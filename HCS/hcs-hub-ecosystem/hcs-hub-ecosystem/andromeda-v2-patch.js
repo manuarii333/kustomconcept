@@ -744,6 +744,14 @@ footer{text-align:center;padding:28px;color:rgba(255,255,255,.4);font-size:.82re
 
 <div class="theme-badge">🌺 THÈME DU MOIS : ${theme.toUpperCase()} · ÉDITION LIMITÉE</div>
 
+${_parcoursCss(v.primary)}
+${_parcoursHtml([
+  {label:'Découvrez le thème du mois',desc:'Une collection exclusive renouvelée chaque mois autour d\'un thème tahitien'},
+  {label:'Choisissez votre variante',desc:'T-shirt, hoodie ou accessoire — 3 interprétations du thème selon vos envies'},
+  {label:'Commandez en quelques clics',desc:'Paiement sécurisé OSB Polynésie · XPF · 100% local'},
+  {label:'Livraison rapide',desc:'Expédition sous 3–5 jours ouvrés depuis Papeete'}
+])}
+
 <div class="section" id="collection">
   <div class="section-title">Choisissez votre variante</div>
   <div class="section-sub">3 interprétations exclusives du thème ${theme}</div>
@@ -1083,6 +1091,14 @@ footer{text-align:center;padding:28px;color:rgba(255,255,255,.4);font-size:.82re
     <a href="#parcours" class="cta-hero">${v.cta}</a>
   </div>
 </div>
+
+${_parcoursCss(v.primary)}
+${_parcoursHtml([
+  {label:'Choisissez votre parcours',desc:'Gang Sheet à imprimer chez vous (Parcours A) ou session personnalisée en atelier HCS (Parcours B)'},
+  {label:'Configurez votre commande',desc:'Quantité de planches, durée d\'atelier, accessoires — tout est paramétrable'},
+  {label:'Payez en ligne',desc:'Paiement sécurisé OSB Polynésie · XPF · 100% local'},
+  {label:'Récupérez en boutique',desc:'Vos créations prêtes à emporter · Accompagnement personnalisé si besoin'}
+])}
 
 <div class="section" id="parcours">
   <div class="section-title">Choisissez votre parcours</div>
@@ -1928,6 +1944,14 @@ footer{text-align:center;padding:28px;color:rgba(255,255,255,.4);font-size:.82re
   </div>
 </div>
 
+${_parcoursCss(v.primary)}
+${_parcoursHtml([
+  {label:'Choisissez votre durée d\'engagement',desc:'Mensuel, 3, 6 ou 12 mois — plus vous vous engagez, plus vous économisez (jusqu\'à −15%)'},
+  {label:'Sélectionnez votre formule',desc:'Starter, Pro ou Premium selon vos besoins · Changement de formule possible à tout moment'},
+  {label:'Payez le 1er mois',desc:'Paiement sécurisé OSB Polynésie · Renouvellement automatique mensuel · Résiliation libre'},
+  {label:'Profitez de vos avantages',desc:'Réductions immédiates, ateliers offerts, t-shirts inclus selon votre formule'}
+])}
+
 <div class="section" id="tiers">
   <div class="section-title">Choisissez votre formule</div>
   <div class="section-sub">Résiliable à tout moment · Sans engagement minimum</div>
@@ -2254,6 +2278,14 @@ footer{text-align:center;padding:28px;color:rgba(255,255,255,.4);font-size:.82re
     </a>
   </div>
 </div>
+
+${_parcoursCss(v.primary)}
+${_parcoursHtml([
+  {label:'Sélectionnez vos services',desc:'Détourage, création logo, accès apps IA — choisissez un ou plusieurs services'},
+  {label:'Joignez votre brief',desc:'Fichier image ou instructions spécifiques (optionnel) pour un résultat sur-mesure'},
+  {label:'Payez en ligne',desc:'Pass HCS ou paiement sécurisé OSB Polynésie · XPF · 100% local'},
+  {label:'Livraison par email',desc:'Fichiers finalisés livrés en 24–48h ouvrés · Révision incluse si besoin'}
+])}
 
 <div class="section" id="services">
   <div class="section-title">Nos services numériques</div>
@@ -2718,6 +2750,29 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closePw();});
    ═══════════════════════════════════════════════════════════ */
 function _fmt(n) { return Math.round(n).toLocaleString('fr-FR'); }
 function _slug(s) { return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,30); }
+
+/* ── Parcours client ── */
+function _parcoursCss(primary) {
+  return `<style>
+.parcours-section{padding:48px 20px;max-width:640px;margin:0 auto}
+.parcours-title{font-size:1rem;font-weight:800;text-align:center;margin-bottom:28px;color:rgba(255,255,255,.9);letter-spacing:.3px}
+.parcours-steps{display:flex;flex-direction:column;gap:0}
+.ps-step{display:flex;gap:16px;align-items:flex-start;padding-bottom:24px;position:relative}
+.ps-step:not(:last-child)::before{content:'';position:absolute;left:19px;top:40px;bottom:0;width:2px;background:linear-gradient(to bottom,${primary} 0%,transparent 100%);opacity:.3}
+.ps-num{width:38px;height:38px;border-radius:50%;background:${primary};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.9rem;color:#0f0f1a;flex-shrink:0}
+.ps-body{padding-top:8px}
+.ps-label{font-weight:800;font-size:.95rem;margin-bottom:3px}
+.ps-desc{font-size:.78rem;color:rgba(255,255,255,.55);line-height:1.6}
+</style>`;
+}
+function _parcoursHtml(steps) {
+  return `<section class="parcours-section">
+  <div class="parcours-title">Comment ça marche ?</div>
+  <div class="parcours-steps">
+    ${steps.map((s,i)=>`<div class="ps-step"><div class="ps-num">${i+1}</div><div class="ps-body"><div class="ps-label">${s.label}</div><div class="ps-desc">${s.desc}</div></div></div>`).join('\n    ')}
+  </div>
+</section>`;
+}
 function _hexToRgb(hex) {
   const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
   return `${r},${g},${b}`;
