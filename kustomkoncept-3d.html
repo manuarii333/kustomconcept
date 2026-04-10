@@ -1,0 +1,1787 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>KustomKoncept 3D — Configurateur Kit Deco Moto</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08090e;--surface:#111320;--surface2:#181c2e;--border:#252a40;
+  --text:#e8eaf0;--text2:#8b90a0;--accent:#ff4d00;--accent2:#ff8c42;
+  --green:#22c55e;--purple:#8b5cf6;--blue:#3b82f6;
+  --radius:12px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+/* ── HEADER ── */
+header{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0;z-index:10}
+.logo{font-weight:900;font-size:18px;letter-spacing:3px}
+.logo em{color:var(--accent);font-style:normal}
+.logo-sub{font-size:10px;color:var(--text2);letter-spacing:1px;margin-left:-2px}
+.steps{display:flex;gap:4px;margin-left:auto}
+.step-pill{padding:6px 16px;border-radius:24px;font-size:11px;font-weight:700;background:var(--surface2);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+.step-pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.step-pill.done{background:rgba(34,197,94,.12);border-color:var(--green);color:var(--green)}
+.step-pill .num{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:10px}
+.step-pill.active .num{background:rgba(255,255,255,.25)}
+
+/* ── LAYOUT ── */
+.app{flex:1;display:flex;overflow:hidden}
+.sidebar{width:400px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-scroll{flex:1;overflow-y:auto;padding:24px 20px}
+.sidebar-scroll::-webkit-scrollbar{width:3px}
+.sidebar-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.sidebar-footer{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:8px}
+
+/* ── VIEWPORT ── */
+.viewport{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.vp-toolbar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.vp-canvas{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;background:var(--bg);background-image:radial-gradient(var(--surface2) 1px,transparent 1px);background-size:24px 24px;position:relative}
+.vp-canvas canvas{border-radius:var(--radius);box-shadow:0 8px 40px rgba(0,0,0,.5)}
+
+/* ── WIDGETS ── */
+.section-num{font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px}
+.section-title{font-size:22px;font-weight:800;line-height:1.2;margin-bottom:6px}
+.section-desc{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 20px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;font-family:inherit}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{background:var(--accent2);transform:translateY(-1px)}
+.btn-ghost{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text);border-color:var(--text2)}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{background:#16a34a}
+.btn-full{width:100%}
+.btn-sm{padding:7px 14px;font-size:12px}
+.btn[disabled]{opacity:.3;pointer-events:none}
+
+.upload-zone{border:2px dashed var(--border);border-radius:14px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);position:relative;overflow:hidden}
+.upload-zone:hover,.upload-zone.over{border-color:var(--accent);background:rgba(255,77,0,.04)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-zone .ico{font-size:48px;margin-bottom:10px;display:block}
+.upload-zone .title{font-size:15px;font-weight:700;margin-bottom:4px}
+.upload-zone .hint{font-size:12px;color:var(--text2)}
+
+.thumb{width:100%;border-radius:10px;margin-top:12px;max-height:160px;object-fit:contain;border:1px solid var(--border);background:var(--bg)}
+
+.card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.card h3{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
+
+/* ── ZONE LIST ── */
+.zone-item{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);cursor:pointer;transition:all .15s;margin-bottom:6px}
+.zone-item:hover{border-color:var(--accent)}
+.zone-item.sel{border-color:var(--accent);background:rgba(255,77,0,.06)}
+.zone-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,.2)}
+.zone-name{flex:1;font-size:12px;font-weight:600}
+.zone-badge{font-size:10px;color:var(--text2);background:var(--surface);padding:2px 8px;border-radius:10px}
+.zone-btn{background:none;border:none;color:var(--text2);cursor:pointer;font-size:14px;padding:2px 4px;transition:color .15s}
+.zone-btn:hover{color:var(--accent)}
+
+/* ── MOTIF GRID ── */
+.motif-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.motif-card{aspect-ratio:1;border-radius:10px;border:2px solid var(--border);background:var(--bg);cursor:pointer;overflow:hidden;transition:all .15s;position:relative;display:flex;align-items:center;justify-content:center}
+.motif-card:hover{border-color:var(--accent);transform:scale(1.03)}
+.motif-card.sel{border-color:var(--accent);box-shadow:0 0 0 2px rgba(255,77,0,.3)}
+.motif-card img,.motif-card canvas{width:100%;height:100%;object-fit:cover}
+.motif-card .label{position:absolute;bottom:0;left:0;right:0;padding:4px 6px;background:linear-gradient(transparent,rgba(0,0,0,.8));font-size:9px;font-weight:700;color:#fff;text-align:center}
+.motif-card .rm{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:rgba(239,68,68,.8);color:#fff;font-size:10px;display:none;align-items:center;justify-content:center;border:none;cursor:pointer}
+.motif-card:hover .rm{display:flex}
+
+/* ── COLOR SWATCHES ── */
+.swatch-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.swatch{width:32px;height:32px;border-radius:8px;cursor:pointer;border:2px solid var(--border);transition:all .15s}
+.swatch:hover,.swatch.sel{border-color:#fff;transform:scale(1.1)}
+
+/* ── TOOLBAR BTNS ── */
+.tbtn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--text2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.tbtn:hover{background:var(--surface2);color:var(--text)}
+.tbtn.on{background:rgba(255,77,0,.12);color:var(--accent);border-color:var(--accent)}
+.tsep{width:1px;height:24px;background:var(--border)}
+
+/* ── COMPARISON SLIDER ── */
+.compare-wrap{position:relative;display:inline-block;cursor:ew-resize;user-select:none}
+.compare-wrap canvas{display:block;border-radius:var(--radius)}
+.compare-line{position:absolute;top:0;bottom:0;width:3px;background:var(--accent);z-index:5;pointer-events:none}
+.compare-handle{position:absolute;top:50%;width:36px;height:36px;border-radius:50%;background:var(--accent);border:3px solid #fff;transform:translate(-50%,-50%);z-index:6;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;pointer-events:none;box-shadow:0 2px 12px rgba(0,0,0,.4)}
+.compare-label{position:absolute;top:12px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;z-index:5;pointer-events:none}
+.compare-label.before{left:12px;background:rgba(255,255,255,.15);color:#fff}
+.compare-label.after{right:12px;background:rgba(255,77,0,.8);color:#fff}
+
+/* ── KIT CONFIG ── */
+.kit-piece{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px;transition:all .15s}
+.kit-piece:hover{border-color:var(--accent)}
+.kit-piece .piece-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.kit-piece .piece-name{font-size:13px;font-weight:700;flex:1}
+.kit-piece .piece-toggle{width:40px;height:22px;border-radius:11px;border:none;cursor:pointer;transition:all .2s;position:relative}
+.kit-piece .piece-toggle.on{background:var(--accent)}
+.kit-piece .piece-toggle.off{background:var(--border)}
+.kit-piece .piece-toggle::after{content:'';position:absolute;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:all .2s}
+.kit-piece .piece-toggle.on::after{left:20px}
+.kit-piece .piece-toggle.off::after{left:2px}
+.piece-config{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.piece-config select{background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-size:11px;outline:none;font-family:inherit}
+.piece-config input[type=color]{width:30px;height:28px;padding:1px;border-radius:6px;cursor:pointer;border:1px solid var(--border)}
+
+/* ── PROGRESS ── */
+.progress{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:8px}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .3s;width:0%}
+
+/* ── TOAST ── */
+#toasts{position:fixed;bottom:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:12px;display:flex;align-items:center;gap:8px;animation:fadeUp .25s ease;backdrop-filter:blur(10px)}
+.toast.ok{border-color:var(--green)}
+.toast.err{border-color:#ef4444}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── EXPORT CARDS ── */
+.export-card{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:18px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .15s;margin-bottom:10px}
+.export-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.export-card .eico{font-size:32px;flex-shrink:0}
+.export-card .etxt strong{display:block;font-size:14px;margin-bottom:3px}
+.export-card .etxt span{font-size:11px;color:var(--text2)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .sidebar{width:320px}
+  .motif-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div>
+    <div class="logo">KUSTOM<em>KONCEPT</em></div>
+    <div class="logo-sub">3D MOCKUP GENERATOR</div>
+  </div>
+  <div class="steps" id="steps">
+    <div class="step-pill active" onclick="goStep(1)"><span class="num">1</span>Moto</div>
+    <div class="step-pill" onclick="goStep(2)"><span class="num">2</span>Zones</div>
+    <div class="step-pill" onclick="goStep(3)"><span class="num">3</span>Motifs</div>
+    <div class="step-pill" onclick="goStep(4)"><span class="num">4</span>Kit Deco</div>
+    <div class="step-pill" onclick="goStep(5)"><span class="num">5</span>Mockup 3D</div>
+  </div>
+</header>
+
+<!-- BODY -->
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-scroll" id="sidebar-content"></div>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-sm" id="btn-back" style="display:none" onclick="goStep(ST.step-1)">&#8592; Retour</button>
+      <button class="btn btn-accent btn-full" id="btn-next" onclick="nextStep()">Continuer &#8594;</button>
+    </div>
+  </div>
+
+  <!-- VIEWPORT -->
+  <div class="viewport">
+    <div class="vp-toolbar" id="vp-toolbar">
+      <span style="font-size:11px;color:var(--text2)" id="vp-label">Viewport</span>
+      <div style="flex:1"></div>
+      <button class="tbtn" onclick="vpZoom(-0.15)" title="Zoom -">&#8722;</button>
+      <span id="zoom-lbl" style="font-size:11px;color:var(--text2);min-width:36px;text-align:center">100%</span>
+      <button class="tbtn" onclick="vpZoom(0.15)" title="Zoom +">+</button>
+      <button class="tbtn" onclick="vpResetZoom()" title="Reset">&#8857;</button>
+    </div>
+    <div class="vp-canvas" id="vp-canvas"></div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+const ST = {
+  step: 1,
+  zoom: 1,
+  motoPhoto: null,   // dataURL
+  motoImg: null,     // Image element
+  motoW: 0, motoH: 0,
+  zones: [],         // { id, name, points:[], color, enabled:true, motifIdx:null, tint:'#ffffff', finish:'gloss' }
+  motifs: [],        // { url, name, img:Image }
+  drawingZone: false,
+  currentPts: [],
+  pendingZoneName: '',
+  selectedZoneId: null,
+  selectedMotifIdx: null,
+  mockupGenerated: false,
+};
+
+const ZONE_COLORS = ['#ff4d00','#3b82f6','#22c55e','#f59e0b','#a855f7','#ec4899','#06b6d4','#ef4444'];
+
+const PRESET_MOTIFS = [
+  { name:'Flammes',      gen: genFlames },
+  { name:'Tribal',       gen: genTribal },
+  { name:'Camo',         gen: genCamo },
+  { name:'Carbon',       gen: genCarbon },
+  { name:'Racing',       gen: genRacing },
+  { name:'Geometric',    gen: genGeometric },
+  { name:'Hexagrid',     gen: genHexagrid },
+  { name:'Waves',        gen: genWaves },
+  { name:'Lightning',    gen: genLightning },
+];
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  renderSidebar();
+  renderViewport();
+});
+
+// ══════════════════════════════════════════════════
+// STEPPER
+// ══════════════════════════════════════════════════
+function goStep(n) {
+  if (n < 1 || n > 5) return;
+  ST.step = n;
+  document.querySelectorAll('.step-pill').forEach((el, i) => {
+    el.className = 'step-pill' + (i+1 === n ? ' active' : i+1 < n ? ' done' : '');
+  });
+  document.getElementById('btn-back').style.display = n > 1 ? '' : 'none';
+  document.getElementById('btn-next').textContent = n === 5 ? 'Exporter' : 'Continuer \u2192';
+  if (n === 5) document.getElementById('btn-next').onclick = () => exportMockup();
+  else document.getElementById('btn-next').onclick = () => nextStep();
+  renderSidebar();
+  renderViewport();
+}
+
+function nextStep() {
+  if (ST.step === 1 && !ST.motoPhoto) { toast('Charge une photo de ta moto','err'); return; }
+  if (ST.step === 2 && ST.zones.length === 0) { toast('Dessine au moins une zone de carrosserie','err'); return; }
+  if (ST.step === 3 && ST.motifs.length === 0) { toast('Ajoute au moins un motif','err'); return; }
+  if (ST.step >= 5) return;
+  goStep(ST.step + 1);
+}
+
+// ══════════════════════════════════════════════════
+// SIDEBAR RENDERING
+// ══════════════════════════════════════════════════
+function renderSidebar() {
+  const el = document.getElementById('sidebar-content');
+  const fns = [null, sideStep1, sideStep2, sideStep3, sideStep4, sideStep5];
+  fns[ST.step](el);
+}
+
+// ── STEP 1: UPLOAD MOTO ──
+function sideStep1(el) {
+  el.innerHTML = `
+    <div class="section-num">Etape 1 / 5</div>
+    <div class="section-title">Ta moto</div>
+    <div class="section-desc">Charge une photo de ton engin (vue de cote, 3/4 ou face). C'est la base du mockup 3D.</div>
+    <div class="upload-zone" id="uz-moto">
+      <input type="file" accept="image/*" onchange="loadMoto(this)"/>
+      <span class="ico">${ST.motoPhoto ? '\u2705' : '\uD83D\uDEF5'}</span>
+      <div class="title">${ST.motoPhoto ? 'Photo chargee !' : 'Glisse ta photo ici'}</div>
+      <div class="hint">JPG / PNG — vue laterale recommandee</div>
+    </div>
+    ${ST.motoPhoto ? `<img class="thumb" src="${ST.motoPhoto}"/>` : ''}
+    <div class="card" style="margin-top:16px">
+      <h3>Conseils photo</h3>
+      <ul style="font-size:12px;color:var(--text2);line-height:2;padding-left:16px">
+        <li>Fond uni ou simple pour un meilleur rendu</li>
+        <li>Bonne luminosite, pas de contre-jour</li>
+        <li>Resolution minimum 1200px de large</li>
+        <li>Vue de cote = meilleur pour kit deco complet</li>
+      </ul>
+    </div>
+  `;
+  setupDragDrop('uz-moto');
+}
+
+// ── STEP 2: ZONES ──
+function sideStep2(el) {
+  el.innerHTML = `
+    <div class="section-num">Etape 2 / 5</div>
+    <div class="section-title">Zones de carenage</div>
+    <div class="section-desc">Dessine les zones ou le kit deco sera applique. Clique sur la photo pour tracer un polygone, double-clic pour fermer.</div>
+    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn btn-accent btn-sm" onclick="startDrawZone()" id="btn-draw">+ Nouvelle zone</button>
+      <select onchange="quickZone(this.value);this.value=''" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:7px 10px;font-size:11px;outline:none;font-family:inherit">
+        <option value="">Prereglage...</option>
+        <option value="Carenage avant">Carenage avant</option>
+        <option value="Carenage lateral">Carenage lateral</option>
+        <option value="Reservoir">Reservoir</option>
+        <option value="Garde-boue AV">Garde-boue AV</option>
+        <option value="Garde-boue AR">Garde-boue AR</option>
+        <option value="Selle">Selle</option>
+        <option value="Bras oscillant">Bras oscillant</option>
+        <option value="Tete de fourche">Tete de fourche</option>
+      </select>
+      <button class="btn btn-ghost btn-sm" onclick="clearZones()">Tout effacer</button>
+    </div>
+    <div id="zones-list">
+      ${ST.zones.length === 0 ? '<div style="color:var(--text2);font-size:12px;padding:12px 0;text-align:center">Aucune zone — dessine sur la photo</div>' :
+        ST.zones.map(z => `
+          <div class="zone-item ${ST.selectedZoneId===z.id?'sel':''}" onclick="selectZone(${z.id})">
+            <div class="zone-dot" style="background:${z.color}"></div>
+            <span class="zone-name">${z.name}</span>
+            <span class="zone-badge">${z.points.length} pts</span>
+            <button class="zone-btn" onclick="event.stopPropagation();deleteZone(${z.id})" title="Supprimer">\uD83D\uDDD1</button>
+          </div>
+        `).join('')}
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Raccourcis</h3>
+      <div style="font-size:12px;color:var(--text2);line-height:2">
+        <strong style="color:var(--text)">Clic gauche</strong> : placer un point<br/>
+        <strong style="color:var(--text)">Double-clic</strong> : fermer la zone<br/>
+        <strong style="color:var(--text)">Clic droit</strong> : annuler dernier point<br/>
+        <strong style="color:var(--text)">Echap</strong> : annuler le tracage
+      </div>
+    </div>
+  `;
+}
+
+// ── STEP 3: MOTIFS ──
+function sideStep3(el) {
+  el.innerHTML = `
+    <div class="section-num">Etape 3 / 5</div>
+    <div class="section-title">Motifs & Patterns</div>
+    <div class="section-desc">Choisis parmi les presets ou uploade tes propres motifs.</div>
+
+    <button class="btn btn-accent btn-full" onclick="document.getElementById('motif-input').click()" style="margin-bottom:14px">
+      + Importer mes motifs
+    </button>
+    <input type="file" id="motif-input" style="display:none" accept="image/*" multiple onchange="addMotifs(this)"/>
+
+    ${ST.motifs.length > 0 ? `
+      <div class="card">
+        <h3>Mes motifs (${ST.motifs.length})</h3>
+        <div class="motif-grid">
+          ${ST.motifs.map((m,i) => `
+            <div class="motif-card ${ST.selectedMotifIdx===i?'sel':''}" onclick="selectMotif(${i})">
+              <img src="${m.url}"/>
+              <div class="label">${m.name}</div>
+              <button class="rm" onclick="event.stopPropagation();removeMotif(${i})">\u2715</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    <div class="card">
+      <h3>Presets generatifs</h3>
+      <div class="motif-grid" id="preset-grid"></div>
+    </div>
+  `;
+  // Generate preset thumbnails
+  setTimeout(renderPresetGrid, 50);
+}
+
+// ── STEP 4: KIT CONFIG ──
+function sideStep4(el) {
+  el.innerHTML = `
+    <div class="section-num">Etape 4 / 5</div>
+    <div class="section-title">Configurer le kit</div>
+    <div class="section-desc">Attribue un motif, une teinte et une finition a chaque zone de carenage.</div>
+
+    <div id="kit-list">
+      ${ST.zones.map(z => `
+        <div class="kit-piece" id="kit-${z.id}">
+          <div class="piece-header">
+            <div class="zone-dot" style="background:${z.color}"></div>
+            <span class="piece-name">${z.name}</span>
+            <button class="piece-toggle ${z.enabled?'on':'off'}" onclick="toggleZone(${z.id})"></button>
+          </div>
+          ${z.enabled ? `
+          <div class="piece-config">
+            <select onchange="setZoneMotif(${z.id},+this.value)" style="flex:1">
+              <option value="-1" ${z.motifIdx===null?'selected':''}>-- Motif --</option>
+              ${ST.motifs.map((m,i) => `<option value="${i}" ${z.motifIdx===i?'selected':''}>${m.name}</option>`).join('')}
+            </select>
+            <input type="color" value="${z.tint||'#ffffff'}" onchange="setZoneTint(${z.id},this.value)" title="Teinte"/>
+            <select onchange="setZoneFinish(${z.id},this.value)">
+              <option value="gloss" ${z.finish==='gloss'?'selected':''}>Brillant</option>
+              <option value="mat" ${z.finish==='mat'?'selected':''}>Mat</option>
+              <option value="satin" ${z.finish==='satin'?'selected':''}>Satin</option>
+              <option value="chrome" ${z.finish==='chrome'?'selected':''}>Chrome</option>
+            </select>
+          </div>
+          ` : '<div style="font-size:11px;color:var(--text2);margin-top:4px">Zone desactivee</div>'}
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h3>Actions rapides</h3>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="applyMotifAll()">Meme motif partout</button>
+        <button class="btn btn-ghost btn-sm" onclick="randomizeKit()">Aleatoire</button>
+      </div>
+    </div>
+  `;
+}
+
+// ── STEP 5: MOCKUP 3D ──
+function sideStep5(el) {
+  el.innerHTML = `
+    <div class="section-num">Etape 5 / 5</div>
+    <div class="section-title">Mockup 3D</div>
+    <div class="section-desc">Genere le rendu realiste de ton kit deco sur la moto.</div>
+
+    <button class="btn btn-accent btn-full" onclick="generateMockup()" style="margin-bottom:12px;font-size:14px;padding:14px">
+      Generer le Mockup 3D
+    </button>
+    <div class="progress" id="mockup-progress" style="display:none">
+      <div class="progress-bar" id="mockup-bar"></div>
+    </div>
+    <div id="mockup-status" style="font-size:11px;color:var(--text2);text-align:center;margin-top:8px"></div>
+
+    <div id="export-section" style="display:${ST.mockupGenerated?'block':'none'};margin-top:20px">
+      <div class="export-card" onclick="exportJPG()">
+        <div class="eico">\uD83D\uDDBC</div>
+        <div class="etxt">
+          <strong>JPEG Haute Qualite</strong>
+          <span>Image du mockup pour presentation client</span>
+        </div>
+      </div>
+      <div class="export-card" onclick="exportPNG()">
+        <div class="eico">\uD83D\uDCC4</div>
+        <div class="etxt">
+          <strong>PNG Transparent</strong>
+          <span>Pour integration sur fond personnalise</span>
+        </div>
+      </div>
+      <div class="export-card" onclick="exportComparison()">
+        <div class="eico">\u2194</div>
+        <div class="etxt">
+          <strong>Avant / Apres</strong>
+          <span>Image comparative avec slider</span>
+        </div>
+      </div>
+      <div class="export-card" onclick="saveProject()">
+        <div class="eico">\uD83D\uDCBE</div>
+        <div class="etxt">
+          <strong>Sauvegarder le projet</strong>
+          <span>Reprendre plus tard</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════
+// VIEWPORT RENDERING
+// ══════════════════════════════════════════════════
+function renderViewport() {
+  const vp = document.getElementById('vp-canvas');
+  const label = document.getElementById('vp-label');
+
+  if (ST.step === 1) {
+    label.textContent = 'Apercu photo';
+    if (!ST.motoPhoto) {
+      vp.innerHTML = '<div style="color:var(--text2);font-size:14px">Charge une photo pour commencer</div>';
+    } else {
+      vp.innerHTML = `<canvas id="main-canvas"></canvas>`;
+      drawMotoOnCanvas();
+    }
+  } else if (ST.step === 2) {
+    label.textContent = 'Editeur de zones';
+    vp.innerHTML = `<div style="position:relative;display:inline-block" id="zone-editor-wrap">
+      <canvas id="main-canvas"></canvas>
+      <canvas id="zone-overlay" style="position:absolute;inset:0;cursor:crosshair"></canvas>
+    </div>`;
+    drawMotoOnCanvas();
+    setTimeout(initZoneOverlay, 50);
+  } else if (ST.step === 3) {
+    label.textContent = 'Apercu motifs';
+    vp.innerHTML = `<canvas id="main-canvas"></canvas>`;
+    drawMotoWithZones();
+  } else if (ST.step === 4) {
+    label.textContent = 'Apercu kit deco';
+    vp.innerHTML = `<canvas id="main-canvas"></canvas>`;
+    drawKitPreview();
+  } else if (ST.step === 5) {
+    label.textContent = 'Mockup 3D';
+    if (ST.mockupGenerated) {
+      // Keep the mockup canvas
+    } else {
+      vp.innerHTML = `<canvas id="main-canvas"></canvas>`;
+      drawKitPreview();
+    }
+  }
+}
+
+function getCanvasSize() {
+  const vp = document.getElementById('vp-canvas');
+  const maxW = vp.clientWidth - 48;
+  const maxH = vp.clientHeight - 48;
+  if (!ST.motoImg) return { w: maxW, h: maxH, sc: 1 };
+  const sc = Math.min(maxW / ST.motoW, maxH / ST.motoH, 1);
+  return { w: Math.round(ST.motoW * sc), h: Math.round(ST.motoH * sc), sc };
+}
+
+function drawMotoOnCanvas() {
+  if (!ST.motoImg) return;
+  const c = document.getElementById('main-canvas');
+  if (!c) return;
+  const { w, h, sc } = getCanvasSize();
+  c.width = w; c.height = h;
+  c.style.width = w + 'px'; c.style.height = h + 'px';
+  const ctx = c.getContext('2d');
+  ctx.drawImage(ST.motoImg, 0, 0, w, h);
+  ST._viewSc = sc;
+}
+
+function drawMotoWithZones() {
+  drawMotoOnCanvas();
+  const c = document.getElementById('main-canvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const sc = ST._viewSc;
+  ST.zones.forEach(z => {
+    if (z.points.length < 3) return;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(z.points[0].x * sc, z.points[0].y * sc);
+    z.points.forEach((p, i) => i > 0 && ctx.lineTo(p.x * sc, p.y * sc));
+    ctx.closePath();
+    ctx.fillStyle = z.color + '33';
+    ctx.fill();
+    ctx.strokeStyle = z.color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Label
+    const cx = z.points.reduce((s,p) => s + p.x, 0) / z.points.length * sc;
+    const cy = z.points.reduce((s,p) => s + p.y, 0) / z.points.length * sc;
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,.8)';
+    ctx.shadowBlur = 4;
+    ctx.fillText(z.name, cx, cy);
+    ctx.restore();
+  });
+}
+
+function drawKitPreview() {
+  drawMotoOnCanvas();
+  const c = document.getElementById('main-canvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const sc = ST._viewSc;
+
+  ST.zones.forEach(z => {
+    if (!z.enabled || z.points.length < 3) return;
+    ctx.save();
+    // Clip to zone
+    ctx.beginPath();
+    ctx.moveTo(z.points[0].x * sc, z.points[0].y * sc);
+    z.points.forEach((p, i) => i > 0 && ctx.lineTo(p.x * sc, p.y * sc));
+    ctx.closePath();
+    ctx.clip();
+
+    // Fill with motif if assigned
+    if (z.motifIdx !== null && z.motifIdx >= 0 && ST.motifs[z.motifIdx]) {
+      const motif = ST.motifs[z.motifIdx];
+      const bbox = zoneBBox(z.points);
+      const bw = (bbox.maxX - bbox.minX) * sc;
+      const bh = (bbox.maxY - bbox.minY) * sc;
+      const bx = bbox.minX * sc;
+      const by = bbox.minY * sc;
+
+      // Draw motif tiled or fitted
+      ctx.globalAlpha = 0.85;
+      const msc = Math.max(bw / motif.img.width, bh / motif.img.height);
+      const mw = motif.img.width * msc;
+      const mh = motif.img.height * msc;
+      ctx.drawImage(motif.img, bx + (bw - mw)/2, by + (bh - mh)/2, mw, mh);
+    }
+
+    // Apply tint
+    if (z.tint && z.tint !== '#ffffff') {
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = z.tint;
+      ctx.fillRect(0, 0, c.width, c.height);
+    }
+
+    // Finish effect
+    if (z.finish === 'gloss') {
+      const grad = ctx.createLinearGradient(0, 0, c.width, c.height);
+      grad.addColorStop(0, 'rgba(255,255,255,0)');
+      grad.addColorStop(0.3, 'rgba(255,255,255,0.08)');
+      grad.addColorStop(0.5, 'rgba(255,255,255,0.15)');
+      grad.addColorStop(0.7, 'rgba(255,255,255,0.05)');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, c.width, c.height);
+    } else if (z.finish === 'mat') {
+      ctx.globalAlpha = 0.1;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, c.width, c.height);
+    } else if (z.finish === 'chrome') {
+      const grad = ctx.createLinearGradient(0, 0, c.width * 0.5, c.height);
+      grad.addColorStop(0, 'rgba(200,200,220,0)');
+      grad.addColorStop(0.4, 'rgba(200,200,220,0.2)');
+      grad.addColorStop(0.5, 'rgba(255,255,255,0.35)');
+      grad.addColorStop(0.6, 'rgba(200,200,220,0.15)');
+      grad.addColorStop(1, 'rgba(200,200,220,0)');
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, c.width, c.height);
+    }
+
+    ctx.restore();
+
+    // Zone border
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(z.points[0].x * sc, z.points[0].y * sc);
+    z.points.forEach((p, i) => i > 0 && ctx.lineTo(p.x * sc, p.y * sc));
+    ctx.closePath();
+    ctx.strokeStyle = z.color + '88';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+  });
+}
+
+// ══════════════════════════════════════════════════
+// ZONE EDITOR
+// ══════════════════════════════════════════════════
+function initZoneOverlay() {
+  const mc = document.getElementById('main-canvas');
+  const ov = document.getElementById('zone-overlay');
+  if (!mc || !ov) return;
+  ov.width = mc.width; ov.height = mc.height;
+  ov.style.width = mc.style.width; ov.style.height = mc.style.height;
+
+  ov.onmousedown = zoneMouseDown;
+  ov.onmousemove = zoneMouseMove;
+  ov.ondblclick = zoneClose;
+  ov.oncontextmenu = e => { e.preventDefault(); if (ST.currentPts.length) { ST.currentPts.pop(); renderZones(); } };
+
+  renderZones();
+}
+
+function renderZones() {
+  const ov = document.getElementById('zone-overlay');
+  if (!ov) return;
+  const ctx = ov.getContext('2d');
+  const sc = ST._viewSc;
+  ctx.clearRect(0, 0, ov.width, ov.height);
+
+  // Existing zones
+  ST.zones.forEach(z => {
+    if (z.points.length < 2) return;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(z.points[0].x * sc, z.points[0].y * sc);
+    z.points.forEach((p, i) => i > 0 && ctx.lineTo(p.x * sc, p.y * sc));
+    ctx.closePath();
+    ctx.fillStyle = z.color + '33';
+    ctx.fill();
+    ctx.strokeStyle = z.color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Label
+    const cx = z.points.reduce((s,p) => s + p.x, 0) / z.points.length * sc;
+    const cy = z.points.reduce((s,p) => s + p.y, 0) / z.points.length * sc;
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px Segoe UI';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,.8)'; ctx.shadowBlur = 4;
+    ctx.fillText(z.name, cx, cy);
+    ctx.restore();
+    // Dots
+    z.points.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x * sc, p.y * sc, 4, 0, Math.PI*2);
+      ctx.fillStyle = z.color;
+      ctx.fill();
+    });
+  });
+
+  // In-progress zone
+  if (ST.drawingZone && ST.currentPts.length) {
+    ctx.save();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5,4]);
+    ctx.beginPath();
+    ctx.moveTo(ST.currentPts[0].x * sc, ST.currentPts[0].y * sc);
+    ST.currentPts.forEach((p, i) => i > 0 && ctx.lineTo(p.x * sc, p.y * sc));
+    if (ST._cursor) ctx.lineTo(ST._cursor.x * sc, ST._cursor.y * sc);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ST.currentPts.forEach((p, i) => {
+      ctx.beginPath();
+      ctx.arc(p.x * sc, p.y * sc, i === 0 ? 6 : 4, 0, Math.PI*2);
+      ctx.fillStyle = i === 0 ? '#ff4d00' : '#fff';
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+}
+
+function startDrawZone(name) {
+  if (!ST.motoPhoto) { toast('Photo requise','err'); return; }
+  ST.drawingZone = true;
+  ST.currentPts = [];
+  ST.pendingZoneName = name || 'Zone ' + (ST.zones.length + 1);
+  const btn = document.getElementById('btn-draw');
+  if (btn) { btn.textContent = 'Terminer (double-clic)'; btn.style.background = 'var(--green)'; }
+  toast('Clic pour placer les points, double-clic pour fermer','ok');
+}
+
+function quickZone(name) { if (name) startDrawZone(name); }
+
+function zoneMouseDown(e) {
+  if (!ST.drawingZone) return;
+  if (e.button === 2) { e.preventDefault(); ST.currentPts.pop(); renderZones(); return; }
+  const rect = e.target.getBoundingClientRect();
+  const sc = ST._viewSc;
+  const x = (e.clientX - rect.left) / sc;
+  const y = (e.clientY - rect.top) / sc;
+  ST.currentPts.push({ x, y });
+  renderZones();
+}
+
+function zoneMouseMove(e) {
+  if (!ST.drawingZone || !ST.currentPts.length) return;
+  const rect = e.target.getBoundingClientRect();
+  const sc = ST._viewSc;
+  ST._cursor = { x: (e.clientX - rect.left) / sc, y: (e.clientY - rect.top) / sc };
+  renderZones();
+}
+
+function zoneClose(e) {
+  if (!ST.drawingZone || ST.currentPts.length < 3) return;
+  const color = ZONE_COLORS[ST.zones.length % ZONE_COLORS.length];
+  ST.zones.push({
+    id: Date.now(), name: ST.pendingZoneName, points: [...ST.currentPts], color,
+    enabled: true, motifIdx: null, tint: '#ffffff', finish: 'gloss'
+  });
+  ST.currentPts = [];
+  ST.drawingZone = false;
+  ST._cursor = null;
+  const btn = document.getElementById('btn-draw');
+  if (btn) { btn.textContent = '+ Nouvelle zone'; btn.style.background = ''; }
+  renderZones();
+  renderSidebar();
+  toast(`Zone "${ST.pendingZoneName}" creee`, 'ok');
+}
+
+function selectZone(id) { ST.selectedZoneId = id; renderSidebar(); }
+function deleteZone(id) { ST.zones = ST.zones.filter(z => z.id !== id); renderZones(); renderSidebar(); }
+function clearZones() { ST.zones = []; ST.currentPts = []; ST.drawingZone = false; renderZones(); renderSidebar(); }
+
+// Escape to cancel drawing
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && ST.drawingZone) {
+    ST.drawingZone = false; ST.currentPts = []; ST._cursor = null;
+    const btn = document.getElementById('btn-draw');
+    if (btn) { btn.textContent = '+ Nouvelle zone'; btn.style.background = ''; }
+    renderZones();
+  }
+});
+
+// ══════════════════════════════════════════════════
+// MOTIFS
+// ══════════════════════════════════════════════════
+function addMotifs(input) {
+  Array.from(input.files).forEach(file => {
+    const r = new FileReader();
+    r.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        ST.motifs.push({ url: ev.target.result, name: file.name.replace(/\.[^.]+$/, ''), img });
+        renderSidebar();
+        renderViewport();
+      };
+      img.src = ev.target.result;
+    };
+    r.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function removeMotif(i) {
+  // Clear from zones using this motif
+  ST.zones.forEach(z => { if (z.motifIdx === i) z.motifIdx = null; else if (z.motifIdx > i) z.motifIdx--; });
+  ST.motifs.splice(i, 1);
+  if (ST.selectedMotifIdx === i) ST.selectedMotifIdx = null;
+  else if (ST.selectedMotifIdx > i) ST.selectedMotifIdx--;
+  renderSidebar();
+}
+
+function selectMotif(i) { ST.selectedMotifIdx = i; renderSidebar(); }
+
+function addPresetMotif(idx) {
+  const preset = PRESET_MOTIFS[idx];
+  const c = document.createElement('canvas');
+  c.width = 400; c.height = 400;
+  preset.gen(c.getContext('2d'), 400, 400);
+  const url = c.toDataURL();
+  const img = new Image();
+  img.onload = () => {
+    ST.motifs.push({ url, name: preset.name, img });
+    renderSidebar();
+    toast(`Motif "${preset.name}" ajoute`, 'ok');
+  };
+  img.src = url;
+}
+
+function renderPresetGrid() {
+  const grid = document.getElementById('preset-grid');
+  if (!grid) return;
+  grid.innerHTML = PRESET_MOTIFS.map((p, i) => {
+    const c = document.createElement('canvas');
+    c.width = 120; c.height = 120;
+    p.gen(c.getContext('2d'), 120, 120);
+    return `<div class="motif-card" onclick="addPresetMotif(${i})">
+      <img src="${c.toDataURL()}"/>
+      <div class="label">${p.name}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════
+// PRESET PATTERN GENERATORS
+// ══════════════════════════════════════════════════
+function genFlames(ctx, w, h) {
+  ctx.fillStyle = '#1a0a00';
+  ctx.fillRect(0, 0, w, h);
+  for (let i = 0; i < 8; i++) {
+    const x = w * 0.1 + Math.random() * w * 0.3;
+    const y = h * (0.3 + Math.random() * 0.5);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-0.3 + Math.random() * 0.2);
+    const grad = ctx.createLinearGradient(0, 0, w * 0.8, -h * 0.4);
+    grad.addColorStop(0, '#ff4d00');
+    grad.addColorStop(0.4, '#ff8c00');
+    grad.addColorStop(0.7, '#ffcc00');
+    grad.addColorStop(1, 'rgba(255,200,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(w*0.2, -h*0.15, w*0.4, -h*0.05 - i*8, w*0.7, -h*0.25 - i*5);
+    ctx.bezierCurveTo(w*0.5, -h*0.1 - i*4, w*0.3, h*0.02, w*0.15, h*0.05);
+    ctx.bezierCurveTo(w*0.08, h*0.03, 0, 0, 0, 0);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function genTribal(ctx, w, h) {
+  ctx.fillStyle = '#0d0d0d';
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 6; i++) {
+    ctx.beginPath();
+    const y = h * 0.2 + i * h * 0.12;
+    ctx.moveTo(0, y);
+    for (let x = 0; x < w; x += 20) {
+      const dy = Math.sin(x * 0.03 + i) * 30 + Math.sin(x * 0.07 + i * 2) * 15;
+      ctx.lineTo(x, y + dy);
+    }
+    ctx.stroke();
+    // Spikes
+    for (let x = 30 + i * 15; x < w; x += 60) {
+      ctx.beginPath();
+      const baseY = y + Math.sin(x * 0.03 + i) * 30;
+      ctx.moveTo(x - 8, baseY);
+      ctx.lineTo(x, baseY - 25 - Math.random() * 15);
+      ctx.lineTo(x + 8, baseY);
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fill();
+    }
+  }
+}
+
+function genCamo(ctx, w, h) {
+  ctx.fillStyle = '#2d3a1f';
+  ctx.fillRect(0, 0, w, h);
+  const colors = ['#1a2410','#3d4f28','#4a5a30','#1f2b14','#556b2f'];
+  for (let i = 0; i < 40; i++) {
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.beginPath();
+    const cx = Math.random() * w, cy = Math.random() * h;
+    ctx.moveTo(cx, cy);
+    for (let j = 0; j < 6; j++) {
+      const a = (j / 6) * Math.PI * 2;
+      const r = 20 + Math.random() * 40;
+      ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+function genCarbon(ctx, w, h) {
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(0, 0, w, h);
+  const sz = 8;
+  for (let y = 0; y < h; y += sz * 2) {
+    for (let x = 0; x < w; x += sz * 2) {
+      ctx.fillStyle = (Math.floor(x / sz) + Math.floor(y / sz)) % 2 === 0 ? '#222' : '#2a2a2a';
+      ctx.fillRect(x, y, sz, sz);
+      ctx.fillStyle = (Math.floor(x / sz) + Math.floor(y / sz)) % 2 === 0 ? '#2a2a2a' : '#222';
+      ctx.fillRect(x + sz, y, sz, sz);
+      ctx.fillRect(x, y + sz, sz, sz);
+      ctx.fillStyle = (Math.floor(x / sz) + Math.floor(y / sz)) % 2 === 0 ? '#252525' : '#1e1e1e';
+      ctx.fillRect(x + sz, y + sz, sz, sz);
+    }
+  }
+  // Sheen
+  const g = ctx.createLinearGradient(0, 0, w, h);
+  g.addColorStop(0, 'rgba(255,255,255,0)');
+  g.addColorStop(0.5, 'rgba(255,255,255,0.04)');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+}
+
+function genRacing(ctx, w, h) {
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, w, h);
+  // Big diagonal stripes
+  ctx.fillStyle = '#ff4d00';
+  ctx.save();
+  ctx.translate(w * 0.5, 0);
+  ctx.rotate(0.3);
+  ctx.fillRect(-w, 0, w * 0.4, h * 2);
+  ctx.fillRect(-w + w * 0.5, 0, w * 0.15, h * 2);
+  ctx.restore();
+  // Number circle
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.ellipse(w * 0.5, h * 0.5, w * 0.2, h * 0.25, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${h * 0.3}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('42', w * 0.5, h * 0.52);
+}
+
+function genGeometric(ctx, w, h) {
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fillRect(0, 0, w, h);
+  const colors = ['#ff4d00','#3b82f6','#22c55e','#f59e0b','#8b5cf6'];
+  for (let i = 0; i < 25; i++) {
+    ctx.save();
+    ctx.translate(Math.random() * w, Math.random() * h);
+    ctx.rotate(Math.random() * Math.PI);
+    ctx.globalAlpha = 0.3 + Math.random() * 0.4;
+    ctx.fillStyle = colors[i % colors.length];
+    const sz = 20 + Math.random() * 60;
+    if (i % 3 === 0) {
+      ctx.beginPath();
+      ctx.moveTo(0, -sz);
+      ctx.lineTo(sz * 0.87, sz * 0.5);
+      ctx.lineTo(-sz * 0.87, sz * 0.5);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      ctx.fillRect(-sz/2, -sz/2, sz, sz);
+    }
+    ctx.restore();
+  }
+}
+
+function genHexagrid(ctx, w, h) {
+  ctx.fillStyle = '#0a0f1a';
+  ctx.fillRect(0, 0, w, h);
+  const sz = 18;
+  const dx = sz * 1.75;
+  const dy = sz * 1.5;
+  for (let row = -1; row < h / dy + 1; row++) {
+    for (let col = -1; col < w / dx + 1; col++) {
+      const cx = col * dx + (row % 2) * dx * 0.5;
+      const cy = row * dy;
+      ctx.beginPath();
+      for (let a = 0; a < 6; a++) {
+        const ang = (a * 60 - 30) * Math.PI / 180;
+        const method = a === 0 ? 'moveTo' : 'lineTo';
+        ctx[method](cx + sz * Math.cos(ang), cy + sz * Math.sin(ang));
+      }
+      ctx.closePath();
+      const dist = Math.sqrt((cx - w/2)**2 + (cy - h/2)**2) / (w * 0.5);
+      ctx.fillStyle = `rgba(59,130,246,${0.05 + (1 - dist) * 0.15})`;
+      ctx.fill();
+      ctx.strokeStyle = `rgba(59,130,246,${0.15 + (1 - dist) * 0.3})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+}
+
+function genWaves(ctx, w, h) {
+  ctx.fillStyle = '#001020';
+  ctx.fillRect(0, 0, w, h);
+  for (let i = 0; i < 12; i++) {
+    ctx.beginPath();
+    const y0 = h * 0.1 + i * h * 0.08;
+    ctx.moveTo(0, y0);
+    for (let x = 0; x <= w; x += 2) {
+      const y = y0 + Math.sin(x * 0.02 + i * 0.8) * 20 + Math.sin(x * 0.05 + i) * 10;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+    ctx.fillStyle = `rgba(0,${100 + i * 12},${180 + i * 6},${0.08 + i * 0.02})`;
+    ctx.fill();
+  }
+}
+
+function genLightning(ctx, w, h) {
+  ctx.fillStyle = '#0a001a';
+  ctx.fillRect(0, 0, w, h);
+  for (let b = 0; b < 5; b++) {
+    let x = w * (0.2 + Math.random() * 0.6);
+    let y = 0;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.strokeStyle = `rgba(${180 + b * 15},${100 + b * 20},255,${0.5 + b * 0.1})`;
+    ctx.lineWidth = 3 - b * 0.4;
+    ctx.shadowColor = '#8b5cf6';
+    ctx.shadowBlur = 15;
+    while (y < h) {
+      x += (Math.random() - 0.5) * 40;
+      y += 10 + Math.random() * 20;
+      ctx.lineTo(x, y);
+      // Branch
+      if (Math.random() < 0.2) {
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        let bx = x, by = y;
+        for (let s = 0; s < 3; s++) {
+          bx += (Math.random() - 0.5) * 30;
+          by += 8 + Math.random() * 12;
+          ctx.lineTo(bx, by);
+        }
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+      }
+    }
+    ctx.stroke();
+  }
+  ctx.shadowBlur = 0;
+}
+
+// ══════════════════════════════════════════════════
+// KIT CONFIGURATION
+// ══════════════════════════════════════════════════
+function toggleZone(id) {
+  const z = ST.zones.find(z => z.id === id);
+  if (z) { z.enabled = !z.enabled; renderSidebar(); drawKitPreview(); }
+}
+function setZoneMotif(id, idx) {
+  const z = ST.zones.find(z => z.id === id);
+  if (z) { z.motifIdx = idx >= 0 ? idx : null; drawKitPreview(); }
+}
+function setZoneTint(id, color) {
+  const z = ST.zones.find(z => z.id === id);
+  if (z) { z.tint = color; drawKitPreview(); }
+}
+function setZoneFinish(id, finish) {
+  const z = ST.zones.find(z => z.id === id);
+  if (z) { z.finish = finish; drawKitPreview(); }
+}
+function applyMotifAll() {
+  if (ST.motifs.length === 0) { toast('Ajoute un motif d\'abord','err'); return; }
+  const idx = ST.motifs.length > 0 ? 0 : null;
+  ST.zones.forEach(z => { if (z.enabled) z.motifIdx = idx; });
+  renderSidebar(); drawKitPreview();
+  toast('Motif applique a toutes les zones','ok');
+}
+function randomizeKit() {
+  if (ST.motifs.length === 0) { toast('Ajoute des motifs d\'abord','err'); return; }
+  const tints = ['#ff4d00','#3b82f6','#22c55e','#ffffff','#000000','#f59e0b','#8b5cf6'];
+  const finishes = ['gloss','mat','satin','chrome'];
+  ST.zones.forEach(z => {
+    z.motifIdx = Math.floor(Math.random() * ST.motifs.length);
+    z.tint = tints[Math.floor(Math.random() * tints.length)];
+    z.finish = finishes[Math.floor(Math.random() * finishes.length)];
+    z.enabled = true;
+  });
+  renderSidebar(); drawKitPreview();
+  toast('Kit aleatoire genere','ok');
+}
+
+// ══════════════════════════════════════════════════
+// WEB WORKER (inline blob) for heavy pixel processing
+// ══════════════════════════════════════════════════
+const WORKER_CODE = `
+  // ── Sobel edge detection ──
+  function sobelAnalysis(pixelData, W, H) {
+    const src = pixelData;
+    const mag = new Float32Array(W*H);
+    const gx  = new Float32Array(W*H);
+    const gy  = new Float32Array(W*H);
+    const Kx = [-1,0,1,-2,0,2,-1,0,1];
+    const Ky = [-1,-2,-1,0,0,0,1,2,1];
+    for (let y=1;y<H-1;y++) for (let x=1;x<W-1;x++) {
+      let sx=0,sy=0;
+      for (let ky=-1;ky<=1;ky++) for (let kx=-1;kx<=1;kx++) {
+        const pi=((y+ky)*W+(x+kx))*4;
+        const v=src[pi]*0.299+src[pi+1]*0.587+src[pi+2]*0.114;
+        const ki=(ky+1)*3+(kx+1);
+        sx+=v*Kx[ki]; sy+=v*Ky[ki];
+      }
+      const i=y*W+x;
+      gx[i]=sx; gy[i]=sy;
+      mag[i]=Math.sqrt(sx*sx+sy*sy);
+    }
+    return {mag,gx,gy};
+  }
+
+  // ── Gaussian blur ──
+  function gaussBlur(data,W,H,r) {
+    const tmp = new Float32Array(data.length);
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+      let s=0,c=0;
+      for(let k=-r;k<=r;k++){const nx=Math.max(0,Math.min(W-1,x+k));s+=data[y*W+nx];c++;}
+      tmp[y*W+x]=s/c;
+    }
+    const out=new Float32Array(data.length);
+    for(let x=0;x<W;x++) for(let y=0;y<H;y++){
+      let s=0,c=0;
+      for(let k=-r;k<=r;k++){const ny=Math.max(0,Math.min(H-1,y+k));s+=tmp[ny*W+x];c++;}
+      out[y*W+x]=s/c;
+    }
+    return out;
+  }
+
+  // ── Depth map ──
+  function generateDepthMap(edgeMag, W, H) {
+    const depth = new Float32Array(W*H);
+    let maxMag = 0;
+    const limit = Math.min(edgeMag.length, 500000);
+    for (let i=0;i<limit;i++) if(edgeMag[i]>maxMag) maxMag=edgeMag[i];
+    if(maxMag===0) maxMag=1;
+    for (let i=0;i<W*H;i++) depth[i] = 1 - Math.min(edgeMag[i]/maxMag, 1);
+    return gaussBlur(depth, W, H, 6);
+  }
+
+  // ── Point in polygon ──
+  function ptInPoly(px,py,poly) {
+    let inside=false;
+    for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+      const xi=poly[i].x,yi=poly[i].y,xj=poly[j].x,yj=poly[j].y;
+      if(((yi>py)!==(yj>py))&&(px<(xj-xi)*(py-yi)/(yj-yi)+xi)) inside=!inside;
+    }
+    return inside;
+  }
+
+  // ── Precompute zone mask (bitmap) to avoid per-pixel ptInPoly ──
+  function buildZoneMask(points, bbox, W, H) {
+    const bx0=Math.floor(bbox.minX), by0=Math.floor(bbox.minY);
+    const bx1=Math.ceil(bbox.maxX), by1=Math.ceil(bbox.maxY);
+    const mw=bx1-bx0, mh=by1-by0;
+    const mask=new Uint8Array(mw*mh);
+    for(let py=0;py<mh;py++) for(let px=0;px<mw;px++){
+      if(ptInPoly(bx0+px, by0+py, points)) mask[py*mw+px]=1;
+    }
+    return {mask, mw, mh, bx0, by0};
+  }
+
+  // ── Process one zone warp ──
+  function processZone(zone, texPixels, texW, texH, blurGx, blurGy, depthMap, W, H) {
+    const bbox = zone.bbox;
+    const bx0=Math.floor(bbox.minX), by0=Math.floor(bbox.minY);
+    const bx1=Math.ceil(bbox.maxX), by1=Math.ceil(bbox.maxY);
+    const bw=bbox.maxX-bbox.minX, bh=bbox.maxY-bbox.minY;
+    const {mask,mw,mh}=buildZoneMask(zone.points, bbox, W, H);
+    const warpStrength=12;
+    const finish=zone.finish;
+
+    // Output: RGBA for the bounding box region only (saves memory)
+    const outData=new Uint8ClampedArray(mw*mh*4);
+
+    for(let py=0;py<mh;py++){
+      for(let px=0;px<mw;px++){
+        if(!mask[py*mw+px]) continue;
+        const gx=bx0+px, gy=by0+py;
+        if(gx<0||gx>=W||gy<0||gy>=H) continue;
+        const idx=gy*W+gx;
+        const displaceX=blurGx[idx]*warpStrength/255;
+        const displaceY=blurGy[idx]*warpStrength/255;
+
+        let tx=Math.round(gx-bbox.minX+displaceX);
+        let ty=Math.round(gy-bbox.minY+displaceY);
+        tx=Math.max(0,Math.min(texW-1,tx));
+        ty=Math.max(0,Math.min(texH-1,ty));
+
+        const srcIdx=(ty*texW+tx)*4;
+        const dstIdx=(py*mw+px)*4;
+        const depth=depthMap[idx];
+        const lightFactor=0.7+depth*0.6;
+
+        let specular=0;
+        if(finish==='gloss') specular=Math.pow(Math.max(0,depth),3)*0.3;
+        else if(finish==='chrome') specular=Math.pow(Math.max(0,depth),2)*0.5;
+        else if(finish==='satin') specular=Math.pow(Math.max(0,depth),4)*0.15;
+
+        outData[dstIdx]  =Math.min(255,texPixels[srcIdx]*lightFactor+specular*255);
+        outData[dstIdx+1]=Math.min(255,texPixels[srcIdx+1]*lightFactor+specular*255);
+        outData[dstIdx+2]=Math.min(255,texPixels[srcIdx+2]*lightFactor+specular*255);
+        outData[dstIdx+3]=texPixels[srcIdx+3];
+      }
+    }
+    return {outData, bx0, by0, mw, mh};
+  }
+
+  // ── Message handler ──
+  self.onmessage = function(e) {
+    const msg = e.data;
+
+    if (msg.type === 'analyze') {
+      self.postMessage({type:'progress', pct:10, msg:'Sobel...'});
+      const {mag,gx,gy} = sobelAnalysis(msg.pixels, msg.W, msg.H);
+      self.postMessage({type:'progress', pct:25, msg:'Blur gradients...'});
+      const blurGx = gaussBlur(gx, msg.W, msg.H, 4);
+      const blurGy = gaussBlur(gy, msg.W, msg.H, 4);
+      self.postMessage({type:'progress', pct:35, msg:'Depth map...'});
+      const depthMap = generateDepthMap(mag, msg.W, msg.H);
+      self.postMessage({
+        type: 'analyzed',
+        blurGx: blurGx.buffer,
+        blurGy: blurGy.buffer,
+        depthMap: depthMap.buffer
+      }, [blurGx.buffer, blurGy.buffer, depthMap.buffer]);
+    }
+
+    if (msg.type === 'warpZone') {
+      const blurGx = new Float32Array(msg.blurGx);
+      const blurGy = new Float32Array(msg.blurGy);
+      const depthMap = new Float32Array(msg.depthMap);
+      const texPixels = new Uint8ClampedArray(msg.texPixels);
+      const result = processZone(msg.zone, texPixels, msg.texW, msg.texH, blurGx, blurGy, depthMap, msg.W, msg.H);
+      self.postMessage({
+        type: 'zoneWarped',
+        zoneId: msg.zone.id,
+        outData: result.outData.buffer,
+        bx0: result.bx0, by0: result.by0,
+        mw: result.mw, mh: result.mh
+      }, [result.outData.buffer]);
+    }
+  };
+`;
+
+let _worker = null;
+function getWorker() {
+  if (!_worker) {
+    const blob = new Blob([WORKER_CODE], { type: 'application/javascript' });
+    _worker = new Worker(URL.createObjectURL(blob));
+  }
+  return _worker;
+}
+
+// ── Downscale photo for processing (max 1500px) ──
+const MAX_PROCESS_SIZE = 1500;
+
+function getProcessingCanvas(photo, origW, origH) {
+  const scale = Math.min(MAX_PROCESS_SIZE / origW, MAX_PROCESS_SIZE / origH, 1);
+  const pw = Math.round(origW * scale);
+  const ph = Math.round(origH * scale);
+  const c = document.createElement('canvas');
+  c.width = pw; c.height = ph;
+  c.getContext('2d').drawImage(photo, 0, 0, pw, ph);
+  return { canvas: c, w: pw, h: ph, scale };
+}
+
+// ══════════════════════════════════════════════════
+// 3D MOCKUP GENERATION (Web Worker + downscale)
+// ══════════════════════════════════════════════════
+async function generateMockup() {
+  if (!ST.motoPhoto || ST.zones.length === 0) {
+    toast('Photo et zones requises','err'); return;
+  }
+
+  const t0 = performance.now();
+  const progEl = document.getElementById('mockup-progress');
+  const barEl = document.getElementById('mockup-bar');
+  const statusEl = document.getElementById('mockup-status');
+  progEl.style.display = 'block';
+  barEl.style.width = '0%';
+
+  const setP = (pct, msg) => { barEl.style.width = pct + '%'; statusEl.textContent = msg; };
+
+  setP(5, 'Preparation...');
+  await sleep(30);
+
+  const photo = ST.motoImg;
+  const origW = ST.motoW, origH = ST.motoH;
+
+  // Downscale for heavy processing
+  const proc = getProcessingCanvas(photo, origW, origH);
+  const pScale = proc.scale; // ratio processing / original
+  const W = proc.w, H = proc.h;
+
+  setP(8, `Traitement a ${W}x${H} (x${pScale < 1 ? pScale.toFixed(2) : '1'})...`);
+
+  // Get pixel data
+  const phData = proc.canvas.getContext('2d').getImageData(0, 0, W, H);
+
+  // ── Phase 1: Sobel + depth in Web Worker ──
+  setP(10, 'Analyse des contours (Worker)...');
+  const worker = getWorker();
+
+  const analysisResult = await new Promise((resolve) => {
+    const handler = (e) => {
+      if (e.data.type === 'progress') {
+        setP(10 + e.data.pct * 0.3, e.data.msg);
+      }
+      if (e.data.type === 'analyzed') {
+        worker.removeEventListener('message', handler);
+        resolve(e.data);
+      }
+    };
+    worker.addEventListener('message', handler);
+    // Transfer pixel data to worker (zero-copy)
+    const pixelsCopy = new Uint8ClampedArray(phData.data);
+    worker.postMessage({
+      type: 'analyze',
+      pixels: pixelsCopy.buffer,
+      W, H
+    }, [pixelsCopy.buffer]);
+  });
+
+  const blurGxBuf = analysisResult.blurGx;
+  const blurGyBuf = analysisResult.blurGy;
+  const depthMapBuf = analysisResult.depthMap;
+
+  setP(45, 'Application des motifs...');
+  await sleep(20);
+
+  // ── Phase 2: Process zones in worker ──
+  const activeZones = ST.zones.filter(z => z.enabled && z.motifIdx !== null && z.motifIdx >= 0 && ST.motifs[z.motifIdx]);
+  const totalZones = activeZones.length;
+
+  // Prepare output canvas at ORIGINAL resolution
+  const out = document.createElement('canvas');
+  out.width = origW; out.height = origH;
+  const ctx = out.getContext('2d');
+  ctx.drawImage(photo, 0, 0, origW, origH);
+
+  let processed = 0;
+
+  for (const z of activeZones) {
+    const motif = ST.motifs[z.motifIdx];
+
+    // Scale zone points to processing resolution
+    const scaledPts = z.points.map(p => ({ x: p.x * pScale, y: p.y * pScale }));
+    const bbox = zoneBBox(scaledPts);
+    const bw = Math.round(bbox.maxX - bbox.minX);
+    const bh = Math.round(bbox.maxY - bbox.minY);
+    if (bw < 2 || bh < 2) continue;
+
+    // Create texture at processing-res zone size
+    const texCanvas = document.createElement('canvas');
+    texCanvas.width = bw; texCanvas.height = bh;
+    const texCtx = texCanvas.getContext('2d');
+    const msc = Math.max(bw / motif.img.width, bh / motif.img.height);
+    const mw = motif.img.width * msc;
+    const mh = motif.img.height * msc;
+    texCtx.drawImage(motif.img, (bw - mw) / 2, (bh - mh) / 2, mw, mh);
+    if (z.tint && z.tint !== '#ffffff') {
+      texCtx.globalCompositeOperation = 'multiply';
+      texCtx.fillStyle = z.tint;
+      texCtx.fillRect(0, 0, bw, bh);
+      texCtx.globalCompositeOperation = 'source-over';
+    }
+    const texData = texCtx.getImageData(0, 0, bw, bh);
+
+    // Send zone warp to worker
+    const warpResult = await new Promise((resolve) => {
+      const handler = (e) => {
+        if (e.data.type === 'zoneWarped' && e.data.zoneId === z.id) {
+          worker.removeEventListener('message', handler);
+          resolve(e.data);
+        }
+      };
+      worker.addEventListener('message', handler);
+
+      // Copy buffers (they may have been transferred previously)
+      const gxCopy = new Float32Array(new Float32Array(blurGxBuf.byteLength ? blurGxBuf : analysisResult.blurGx));
+      const gyCopy = new Float32Array(new Float32Array(blurGyBuf.byteLength ? blurGyBuf : analysisResult.blurGy));
+      const depthCopy = new Float32Array(new Float32Array(depthMapBuf.byteLength ? depthMapBuf : analysisResult.depthMap));
+
+      worker.postMessage({
+        type: 'warpZone',
+        zone: { id: z.id, points: scaledPts, bbox, finish: z.finish },
+        texPixels: texData.data.buffer.slice(0),
+        texW: bw, texH: bh,
+        blurGx: gxCopy.buffer,
+        blurGy: gyCopy.buffer,
+        depthMap: depthCopy.buffer,
+        W, H
+      }, [gxCopy.buffer, gyCopy.buffer, depthCopy.buffer]);
+    });
+
+    // ── Composite result back at original resolution ──
+    // The warp result is at processing-res; upscale to original via an intermediate canvas
+    const warpedPatch = document.createElement('canvas');
+    warpedPatch.width = warpResult.mw;
+    warpedPatch.height = warpResult.mh;
+    const wpCtx = warpedPatch.getContext('2d');
+    const wpImgData = wpCtx.createImageData(warpResult.mw, warpResult.mh);
+    wpImgData.data.set(new Uint8ClampedArray(warpResult.outData));
+    wpCtx.putImageData(wpImgData, 0, 0);
+
+    // Draw warped patch onto output, scaling from proc coords back to original
+    const origBx0 = warpResult.bx0 / pScale;
+    const origBy0 = warpResult.by0 / pScale;
+    const origBw = warpResult.mw / pScale;
+    const origBh = warpResult.mh / pScale;
+
+    // Clip to zone polygon (original coords)
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(z.points[0].x, z.points[0].y);
+    z.points.forEach((p, i) => i > 0 && ctx.lineTo(p.x, p.y));
+    ctx.closePath();
+    ctx.clip();
+
+    ctx.globalAlpha = 0.85;
+    ctx.drawImage(warpedPatch, origBx0, origBy0, origBw, origBh);
+
+    // Blend with original for realism
+    ctx.globalAlpha = 0.2;
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.drawImage(photo, 0, 0, origW, origH);
+    ctx.globalCompositeOperation = 'source-over';
+
+    // Finish sheen
+    if (z.finish === 'gloss' || z.finish === 'chrome') {
+      const origBBox = zoneBBox(z.points);
+      const sheenGrad = ctx.createLinearGradient(origBBox.minX, origBBox.minY, origBBox.maxX, origBBox.maxY);
+      sheenGrad.addColorStop(0, 'rgba(255,255,255,0)');
+      sheenGrad.addColorStop(0.3, 'rgba(255,255,255,0.06)');
+      sheenGrad.addColorStop(0.5, `rgba(255,255,255,${z.finish === 'chrome' ? 0.2 : 0.1})`);
+      sheenGrad.addColorStop(0.7, 'rgba(255,255,255,0.04)');
+      sheenGrad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = sheenGrad;
+      ctx.fillRect(0, 0, origW, origH);
+    }
+    ctx.restore();
+
+    processed++;
+    setP(45 + (processed / totalZones) * 45, `Zone "${z.name}" traitee...`);
+    await sleep(10);
+  }
+
+  setP(92, 'Post-traitement...');
+  await sleep(20);
+
+  // Vignette
+  const vigGrad = ctx.createRadialGradient(origW/2, origH/2, origW*0.3, origW/2, origH/2, origW*0.8);
+  vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  vigGrad.addColorStop(1, 'rgba(0,0,0,0.15)');
+  ctx.fillStyle = vigGrad;
+  ctx.fillRect(0, 0, origW, origH);
+
+  // Store result
+  ST._mockupCanvas = out;
+  ST._originalCanvas = (() => {
+    const c = document.createElement('canvas');
+    c.width = origW; c.height = origH;
+    c.getContext('2d').drawImage(photo, 0, 0, origW, origH);
+    return c;
+  })();
+  ST.mockupGenerated = true;
+
+  const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+  setP(100, `Mockup genere en ${elapsed}s`);
+
+  // Display comparison slider
+  const vp = document.getElementById('vp-canvas');
+  const dispSc = Math.min((vp.clientWidth - 48) / origW, (vp.clientHeight - 48) / origH, 1);
+  const dw = Math.round(origW * dispSc);
+  const dh = Math.round(origH * dispSc);
+
+  vp.innerHTML = `
+    <div class="compare-wrap" id="compare-wrap" style="width:${dw}px;height:${dh}px">
+      <canvas id="compare-canvas" width="${dw}" height="${dh}" style="width:${dw}px;height:${dh}px"></canvas>
+      <div class="compare-line" id="compare-line" style="left:${dw/2}px"></div>
+      <div class="compare-handle" id="compare-handle" style="left:${dw/2}px">\u2194</div>
+      <div class="compare-label before">AVANT</div>
+      <div class="compare-label after">APRES</div>
+    </div>
+  `;
+
+  drawComparison(dw / 2);
+  initCompareSlider(dw);
+
+  const expSec = document.getElementById('export-section');
+  if (expSec) expSec.style.display = 'block';
+
+  toast(`Mockup 3D en ${elapsed}s !`, 'ok');
+}
+
+function drawComparison(splitX) {
+  const cc = document.getElementById('compare-canvas');
+  if (!cc || !ST._mockupCanvas || !ST._originalCanvas) return;
+  const ctx = cc.getContext('2d');
+  const w = cc.width, h = cc.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Draw mockup (right side)
+  ctx.drawImage(ST._mockupCanvas, 0, 0, w, h);
+
+  // Draw original (left side) clipped
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, splitX, h);
+  ctx.clip();
+  ctx.drawImage(ST._originalCanvas, 0, 0, w, h);
+  ctx.restore();
+}
+
+function initCompareSlider(maxW) {
+  const wrap = document.getElementById('compare-wrap');
+  const line = document.getElementById('compare-line');
+  const handle = document.getElementById('compare-handle');
+  if (!wrap) return;
+
+  let dragging = false;
+  const update = (x) => {
+    x = Math.max(0, Math.min(maxW, x));
+    line.style.left = x + 'px';
+    handle.style.left = x + 'px';
+    drawComparison(x);
+  };
+
+  wrap.addEventListener('mousedown', e => { dragging = true; update(e.offsetX); });
+  document.addEventListener('mousemove', e => { if (dragging) { const r = wrap.getBoundingClientRect(); update(e.clientX - r.left); } });
+  document.addEventListener('mouseup', () => { dragging = false; });
+
+  // Touch
+  wrap.addEventListener('touchstart', e => { dragging = true; const r = wrap.getBoundingClientRect(); update(e.touches[0].clientX - r.left); }, { passive: true });
+  document.addEventListener('touchmove', e => { if (dragging) { const r = wrap.getBoundingClientRect(); update(e.touches[0].clientX - r.left); } }, { passive: true });
+  document.addEventListener('touchend', () => { dragging = false; });
+}
+
+// ══════════════════════════════════════════════════
+// IMAGE PROCESSING
+// ══════════════════════════════════════════════════
+function sobelAnalysis(imgData, W, H) {
+  const src = imgData.data;
+  const magArr = new Float32Array(W * H);
+  const gxArr = new Float32Array(W * H);
+  const gyArr = new Float32Array(W * H);
+  const Kx = [-1,0,1,-2,0,2,-1,0,1];
+  const Ky = [-1,-2,-1,0,0,0,1,2,1];
+  for (let y = 1; y < H - 1; y++) {
+    for (let x = 1; x < W - 1; x++) {
+      let sx = 0, sy = 0;
+      for (let ky = -1; ky <= 1; ky++) {
+        for (let kx = -1; kx <= 1; kx++) {
+          const pi = ((y + ky) * W + (x + kx)) * 4;
+          const v = src[pi] * 0.299 + src[pi+1] * 0.587 + src[pi+2] * 0.114;
+          const ki = (ky + 1) * 3 + (kx + 1);
+          sx += v * Kx[ki];
+          sy += v * Ky[ki];
+        }
+      }
+      const i = y * W + x;
+      gxArr[i] = sx; gyArr[i] = sy;
+      magArr[i] = Math.sqrt(sx * sx + sy * sy);
+    }
+  }
+  return { mag: magArr, gx: gxArr, gy: gyArr };
+}
+
+function gaussBlur(data, W, H, r) {
+  const tmp = new Float32Array(data.length);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      let s = 0, c = 0;
+      for (let k = -r; k <= r; k++) { const nx = Math.max(0, Math.min(W-1, x+k)); s += data[y*W+nx]; c++; }
+      tmp[y*W+x] = s / c;
+    }
+  }
+  const out = new Float32Array(data.length);
+  for (let x = 0; x < W; x++) {
+    for (let y = 0; y < H; y++) {
+      let s = 0, c = 0;
+      for (let k = -r; k <= r; k++) { const ny = Math.max(0, Math.min(H-1, y+k)); s += tmp[ny*W+x]; c++; }
+      out[y*W+x] = s / c;
+    }
+  }
+  return out;
+}
+
+function generateDepthMap(edgeMag, W, H) {
+  // Simple depth estimation from edge density
+  const depth = new Float32Array(W * H);
+  const maxMag = Math.max(...Array.from(edgeMag).slice(0, Math.min(edgeMag.length, 500000)).filter(v => v > 0)) || 1;
+
+  for (let i = 0; i < W * H; i++) {
+    depth[i] = 1 - Math.min(edgeMag[i] / maxMag, 1);
+  }
+  // Smooth
+  return gaussBlur(depth, W, H, 6);
+}
+
+function ptInPoly(px, py, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i].x, yi = poly[i].y, xj = poly[j].x, yj = poly[j].y;
+    if (((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+
+function zoneBBox(pts) {
+  const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+  return { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
+}
+
+// ══════════════════════════════════════════════════
+// UPLOADS
+// ══════════════════════════════════════════════════
+function loadMoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    ST.motoPhoto = ev.target.result;
+    const img = new Image();
+    img.onload = () => {
+      ST.motoImg = img;
+      ST.motoW = img.width;
+      ST.motoH = img.height;
+      renderSidebar();
+      renderViewport();
+      toast('Photo chargee', 'ok');
+    };
+    img.src = ev.target.result;
+  };
+  r.readAsDataURL(file);
+}
+
+function setupDragDrop(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });
+  el.addEventListener('dragleave', () => el.classList.remove('over'));
+  el.addEventListener('drop', e => {
+    e.preventDefault(); el.classList.remove('over');
+    const files = e.dataTransfer?.files;
+    if (!files?.length) return;
+    const inp = el.querySelector('input[type=file]');
+    if (!inp) return;
+    const dt = new DataTransfer();
+    dt.items.add(files[0]);
+    inp.files = dt.files;
+    inp.dispatchEvent(new Event('change'));
+  });
+}
+
+// ══════════════════════════════════════════════════
+// EXPORTS
+// ══════════════════════════════════════════════════
+function exportMockup() {
+  if (!ST.mockupGenerated) { generateMockup(); return; }
+  exportJPG();
+}
+
+function exportJPG() {
+  if (!ST._mockupCanvas) { toast('Genere le mockup d\'abord','err'); return; }
+  const a = document.createElement('a');
+  a.href = ST._mockupCanvas.toDataURL('image/jpeg', 0.95);
+  a.download = 'kustomkoncept-mockup-3d.jpg';
+  a.click();
+  toast('JPEG exporte', 'ok');
+}
+
+function exportPNG() {
+  if (!ST._mockupCanvas) { toast('Genere le mockup d\'abord','err'); return; }
+  const a = document.createElement('a');
+  a.href = ST._mockupCanvas.toDataURL('image/png');
+  a.download = 'kustomkoncept-mockup-3d.png';
+  a.click();
+  toast('PNG exporte', 'ok');
+}
+
+function exportComparison() {
+  if (!ST._mockupCanvas || !ST._originalCanvas) { toast('Genere le mockup d\'abord','err'); return; }
+  const W = ST.motoW, H = ST.motoH;
+  const c = document.createElement('canvas');
+  c.width = W * 2 + 4;
+  c.height = H;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(ST._originalCanvas, 0, 0);
+  ctx.fillStyle = '#ff4d00';
+  ctx.fillRect(W, 0, 4, H);
+  ctx.drawImage(ST._mockupCanvas, W + 4, 0);
+  // Labels
+  ctx.font = 'bold 24px Segoe UI';
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.textAlign = 'center';
+  ctx.shadowColor = 'rgba(0,0,0,.8)';
+  ctx.shadowBlur = 6;
+  ctx.fillText('AVANT', W / 2, 40);
+  ctx.fillText('APRES', W + 4 + W / 2, 40);
+  const a = document.createElement('a');
+  a.href = c.toDataURL('image/jpeg', 0.95);
+  a.download = 'kustomkoncept-avant-apres.jpg';
+  a.click();
+  toast('Comparaison exportee', 'ok');
+}
+
+function saveProject() {
+  const data = {
+    v: 1,
+    zones: ST.zones,
+    motifs: ST.motifs.map(m => ({ url: m.url, name: m.name })),
+    motoPhoto: ST.motoPhoto,
+    savedAt: new Date().toISOString()
+  };
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
+  a.download = 'kustomkoncept-projet.json';
+  a.click();
+  toast('Projet sauvegarde', 'ok');
+}
+
+// ══════════════════════════════════════════════════
+// ZOOM
+// ══════════════════════════════════════════════════
+function vpZoom(d) {
+  ST.zoom = Math.min(Math.max(ST.zoom + d, 0.3), 4);
+  const vp = document.getElementById('vp-canvas');
+  const child = vp.firstElementChild;
+  if (child) child.style.transform = `scale(${ST.zoom})`;
+  document.getElementById('zoom-lbl').textContent = Math.round(ST.zoom * 100) + '%';
+}
+function vpResetZoom() {
+  ST.zoom = 1;
+  const vp = document.getElementById('vp-canvas');
+  const child = vp.firstElementChild;
+  if (child) child.style.transform = 'scale(1)';
+  document.getElementById('zoom-lbl').textContent = '100%';
+}
+
+// ══════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════
+function toast(msg, type) {
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type || '');
+  el.innerHTML = (type === 'ok' ? '\u2705' : type === 'err' ? '\u274C' : '\u2139\uFE0F') + ' ' + msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>
