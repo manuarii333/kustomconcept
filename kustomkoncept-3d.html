@@ -4,10 +4,13 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>KustomKoncept 3D — Configurateur Kit Deco Moto</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-// OrbitControls inline (r128 compatible)
-!function(){const e=THREE;class t extends e.EventDispatcher{constructor(t,n){super(),void 0===n&&console.warn('OrbitControls: The second parameter "domElement" is now mandatory.');const i=this;this.object=t,this.domElement=n,this.enabled=!0,this.target=new e.Vector3,this.minDistance=0,this.maxDistance=1/0,this.minZoom=0,this.maxZoom=1/0,this.minPolarAngle=0,this.maxPolarAngle=Math.PI,this.minAzimuthAngle=-1/0,this.maxAzimuthAngle=1/0,this.enableDamping=!0,this.dampingFactor=.08,this.enableZoom=!0,this.zoomSpeed=1,this.enableRotate=!0,this.rotateSpeed=.6,this.enablePan=!0,this.panSpeed=1,this.screenSpacePanning=!0,this.keyPanSpeed=7,this.autoRotate=!1,this.autoRotateSpeed=2;const a={NONE:-1,ROTATE:0,DOLLY:1,PAN:2},o=1e-6;let r=a.NONE,s=0,l=0;const c=new e.Spherical,d=new e.Spherical;let h=1;const u=new e.Vector2,p=new e.Vector2,m=new e.Vector2,f=new e.Vector2,g=new e.Vector2,v=new e.Vector2,y=new e.Vector2,x=new e.Vector2,w=new e.Vector2;function b(){return 2*Math.PI/60/60*i.autoRotateSpeed}function M(e){d.theta-=e}function _(e){d.phi-=e}const S=function(){const t=new e.Vector3;return function(e,n){t.setFromMatrixColumn(n,0),t.multiplyScalar(-e),u.add(t)}}(),E=function(){const t=new e.Vector3;return function(e,n){i.screenSpacePanning?t.setFromMatrixColumn(n,1):(t.setFromMatrixColumn(n,0),t.crossVectors(i.object.up,t)),t.multiplyScalar(e),u.add(t)}}();function T(e){i.object.isPerspectiveCamera?h/=e:i.object.isOrthographicCamera?(i.object.zoom=Math.max(i.minZoom,Math.min(i.maxZoom,i.object.zoom*e)),i.object.updateProjectionMatrix(),l=!0):console.warn("WARNING: OrbitControls encountered an unknown camera type")}function A(t){if(r===a.ROTATE){p.set(t.clientX,t.clientY),m.subVectors(p,f).multiplyScalar(i.rotateSpeed);const e=i.domElement;M(2*Math.PI*m.x/e.clientHeight),_(2*Math.PI*m.y/e.clientHeight),f.copy(p)}else if(r===a.DOLLY)x.set(t.clientX,t.clientY),w.subVectors(x,y),w.y>0?T(Math.pow(.95,i.zoomSpeed)):w.y<0&&T(Math.pow(1/.95,i.zoomSpeed)),y.copy(x);else if(r===a.PAN){g.set(t.clientX,t.clientY),v.subVectors(g,f).multiplyScalar(i.panSpeed);const e=i.domElement;S(2*v.x/e.clientHeight,i.object.matrix),E(2*v.y/e.clientHeight,i.object.matrix),f.copy(g)}r!==a.NONE&&i.update()}function C(){r=a.NONE}function P(e){if(!1!==i.enabled&&(e.preventDefault(),0===e.button))if(e.ctrlKey||e.metaKey||e.shiftKey){if(!1===i.enablePan)return;f.set(e.clientX,e.clientY),r=a.PAN}else{if(!1===i.enableRotate)return;f.set(e.clientX,e.clientY),r=a.ROTATE}r!==a.NONE&&(n.addEventListener("mousemove",A),n.addEventListener("mouseup",C))}function D(e){if(!1!==i.enabled&&!1!==i.enableZoom){e.preventDefault(),e.deltaY<0?T(Math.pow(1/.95,i.zoomSpeed)):e.deltaY>0&&T(Math.pow(.95,i.zoomSpeed)),i.update()}}this.update=function(){const n=new e.Vector3,a=(new e.Quaternion).setFromUnitVectors(t.up,new e.Vector3(0,1,0)),r=a.clone().invert(),s=new e.Spherical,p=2*Math.PI;return function(){const e=i.target;n.copy(i.object.position).sub(e),n.applyQuaternion(a),c.setFromVector3(n),i.autoRotate&&r!==0&&M(b()),c.theta+=d.theta*i.dampingFactor,c.phi+=d.phi*i.dampingFactor;let m=i.minAzimuthAngle,f=i.maxAzimuthAngle;isFinite(m)&&isFinite(f)&&(m<-Math.PI?m+=p:m>Math.PI&&(m-=p),f<-Math.PI?f+=p:f>Math.PI&&(f-=p),c.theta=m<=f?Math.max(m,Math.min(f,c.theta)):c.theta>(m+f)/2?Math.max(m,c.theta):Math.min(f,c.theta)),c.phi=Math.max(i.minPolarAngle,Math.min(i.maxPolarAngle,c.phi)),c.makeSafe(),c.radius*=h;let g=i.minDistance,v=i.maxDistance;c.radius=Math.max(g,Math.min(v,c.radius)),e.add(u.multiplyScalar(i.dampingFactor)),n.setFromSpherical(c),n.applyQuaternion(r),i.object.position.copy(e).add(n),i.object.lookAt(e),d.set(0,0,0),u.set(0,0,0),h=1;if(l||s.distanceToSquared(i.object.position)>o||8*(1-s.dot(i.object.quaternion))>o){i.dispatchEvent({type:"change"}),s.copy(i.object.position),l=!1;return!0}return!1}}(),n.addEventListener("contextmenu",e=>e.preventDefault()),n.addEventListener("mousedown",P),n.addEventListener("wheel",D,{passive:!1}),this.update()}}e.OrbitControls=t}();
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.10.1/dist/es-module-shims.js"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+window.THREE = THREE;
+window.OrbitControls = OrbitControls;
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1356,13 +1359,17 @@ async function generateMockup() {
   }
 
   const t0 = performance.now();
+
+  // Ensure step 5 sidebar is rendered so DOM elements exist
+  if (ST.step !== 5) { ST.step = 5; renderSidebar(); }
+
   const progEl = document.getElementById('mockup-progress');
   const barEl = document.getElementById('mockup-bar');
   const statusEl = document.getElementById('mockup-status');
-  progEl.style.display = 'block';
-  barEl.style.width = '0%';
+  if (progEl) progEl.style.display = 'block';
+  if (barEl) barEl.style.width = '0%';
 
-  const setP = (pct, msg) => { barEl.style.width = pct + '%'; statusEl.textContent = msg; };
+  const setP = (pct, msg) => { if (barEl) barEl.style.width = pct + '%'; if (statusEl) statusEl.textContent = msg; };
 
   setP(5, 'Preparation...');
   await sleep(30);
@@ -1636,7 +1643,7 @@ function show3DView() {
   ST._threeRenderer = renderer;
 
   // Controls
-  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
   controls.rotateSpeed = 0.5;
@@ -1743,7 +1750,7 @@ function buildDepthMesh(scene) {
   const texture = new THREE.CanvasTexture(ST._mockupCanvas);
   texture.minFilter = THREE.LinearFilter;
   texture.magFilter = THREE.LinearFilter;
-  texture.colorSpace = THREE.SRGBColorSpace || THREE.sRGBEncoding;
+  texture.colorSpace = THREE.SRGBColorSpace;
 
   const material = new THREE.MeshStandardMaterial({
     map: texture,
