@@ -4,6 +4,11 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>KustomKoncept 3D — Configurateur Kit Deco Moto</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// OrbitControls inline (r128 compatible)
+!function(){const e=THREE;class t extends e.EventDispatcher{constructor(t,n){super(),void 0===n&&console.warn('OrbitControls: The second parameter "domElement" is now mandatory.');const i=this;this.object=t,this.domElement=n,this.enabled=!0,this.target=new e.Vector3,this.minDistance=0,this.maxDistance=1/0,this.minZoom=0,this.maxZoom=1/0,this.minPolarAngle=0,this.maxPolarAngle=Math.PI,this.minAzimuthAngle=-1/0,this.maxAzimuthAngle=1/0,this.enableDamping=!0,this.dampingFactor=.08,this.enableZoom=!0,this.zoomSpeed=1,this.enableRotate=!0,this.rotateSpeed=.6,this.enablePan=!0,this.panSpeed=1,this.screenSpacePanning=!0,this.keyPanSpeed=7,this.autoRotate=!1,this.autoRotateSpeed=2;const a={NONE:-1,ROTATE:0,DOLLY:1,PAN:2},o=1e-6;let r=a.NONE,s=0,l=0;const c=new e.Spherical,d=new e.Spherical;let h=1;const u=new e.Vector2,p=new e.Vector2,m=new e.Vector2,f=new e.Vector2,g=new e.Vector2,v=new e.Vector2,y=new e.Vector2,x=new e.Vector2,w=new e.Vector2;function b(){return 2*Math.PI/60/60*i.autoRotateSpeed}function M(e){d.theta-=e}function _(e){d.phi-=e}const S=function(){const t=new e.Vector3;return function(e,n){t.setFromMatrixColumn(n,0),t.multiplyScalar(-e),u.add(t)}}(),E=function(){const t=new e.Vector3;return function(e,n){i.screenSpacePanning?t.setFromMatrixColumn(n,1):(t.setFromMatrixColumn(n,0),t.crossVectors(i.object.up,t)),t.multiplyScalar(e),u.add(t)}}();function T(e){i.object.isPerspectiveCamera?h/=e:i.object.isOrthographicCamera?(i.object.zoom=Math.max(i.minZoom,Math.min(i.maxZoom,i.object.zoom*e)),i.object.updateProjectionMatrix(),l=!0):console.warn("WARNING: OrbitControls encountered an unknown camera type")}function A(t){if(r===a.ROTATE){p.set(t.clientX,t.clientY),m.subVectors(p,f).multiplyScalar(i.rotateSpeed);const e=i.domElement;M(2*Math.PI*m.x/e.clientHeight),_(2*Math.PI*m.y/e.clientHeight),f.copy(p)}else if(r===a.DOLLY)x.set(t.clientX,t.clientY),w.subVectors(x,y),w.y>0?T(Math.pow(.95,i.zoomSpeed)):w.y<0&&T(Math.pow(1/.95,i.zoomSpeed)),y.copy(x);else if(r===a.PAN){g.set(t.clientX,t.clientY),v.subVectors(g,f).multiplyScalar(i.panSpeed);const e=i.domElement;S(2*v.x/e.clientHeight,i.object.matrix),E(2*v.y/e.clientHeight,i.object.matrix),f.copy(g)}r!==a.NONE&&i.update()}function C(){r=a.NONE}function P(e){if(!1!==i.enabled&&(e.preventDefault(),0===e.button))if(e.ctrlKey||e.metaKey||e.shiftKey){if(!1===i.enablePan)return;f.set(e.clientX,e.clientY),r=a.PAN}else{if(!1===i.enableRotate)return;f.set(e.clientX,e.clientY),r=a.ROTATE}r!==a.NONE&&(n.addEventListener("mousemove",A),n.addEventListener("mouseup",C))}function D(e){if(!1!==i.enabled&&!1!==i.enableZoom){e.preventDefault(),e.deltaY<0?T(Math.pow(1/.95,i.zoomSpeed)):e.deltaY>0&&T(Math.pow(.95,i.zoomSpeed)),i.update()}}this.update=function(){const n=new e.Vector3,a=(new e.Quaternion).setFromUnitVectors(t.up,new e.Vector3(0,1,0)),r=a.clone().invert(),s=new e.Spherical,p=2*Math.PI;return function(){const e=i.target;n.copy(i.object.position).sub(e),n.applyQuaternion(a),c.setFromVector3(n),i.autoRotate&&r!==0&&M(b()),c.theta+=d.theta*i.dampingFactor,c.phi+=d.phi*i.dampingFactor;let m=i.minAzimuthAngle,f=i.maxAzimuthAngle;isFinite(m)&&isFinite(f)&&(m<-Math.PI?m+=p:m>Math.PI&&(m-=p),f<-Math.PI?f+=p:f>Math.PI&&(f-=p),c.theta=m<=f?Math.max(m,Math.min(f,c.theta)):c.theta>(m+f)/2?Math.max(m,c.theta):Math.min(f,c.theta)),c.phi=Math.max(i.minPolarAngle,Math.min(i.maxPolarAngle,c.phi)),c.makeSafe(),c.radius*=h;let g=i.minDistance,v=i.maxDistance;c.radius=Math.max(g,Math.min(v,c.radius)),e.add(u.multiplyScalar(i.dampingFactor)),n.setFromSpherical(c),n.applyQuaternion(r),i.object.position.copy(e).add(n),i.object.lookAt(e),d.set(0,0,0),u.set(0,0,0),h=1;if(l||s.distanceToSquared(i.object.position)>o||8*(1-s.dot(i.object.quaternion))>o){i.dispatchEvent({type:"change"}),s.copy(i.object.position),l=!1;return!0}return!1}}(),n.addEventListener("contextmenu",e=>e.preventDefault()),n.addEventListener("mousedown",P),n.addEventListener("wheel",D,{passive:!1}),this.update()}}e.OrbitControls=t}();
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -140,6 +145,18 @@ header{height:56px;background:var(--surface);border-bottom:1px solid var(--borde
 .export-card .eico{font-size:32px;flex-shrink:0}
 .export-card .etxt strong{display:block;font-size:14px;margin-bottom:3px}
 .export-card .etxt span{font-size:11px;color:var(--text2)}
+
+/* ── 3D VIEWER ── */
+.view-toggle{display:flex;gap:2px;background:var(--surface2);border-radius:8px;padding:2px;border:1px solid var(--border)}
+.view-toggle button{padding:6px 14px;border-radius:6px;border:none;background:none;color:var(--text2);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit}
+.view-toggle button.on{background:var(--accent);color:#fff}
+#three-container{width:100%;height:100%;position:absolute;inset:0;display:none}
+#three-container canvas{width:100%!important;height:100%!important;outline:none}
+.three-controls{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:5;pointer-events:none}
+.three-controls .tbtn{pointer-events:all;background:rgba(17,19,32,.85);backdrop-filter:blur(8px)}
+.depth-slider{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);margin-top:10px}
+.depth-slider input[type=range]{flex:1;accent-color:var(--accent)}
+.depth-slider .val{min-width:28px;color:var(--text);font-weight:600}
 
 /* ── RESPONSIVE ── */
 @media(max-width:900px){
@@ -423,7 +440,7 @@ function sideStep5(el) {
   el.innerHTML = `
     <div class="section-num">Etape 5 / 5</div>
     <div class="section-title">Mockup 3D</div>
-    <div class="section-desc">Genere le rendu realiste de ton kit deco sur la moto.</div>
+    <div class="section-desc">Genere le rendu realiste de ton kit deco sur la moto. Tourne autour en 3D.</div>
 
     <button class="btn btn-accent btn-full" onclick="generateMockup()" style="margin-bottom:12px;font-size:14px;padding:14px">
       Generer le Mockup 3D
@@ -433,7 +450,35 @@ function sideStep5(el) {
     </div>
     <div id="mockup-status" style="font-size:11px;color:var(--text2);text-align:center;margin-top:8px"></div>
 
-    <div id="export-section" style="display:${ST.mockupGenerated?'block':'none'};margin-top:20px">
+    <div id="view-controls" style="display:${ST.mockupGenerated?'block':'none'};margin-top:16px">
+      <div class="card">
+        <h3>Mode de vue</h3>
+        <div class="view-toggle" style="margin-bottom:10px">
+          <button class="${ST._viewMode!=='3d'?'on':''}" onclick="switchViewMode('compare')">Avant / Apres</button>
+          <button class="${ST._viewMode==='3d'?'on':''}" onclick="switchViewMode('3d')">Vue 3D</button>
+        </div>
+        <div id="depth-controls" style="display:${ST._viewMode==='3d'?'block':'none'}">
+          <div class="depth-slider">
+            <span>Profondeur</span>
+            <input type="range" id="depth-amount" min="5" max="120" value="${ST._depthAmount||40}" oninput="updateDepth(+this.value)"/>
+            <span class="val" id="depth-val">${ST._depthAmount||40}</span>
+          </div>
+          <div class="depth-slider">
+            <span>Lissage mesh</span>
+            <input type="range" id="mesh-smooth" min="1" max="8" value="${ST._meshSmooth||3}" oninput="updateMeshSmooth(+this.value)"/>
+            <span class="val" id="smooth-val">${ST._meshSmooth||3}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-top:8px;line-height:1.6">
+            Souris : orbiter autour<br/>
+            Molette : zoom<br/>
+            Shift+souris : deplacer
+          </div>
+          <button class="btn btn-ghost btn-sm btn-full" style="margin-top:8px" onclick="resetThreeCamera()">Reinitialiser la camera</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="export-section" style="display:${ST.mockupGenerated?'block':'none'};margin-top:12px">
       <div class="export-card" onclick="exportJPG()">
         <div class="eico">\uD83D\uDDBC</div>
         <div class="etxt">
@@ -446,6 +491,13 @@ function sideStep5(el) {
         <div class="etxt">
           <strong>PNG Transparent</strong>
           <span>Pour integration sur fond personnalise</span>
+        </div>
+      </div>
+      <div class="export-card" onclick="export3DSnapshot()">
+        <div class="eico">&#x1F4F7;</div>
+        <div class="etxt">
+          <strong>Capture 3D</strong>
+          <span>Screenshot de la vue 3D actuelle</span>
         </div>
       </div>
       <div class="export-card" onclick="exportComparison()">
@@ -1496,13 +1548,45 @@ async function generateMockup() {
     c.getContext('2d').drawImage(photo, 0, 0, origW, origH);
     return c;
   })();
+
+  // Store depth map for 3D viewer (at processing resolution)
+  ST._depthW = W;
+  ST._depthH = H;
+  ST._depthData = depthMapArr; // Float32Array at proc resolution
+  ST._pScale = pScale;
+
   ST.mockupGenerated = true;
+  ST._viewMode = 'compare';
 
   const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
   setP(100, `Mockup genere en ${elapsed}s`);
 
-  // Display comparison slider
+  // Display
+  showCompareView();
+  renderSidebar();
+
+  toast(`Mockup 3D en ${elapsed}s !`, 'ok');
+}
+
+// ══════════════════════════════════════════════════
+// VIEW MODE SWITCHING
+// ══════════════════════════════════════════════════
+function switchViewMode(mode) {
+  ST._viewMode = mode;
+  if (mode === 'compare') {
+    showCompareView();
+  } else if (mode === '3d') {
+    show3DView();
+  }
+  renderSidebar();
+}
+
+function showCompareView() {
+  // Tear down 3D if running
+  if (ST._threeRAF) { cancelAnimationFrame(ST._threeRAF); ST._threeRAF = null; }
+
   const vp = document.getElementById('vp-canvas');
+  const origW = ST.motoW, origH = ST.motoH;
   const dispSc = Math.min((vp.clientWidth - 48) / origW, (vp.clientHeight - 48) / origH, 1);
   const dw = Math.round(origW * dispSc);
   const dh = Math.round(origH * dispSc);
@@ -1516,14 +1600,215 @@ async function generateMockup() {
       <div class="compare-label after">APRES</div>
     </div>
   `;
-
   drawComparison(dw / 2);
   initCompareSlider(dw);
+}
 
-  const expSec = document.getElementById('export-section');
-  if (expSec) expSec.style.display = 'block';
+// ══════════════════════════════════════════════════
+// THREE.JS 3D VIEWER
+// ══════════════════════════════════════════════════
+function show3DView() {
+  if (!ST._mockupCanvas || !ST._depthData) { toast('Genere le mockup d\'abord','err'); return; }
+  if (ST._threeRAF) { cancelAnimationFrame(ST._threeRAF); ST._threeRAF = null; }
 
-  toast(`Mockup 3D en ${elapsed}s !`, 'ok');
+  const vp = document.getElementById('vp-canvas');
+  vp.innerHTML = '<div id="three-container" style="display:block"></div>';
+  const container = document.getElementById('three-container');
+
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  // Scene
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x08090e);
+
+  // Camera
+  const aspect = width / height;
+  const camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 100);
+  camera.position.set(0, 0, 2.8);
+  ST._threeCamera = camera;
+
+  // Renderer
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  container.appendChild(renderer.domElement);
+  ST._threeRenderer = renderer;
+
+  // Controls
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.rotateSpeed = 0.5;
+  controls.minPolarAngle = Math.PI * 0.2;
+  controls.maxPolarAngle = Math.PI * 0.8;
+  controls.minAzimuthAngle = -Math.PI * 0.4;
+  controls.maxAzimuthAngle = Math.PI * 0.4;
+  controls.minDistance = 1.5;
+  controls.maxDistance = 5;
+  ST._threeControls = controls;
+
+  // Build depth mesh
+  buildDepthMesh(scene);
+
+  // Lighting
+  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambient);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+  dirLight.position.set(2, 3, 4);
+  scene.add(dirLight);
+  const backLight = new THREE.DirectionalLight(0x8888ff, 0.2);
+  backLight.position.set(-2, -1, -3);
+  scene.add(backLight);
+
+  // Ground plane (subtle shadow/reflection)
+  const groundGeo = new THREE.PlaneGeometry(6, 6);
+  const groundMat = new THREE.MeshStandardMaterial({
+    color: 0x08090e, roughness: 0.8, metalness: 0.1
+  });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.position.y = -1.2;
+  ground.rotation.x = -Math.PI / 2;
+  scene.add(ground);
+
+  ST._threeScene = scene;
+
+  // Animation loop
+  function animate() {
+    ST._threeRAF = requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // Handle resize
+  const onResize = () => {
+    const w = container.clientWidth, h = container.clientHeight;
+    if (w === 0 || h === 0) return;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  };
+  window.addEventListener('resize', onResize);
+  ST._threeResizeHandler = onResize;
+}
+
+function buildDepthMesh(scene) {
+  // Remove old mesh
+  if (ST._threeMesh) { scene.remove(ST._threeMesh); ST._threeMesh.geometry.dispose(); ST._threeMesh.material.dispose(); }
+
+  const dW = ST._depthW;
+  const dH = ST._depthH;
+  const depthData = ST._depthData;
+  const smooth = ST._meshSmooth || 3;
+  const depthAmount = (ST._depthAmount || 40) / 100;
+
+  // Downsample depth for mesh (max ~200 segments for performance)
+  const maxSeg = 200;
+  const step = Math.max(1, Math.floor(Math.max(dW, dH) / maxSeg));
+  const segW = Math.floor(dW / step);
+  const segH = Math.floor(dH / step);
+
+  // Smooth the depth data
+  let smoothDepth = new Float32Array(depthData);
+  for (let pass = 0; pass < smooth; pass++) {
+    smoothDepth = gaussBlurSmall(smoothDepth, dW, dH, 3);
+  }
+
+  // Create plane geometry
+  const imgRatio = dW / dH;
+  const planeW = 2 * imgRatio;
+  const planeH = 2;
+  const geo = new THREE.PlaneGeometry(planeW, planeH, segW, segH);
+  const positions = geo.attributes.position;
+
+  // Displace Z based on depth
+  for (let iy = 0; iy <= segH; iy++) {
+    for (let ix = 0; ix <= segW; ix++) {
+      const vi = iy * (segW + 1) + ix;
+      // Map vertex to depth map coords
+      const dx = Math.min(Math.round(ix * step), dW - 1);
+      const dy = Math.min(Math.round(iy * step), dH - 1);
+      // Flip Y because geometry goes top-down but image goes opposite
+      const di = (dH - 1 - dy) * dW + dx;
+      const depth = smoothDepth[di] || 0;
+      // Push outward based on depth (closer = more displacement)
+      positions.setZ(vi, depth * depthAmount);
+    }
+  }
+
+  geo.computeVertexNormals();
+
+  // Texture from mockup canvas
+  const texture = new THREE.CanvasTexture(ST._mockupCanvas);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.colorSpace = THREE.SRGBColorSpace || THREE.sRGBEncoding;
+
+  const material = new THREE.MeshStandardMaterial({
+    map: texture,
+    roughness: 0.4,
+    metalness: 0.05,
+    side: THREE.DoubleSide
+  });
+
+  const mesh = new THREE.Mesh(geo, material);
+  scene.add(mesh);
+  ST._threeMesh = mesh;
+}
+
+// Lightweight blur for depth smoothing (reusable)
+function gaussBlurSmall(data, W, H, r) {
+  const tmp = new Float32Array(data.length);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    let s = 0, c = 0;
+    for (let k = -r; k <= r; k++) { const nx = Math.max(0, Math.min(W-1, x+k)); s += data[y*W+nx]; c++; }
+    tmp[y*W+x] = s / c;
+  }
+  const out = new Float32Array(data.length);
+  for (let x = 0; x < W; x++) for (let y = 0; y < H; y++) {
+    let s = 0, c = 0;
+    for (let k = -r; k <= r; k++) { const ny = Math.max(0, Math.min(H-1, y+k)); s += tmp[ny*W+x]; c++; }
+    out[y*W+x] = s / c;
+  }
+  return out;
+}
+
+function updateDepth(val) {
+  ST._depthAmount = val;
+  document.getElementById('depth-val').textContent = val;
+  if (ST._threeScene && ST._threeMesh) {
+    buildDepthMesh(ST._threeScene);
+  }
+}
+
+function updateMeshSmooth(val) {
+  ST._meshSmooth = val;
+  document.getElementById('smooth-val').textContent = val;
+  if (ST._threeScene && ST._threeMesh) {
+    buildDepthMesh(ST._threeScene);
+  }
+}
+
+function resetThreeCamera() {
+  if (ST._threeCamera) {
+    ST._threeCamera.position.set(0, 0, 2.8);
+    ST._threeCamera.lookAt(0, 0, 0);
+  }
+  if (ST._threeControls) {
+    ST._threeControls.target.set(0, 0, 0);
+    ST._threeControls.update();
+  }
+}
+
+function export3DSnapshot() {
+  if (!ST._threeRenderer) { toast('Active la vue 3D d\'abord','err'); return; }
+  ST._threeRenderer.render(ST._threeScene, ST._threeCamera);
+  const a = document.createElement('a');
+  a.href = ST._threeRenderer.domElement.toDataURL('image/jpeg', 0.95);
+  a.download = 'kustomkoncept-3d-snapshot.jpg';
+  a.click();
+  toast('Capture 3D exportee','ok');
 }
 
 function drawComparison(splitX) {
