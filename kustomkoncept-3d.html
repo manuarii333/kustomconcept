@@ -9,8 +9,10 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 window.THREE = THREE;
 window.OrbitControls = OrbitControls;
+window.GLTFLoader = GLTFLoader;
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -288,30 +290,82 @@ function renderSidebar() {
   fns[ST.step](el);
 }
 
-// ── STEP 1: UPLOAD MOTO ──
+// ── STEP 1: UPLOAD MOTO (multi-photo) ──
 function sideStep1(el) {
+  if (!ST.extraPhotos) ST.extraPhotos = { front: null, rear: null, left: null, right: null };
+  const ep = ST.extraPhotos;
+  const photoCount = [ST.motoPhoto, ep.front, ep.rear, ep.left, ep.right].filter(Boolean).length;
+
   el.innerHTML = `
     <div class="section-num">Etape 1 / 5</div>
-    <div class="section-title">Ta moto</div>
-    <div class="section-desc">Charge une photo de ton engin (vue de cote, 3/4 ou face). C'est la base du mockup 3D.</div>
-    <div class="upload-zone" id="uz-moto">
-      <input type="file" accept="image/*" onchange="loadMoto(this)"/>
-      <span class="ico">${ST.motoPhoto ? '\u2705' : '\uD83D\uDEF5'}</span>
-      <div class="title">${ST.motoPhoto ? 'Photo chargee !' : 'Glisse ta photo ici'}</div>
-      <div class="hint">JPG / PNG — vue laterale recommandee</div>
+    <div class="section-title">Photos de ta moto</div>
+    <div class="section-desc">Photo principale (cote) + photos supplementaires pour un modele 3D plus fidele.</div>
+
+    <div class="card">
+      <h3>Photo principale (obligatoire)</h3>
+      <div class="upload-zone" id="uz-moto" style="padding:20px">
+        <input type="file" accept="image/*" onchange="loadMoto(this)"/>
+        <span class="ico" style="font-size:36px">${ST.motoPhoto ? '\u2705' : '\uD83D\uDEF5'}</span>
+        <div class="title">${ST.motoPhoto ? 'Photo chargee !' : 'Vue de cote'}</div>
+        <div class="hint">JPG / PNG — base du kit deco</div>
+      </div>
+      ${ST.motoPhoto ? '<img class="thumb" src="' + ST.motoPhoto + '"/>' : ''}
     </div>
-    ${ST.motoPhoto ? `<img class="thumb" src="${ST.motoPhoto}"/>` : ''}
-    <div class="card" style="margin-top:16px">
-      <h3>Conseils photo</h3>
-      <ul style="font-size:12px;color:var(--text2);line-height:2;padding-left:16px">
-        <li>Fond uni ou simple pour un meilleur rendu</li>
-        <li>Bonne luminosite, pas de contre-jour</li>
-        <li>Resolution minimum 1200px de large</li>
-        <li>Vue de cote = meilleur pour kit deco complet</li>
-      </ul>
+
+    <div class="card">
+      <h3>Photos supplementaires (optionnel — ameliore le 3D)</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        ${['front:Face avant', 'rear:Face arriere', 'left:Cote gauche', 'right:Cote droit'].map(item => {
+          const [key, label] = item.split(':');
+          const hasPhoto = !!ep[key];
+          return '<div class="upload-zone" id="uz-' + key + '" style="padding:14px">' +
+            '<input type="file" accept="image/*" onchange="loadExtraPhoto(\'' + key + '\',this)"/>' +
+            '<span class="ico" style="font-size:24px">' + (hasPhoto ? '\u2705' : '\uD83D\uDCF7') + '</span>' +
+            '<div class="title" style="font-size:12px">' + label + '</div>' +
+            (hasPhoto ? '<img src="' + ep[key] + '" style="width:100%;border-radius:6px;margin-top:6px;max-height:60px;object-fit:cover"/>' : '') +
+            '</div>';
+        }).join('')}
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:8px;line-height:1.5">
+        ${photoCount} / 5 photos chargees.
+        ${photoCount >= 3 ? '<span style="color:var(--green)">Excellent pour la reconstruction 3D !</span>' :
+          photoCount >= 2 ? '<span style="color:var(--accent2)">Bon — ajoute plus de vues pour un meilleur 3D.</span>' :
+          'Plus tu ajoutes de vues, meilleur sera le modele 3D.'}
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Rendu 3D</h3>
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <button class="btn btn-sm ${ST._3dMode==='local'||!ST._3dMode?'btn-accent':'btn-ghost'}" onclick="ST._3dMode='local';renderSidebar()">Depth Map (local)</button>
+        <button class="btn btn-sm ${ST._3dMode==='api'?'btn-accent':'btn-ghost'}" onclick="ST._3dMode='api';renderSidebar()">IA 3D (Tripo)</button>
+      </div>
+      ${ST._3dMode === 'api' ? '<div style="font-size:11px;color:var(--text2);line-height:1.6">' +
+        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">' +
+        '<span style="font-size:16px">\uD83E\uDD16</span><strong style="color:var(--accent)">Tripo3D API</strong></div>' +
+        'Reconstruction 3D par IA. Necessite une cle API.<br/>' +
+        '<input type="text" id="tripo-key" placeholder="Cle API Tripo3D" value="' + (ST._tripoKey || '') + '" ' +
+        'onchange="ST._tripoKey=this.value" ' +
+        'style="width:100%;margin-top:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:11px;outline:none;font-family:inherit"/>' +
+        '<a href="https://platform.tripo3d.ai" target="_blank" style="color:var(--accent);font-size:10px;margin-top:4px;display:inline-block">Obtenir une cle gratuite (3000 credits)</a>' +
+        '</div>' : '<div style="font-size:11px;color:var(--text2)">Depth map locale — pas d\'API necessaire.</div>'}
     </div>
   `;
   setupDragDrop('uz-moto');
+  ['front','rear','left','right'].forEach(k => setupDragDrop('uz-' + k));
+}
+
+function loadExtraPhoto(key, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    if (!ST.extraPhotos) ST.extraPhotos = {};
+    ST.extraPhotos[key] = ev.target.result;
+    renderSidebar();
+    toast('Photo ' + key + ' chargee', 'ok');
+  };
+  r.readAsDataURL(file);
 }
 
 // ── STEP 2: ZONES ──
@@ -445,20 +499,27 @@ function sideStep5(el) {
     <div class="section-title">Mockup 3D</div>
     <div class="section-desc">Genere le rendu realiste de ton kit deco sur la moto. Tourne autour en 3D.</div>
 
-    <button class="btn btn-accent btn-full" onclick="generateMockup()" style="margin-bottom:12px;font-size:14px;padding:14px">
-      Generer le Mockup 3D
+    <button class="btn btn-accent btn-full" onclick="generateMockup()" style="margin-bottom:8px;font-size:14px;padding:14px">
+      Generer le Mockup 2D + Textures
     </button>
+
+    ${ST._3dMode === 'api' && ST._tripoKey ? `
+    <button class="btn btn-full" onclick="generateTripo3D()" style="margin-bottom:8px;font-size:14px;padding:14px;background:linear-gradient(135deg,#8b5cf6,#3b82f6);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-family:inherit">
+      Reconstruction 3D IA (Tripo)
+    </button>` : ''}
+
     <div class="progress" id="mockup-progress" style="display:none">
       <div class="progress-bar" id="mockup-bar"></div>
     </div>
     <div id="mockup-status" style="font-size:11px;color:var(--text2);text-align:center;margin-top:8px"></div>
 
-    <div id="view-controls" style="display:${ST.mockupGenerated?'block':'none'};margin-top:16px">
+    <div id="view-controls" style="display:${ST.mockupGenerated || ST._tripoModel?'block':'none'};margin-top:16px">
       <div class="card">
         <h3>Mode de vue</h3>
         <div class="view-toggle" style="margin-bottom:10px">
-          <button class="${ST._viewMode!=='3d'?'on':''}" onclick="switchViewMode('compare')">Avant / Apres</button>
-          <button class="${ST._viewMode==='3d'?'on':''}" onclick="switchViewMode('3d')">Vue 3D</button>
+          <button class="${ST._viewMode==='compare'||!ST._viewMode?'on':''}" onclick="switchViewMode('compare')">Avant / Apres</button>
+          <button class="${ST._viewMode==='3d'?'on':''}" onclick="switchViewMode('3d')">3D Depth</button>
+          ${ST._tripoModel ? `<button class="${ST._viewMode==='tripo'?'on':''}" onclick="switchViewMode('tripo')">3D IA</button>` : ''}
         </div>
         <div id="depth-controls" style="display:${ST._viewMode==='3d'?'block':'none'}">
           <div class="depth-slider">
@@ -472,12 +533,15 @@ function sideStep5(el) {
             <span class="val" id="smooth-val">${ST._meshSmooth||3}</span>
           </div>
           <div style="font-size:11px;color:var(--text2);margin-top:8px;line-height:1.6">
-            Souris : orbiter autour<br/>
-            Molette : zoom<br/>
-            Shift+souris : deplacer
+            Souris : orbiter autour &middot; Molette : zoom &middot; Shift+souris : deplacer
           </div>
           <button class="btn btn-ghost btn-sm btn-full" style="margin-top:8px" onclick="resetThreeCamera()">Reinitialiser la camera</button>
         </div>
+        ${ST._viewMode === 'tripo' ? `<div style="font-size:11px;color:var(--text2);margin-top:8px;line-height:1.6">
+          Modele 3D IA — rotation libre 360 degres<br/>
+          Souris : orbiter &middot; Molette : zoom
+        </div>
+        <button class="btn btn-ghost btn-sm btn-full" style="margin-top:8px" onclick="resetThreeCamera()">Reinitialiser la camera</button>` : ''}
       </div>
     </div>
 
@@ -1584,6 +1648,8 @@ function switchViewMode(mode) {
     showCompareView();
   } else if (mode === '3d') {
     show3DView();
+  } else if (mode === 'tripo') {
+    showTripoView();
   }
   renderSidebar();
 }
@@ -2275,6 +2341,311 @@ function toast(msg, type) {
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ══════════════════════════════════════════════════
+// TRIPO3D API INTEGRATION
+// ══════════════════════════════════════════════════
+// CORS proxy on Cloudflare Worker — forwards to api.tripo3d.ai
+const TRIPO_PROXY = 'https://tripo-proxy.highcoffeeshirt.workers.dev';
+const TRIPO_API = TRIPO_PROXY + '/v2/openapi';
+
+async function tripoFetch(endpoint, opts = {}) {
+  const key = ST._tripoKey;
+  if (!key) throw new Error('Cle API Tripo3D manquante');
+  const res = await fetch(TRIPO_API + endpoint, {
+    ...opts,
+    headers: { 'Authorization': 'Bearer ' + key, ...(opts.headers || {}) }
+  });
+  if (!res.ok) {
+    const err = await res.text().catch(() => res.statusText);
+    throw new Error('Tripo API ' + res.status + ': ' + err);
+  }
+  return res.json();
+}
+
+async function uploadImageToTripo(dataURL) {
+  // Convert dataURL to blob
+  const resp = await fetch(dataURL);
+  const blob = await resp.blob();
+  const form = new FormData();
+  form.append('file', blob, 'photo.jpg');
+  const result = await tripoFetch('/upload', { method: 'POST', body: form, headers: {} });
+  return result.data.image_token;
+}
+
+async function generateTripo3D() {
+  if (!ST._tripoKey) { toast('Entre ta cle API Tripo3D a l\'etape 1','err'); return; }
+  if (!ST.motoPhoto) { toast('Photo principale requise','err'); return; }
+
+  const progEl = document.getElementById('mockup-progress');
+  const barEl = document.getElementById('mockup-bar');
+  const statusEl = document.getElementById('mockup-status');
+  if (progEl) progEl.style.display = 'block';
+  if (barEl) barEl.style.width = '0%';
+  const setP = (pct, msg) => { if (barEl) barEl.style.width = pct+'%'; if (statusEl) statusEl.textContent = msg; };
+
+  try {
+    setP(5, 'Upload de la photo principale...');
+
+    // Collect all available photos
+    const photos = [ST.motoPhoto];
+    if (ST.extraPhotos) {
+      ['front','rear','left','right'].forEach(k => { if (ST.extraPhotos[k]) photos.push(ST.extraPhotos[k]); });
+    }
+
+    // Upload images
+    const tokens = [];
+    for (let i = 0; i < photos.length; i++) {
+      setP(5 + (i / photos.length) * 20, 'Upload photo ' + (i+1) + '/' + photos.length + '...');
+      const token = await uploadImageToTripo(photos[i]);
+      tokens.push(token);
+    }
+
+    setP(30, 'Lancement de la reconstruction 3D...');
+
+    // Create task — multi-image if multiple photos, single image otherwise
+    let taskBody;
+    if (tokens.length === 1) {
+      taskBody = { type: 'image_to_model', file: { type: 'image_token', file_token: tokens[0] } };
+    } else {
+      taskBody = {
+        type: 'multiview_to_model',
+        files: tokens.map(t => ({ type: 'image_token', file_token: t }))
+      };
+    }
+
+    const taskRes = await tripoFetch('/task', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(taskBody)
+    });
+
+    const taskId = taskRes.data.task_id;
+    setP(35, 'Reconstruction en cours (task: ' + taskId.substring(0,8) + '...)');
+
+    // Poll for completion
+    let status = 'running';
+    let modelUrl = null;
+    let pollCount = 0;
+    const maxPolls = 120; // 2 min max
+
+    while (status === 'running' || status === 'queued') {
+      await sleep(2000);
+      pollCount++;
+      if (pollCount > maxPolls) throw new Error('Timeout — la generation prend trop de temps');
+
+      const pollRes = await tripoFetch('/task/' + taskId);
+      status = pollRes.data.status;
+      const progress = pollRes.data.progress || 0;
+      setP(35 + progress * 0.55, 'Reconstruction: ' + Math.round(progress * 100) + '%...');
+
+      if (status === 'success') {
+        // Get the GLB model URL
+        modelUrl = pollRes.data.output?.model;
+        if (!modelUrl && pollRes.data.output?.pbr_model) {
+          modelUrl = pollRes.data.output.pbr_model;
+        }
+        break;
+      }
+      if (status === 'failed') {
+        throw new Error('Generation echouee: ' + (pollRes.data.message || 'erreur inconnue'));
+      }
+    }
+
+    if (!modelUrl) throw new Error('Pas de modele dans la reponse');
+
+    setP(92, 'Telechargement du modele 3D...');
+
+    // Download the GLB
+    const glbResp = await fetch(modelUrl);
+    if (!glbResp.ok) throw new Error('Impossible de telecharger le modele');
+    const glbBlob = await glbResp.blob();
+    const glbUrl = URL.createObjectURL(glbBlob);
+
+    ST._tripoModel = glbUrl;
+    ST._viewMode = 'tripo';
+
+    setP(100, 'Modele 3D pret !');
+    renderSidebar();
+    showTripoView();
+
+    toast('Modele 3D IA genere !', 'ok');
+
+  } catch (e) {
+    setP(0, '');
+    if (progEl) progEl.style.display = 'none';
+    toast('Erreur Tripo: ' + e.message, 'err');
+    console.error('Tripo3D error:', e);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// TRIPO 3D VIEWER (GLB model)
+// ══════════════════════════════════════════════════
+function showTripoView() {
+  if (!ST._tripoModel) { toast('Genere le modele 3D IA d\'abord','err'); return; }
+  if (ST._threeRAF) { cancelAnimationFrame(ST._threeRAF); ST._threeRAF = null; }
+
+  const vp = document.getElementById('vp-canvas');
+  vp.innerHTML = '<div id="three-container" style="display:block"></div>';
+  const container = document.getElementById('three-container');
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  // Scene
+  const scene = new THREE.Scene();
+
+  // Gradient background
+  const bgCanvas = document.createElement('canvas');
+  bgCanvas.width = 512; bgCanvas.height = 512;
+  const bgCtx = bgCanvas.getContext('2d');
+  const bgGrad = bgCtx.createRadialGradient(256, 180, 40, 256, 256, 400);
+  bgGrad.addColorStop(0, '#1e2038');
+  bgGrad.addColorStop(0.5, '#0e1018');
+  bgGrad.addColorStop(1, '#050610');
+  bgCtx.fillStyle = bgGrad;
+  bgCtx.fillRect(0, 0, 512, 512);
+  scene.background = new THREE.CanvasTexture(bgCanvas);
+
+  // Camera
+  const camera = new THREE.PerspectiveCamera(40, width / height, 0.01, 100);
+  camera.position.set(1.5, 1, 2.5);
+  ST._threeCamera = camera;
+
+  // Renderer
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.2;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  container.appendChild(renderer.domElement);
+  ST._threeRenderer = renderer;
+
+  // Controls — full 360 rotation for real 3D model
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.06;
+  controls.rotateSpeed = 0.5;
+  controls.minDistance = 0.5;
+  controls.maxDistance = 8;
+  controls.target.set(0, 0.3, 0);
+  ST._threeControls = controls;
+
+  // === STUDIO LIGHTING ===
+  const ambient = new THREE.AmbientLight(0x606080, 0.5);
+  scene.add(ambient);
+
+  const keyLight = new THREE.DirectionalLight(0xfff5e6, 1.5);
+  keyLight.position.set(3, 5, 4);
+  scene.add(keyLight);
+
+  const fillLight = new THREE.DirectionalLight(0xc8d8ff, 0.6);
+  fillLight.position.set(-4, 3, 2);
+  scene.add(fillLight);
+
+  const rimLight = new THREE.DirectionalLight(0xff8844, 0.8);
+  rimLight.position.set(-1, 2, -4);
+  scene.add(rimLight);
+
+  const bottomLight = new THREE.DirectionalLight(0x4466aa, 0.3);
+  bottomLight.position.set(0, -3, 0);
+  scene.add(bottomLight);
+
+  // Environment map for reflections
+  const envCanvas = document.createElement('canvas');
+  envCanvas.width = 256; envCanvas.height = 256;
+  const envCtx = envCanvas.getContext('2d');
+  const skyGrad = envCtx.createLinearGradient(0, 0, 0, 256);
+  skyGrad.addColorStop(0, '#2a3560');
+  skyGrad.addColorStop(0.3, '#4a5880');
+  skyGrad.addColorStop(0.6, '#7080a0');
+  skyGrad.addColorStop(1, '#a0a8b0');
+  envCtx.fillStyle = skyGrad;
+  envCtx.fillRect(0, 0, 256, 256);
+  envCtx.fillStyle = 'rgba(255,255,240,0.5)';
+  envCtx.beginPath(); envCtx.arc(90, 50, 35, 0, Math.PI*2); envCtx.fill();
+  const envTex = new THREE.CanvasTexture(envCanvas);
+  envTex.mapping = THREE.EquirectangularReflectionMapping;
+  scene.environment = envTex;
+
+  // Ground plane
+  const groundGeo = new THREE.PlaneGeometry(10, 10);
+  const groundMat = new THREE.MeshStandardMaterial({ color: 0x080a12, roughness: 0.25, metalness: 0.7 });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.position.y = -0.01;
+  ground.rotation.x = -Math.PI / 2;
+  scene.add(ground);
+
+  ST._threeScene = scene;
+
+  // Load GLB model
+  const loader = new GLTFLoader();
+  loader.load(ST._tripoModel,
+    (gltf) => {
+      const model = gltf.scene;
+
+      // Auto-center and scale the model
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const scale = 2 / maxDim; // Normalize to ~2 units
+
+      model.position.sub(center);
+      model.position.y += size.y * scale / 2; // Sit on ground
+      model.scale.setScalar(scale);
+
+      // Enhance materials for realism
+      model.traverse(child => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          if (child.material) {
+            child.material.envMapIntensity = 0.8;
+            child.material.needsUpdate = true;
+          }
+        }
+      });
+
+      scene.add(model);
+      ST._tripoMesh = model;
+
+      // Adjust camera to frame the model
+      controls.target.set(0, size.y * scale * 0.4, 0);
+      camera.position.set(1.8, size.y * scale * 0.6, 2.5);
+      controls.update();
+
+      toast('Modele 3D charge', 'ok');
+    },
+    (progress) => {
+      // Loading progress
+    },
+    (error) => {
+      console.error('GLB load error:', error);
+      toast('Erreur chargement modele: ' + error.message, 'err');
+    }
+  );
+
+  // Animation loop
+  function animate() {
+    ST._threeRAF = requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // Resize handler
+  const onResize = () => {
+    const w = container.clientWidth, h = container.clientHeight;
+    if (w === 0 || h === 0) return;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  };
+  window.addEventListener('resize', onResize);
+  ST._threeResizeHandler = onResize;
+}
 </script>
 </body>
 </html>
