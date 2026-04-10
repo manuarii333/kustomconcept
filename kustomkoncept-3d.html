@@ -1241,7 +1241,8 @@ const WORKER_CODE = `
 
     if (msg.type === 'analyze') {
       self.postMessage({type:'progress', pct:10, msg:'Sobel...'});
-      const {mag,gx,gy} = sobelAnalysis(msg.pixels, msg.W, msg.H);
+      const pixels = new Uint8ClampedArray(msg.pixels);
+      const {mag,gx,gy} = sobelAnalysis(pixels, msg.W, msg.H);
       self.postMessage({type:'progress', pct:25, msg:'Blur gradients...'});
       const blurGx = gaussBlur(gx, msg.W, msg.H, 4);
       const blurGy = gaussBlur(gy, msg.W, msg.H, 4);
@@ -1351,9 +1352,10 @@ async function generateMockup() {
     }, [pixelsCopy.buffer]);
   });
 
-  const blurGxBuf = analysisResult.blurGx;
-  const blurGyBuf = analysisResult.blurGy;
-  const depthMapBuf = analysisResult.depthMap;
+  // Store persistent copies — transferred buffers get detached after postMessage
+  const blurGxArr = new Float32Array(analysisResult.blurGx);
+  const blurGyArr = new Float32Array(analysisResult.blurGy);
+  const depthMapArr = new Float32Array(analysisResult.depthMap);
 
   setP(45, 'Application des motifs...');
   await sleep(20);
@@ -1406,10 +1408,10 @@ async function generateMockup() {
       };
       worker.addEventListener('message', handler);
 
-      // Copy buffers (they may have been transferred previously)
-      const gxCopy = new Float32Array(new Float32Array(blurGxBuf.byteLength ? blurGxBuf : analysisResult.blurGx));
-      const gyCopy = new Float32Array(new Float32Array(blurGyBuf.byteLength ? blurGyBuf : analysisResult.blurGy));
-      const depthCopy = new Float32Array(new Float32Array(depthMapBuf.byteLength ? depthMapBuf : analysisResult.depthMap));
+      // Fresh copies each time — transferred buffers get detached
+      const gxCopy = new Float32Array(blurGxArr);
+      const gyCopy = new Float32Array(blurGyArr);
+      const depthCopy = new Float32Array(depthMapArr);
 
       worker.postMessage({
         type: 'warpZone',
