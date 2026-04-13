@@ -378,7 +378,8 @@ function renderSidebar(app) {
   Object.entries(sections).forEach(([section, views]) => {
     if (section) {
       html += `<div class="sidebar-section">
-        <div class="sidebar-section-label">${section}</div>`;
+        <div class="sidebar-section-label">${section}</div>
+        <div class="sidebar-section-items">`;
     }
     views.forEach(v => {
       html += `
@@ -387,7 +388,7 @@ function renderSidebar(app) {
           <span class="item-label">${v.label}</span>
         </button>`;
     });
-    if (section) html += '</div>';
+    if (section) html += '</div></div>';
   });
 
   menu.innerHTML = html;

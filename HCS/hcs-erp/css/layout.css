@@ -187,6 +187,41 @@
   text-transform: uppercase;
   letter-spacing: 0.09em;
   padding: 4px var(--space-2) 6px;
+  position: sticky;
+  top: 0;
+  background: var(--sidebar-bg);
+  z-index: 1;
+}
+
+/* Conteneur scrollable par section */
+.sidebar-section-items {
+  max-height: 180px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* Scrollbar fine et discrète (webkit) */
+.sidebar-section-items::-webkit-scrollbar {
+  width: 3px;
+}
+.sidebar-section-items::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-section-items::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+.sidebar-section-items::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+/* Firefox */
+.sidebar-section-items {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }
 
 /* Item de sous-menu */
