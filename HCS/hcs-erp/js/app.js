@@ -113,7 +113,7 @@ const APPS = [
     label: 'Comptabilité',
     icon: '💰',
     color: '#00d4aa',
-    pinned: true,
+    pinned: false,
     views: [
       { id: 'tableau-de-bord', label: 'Tableau de bord',    icon: '📊', section: 'Vue globale' },
       { id: 'conseiller',      label: 'Copilote financier',  icon: '🧠', section: 'Vue globale' },
@@ -171,6 +171,7 @@ const APPS = [
     label: 'Outils HCS',
     icon: '🔧',
     color: '#6B7280',
+    pinned: false,
     views: [
       { id: 'triage-dashboard',        label: 'Triage & Réception',    icon: '📋', section: 'Opérations'       },
       { id: 'commercial-dashboard',    label: 'Commercial & Devis',    icon: '🤝', section: 'Opérations'       },

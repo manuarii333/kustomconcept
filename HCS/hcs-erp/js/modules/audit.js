@@ -92,12 +92,12 @@ const Audit = (() => {
 
     /* Collections critiques attendues dans Store */
     collections: [
-      { key: 'contacts',   label: 'Contacts'   },
-      { key: 'produits',   label: 'Produits'   },
-      { key: 'devis',      label: 'Devis'      },
-      { key: 'commandes',  label: 'Commandes'  },
-      { key: 'factures',   label: 'Factures'   },
-      { key: 'clients',    label: 'Clients'    },
+      { key: 'contacts',    label: 'Contacts'    },
+      { key: 'produits',    label: 'Produits'    },
+      { key: 'devis',       label: 'Devis'       },
+      { key: 'commandes',   label: 'Commandes'   },
+      { key: 'factures',    label: 'Factures'    },
+      { key: 'fournisseurs',label: 'Fournisseurs'},
     ],
 
     /* Les 8 agents IA HCS */
