@@ -1,0 +1,14 @@
+# ================================================================
+# HCS ERP — api/.htaccess
+# Redirige toutes les requêtes vers index.php (URLs propres REST)
+# ================================================================
+
+Options -Indexes
+
+RewriteEngine On
+
+# Ne pas réécrire si le fichier existe réellement (ex : config.php)
+RewriteCond %{REQUEST_FILENAME} !-f
+
+# Tout le reste va vers index.php, avec la query string préservée
+RewriteRule ^(.*)$ index.php [QSA,L]
