@@ -191,6 +191,7 @@ const APPS = [
       { id: 'supervision-dashboard',   label: 'Supervision',           icon: '👁',  section: 'Supervision'      },
       { id: 'routine-dashboard',       label: 'Routines',              icon: '🔄', section: 'Supervision'      },
       { id: 'vocal-dashboard',         label: 'Agent Vocal',           icon: '🎙', section: 'Supervision'      },
+      { id: 'audit-dashboard',         label: '🔍 Audit ERP',          icon: '🔍', section: 'Supervision'      },
       { id: 'apps-hcs',                label: 'Applications HCS',      icon: '🚀', section: 'Applications'     }
     ]
   }
@@ -485,9 +486,13 @@ function renderView() {
       renderIframe(`modules/${view}.html`, container);
       break;
     case 'outils':
-      /* La vue apps-hcs est rendue en interne (grille de liens) */
+      /* Vues natives rendues directement (sans iframe) */
       if (view === 'apps-hcs') {
         renderAppsHCS(container);
+      } else if (view === 'audit-dashboard') {
+        if (typeof Audit !== 'undefined') {
+          Audit.init(document.getElementById('toolbar-actions'), container, view);
+        }
       /* picwish-pipeline : servi depuis apps/ */
       } else if (view === 'picwish-pipeline') {
         renderIframe('apps/picwish-pipeline.html', container);
