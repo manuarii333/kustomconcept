@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HCS Cockpit — Centre de pilotage</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080812;
+  --card:#12121f;
+  --card2:#0e0e1c;
+  --border:rgba(255,255,255,.07);
+  --primary:#f6d365;
+  --accent:#fda085;
+  --green:#43e97b;
+  --blue:#4facfe;
+  --purple:#a855f7;
+  --red:#ff6b6b;
+}
+body{background:var(--bg);color:#fff;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+
+/* ══ TOP BAR ══ */
+.topbar{
+  background:rgba(10,10,20,.95);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:0 24px;
+  height:56px;
+  display:flex;align-items:center;gap:16px;
+  position:sticky;top:0;z-index:100
+}
+.logo{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:.9rem;color:#080812;flex-shrink:0
+}
+.topbar-title{font-weight:800;font-size:.95rem;letter-spacing:.3px}
+.topbar-sub{font-size:.7rem;color:rgba(255,255,255,.3)}
+
+.topbar-widgets{display:flex;align-items:center;gap:12px;margin-left:auto}
+.tb-widget{
+  background:rgba(255,255,255,.04);border:1px solid var(--border);
+  border-radius:8px;padding:6px 12px;font-size:.72rem;cursor:pointer;
+  transition:all .2s;white-space:nowrap
+}
+.tb-widget:hover{background:rgba(255,255,255,.08)}
+.tb-widget .val{font-weight:800;color:var(--primary)}
+.tb-widget.pass{border-color:rgba(253,160,133,.2);background:rgba(253,160,133,.04)}
+.tb-widget.pass .val{color:var(--accent)}
+.tb-widget.orders{border-color:rgba(67,233,123,.2);background:rgba(67,233,123,.04)}
+.tb-widget.orders .val{color:var(--green)}
+.time-badge{font-size:.7rem;color:rgba(255,255,255,.25);border-left:1px solid var(--border);padding-left:12px}
+
+/* ══ LAYOUT ══ */
+.layout{display:grid;grid-template-columns:200px 1fr;min-height:calc(100vh - 56px)}
+@media(max-width:768px){.layout{grid-template-columns:1fr}}
+
+/* ══ NAV SIDEBAR ══ */
+.nav{background:var(--card2);border-right:1px solid var(--border);padding:16px 10px}
+@media(max-width:768px){.nav{display:none}}
+.nav-section{font-size:.58rem;font-weight:800;color:rgba(255,255,255,.2);letter-spacing:1.5px;padding:12px 8px 6px}
+.nav-item{
+  display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;
+  font-size:.78rem;cursor:pointer;transition:all .15s;color:rgba(255,255,255,.6);
+  border:1px solid transparent;margin-bottom:2px
+}
+.nav-item:hover{background:rgba(255,255,255,.04);color:#fff}
+.nav-item.active{background:rgba(246,211,101,.08);border-color:rgba(246,211,101,.15);color:var(--primary)}
+.nav-icon{font-size:1rem;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:rgba(255,100,100,.2);color:#ff6b6b;border-radius:20px;padding:1px 6px;font-size:.58rem;font-weight:700}
+
+/* ══ MAIN ══ */
+.main{padding:24px;overflow-y:auto}
+
+/* ══ VIEW (pages) ══ */
+.view{display:none}
+.view.active{display:block;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══ PAGE HEADER ══ */
+.page-header{margin-bottom:24px}
+.page-header h2{font-size:1.2rem;font-weight:900;margin-bottom:4px}
+.page-header p{font-size:.78rem;color:rgba(255,255,255,.4);line-height:1.6}
+
+/* ══ SCENARIO CARDS ══ */
+.scenario-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:32px}
+.scenario-card{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:20px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden
+}
+.scenario-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--c1),var(--c2))
+}
+.scenario-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.15);box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.sc-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.sc-icon{
+  width:44px;height:44px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  display:flex;align-items:center;justify-content:center;font-size:1.3rem
+}
+.sc-title{font-weight:800;font-size:.95rem;margin-bottom:2px}
+.sc-sub{font-size:.7rem;color:rgba(255,255,255,.4)}
+.sc-duration{
+  margin-left:auto;font-size:.62rem;background:rgba(255,255,255,.06);
+  border-radius:20px;padding:3px 8px;color:rgba(255,255,255,.4);white-space:nowrap
+}
+.sc-steps{display:flex;flex-direction:column;gap:6px}
+.sc-step{display:flex;align-items:center;gap:8px;font-size:.72rem;color:rgba(255,255,255,.55)}
+.sc-step-dot{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;flex-shrink:0}
+.sc-step-arrow{color:rgba(255,255,255,.2);font-size:.65rem}
+.sc-btn{
+  margin-top:16px;padding:9px 0;border-radius:8px;border:none;
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  color:#080812;font-weight:800;font-size:.78rem;cursor:pointer;
+  width:100%;transition:all .2s
+}
+.sc-btn:hover{opacity:.9;transform:translateY(-1px)}
+
+/* ══ APP GRID ══ */
+.apps-section{margin-bottom:28px}
+.section-title-bar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.section-title-bar h3{font-size:.82rem;font-weight:800;color:rgba(255,255,255,.7)}
+.section-line{flex:1;height:1px;background:var(--border)}
+.apps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.app-card{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:16px 14px;cursor:pointer;transition:all .2s;text-decoration:none;color:inherit;
+  display:flex;flex-direction:column;gap:8px
+}
+.app-card:hover{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.15);transform:translateY(-2px)}
+.app-card.primary-app{border-color:rgba(246,211,101,.2);background:rgba(246,211,101,.03)}
+.app-icon{font-size:1.6rem}
+.app-name{font-size:.78rem;font-weight:700;line-height:1.3}
+.app-desc{font-size:.65rem;color:rgba(255,255,255,.35);line-height:1.4}
+.app-tag{font-size:.58rem;background:rgba(255,255,255,.06);border-radius:20px;padding:2px 7px;color:rgba(255,255,255,.4);display:inline-block;margin-top:2px;align-self:flex-start}
+
+/* ══ WORKFLOW STRIP ══ */
+.workflow{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:24px}
+.wf-title{font-size:.78rem;font-weight:800;color:rgba(255,255,255,.5);letter-spacing:.5px;margin-bottom:16px}
+.wf-steps{display:flex;align-items:center;gap:0;overflow-x:auto;padding-bottom:4px}
+.wf-step{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  min-width:100px;padding:0 12px;text-align:center;cursor:pointer;
+  transition:all .2s;flex-shrink:0
+}
+.wf-step:hover .wf-circle{border-color:var(--primary);background:rgba(246,211,101,.08)}
+.wf-circle{
+  width:48px;height:48px;border-radius:50%;border:2px solid rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;font-size:1.3rem;
+  transition:all .2s;background:var(--card2)
+}
+.wf-label{font-size:.62rem;color:rgba(255,255,255,.5);line-height:1.3}
+.wf-arrow{color:rgba(255,255,255,.15);font-size:1rem;flex-shrink:0}
+
+/* ══ STATUS PANEL ══ */
+.status-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat-label{font-size:.65rem;color:rgba(255,255,255,.3);font-weight:700;letter-spacing:.5px;margin-bottom:8px}
+.stat-val{font-size:1.4rem;font-weight:900}
+.stat-sub{font-size:.65rem;color:rgba(255,255,255,.3);margin-top:4px}
+.stat-green{color:var(--green)}
+.stat-yellow{color:var(--primary)}
+.stat-blue{color:var(--blue)}
+.stat-red{color:var(--red)}
+
+/* ══ QUICK ACTIONS ══ */
+.quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.quick-btn{
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;cursor:pointer;transition:all .2s;text-align:left;
+  display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none
+}
+.quick-btn:hover{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.04)}
+.qb-icon{font-size:1.4rem;flex-shrink:0}
+.qb-text strong{font-size:.78rem;display:block;margin-bottom:2px}
+.qb-text span{font-size:.65rem;color:rgba(255,255,255,.35)}
+
+/* ══ SCENARIO DETAIL ══ */
+.detail-header{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:20px;margin-bottom:20px;display:flex;align-items:center;gap:16px
+}
+.detail-icon{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0}
+.detail-steps{display:flex;flex-direction:column;gap:8px}
+.detail-step{
+  background:var(--card2);border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;display:flex;align-items:center;gap:14px;
+  cursor:pointer;transition:all .2s;text-decoration:none;color:inherit
+}
+.detail-step:hover{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.02)}
+.ds-num{
+  width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;flex-shrink:0
+}
+.ds-info strong{font-size:.82rem;display:block;margin-bottom:2px}
+.ds-info span{font-size:.68rem;color:rgba(255,255,255,.35)}
+.ds-app{
+  margin-left:auto;font-size:.62rem;background:rgba(255,255,255,.06);
+  border-radius:6px;padding:3px 8px;color:rgba(255,255,255,.4);white-space:nowrap;flex-shrink:0
+}
+.ds-open{
+  background:linear-gradient(135deg,var(--c1,#f6d365),var(--c2,#fda085));
+  color:#080812;border:none;border-radius:6px;padding:6px 12px;
+  font-size:.7rem;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0
+}
+
+/* ══ DEMO BADGE ══ */
+.demo-link{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(79,172,254,.08);border:1px solid rgba(79,172,254,.2);
+  border-radius:8px;padding:8px 14px;font-size:.75rem;color:var(--blue);
+  cursor:pointer;text-decoration:none;transition:all .2s;margin-bottom:20px
+}
+.demo-link:hover{background:rgba(79,172,254,.15)}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">HCS</div>
+  <div>
+    <div class="topbar-title">HCS Cockpit</div>
+    <div class="topbar-sub">Centre de pilotage opérationnel</div>
+  </div>
+  <div class="topbar-widgets">
+    <div class="tb-widget pass" onclick="showView('apps')">
+      🎫 Pass HCS <span class="val" id="tb-pass">— XPF</span>
+    </div>
+    <div class="tb-widget orders" onclick="showView('dashboard')">
+      📦 Commandes <span class="val" id="tb-orders">—</span>
+    </div>
+    <div class="time-badge" id="tb-time"></div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- NAV SIDEBAR -->
+  <nav class="nav">
+    <div class="nav-section">PILOTAGE</div>
+    <div class="nav-item active" id="nav-home" onclick="showView('home')">
+      <span class="nav-icon">🏠</span> Accueil
+    </div>
+    <div class="nav-item" id="nav-dashboard" onclick="showView('dashboard')">
+      <span class="nav-icon">📊</span> Tableau de bord
+    </div>
+    <div class="nav-item" id="nav-orders" onclick="showView('orders');loadOrders()">
+      <span class="nav-icon">📦</span> Commandes
+    </div>
+
+    <div class="nav-section">SCÉNARIOS</div>
+    <div class="nav-item" id="nav-sc-a" onclick="showView('sc-a')">
+      <span class="nav-icon">🚶</span> A — Walk-In
+    </div>
+    <div class="nav-item" id="nav-sc-b" onclick="showView('sc-b')">
+      <span class="nav-icon">🌐</span> B — En ligne
+    </div>
+    <div class="nav-item" id="nav-sc-c" onclick="showView('sc-c')">
+      <span class="nav-icon">🏪</span> C — Atelier
+    </div>
+    <div class="nav-item" id="nav-sc-d" onclick="showView('sc-d')">
+      <span class="nav-icon">🔄</span> D — Abonnement
+    </div>
+    <div class="nav-item" id="nav-sc-e" onclick="showView('sc-e')">
+      <span class="nav-icon">🤖</span> E — Services IA
+    </div>
+
+    <div class="nav-section">OUTILS</div>
+    <div class="nav-item" id="nav-apps" onclick="showView('apps')">
+      <span class="nav-icon">⚡</span> Toutes les apps
+    </div>
+    <div class="nav-item" onclick="window.open('hcs-pass-test.html')">
+      <span class="nav-icon">🎫</span> Test Pass HCS
+    </div>
+    <div class="nav-item" onclick="window.open('hcs-hub-diagnostic.html')">
+      <span class="nav-icon">🔧</span> Diagnostic Hub
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- ══ HOME ══ -->
+    <div class="view active" id="view-home">
+      <div class="page-header">
+        <h2>Bonjour 👋 — Que faites-vous aujourd'hui ?</h2>
+        <p>Choisissez un scénario pour accéder directement aux outils nécessaires</p>
+      </div>
+
+      <!-- Statuts rapides -->
+      <div class="status-grid">
+        <div class="stat-card">
+          <div class="stat-label">PASS HCS</div>
+          <div class="stat-val stat-yellow" id="home-pass">— XPF</div>
+          <div class="stat-sub">Solde disponible</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">COMMANDES PAID</div>
+          <div class="stat-val stat-green" id="home-orders">0</div>
+          <div class="stat-sub">À produire aujourd'hui</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">THÈME DU MOIS</div>
+          <div class="stat-val" style="font-size:1rem" id="home-theme">—</div>
+          <div class="stat-sub">Collection V3 Originals</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">HEURE</div>
+          <div class="stat-val stat-blue" id="home-time">—</div>
+          <div class="stat-sub" id="home-date">—</div>
+        </div>
+      </div>
+
+      <!-- Scénarios -->
+      <div class="section-title-bar">
+        <h3>SCÉNARIOS DU JOUR</h3><div class="section-line"></div>
+      </div>
+      <div class="scenario-grid">
+
+        <div class="scenario-card" style="--c1:#f6d365;--c2:#fda085" onclick="showView('sc-a')">
+          <div class="sc-header">
+            <div class="sc-icon">🚶</div>
+            <div>
+              <div class="sc-title">A — Client Walk-In</div>
+              <div class="sc-sub">Client arrive en boutique avec son logo</div>
+            </div>
+            <div class="sc-duration">~12 min</div>
+          </div>
+          <div class="sc-steps">
+            <div class="sc-step"><div class="sc-step-dot">1</div>PicWish — Détourage logo</div>
+            <div class="sc-step"><div class="sc-step-dot">2</div>MockupForge — Mockup T-shirt</div>
+            <div class="sc-step"><div class="sc-step-dot">3</div>Builder — Export LP V1</div>
+            <div class="sc-step"><div class="sc-step-dot">4</div>Client commande → PAID</div>
+          </div>
+          <button class="sc-btn">Démarrer ce scénario →</button>
+        </div>
+
+        <div class="scenario-card" style="--c1:#43e97b;--c2:#38f9d7" onclick="showView('sc-b')">
+          <div class="sc-header">
+            <div class="sc-icon">🌐</div>
+            <div>
+              <div class="sc-title">B — Commande en ligne</div>
+              <div class="sc-sub">Client sur LP V3 Originals publiée</div>
+            </div>
+            <div class="sc-duration">Auto</div>
+          </div>
+          <div class="sc-steps">
+            <div class="sc-step"><div class="sc-step-dot">1</div>Vérifier LP V3 publiée</div>
+            <div class="sc-step"><div class="sc-step-dot">2</div>Client choisit variante + paye</div>
+            <div class="sc-step"><div class="sc-step-dot">3</div>Commande → Dashboard</div>
+          </div>
+          <button class="sc-btn">Gérer les commandes →</button>
+        </div>
+
+        <div class="scenario-card" style="--c1:#4facfe;--c2:#00f2fe" onclick="showView('sc-c')">
+          <div class="sc-header">
+            <div class="sc-icon">🏪</div>
+            <div>
+              <div class="sc-title">C — Réservation Atelier</div>
+              <div class="sc-sub">Session DTF personnalisée en boutique</div>
+            </div>
+            <div class="sc-duration">~1h atelier</div>
+          </div>
+          <div class="sc-steps">
+            <div class="sc-step"><div class="sc-step-dot">1</div>LP V4 — Gang Sheet ou Atelier</div>
+            <div class="sc-step"><div class="sc-step-dot">2</div>Réservation date/créneau</div>
+            <div class="sc-step"><div class="sc-step-dot">3</div>Acompte → Confirmation</div>
+          </div>
+          <button class="sc-btn">Gérer l'atelier →</button>
+        </div>
+
+        <div class="scenario-card" style="--c1:#a855f7;--c2:#ec4899" onclick="showView('sc-d')">
+          <div class="sc-header">
+            <div class="sc-icon">🔄</div>
+            <div>
+              <div class="sc-title">D — Abonnement V6</div>
+              <div class="sc-sub">Nouveau client abonnement mensuel</div>
+            </div>
+            <div class="sc-duration">Récurrent</div>
+          </div>
+          <div class="sc-steps">
+            <div class="sc-step"><div class="sc-step-dot">1</div>LP V6 — Choisir formule</div>
+            <div class="sc-step"><div class="sc-step-dot">2</div>1er paiement → Pass chargé</div>
+            <div class="sc-step"><div class="sc-step-dot">3</div>Renouvellement mensuel auto</div>
+          </div>
+          <button class="sc-btn">Gérer abonnements →</button>
+        </div>
+
+        <div class="scenario-card" style="--c1:#f093fb;--c2:#f5576c" onclick="showView('sc-e')">
+          <div class="sc-header">
+            <div class="sc-icon">🤖</div>
+            <div>
+              <div class="sc-title">E — Services IA</div>
+              <div class="sc-sub">Détourage, logo, accès apps</div>
+            </div>
+            <div class="sc-duration">24–48h</div>
+          </div>
+          <div class="sc-steps">
+            <div class="sc-step"><div class="sc-step-dot">1</div>Client choisit services (LP V7)</div>
+            <div class="sc-step"><div class="sc-step-dot">2</div>Brief reçu → Production PicWish</div>
+            <div class="sc-step"><div class="sc-step-dot">3</div>Livraison email fichiers</div>
+          </div>
+          <button class="sc-btn">Gérer services →</button>
+        </div>
+
+      </div>
+
+      <!-- Workflow global -->
+      <div class="section-title-bar">
+        <h3>FLUX GLOBAL</h3><div class="section-line"></div>
+      </div>
+      <div class="workflow">
+        <div class="wf-title">CHAÎNE DE VALEUR HCS</div>
+        <div class="wf-steps">
+          <div class="wf-step" onclick="window.open('../../picwish-pipeline.html')">
+            <div class="wf-circle">✂️</div>
+            <div class="wf-label">PicWish<br>Détourage</div>
+          </div>
+          <div class="wf-arrow">→</div>
+          <div class="wf-step" onclick="window.open('../../mockup-forge-v12.html')">
+            <div class="wf-circle">🖼️</div>
+            <div class="wf-label">MockupForge<br>Mockup</div>
+          </div>
+          <div class="wf-arrow">→</div>
+          <div class="wf-step" onclick="window.open('../../campaign/andromeda-campaign.html')">
+            <div class="wf-circle">📡</div>
+            <div class="wf-label">Andromeda<br>LP Builder</div>
+          </div>
+          <div class="wf-arrow">→</div>
+          <div class="wf-step">
+            <div class="wf-circle">📱</div>
+            <div class="wf-label">LP Client<br>Mobile</div>
+          </div>
+          <div class="wf-arrow">→</div>
+          <div class="wf-step">
+            <div class="wf-circle">💳</div>
+            <div class="wf-label">PayZen OSB<br>XPF</div>
+          </div>
+          <div class="wf-arrow">→</div>
+          <div class="wf-step">
+            <div class="wf-circle">🖨️</div>
+            <div class="wf-label">Production<br>DTF</div>
+          </div>
+          <div class="wf-arrow">→</div>
+          <div class="wf-step">
+            <div class="wf-circle">📦</div>
+            <div class="wf-label">Livraison<br>Client</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SCÉNARIO A ══ -->
+    <div class="view" id="view-sc-a">
+      <a class="demo-link" href="scenario-a-demo.html" target="_blank">▶ Voir la démo interactive complète du Scénario A</a>
+      <div class="page-header">
+        <h2>🚶 Scénario A — Client Walk-In</h2>
+        <p>Client arrive avec son logo · De l'upload au paiement en ~12 minutes</p>
+      </div>
+      <div class="detail-steps" style="--c1:#f6d365;--c2:#fda085">
+        <a class="detail-step" href="../../picwish-pipeline.html" target="_blank">
+          <div class="ds-num" style="background:rgba(246,211,101,.15);color:#f6d365">1</div>
+          <div class="ds-info">
+            <strong>Recevoir et uploader le logo client</strong>
+            <span>PicWish Pipeline — Détourage IA automatique + amélioration résolution</span>
+          </div>
+          <div class="ds-app">picwish-pipeline.html</div>
+          <button class="ds-open" onclick="event.preventDefault();window.open('../../picwish-pipeline.html')">Ouvrir →</button>
+        </a>
+        <a class="detail-step" href="../../mockup-forge-v12.html" target="_blank">
+          <div class="ds-num" style="background:rgba(246,211,101,.15);color:#f6d365">2</div>
+          <div class="ds-info">
+            <strong>Générer le mockup T-shirt</strong>
+            <span>MockupForge v12 — Drag logo · 9 modèles · 6 coloris · Export vers Builder</span>
+          </div>
+          <div class="ds-app">mockup-forge-v12.html</div>
+          <button class="ds-open" onclick="event.preventDefault();window.open('../../mockup-forge-v12.html')">Ouvrir →</button>
+        </a>
+        <a class="detail-step" href="../../campaign/andromeda-campaign.html" target="_blank">
+          <div class="ds-num" style="background:rgba(246,211,101,.15);color:#f6d365">3</div>
+          <div class="ds-info">
+            <strong>Créer et exporter la LP V1 T-Shirt</strong>
+            <span>Andromeda Builder — Glisser le mockup · Exporter LP · Checkout PayZen intégré</span>
+          </div>
+          <div class="ds-app">andromeda-campaign.html</div>
+          <button class="ds-open" onclick="event.preventDefault();window.open('../../campaign/andromeda-campaign.html')">Ouvrir →</button>
+        </a>
+        <div class="detail-step" style="cursor:default">
+          <div class="ds-num" style="background:rgba(246,211,101,.15);color:#f6d365">4</div>
+          <div class="ds-info">
+            <strong>Envoyer le lien LP au client</strong>
+            <span>WhatsApp · Email · AirDrop — Client commande depuis son téléphone</span>
+          </div>
+          <div class="ds-app">LP exportée</div>
+        </div>
+        <div class="detail-step" style="cursor:default">
+          <div class="ds-num" style="background:rgba(67,233,123,.15);color:#43e97b">✓</div>
+          <div class="ds-info">
+            <strong>Commande reçue → Production DTF</strong>
+            <span>Paiement OSB Polynésie · Commande visible dans Campaign Builder · Imprimer</span>
+          </div>
+          <div class="ds-app">PAID</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SCÉNARIO B ══ -->
+    <div class="view" id="view-sc-b">
+      <a class="demo-link" href="scenario-b-demo.html" target="_blank">▶ Voir la démo interactive complète du Scénario B</a>
+      <div class="page-header">
+        <h2>🌐 Scénario B — Commande en ligne</h2>
+        <p>Client sur LP V3 Originals · Tout est automatique</p>
+      </div>
+      <div class="detail-steps" style="--c1:#43e97b;--c2:#38f9d7">
+        <a class="detail-step" href="../../campaign/andromeda-campaign.html" target="_blank">
+          <div class="ds-num" style="background:rgba(67,233,123,.1);color:#43e97b">1</div>
+          <div class="ds-info">
+            <strong>Vérifier la LP V3 Originals est à jour</strong>
+            <span>Builder — Thème du mois · Mockups des 3 variantes · Prix Pack Trio correct</span>
+          </div>
+          <div class="ds-app">Andromeda Builder</div>
+          <button class="ds-open" style="--c1:#43e97b;--c2:#38f9d7" onclick="event.preventDefault();window.open('../../campaign/andromeda-campaign.html')">Ouvrir →</button>
+        </a>
+        <div class="detail-step" style="cursor:default">
+          <div class="ds-num" style="background:rgba(67,233,123,.1);color:#43e97b">2</div>
+          <div class="ds-info">
+            <strong>Client reçoit le lien · Choisit sa variante · Paye OSB</strong>
+            <span>LP autonome · Checkout PayZen intégré · Pass HCS accepté · PAID automatique</span>
+          </div>
+          <div class="ds-app">LP publiée</div>
+        </div>
+        <a class="detail-step" href="../../campaign/andromeda-campaign.html" target="_blank">
+          <div class="ds-num" style="background:rgba(67,233,123,.1);color:#43e97b">3</div>
+          <div class="ds-info">
+            <strong>Commande visible dans le Campaign Builder</strong>
+            <span>Onglet commandes · Statut PAID · Exporter CSV · Lancer production</span>
+          </div>
+          <div class="ds-app">Dashboard Builder</div>
+          <button class="ds-open" style="--c1:#43e97b;--c2:#38f9d7" onclick="event.preventDefault();window.open('../../campaign/andromeda-campaign.html')">Ouvrir →</button>
+        </a>
+      </div>
+    </div>
+
+    <!-- ══ SCÉNARIO C ══ -->
+    <div class="view" id="view-sc-c">
+      <a class="demo-link" href="scenario-c-demo.html" target="_blank">▶ Voir la démo interactive complète du Scénario C</a>
+      <div class="page-header">
+        <h2>🏪 Scénario C — Réservation Atelier</h2>
+        <p>LP V4 Pack Atelier · Parcours A (Gang Sheet) ou B (Session personnalisée)</p>
+      </div>
+      <div class="detail-steps" style="--c1:#4facfe;--c2:#00f2fe">
+        <a class="detail-step" href="../../campaign/andromeda-campaign.html" target="_blank">
+          <div class="ds-num" style="background:rgba(79,172,254,.1);color:#4facfe">1</div>
+          <div class="ds-info">
+            <strong>Exporter LP V4 Pack Atelier</strong>
+            <span>Builder — Campagne "Pack Atelier" · Parcours A (Gang Sheet 20 000 XPF/planche) ou B (atelier 1 500 XPF/h)</span>
+          </div>
+          <div class="ds-app">Andromeda Builder</div>
+          <button class="ds-open" style="--c1:#4facfe;--c2:#00f2fe" onclick="event.preventDefault();window.open('../../campaign/andromeda-campaign.html')">Ouvrir →</button>
+        </a>
+        <div class="detail-step" style="cursor:default">
+          <div class="ds-num" style="background:rgba(79,172,254,.1);color:#4facfe">2</div>
+          <div class="ds-info">
+            <strong>Client réserve date et créneau</strong>
+            <span>Parcours B — Date · Créneau matin/après-midi · Durée · Accessoires DTF en option</span>
+          </div>
+          <div class="ds-app">LP V4</div>
+        </div>
+        <div class="detail-step" style="cursor:default">
+          <div class="ds-num" style="background:rgba(79,172,254,.1);color:#4facfe">3</div>
+          <div class="ds-info">
+            <strong>Acompte 30% si pack ≥ 400 000 XPF · Confirmation sous 24h</strong>
+            <span>Paiement OSB ou Pass HCS · Note de commande avec date/créneau choisi</span>
+          </div>
+          <div class="ds-app">PayZen / Pass</div>
+        </div>
+        <a class="detail-step" href="../../hcs-erp ok/modules/atelier-production.html" target="_blank">
+          <div class="ds-num" style="background:rgba(67,233,123,.1);color:#43e97b">✓</div>
+          <div class="ds-info">
+            <strong>Préparer l'atelier · Planning production</strong>
+            <span>Module Atelier Production — Fiche session · Matériaux · Durée</span>
+          </div>
+          <div class="ds-app">atelier-production.html</div>
+          <button class="ds-open" style="--c1:#43e97b;--c2:#38f9d7" onclick="event.preventDefault();window.open('../../hcs-erp ok/modules/atelier-production.html')">Ouvrir →</button>
+        </a>
+      </div>
+    </div>
+
+    <!-- ══ SCÉNARIO D ══ -->
+    <div class="view" id="view-sc-d">
+      <a class="demo-link" href="scenario-d-demo.html" target="_blank">▶ Voir la démo interactive complète du Scénario D</a>
+      <div class="page-header">
+        <h2>🔄 Scénario D — Abonnement V6</h2>
+        <p>Nouveau client abonnement · Starter / Pro / Premium · Récurrent mensuel</p>
+      </div>
+      <div class="detail-steps" style="--c1:#a855f7;--c2:#ec4899">
+        <a class="detail-step" href="../../campaign/andromeda-campaign.html" target="_blank">
+          <div class="ds-num" style="background:rgba(168,85,247,.1);color:#a855f7">1</div>
+          <div class="ds-info">
+            <strong>Exporter LP V6 Subscription</strong>
+            <span>Builder — Engagement (1/3/6/12 mois) · Réductions progressives jusqu'à −15%</span>
+          </div>
+          <div class="ds-app">Andromeda Builder</div>
+          <button class="ds-open" style="--c1:#a855f7;--c2:#ec4899" onclick="event.preventDefault();window.open('../../campaign/andromeda-campaign.html')">Ouvrir →</button>
+        </a>
+        <div class="detail-step" style="cursor:default">
+          <div class="ds-num" style="background:rgba(168,85,247,.1);color:#a855f7">2</div>
+          <div class="ds-info">
+            <strong>Client choisit formule + paye 1er mois</strong>
+            <span>PayZen OSB · Starter 1 800 XPF · Pro 3 500 XPF · Premium 5 500 XPF / mois</span>
+          </div>
+          <div class="ds-app">LP V6</div>
+        </div>
+        <div class="detail-step" style="cursor:default">
+          <div class="ds-num" style="background:rgba(168,85,247,.1);color:#a855f7">3</div>
+          <div class="ds-info">
+            <strong>Pass HCS rechargé → avantages immédiats</strong>
+            <span>Solde Pass alimenté · Réductions activées · Ateliers offerts selon formule</span>
+          </div>
+          <div class="ds-app">Pass HCS</div>
+        </div>
+        <a class="detail-step" href="hcs-pass-test.html" target="_blank">
+          <div class="ds-num" style="background:rgba(67,233,123,.1);color:#43e97b">✓</div>
+          <div class="ds-info">
+            <strong>Vérifier le solde Pass + historique</strong>
+            <span>Renouvellement mensuel automatique · Suggestion upgrade formule si usage élevé</span>
+          </div>
+          <div class="ds-app">hcs-pass-test.html</div>
+          <button class="ds-open" style="--c1:#43e97b;--c2:#38f9d7" onclick="event.preventDefault();window.open('hcs-pass-test.html')">Ouvrir →</button>
+        </a>
+      </div>
+    </div>
+
+    <!-- ══ SCÉNARIO E ══ -->
+    <div class="view" id="view-sc-e">
+      <a class="demo-link" href="scenario-e-demo.html" target="_blank">▶ Voir la démo interactive complète du Scénario E</a>
+      <div class="page-header">
+        <h2>🤖 Scénario E — Services IA</h2>
+        <p>LP V7 · Détourage · Création logo · Accès apps · Livraison 24–48h</p>
+      </div>
+      <div class="detail-steps" style="--c1:#f093fb;--c2:#f5576c">
+        <a class="detail-step" href="../../campaign/andromeda-campaign.html" target="_blank">
+          <div class="ds-num" style="background:rgba(240,147,251,.1);color:#f093fb">1</div>
+          <div class="ds-info">
+            <strong>Exporter LP V7 Services IA</strong>
+            <span>Builder — Grille services · 1er détourage offert (freemium) · Panier multi-sélection</span>
+          </div>
+          <div class="ds-app">Andromeda Builder</div>
+          <button class="ds-open" style="--c1:#f093fb;--c2:#f5576c" onclick="event.preventDefault();window.open('../../campaign/andromeda-campaign.html')">Ouvrir →</button>
+        </a>
+        <div class="detail-step" style="cursor:default">
+          <div class="ds-num" style="background:rgba(240,147,251,.1);color:#f093fb">2</div>
+          <div class="ds-info">
+            <strong>Client sélectionne services + joint brief + paye</strong>
+            <span>Pass HCS ou PayZen · Brief fichier upload dans la LP · Note de commande</span>
+          </div>
+          <div class="ds-app">LP V7</div>
+        </div>
+        <a class="detail-step" href="../../picwish-pipeline.html" target="_blank">
+          <div class="ds-num" style="background:rgba(240,147,251,.1);color:#f093fb">3</div>
+          <div class="ds-info">
+            <strong>Traitement HCS · PicWish Pipeline</strong>
+            <span>Détourage · Retouche · Export PNG transparent · Haute résolution DTF</span>
+          </div>
+          <div class="ds-app">picwish-pipeline.html</div>
+          <button class="ds-open" style="--c1:#f093fb;--c2:#f5576c" onclick="event.preventDefault();window.open('../../picwish-pipeline.html')">Ouvrir →</button>
+        </a>
+        <div class="detail-step" style="cursor:default">
+          <div class="ds-num" style="background:rgba(67,233,123,.1);color:#43e97b">✓</div>
+          <div class="ds-info">
+            <strong>Livraison par email · Fichiers prêts en 24–48h ouvrés</strong>
+            <span>PNG · SVG · PDF selon demande · Révision incluse · Satisfaction garantie</span>
+          </div>
+          <div class="ds-app">Email livraison</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TOUTES LES APPS ══ -->
+    <div class="view" id="view-apps">
+      <div class="page-header">
+        <h2>⚡ Toutes les applications</h2>
+        <p>Accès direct à chaque outil de l'écosystème HCS</p>
+      </div>
+
+      <div class="apps-section">
+        <div class="section-title-bar"><h3>CRÉATION VISUELLE</h3><div class="section-line"></div></div>
+        <div class="apps-grid">
+          <a class="app-card primary-app" href="../../picwish-pipeline.html" target="_blank">
+            <div class="app-icon">✂️</div>
+            <div class="app-name">PicWish Pipeline</div>
+            <div class="app-desc">Détourage IA + amélioration qualité logo</div>
+            <div class="app-tag">Scénario A · E</div>
+          </a>
+          <a class="app-card primary-app" href="../../mockup-forge-v12.html" target="_blank">
+            <div class="app-icon">🖼️</div>
+            <div class="app-name">MockupForge v12</div>
+            <div class="app-desc">9 mockups T-shirt · Coloris · Placement logo</div>
+            <div class="app-tag">Scénario A</div>
+          </a>
+          <a class="app-card" href="../../agents/agent3_visuel/dtf-composer-v4.html" target="_blank">
+            <div class="app-icon">🎨</div>
+            <div class="app-name">DTF Composer v4</div>
+            <div class="app-desc">Composition gang sheet DTF</div>
+            <div class="app-tag">Scénario C</div>
+          </a>
+          <a class="app-card" href="../../dtf-calculator-hcs-v2.html" target="_blank">
+            <div class="app-icon">🧮</div>
+            <div class="app-name">Calculateur DTF</div>
+            <div class="app-desc">Calcul prix impression DTF · Marges</div>
+            <div class="app-tag">Interne</div>
+          </a>
+        </div>
+      </div>
+
+      <div class="apps-section">
+        <div class="section-title-bar"><h3>CAMPAGNES & LP</h3><div class="section-line"></div></div>
+        <div class="apps-grid">
+          <a class="app-card primary-app" href="../../campaign/andromeda-campaign.html" target="_blank">
+            <div class="app-icon">📡</div>
+            <div class="app-name">Andromeda Builder</div>
+            <div class="app-desc">Builder 8 verticales · Export LP autonomes</div>
+            <div class="app-tag">Tous scénarios</div>
+          </a>
+          <a class="app-card" href="../../hcs-builder-v2-fixed.html" target="_blank">
+            <div class="app-icon">🏗️</div>
+            <div class="app-name">HCS Builder v2</div>
+            <div class="app-desc">LP builder générique · Templates</div>
+            <div class="app-tag">Général</div>
+          </a>
+          <a class="app-card" href="scenario-a-demo.html" target="_blank">
+            <div class="app-icon">▶️</div>
+            <div class="app-name">Démo Scénario A</div>
+            <div class="app-desc">Walk-in client → mockup → LP → paiement</div>
+            <div class="app-tag">Formation</div>
+          </a>
+          <a class="app-card" href="scenario-b-demo.html" target="_blank">
+            <div class="app-icon">▶️</div>
+            <div class="app-name">Démo Scénario B</div>
+            <div class="app-desc">Commande en ligne LP V3 Originals</div>
+            <div class="app-tag">Formation</div>
+          </a>
+          <a class="app-card" href="scenario-c-demo.html" target="_blank">
+            <div class="app-icon">▶️</div>
+            <div class="app-name">Démo Scénario C</div>
+            <div class="app-desc">Réservation atelier LP V4 Pack Atelier</div>
+            <div class="app-tag">Formation</div>
+          </a>
+          <a class="app-card" href="scenario-d-demo.html" target="_blank">
+            <div class="app-icon">▶️</div>
+            <div class="app-name">Démo Scénario D</div>
+            <div class="app-desc">Abonnement LP V6 + Pass HCS rechargé</div>
+            <div class="app-tag">Formation</div>
+          </a>
+          <a class="app-card" href="scenario-e-demo.html" target="_blank">
+            <div class="app-icon">▶️</div>
+            <div class="app-name">Démo Scénario E</div>
+            <div class="app-desc">Services IA LP V7 + PicWish livraison</div>
+            <div class="app-tag">Formation</div>
+          </a>
+        </div>
+      </div>
+
+      <div class="apps-section">
+        <div class="section-title-bar"><h3>PAIEMENT & PASS</h3><div class="section-line"></div></div>
+        <div class="apps-grid">
+          <a class="app-card primary-app" href="hcs-pass-test.html" target="_blank">
+            <div class="app-icon">🎫</div>
+            <div class="app-name">Pass HCS Test</div>
+            <div class="app-desc">Tester · Créditer · Débiter · Historique</div>
+            <div class="app-tag">Scénario D</div>
+          </a>
+          <a class="app-card" href="../../hcs-erp ok/modules/caisse-pos.html" target="_blank">
+            <div class="app-icon">💳</div>
+            <div class="app-name">Caisse POS</div>
+            <div class="app-desc">Point de vente en boutique · XPF</div>
+            <div class="app-tag">Boutique</div>
+          </a>
+        </div>
+      </div>
+
+      <div class="apps-section">
+        <div class="section-title-bar"><h3>GESTION & ERP</h3><div class="section-line"></div></div>
+        <div class="apps-grid">
+          <a class="app-card" href="../../hcs-erp ok/modules/commercial-dashboard.html" target="_blank">
+            <div class="app-icon">📊</div>
+            <div class="app-name">Dashboard Commercial</div>
+            <div class="app-desc">Pipeline ventes · Devis · Clients</div>
+            <div class="app-tag">Commercial</div>
+          </a>
+          <a class="app-card" href="../../hcs-erp ok/modules/stock-dashboard.html" target="_blank">
+            <div class="app-icon">📦</div>
+            <div class="app-name">Stock</div>
+            <div class="app-desc">Gestion stock textile · Fournitures</div>
+            <div class="app-tag">Logistique</div>
+          </a>
+          <a class="app-card" href="../../hcs-erp ok/modules/finance-dashboard.html" target="_blank">
+            <div class="app-icon">💰</div>
+            <div class="app-name">Finance</div>
+            <div class="app-desc">P&L · Trésorerie · XPF</div>
+            <div class="app-tag">Finance</div>
+          </a>
+          <a class="app-card" href="../../hcs-erp ok/modules/planning-dashboard.html" target="_blank">
+            <div class="app-icon">📅</div>
+            <div class="app-name">Planning</div>
+            <div class="app-desc">Ateliers · Production · Créneaux</div>
+            <div class="app-tag">Scénario C</div>
+          </a>
+          <a class="app-card" href="../../hcs-erp ok/modules/atelier-production.html" target="_blank">
+            <div class="app-icon">🖨️</div>
+            <div class="app-name">Atelier Production</div>
+            <div class="app-desc">Fiches production DTF · BN20</div>
+            <div class="app-tag">Production</div>
+          </a>
+          <a class="app-card" href="../../hcs-erp ok/modules/triage-dashboard.html" target="_blank">
+            <div class="app-icon">🔀</div>
+            <div class="app-name">Triage Commandes</div>
+            <div class="app-desc">Prioriser · Dispatcher · Valider</div>
+            <div class="app-tag">Opérations</div>
+          </a>
+        </div>
+      </div>
+
+      <div class="apps-section">
+        <div class="section-title-bar"><h3>HUB & DIAGNOSTIC</h3><div class="section-line"></div></div>
+        <div class="apps-grid">
+          <a class="app-card" href="../../hcs-hub.html" target="_blank">
+            <div class="app-icon">🗄️</div>
+            <div class="app-name">HCS Hub</div>
+            <div class="app-desc">IndexedDB · Logos · Mockups · Configs</div>
+            <div class="app-tag">Données</div>
+          </a>
+          <a class="app-card" href="hcs-hub-diagnostic.html" target="_blank">
+            <div class="app-icon">🔧</div>
+            <div class="app-name">Diagnostic Hub</div>
+            <div class="app-desc">État IndexedDB · Santé du Hub</div>
+            <div class="app-tag">Dev</div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ COMMANDES ══ -->
+    <div class="view" id="view-orders">
+      <div class="page-header">
+        <h2>📦 Commandes</h2>
+        <p>Historique des paiements reçus via les LP exportées</p>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <button onclick="filterOrders('ALL')" id="ord-f-all" style="padding:7px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.15);background:rgba(246,211,101,.15);color:#f6d365;font-size:.8rem;cursor:pointer;font-weight:700">Toutes</button>
+        <button onclick="filterOrders('PAID')" id="ord-f-paid" style="padding:7px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#9090b0;font-size:.8rem;cursor:pointer">✅ PAID</button>
+        <button onclick="filterOrders('PENDING')" id="ord-f-pending" style="padding:7px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#9090b0;font-size:.8rem;cursor:pointer">⏳ PENDING</button>
+        <button onclick="exportOrdersCsv()" style="margin-left:auto;padding:7px 16px;border-radius:20px;border:1px solid rgba(67,233,123,.3);background:rgba(67,233,123,.08);color:#43e97b;font-size:.8rem;cursor:pointer;font-weight:700">⬇️ CSV</button>
+      </div>
+      <div id="orders-table-wrap" style="overflow-x:auto">
+        <table id="orders-table" style="width:100%;border-collapse:collapse;font-size:.78rem">
+          <thead>
+            <tr style="border-bottom:2px solid rgba(255,255,255,.1);color:#9090b0;text-align:left">
+              <th style="padding:8px 12px">Réf.</th>
+              <th style="padding:8px 12px">Produit</th>
+              <th style="padding:8px 12px">Montant</th>
+              <th style="padding:8px 12px">Statut</th>
+              <th style="padding:8px 12px">Date</th>
+            </tr>
+          </thead>
+          <tbody id="orders-tbody">
+            <tr><td colspan="5" style="padding:32px;text-align:center;color:#9090b0">Aucune commande enregistrée.<br><span style="font-size:.72rem">Les commandes apparaissent ici après paiement via les LP exportées.</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="orders-summary" style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap"></div>
+    </div>
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="view" id="view-dashboard">
+      <div class="page-header">
+        <h2>📊 Tableau de bord</h2>
+        <p>Vue temps réel des indicateurs HCS</p>
+      </div>
+      <div class="status-grid">
+        <div class="stat-card">
+          <div class="stat-label">PASS HCS SOLDE</div>
+          <div class="stat-val stat-yellow" id="db-pass">— XPF</div>
+          <div class="stat-sub" id="db-pass-hist">Historique : — transactions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">TOTAL RECHARGÉ</div>
+          <div class="stat-val stat-blue" id="db-reloaded">— XPF</div>
+          <div class="stat-sub">Depuis création du Pass</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">THÈME DU MOIS</div>
+          <div class="stat-val" style="font-size:1rem" id="db-theme">—</div>
+          <div class="stat-sub">Collection V3 Originals</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">APPS DISPONIBLES</div>
+          <div class="stat-val stat-green">18</div>
+          <div class="stat-sub">5 scénarios couverts</div>
+        </div>
+      </div>
+
+      <div class="section-title-bar" style="margin-top:8px">
+        <h3>ACCÈS RAPIDES</h3><div class="section-line"></div>
+      </div>
+      <div class="quick-grid">
+        <a class="quick-btn" href="../../picwish-pipeline.html" target="_blank">
+          <div class="qb-icon">✂️</div>
+          <div class="qb-text"><strong>Détourer un logo</strong><span>PicWish Pipeline → Hub</span></div>
+        </a>
+        <a class="quick-btn" href="../../mockup-forge-v12.html" target="_blank">
+          <div class="qb-icon">🖼️</div>
+          <div class="qb-text"><strong>Créer un mockup</strong><span>MockupForge v12</span></div>
+        </a>
+        <a class="quick-btn" href="../../campaign/andromeda-campaign.html" target="_blank">
+          <div class="qb-icon">📡</div>
+          <div class="qb-text"><strong>Exporter une LP</strong><span>Andromeda Builder</span></div>
+        </a>
+        <a class="quick-btn" href="hcs-pass-test.html" target="_blank">
+          <div class="qb-icon">🎫</div>
+          <div class="qb-text"><strong>Gérer le Pass HCS</strong><span>Solde · Recharge · Historique</span></div>
+        </a>
+        <a class="quick-btn" href="../../hcs-erp ok/modules/atelier-production.html" target="_blank">
+          <div class="qb-icon">🖨️</div>
+          <div class="qb-text"><strong>Fiche production DTF</strong><span>Atelier · BN20</span></div>
+        </a>
+        <a class="quick-btn" href="scenario-a-demo.html" target="_blank">
+          <div class="qb-icon">▶️</div>
+          <div class="qb-text"><strong>Démo Walk-In</strong><span>Former l'équipe · Scénario A</span></div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Navigation ──
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const el = document.getElementById('view-'+id);
+  if(el) el.classList.add('active');
+  const nav = document.getElementById('nav-'+id);
+  if(nav) nav.classList.add('active');
+}
+
+// ── Dashboard Commandes ──
+let _allOrders = [];
+let _orderFilter = 'ALL';
+
+function loadOrders() {
+  try {
+    _allOrders = JSON.parse(localStorage.getItem('hcs_orders') || '[]');
+    // Compléter avec Pass history (paiements Pass)
+    const pass = JSON.parse(localStorage.getItem('hcs_pass') || '{}');
+    const passDebits = (pass.history || []).filter(h => h.type === 'debit').map(h => ({
+      orderId: 'PASS-' + h.date,
+      product: h.label,
+      date: h.date,
+      status: 'PAID',
+      amount: h.amount,
+      source: 'pass'
+    }));
+    _allOrders = [..._allOrders, ...passDebits].sort((a,b) => new Date(b.date) - new Date(a.date));
+  } catch(e) { _allOrders = []; }
+  renderOrders();
+}
+
+function filterOrders(f) {
+  _orderFilter = f;
+  document.querySelectorAll('[id^="ord-f-"]').forEach(btn => {
+    btn.style.background = 'rgba(255,255,255,.05)';
+    btn.style.color = '#9090b0';
+  });
+  const active = document.getElementById('ord-f-' + f.toLowerCase());
+  if (active) { active.style.background = 'rgba(246,211,101,.15)'; active.style.color = '#f6d365'; }
+  renderOrders();
+}
+
+function renderOrders() {
+  const orders = _orderFilter === 'ALL' ? _allOrders : _allOrders.filter(o => o.status === _orderFilter);
+  const tbody = document.getElementById('orders-tbody');
+  if (!tbody) return;
+  if (!orders.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="padding:32px;text-align:center;color:#9090b0">Aucune commande' + (_orderFilter !== 'ALL' ? ' ' + _orderFilter : '') + '.</td></tr>';
+  } else {
+    tbody.innerHTML = orders.map(o => {
+      const d = new Date(o.date);
+      const dateStr = isNaN(d) ? o.date : d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+      const statusColor = o.status === 'PAID' ? '#43e97b' : '#f6d365';
+      const badge = o.source === 'pass' ? ' <span style="font-size:.6rem;background:rgba(253,160,133,.2);color:#fda085;padding:1px 5px;border-radius:4px">Pass</span>' : '';
+      return `<tr style="border-bottom:1px solid rgba(255,255,255,.06);transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background=''">
+        <td style="padding:10px 12px;font-family:monospace;font-size:.7rem;color:#9090b0">${o.orderId || '—'}</td>
+        <td style="padding:10px 12px">${(o.product||'—').substring(0,40)}${badge}</td>
+        <td style="padding:10px 12px;font-weight:700;color:#f6d365">${(o.amount||0).toLocaleString('fr-FR')} XPF</td>
+        <td style="padding:10px 12px"><span style="color:${statusColor};font-weight:700;font-size:.75rem">${o.status||'—'}</span></td>
+        <td style="padding:10px 12px;color:#9090b0;font-size:.72rem">${dateStr}</td>
+      </tr>`;
+    }).join('');
+  }
+  // Résumé
+  const paid = _allOrders.filter(o => o.status === 'PAID');
+  const total = paid.reduce((s, o) => s + (o.amount || 0), 0);
+  const summary = document.getElementById('orders-summary');
+  if (summary) summary.innerHTML = `
+    <div style="background:rgba(67,233,123,.08);border:1px solid rgba(67,233,123,.2);border-radius:10px;padding:12px 20px;font-size:.82rem">
+      <div style="color:#9090b0;font-size:.68rem;margin-bottom:2px">TOTAL ENCAISSÉ</div>
+      <div style="font-weight:900;color:#43e97b;font-size:1.1rem">${total.toLocaleString('fr-FR')} XPF</div>
+    </div>
+    <div style="background:rgba(246,211,101,.08);border:1px solid rgba(246,211,101,.2);border-radius:10px;padding:12px 20px;font-size:.82rem">
+      <div style="color:#9090b0;font-size:.68rem;margin-bottom:2px">COMMANDES PAID</div>
+      <div style="font-weight:900;color:#f6d365;font-size:1.1rem">${paid.length}</div>
+    </div>
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 20px;font-size:.82rem">
+      <div style="color:#9090b0;font-size:.68rem;margin-bottom:2px">TOTAL COMMANDES</div>
+      <div style="font-weight:900;font-size:1.1rem">${_allOrders.length}</div>
+    </div>`;
+  // Maj topbar
+  const tbOrders = document.getElementById('tb-orders');
+  if (tbOrders) tbOrders.textContent = paid.length;
+}
+
+function exportOrdersCsv() {
+  if (!_allOrders.length) { alert('Aucune commande à exporter.'); return; }
+  const header = ['Réf.','Produit','Montant XPF','Statut','Date'];
+  const rows = _allOrders.map(o => [
+    o.orderId || '',
+    (o.product || '').replace(/,/g, ';'),
+    o.amount || 0,
+    o.status || '',
+    o.date || ''
+  ]);
+  const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'hcs-commandes-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+// ── Thème du mois ──
+const THEMES = {1:'Matahiti Api',2:'Aroha',3:"Taure'a",4:'Tautai',5:'Mama',6:"Va'a",7:'Heiva',8:'Surf',9:'Tupuna',10:'Taata Tahiti',11:'Rugby Māohi',12:'Noera'};
+const month = new Date().getMonth()+1;
+const theme = THEMES[month]||'Collection';
+document.querySelectorAll('#home-theme,#db-theme').forEach(el=>el.textContent=theme);
+
+// ── Pass HCS ──
+function loadPass() {
+  try {
+    const d = JSON.parse(localStorage.getItem('hcs_pass')||'{}');
+    const bal = (d.balance||0).toLocaleString('fr-FR')+' XPF';
+    const hist = (d.history||[]).length;
+    const reload = (d.totalReloaded||0).toLocaleString('fr-FR')+' XPF';
+    document.querySelectorAll('#tb-pass,#home-pass').forEach(el=>el.textContent=bal);
+    const dbPass = document.getElementById('db-pass');
+    if(dbPass){ dbPass.textContent=bal; }
+    const dbHist = document.getElementById('db-pass-hist');
+    if(dbHist) dbHist.textContent='Historique : '+hist+' transaction'+(hist>1?'s':'');
+    const dbR = document.getElementById('db-reloaded');
+    if(dbR) dbR.textContent=reload;
+  } catch(e){}
+}
+loadPass();
+setInterval(loadPass, 5000);
+
+// ── Heure ──
+function tick() {
+  const now = new Date();
+  const t = now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const d = now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('tb-time').textContent = t;
+  const ht = document.getElementById('home-time');
+  if(ht) ht.textContent=t;
+  const hd = document.getElementById('home-date');
+  if(hd) hd.textContent=d.charAt(0).toUpperCase()+d.slice(1);
+}
+tick(); setInterval(tick,1000);
+</script>
+</body>
+</html>

@@ -1,0 +1,3136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DTF STUDIO — Générateur de Collections</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ocean:#0a1628;--deep:#0d2137;--teal:#0e7c7b;--coral:#e8533a;
+  --gold:#f0a500;--sand:#f5e6c8;--white:#faf8f3;--muted:#8a9bb0;
+  --border:rgba(14,124,123,0.25);--glow:0 0 28px rgba(14,124,123,0.3);
+  --v1:#2563eb;--v2:#dc2626;--v3:#ca8a04;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--ocean);color:var(--white);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 15% 25%,rgba(14,124,123,0.13) 0%,transparent 55%),radial-gradient(ellipse at 85% 75%,rgba(232,83,58,0.08) 0%,transparent 50%);pointer-events:none;z-index:0}
+
+/* ── HEADER ── */
+header{position:relative;z-index:10;padding:18px 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.logo-mark{display:flex;align-items:center;gap:14px}
+.logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--teal),var(--coral));border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:20px;color:white;box-shadow:var(--glow)}
+.logo-text h1{font-family:'Bebas Neue';font-size:24px;letter-spacing:3px;line-height:1}
+.logo-text span{font-family:'Space Mono';font-size:9px;color:var(--teal);letter-spacing:2px}
+.badge{font-family:'Space Mono';font-size:10px;padding:6px 14px;background:rgba(14,124,123,0.12);border:1px solid var(--teal);border-radius:20px;color:var(--teal);letter-spacing:2px}
+
+/* ── STEPS ── */
+.steps-nav{position:relative;z-index:10;display:flex;align-items:center;justify-content:center;padding:26px 40px 0}
+.step-item{display:flex;align-items:center}
+.step-dot{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer}
+.sc{width:34px;height:34px;border-radius:50%;border:2px solid var(--muted);display:flex;align-items:center;justify-content:center;font-family:'Space Mono';font-size:11px;color:var(--muted);transition:all .3s}
+.sc.active{border-color:var(--teal);background:rgba(14,124,123,0.2);color:var(--teal);box-shadow:var(--glow)}
+.sc.done{border-color:var(--teal);background:var(--teal);color:white}
+.sl{font-family:'Space Mono';font-size:9px;letter-spacing:1px;color:var(--muted);text-align:center;max-width:80px;text-transform:uppercase}
+.sl.active{color:var(--teal)}
+.sline{width:60px;height:2px;background:var(--border);margin-bottom:24px;transition:background .3s}
+.sline.done{background:var(--teal)}
+
+/* ── PANELS ── */
+main{position:relative;z-index:10;max-width:1280px;margin:0 auto;padding:32px 40px}
+.panel{background:rgba(13,33,55,0.78);border:1px solid var(--border);border-radius:20px;padding:36px;backdrop-filter:blur(20px);display:none}
+.panel.active{display:block;animation:fadeUp .4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.ptitle{font-family:'Bebas Neue';font-size:38px;letter-spacing:3px;margin-bottom:4px;background:linear-gradient(135deg,var(--white),var(--sand));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.psub{font-family:'Space Mono';font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;padding-bottom:18px;border-bottom:1px solid var(--border)}
+
+/* ── FORMS ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:16px}
+.fg{margin-bottom:0}
+.fg label{display:block;font-family:'Space Mono';font-size:10px;color:var(--teal);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}
+.fg input,.fg textarea{width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:11px 15px;color:var(--white);font-family:'Syne';font-size:14px;outline:none;transition:all .3s}
+.fg input:focus,.fg textarea:focus{border-color:var(--teal);background:rgba(14,124,123,0.07)}
+
+/* ── UPLOAD ── */
+.upzone{border:2px dashed var(--border);border-radius:14px;padding:40px;text-align:center;cursor:pointer;transition:all .3s;margin:18px 0}
+.upzone:hover{border-color:var(--teal);background:rgba(14,124,123,0.04)}
+.upzone.has{border-style:solid;border-color:var(--teal);padding:16px}
+.upzone input{display:none}
+.up-ico{width:52px;height:52px;margin:0 auto 12px;background:rgba(14,124,123,0.15);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.upzone h3{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;margin-bottom:5px}
+.upzone p{font-size:12px;color:var(--muted);font-family:'Space Mono'}
+#prevCont{display:none;align-items:center;gap:18px}
+#prevImg{width:120px;height:120px;object-fit:cover;border-radius:10px;border:2px solid var(--teal)}
+.prev-info h4{font-family:'Bebas Neue';font-size:17px;letter-spacing:2px;margin-bottom:4px}
+.prev-info p{font-size:11px;color:var(--muted);font-family:'Space Mono';margin-bottom:10px}
+.btn-rm{background:rgba(232,83,58,0.15);border:1px solid var(--coral);color:var(--coral);padding:6px 13px;border-radius:8px;font-family:'Space Mono';font-size:10px;cursor:pointer}
+
+/* ── TAGS ── */
+.tag{padding:6px 13px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:20px;font-family:'Space Mono';font-size:11px;color:var(--muted);cursor:pointer;transition:all .2s;user-select:none;display:inline-block;margin:3px}
+.tag.on{background:rgba(14,124,123,0.2);border-color:var(--teal);color:var(--teal)}
+.dtf-bar{display:flex;gap:10px;flex-wrap:wrap;padding:12px 16px;background:rgba(232,83,58,0.06);border:1px solid rgba(232,83,58,0.2);border-radius:10px;margin-top:14px}
+.dtf-spec{font-family:'Space Mono';font-size:10px;color:var(--coral)}
+.dtf-spec::before{content:'◆ ';font-size:7px}
+
+/* ── STEP 2 ── */
+.a-layout{display:grid;grid-template-columns:170px 1fr;gap:20px;margin-bottom:22px}
+.a-img{border-radius:12px;overflow:hidden;border:2px solid var(--border);aspect-ratio:1;background:var(--deep);display:flex;align-items:center;justify-content:center}
+.a-img img{width:100%;height:100%;object-fit:cover}
+.prompt-box{background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:12px;padding:18px}
+.pb-title{font-family:'Space Mono';font-size:10px;color:var(--teal);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.prompt-text{font-size:11px;line-height:1.8;color:var(--sand);font-family:'Space Mono';white-space:pre-wrap;max-height:160px;overflow-y:auto}
+.cgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:4px}
+.ccard{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:13px}
+.ck{font-family:'Space Mono';font-size:9px;color:var(--teal);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+.cv{font-size:12px;color:var(--sand);line-height:1.5}
+
+/* ── STEP 3 — VARIATION CARDS (vertical layout per component) ── */
+
+/* Auto-fill bar */
+.pf-bar{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;background:rgba(14,124,123,0.07);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;gap:14px}
+.pf-bar p{font-family:'Space Mono';font-size:11px;color:var(--muted);line-height:1.5}
+.btn-pf{flex-shrink:0;display:inline-flex;align-items:center;gap:7px;padding:9px 20px;background:rgba(14,124,123,0.2);border:1px solid var(--teal);border-radius:10px;color:var(--teal);font-family:'Bebas Neue';font-size:14px;letter-spacing:2px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-pf:hover{background:rgba(14,124,123,0.35)}
+.btn-pf:disabled{opacity:.4;cursor:not-allowed}
+
+/* Notice banner */
+.same-notice{display:flex;align-items:center;gap:12px;padding:12px 18px;background:rgba(14,124,123,0.1);border:1px solid rgba(14,124,123,0.4);border-radius:10px;margin-bottom:18px;font-family:'Space Mono';font-size:11px;color:var(--sand);line-height:1.5}
+.same-notice .ni{font-size:20px;flex-shrink:0}
+
+/* Variant name header strip */
+.vnames-strip{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+.vname-col{display:flex;flex-direction:column;align-items:center;gap:6px}
+.vname-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 12px;border-radius:20px;font-family:'Space Mono';font-size:10px;font-weight:700;letter-spacing:1px}
+.vname-badge.b1{background:rgba(37,99,235,0.18);border:1px solid var(--v1);color:var(--v1)}
+.vname-badge.b2{background:rgba(220,38,38,0.16);border:1px solid var(--v2);color:var(--v2)}
+.vname-badge.b3{background:rgba(202,138,4,0.16);border:1px solid var(--v3);color:var(--v3)}
+.vname-col input{width:100%;padding:9px 12px;border-radius:8px;font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;text-align:center;outline:none;transition:all .25s;border:1px solid}
+.vname-col.vc1 input{color:var(--v1);border-color:rgba(37,99,235,0.4);background:rgba(37,99,235,0.05)}
+.vname-col.vc1 input:focus{border-color:var(--v1);background:rgba(37,99,235,0.1)}
+.vname-col.vc2 input{color:var(--v2);border-color:rgba(220,38,38,0.4);background:rgba(220,38,38,0.04)}
+.vname-col.vc2 input:focus{border-color:var(--v2);background:rgba(220,38,38,0.08)}
+.vname-col.vc3 input{color:var(--v3);border-color:rgba(202,138,4,0.4);background:rgba(202,138,4,0.04)}
+.vname-col.vc3 input:focus{border-color:var(--v3);background:rgba(202,138,4,0.08)}
+
+/* Component cards grid: 2 per row */
+.comp-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.comp-card{border-radius:14px;overflow:hidden;border:1px solid var(--border);transition:border-color .2s;background:rgba(0,0,0,0.2)}
+.comp-card:hover{border-color:rgba(14,124,123,0.4)}
+.comp-card.locked{border-color:rgba(14,124,123,0.45);background:rgba(14,124,123,0.04)}
+
+/* Card header: icon + label + original value */
+.comp-card-head{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:rgba(0,0,0,0.25);border-bottom:1px solid var(--border)}
+.comp-card.locked .comp-card-head{background:rgba(14,124,123,0.1)}
+.cch-ico{font-size:20px;flex-shrink:0;margin-top:1px}
+.cch-info{flex:1;min-width:0}
+.cch-name{font-family:'Bebas Neue';font-size:15px;letter-spacing:2px;color:var(--white);margin-bottom:2px}
+.comp-card.locked .cch-name{color:var(--teal)}
+.cch-hint{font-family:'Space Mono';font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:5px}
+.cch-orig{font-family:'Space Mono';font-size:11px;color:var(--sand);line-height:1.5;opacity:.75;padding:5px 8px;background:rgba(255,255,255,0.04);border-radius:6px;border-left:2px solid var(--teal)}
+.comp-card.locked .cch-orig{border-left-color:var(--teal);color:var(--teal);opacity:.8}
+.lock-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(14,124,123,0.15);border:1px solid rgba(14,124,123,0.4);border-radius:20px;font-family:'Space Mono';font-size:9px;color:var(--teal);letter-spacing:1px;margin-top:6px}
+
+/* Card body: 3 stacked variant fields */
+.comp-card-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.var-field{display:flex;align-items:flex-start;gap:8px}
+.vf-badge{flex-shrink:0;margin-top:4px;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono';font-size:9px;font-weight:700;letter-spacing:.5px}
+.vf-badge.vb1{background:rgba(37,99,235,0.2);color:var(--v1);border:1px solid rgba(37,99,235,0.4)}
+.vf-badge.vb2{background:rgba(220,38,38,0.18);color:var(--v2);border:1px solid rgba(220,38,38,0.4)}
+.vf-badge.vb3{background:rgba(202,138,4,0.18);color:var(--v3);border:1px solid rgba(202,138,4,0.4)}
+.vf-input{flex:1}
+.vf-input textarea{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:8px 11px;color:var(--white);font-family:'Space Mono';font-size:11px;line-height:1.55;resize:none;outline:none;transition:all .25s;min-height:52px}
+.var-field.vf1 .vf-input textarea{border-left:2px solid rgba(37,99,235,0.4)}
+.var-field.vf2 .vf-input textarea{border-left:2px solid rgba(220,38,38,0.4)}
+.var-field.vf3 .vf-input textarea{border-left:2px solid rgba(202,138,4,0.4)}
+.var-field.vf1 .vf-input textarea:focus{border-color:var(--v1);background:rgba(37,99,235,0.07)}
+.var-field.vf2 .vf-input textarea:focus{border-color:var(--v2);background:rgba(220,38,38,0.05)}
+.var-field.vf3 .vf-input textarea:focus{border-color:var(--v3);background:rgba(202,138,4,0.05)}
+/* Locked fields */
+.vf-input textarea.locked-ta{opacity:.55;cursor:default;background:rgba(14,124,123,0.05)!important;border-color:rgba(14,124,123,0.2)!important;border-left-color:rgba(14,124,123,0.4)!important;color:var(--teal)!important;font-style:italic}
+/* Full-width card for locked components */
+.comp-card.full-width{grid-column:1/-1}
+
+@media(max-width:900px){.comp-cards{grid-template-columns:1fr}}
+/* Generating SVG overlay */
+.svg-gen-overlay { position:absolute;inset:0;background:rgba(13,33,55,0.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-family:'Space Mono';font-size:10px;color:var(--teal);z-index:2 }
+.svg-gen-overlay .prog { font-size:9px;color:var(--muted);max-width:140px;text-align:center;line-height:1.5 }
+
+/* ── N8N WORKFLOW CONFIG PANEL ── */
+.n8n-panel{background:rgba(37,99,235,0.06);border:1px solid rgba(37,99,235,0.35);border-radius:16px;padding:22px;margin-bottom:24px}
+.n8n-panel-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.n8n-logo{width:32px;height:32px;background:linear-gradient(135deg,#e8533a,#f97316);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.n8n-panel-head h3{font-family:'Bebas Neue';font-size:20px;letter-spacing:3px;color:var(--v1)}
+.n8n-panel-head p{font-family:'Space Mono';font-size:10px;color:var(--muted);letter-spacing:1px}
+.n8n-status{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-family:'Space Mono';font-size:10px;letter-spacing:1px;margin-left:auto}
+.n8n-status.offline{background:rgba(232,83,58,0.15);border:1px solid rgba(232,83,58,0.4);color:var(--coral)}
+.n8n-status.online{background:rgba(14,124,123,0.15);border:1px solid var(--teal);color:var(--teal)}
+.n8n-status .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+
+.n8n-config{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;margin-top:14px}
+.n8n-config .fg{margin-bottom:0}
+.n8n-config input{font-family:'Space Mono';font-size:12px}
+.btn-test{padding:11px 18px;background:rgba(37,99,235,0.2);border:1px solid var(--v1);border-radius:10px;color:var(--v1);font-family:'Bebas Neue';font-size:14px;letter-spacing:2px;cursor:pointer;white-space:nowrap;transition:all .2s}
+.btn-test:hover{background:rgba(37,99,235,0.35)}
+
+.n8n-nodes{display:flex;align-items:center;gap:0;margin-top:16px;overflow-x:auto;padding:12px 0}
+.n8n-node{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0}
+.n8n-node .nn-box{width:52px;height:52px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;border:2px solid;transition:all .2s}
+.n8n-node .nn-lbl{font-family:'Space Mono';font-size:8px;color:var(--muted);letter-spacing:.5px;text-align:center;max-width:64px;line-height:1.3}
+.n8n-node.active .nn-box{animation:nodePulse 1s ease-in-out infinite}
+.n8n-node.done .nn-box{border-color:var(--teal);background:rgba(14,124,123,0.2)}
+.n8n-node.running .nn-box{border-color:var(--v1);background:rgba(37,99,235,0.2)}
+.n8n-node.pending .nn-box{border-color:var(--border);background:rgba(255,255,255,0.03)}
+@keyframes nodePulse{0%,100%{box-shadow:none}50%{box-shadow:0 0 16px rgba(37,99,235,0.5)}}
+.n8n-arrow{width:28px;height:2px;background:var(--border);flex-shrink:0;margin:0 2px;margin-bottom:20px;position:relative}
+.n8n-arrow::after{content:'▶';position:absolute;right:-6px;top:-5px;font-size:10px;color:var(--muted)}
+.n8n-arrow.lit{background:var(--teal)}
+.n8n-arrow.lit::after{color:var(--teal)}
+
+/* Generation progress on cards */
+.gen-progress{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--border);overflow:hidden}
+.gen-progress-bar{height:100%;background:linear-gradient(90deg,var(--teal),var(--v1));width:0%;transition:width .3s;animation:progressPulse 1.5s ease-in-out infinite}
+@keyframes progressPulse{0%,100%{opacity:.6}50%{opacity:1}}
+
+/* Image result display */
+.lvisual img.gen-result{width:100%;height:100%;object-fit:cover;display:block}
+
+/* ── STEP 4 ── */
+.gallery-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;gap:14px}
+.g-actions{display:flex;gap:9px;flex-wrap:wrap}
+.btn-sm{padding:8px 15px;border-radius:9px;font-family:'Space Mono';font-size:10px;cursor:pointer;transition:all .2s;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--white);letter-spacing:1px}
+.btn-sm:hover{border-color:var(--teal)}
+.btn-sm.pri{background:var(--teal);border-color:var(--teal);color:white}
+.btn-sm.pri:hover{background:#0a6e6d}
+.btn-sm:disabled{opacity:.4;cursor:not-allowed}
+
+/* The 3 cards */
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-bottom:26px}
+.lcard{background:rgba(0,0,0,0.32);border-radius:18px;overflow:hidden;cursor:pointer;transition:all .3s;position:relative;border:2px solid}
+.lcard.vc1{border-color:rgba(37,99,235,0.4)}
+.lcard.vc2{border-color:rgba(220,38,38,0.4)}
+.lcard.vc3{border-color:rgba(202,138,4,0.4)}
+.lcard:hover{transform:translateY(-3px)}
+.lcard.vc1:hover,.lcard.s1{border-color:var(--v1);box-shadow:0 14px 40px rgba(37,99,235,0.25)}
+.lcard.vc2:hover,.lcard.s2{border-color:var(--v2);box-shadow:0 14px 40px rgba(220,38,38,0.2)}
+.lcard.vc3:hover,.lcard.s3{border-color:var(--v3);box-shadow:0 14px 40px rgba(202,138,4,0.2)}
+.lcard.s1{box-shadow:0 0 0 3px rgba(37,99,235,0.3),0 14px 40px rgba(37,99,235,0.3)}
+.lcard.s2{box-shadow:0 0 0 3px rgba(220,38,38,0.28),0 14px 40px rgba(220,38,38,0.25)}
+.lcard.s3{box-shadow:0 0 0 3px rgba(202,138,4,0.28),0 14px 40px rgba(202,138,4,0.2)}
+
+.cvbadge{position:absolute;top:11px;left:11px;padding:4px 12px;border-radius:20px;font-family:'Space Mono';font-size:10px;font-weight:700;letter-spacing:1px;z-index:3}
+.b1{background:var(--v1);color:white}.b2{background:var(--v2);color:white}.b3{background:var(--v3);color:#1a0800}
+.sstar{position:absolute;top:11px;right:11px;background:white;color:var(--ocean);font-family:'Space Mono';font-size:9px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:1px;display:none;z-index:3}
+.s1 .sstar,.s2 .sstar,.s3 .sstar{display:block}
+
+.lvisual{aspect-ratio:1;background:white;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.lvisual svg,.lvisual img{width:100%;height:100%;object-fit:contain}
+.genstatus{position:absolute;inset:0;background:rgba(13,33,55,0.93);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-family:'Space Mono';font-size:10px;color:var(--teal)}
+.genmsg{font-size:10px;color:var(--muted);max-width:150px;text-align:center;line-height:1.5}
+
+.linfo{padding:15px 17px}
+.linfo h4{font-family:'Bebas Neue';font-size:18px;letter-spacing:2px;margin-bottom:5px}
+.ltags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.ltag{padding:3px 9px;border-radius:20px;font-family:'Space Mono';font-size:9px}
+.t1{background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.4);color:var(--v1)}
+.t2{background:rgba(220,38,38,0.12);border:1px solid rgba(220,38,38,0.4);color:var(--v2)}
+.t3{background:rgba(202,138,4,0.12);border:1px solid rgba(202,138,4,0.4);color:var(--v3)}
+
+.prompt-pill{padding:9px 12px;background:rgba(0,0,0,0.3);border-radius:8px;font-family:'Space Mono';font-size:10px;color:var(--muted);line-height:1.5;max-height:65px;overflow:hidden;position:relative;margin-bottom:8px}
+.prompt-pill::after{content:'';position:absolute;bottom:0;left:0;right:0;height:20px;background:linear-gradient(transparent,rgba(0,0,0,0.3))}
+.cpbtn{width:100%;padding:7px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'Space Mono';font-size:10px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px}
+.cpbtn:hover{border-color:var(--teal);color:var(--teal)}
+
+/* Selection bar */
+.selbar{display:none;align-items:center;justify-content:space-between;padding:14px 20px;border-radius:13px;margin-bottom:16px}
+.selbar.vis{display:flex;animation:fadeUp .3s ease}
+.sb1{background:rgba(37,99,235,0.1);border:1px solid rgba(37,99,235,0.4)}
+.sb2{background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.4)}
+.sb3{background:rgba(202,138,4,0.08);border:1px solid rgba(202,138,4,0.4)}
+.sel-info h4{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px}
+.sel-info p{font-size:11px;color:var(--muted);font-family:'Space Mono'}
+.sel-actions{display:flex;gap:9px}
+
+/* Diff strip */
+.diff-strip{background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-top:22px}
+.dsh{display:grid;background:rgba(0,0,0,0.3)}
+.dshc{padding:10px 14px;font-family:'Space Mono';font-size:9px;letter-spacing:1px;text-transform:uppercase;border-right:1px solid var(--border);color:var(--muted)}
+.dshc:last-child{border-right:none}
+.dshc.v1{color:var(--v1)}.dshc.v2{color:var(--v2)}.dshc.v3{color:var(--v3)}
+.dsr{display:grid;border-top:1px solid var(--border)}
+.dsr:hover{background:rgba(255,255,255,0.015)}
+.dsrc{padding:9px 14px;font-family:'Space Mono';font-size:11px;line-height:1.5;border-right:1px solid var(--border);color:var(--sand)}
+.dsrc:last-child{border-right:none}
+.dsrc.k{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.dsrc.dv1{color:rgba(37,99,235,0.9)}.dsrc.dv2{color:rgba(220,38,38,0.9)}.dsrc.dv3{color:rgba(202,138,4,0.9)}
+
+/* Poster */
+.poster-wrap{background:rgba(0,0,0,0.18);border:1px solid var(--border);border-radius:14px;padding:18px;margin-top:14px}
+
+/* Buttons */
+.btn-main{display:inline-flex;align-items:center;gap:9px;padding:14px 28px;background:linear-gradient(135deg,var(--teal),#0a6e6d);border:none;border-radius:12px;color:white;font-family:'Bebas Neue';font-size:18px;letter-spacing:2px;cursor:pointer;transition:all .3s;box-shadow:0 8px 22px rgba(14,124,123,0.3)}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(14,124,123,0.5)}
+.btn-main:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-sec{display:inline-flex;align-items:center;gap:9px;padding:12px 24px;background:transparent;border:1px solid var(--border);border-radius:12px;color:var(--white);font-family:'Bebas Neue';font-size:18px;letter-spacing:2px;cursor:pointer;transition:all .3s}
+.btn-sec:hover{border-color:var(--teal);background:rgba(14,124,123,0.07)}
+.btn-row{display:flex;gap:13px;margin-top:26px;padding-top:26px;border-top:1px solid var(--border);flex-wrap:wrap}
+
+/* Modal */
+.modal-ov{position:fixed;inset:0;background:rgba(10,22,40,0.92);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(10px)}
+.modal-ov.open{display:flex}
+.modal{background:var(--deep);border:1px solid var(--border);border-radius:20px;padding:34px;max-width:560px;width:90%;animation:fadeUp .3s ease}
+.modal h3{font-family:'Bebas Neue';font-size:30px;letter-spacing:3px;margin-bottom:8px;color:var(--gold)}
+.modal p{font-size:12px;color:var(--muted);font-family:'Space Mono';line-height:1.7;margin-bottom:18px}
+.expopts{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px}
+.expopt{padding:17px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;text-align:center}
+.expopt:hover{border-color:var(--teal);background:rgba(14,124,123,0.07)}
+.expicon{font-size:26px;margin-bottom:7px}
+.expname{font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;margin-bottom:4px}
+.expdesc{font-family:'Space Mono';font-size:9px;color:var(--muted);line-height:1.5}
+
+/* Misc */
+.wave{display:flex;gap:5px;align-items:center;padding:14px 0}
+.wave span{width:7px;height:7px;background:var(--teal);border-radius:50%;animation:wv 1.2s ease-in-out infinite}
+.wave span:nth-child(2){animation-delay:.2s}.wave span:nth-child(3){animation-delay:.4s}
+@keyframes wv{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-7px);opacity:1}}
+.spinner{width:32px;height:32px;border:3px solid rgba(14,124,123,0.2);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite}
+.spin-sm{width:16px;height:16px;border-width:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:26px;right:26px;background:var(--teal);color:white;padding:11px 20px;border-radius:10px;font-family:'Space Mono';font-size:11px;z-index:9999;opacity:0;transform:translateY(14px);transition:all .3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--teal);border-radius:4px}
+
+@media(max-width:900px){
+  main{padding:16px}header{padding:14px 18px}
+  .trio,.grid2{grid-template-columns:1fr}
+  .cgrid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">
+    <div class="logo-icon">DTF</div>
+    <div class="logo-text"><h1>VISUAL STUDIO</h1><span>Générateur de collections DTF</span></div>
+  </div>
+  <div class="badge">🌺 POLYNÉSIE DESIGN SYSTEM</div>
+</header>
+
+<div class="steps-nav">
+  <div class="step-item"><div class="step-dot" onclick="nav(1)"><div class="sc active" id="sc1">1</div><div class="sl active" id="sl1">UPLOAD</div></div></div>
+  <div class="sline" id="ln1"></div>
+  <div class="step-item"><div class="step-dot" onclick="nav(2)"><div class="sc" id="sc2">2</div><div class="sl" id="sl2">ANALYSE IA</div></div></div>
+  <div class="sline" id="ln2"></div>
+  <div class="step-item"><div class="step-dot" onclick="nav(3)"><div class="sc" id="sc3">3</div><div class="sl" id="sl3">VARIANTES</div></div></div>
+  <div class="sline" id="ln3"></div>
+  <div class="step-item"><div class="step-dot" onclick="nav(4)"><div class="sc" id="sc4">4</div><div class="sl" id="sl4">COLLECTION</div></div></div>
+</div>
+
+<main>
+
+<!-- ═══ STEP 1 ═══ -->
+<div class="panel active" id="step1">
+  <div class="ptitle">IMPORT & CONFIGURATION</div>
+  <div class="psub">Importez l'image prototype · L'IA analyse chaque composante · Vous déclinez en 3 variantes</div>
+
+  <div class="grid2">
+    <div class="fg"><label>🎨 Thème</label><input type="text" id="iTheme" value="Sports traditionnels polynésiens" oninput="saveFields()"></div>
+    <div class="fg"><label>🏷️ Nom collection</label><input type="text" id="iColl" value="TAURE'A 2025" oninput="saveFields()"></div>
+  </div>
+  <div class="fg" style="margin-bottom:0"><label>📝 Brief / Contexte</label>
+    <textarea id="iCtx" rows="2" style="margin-top:0" oninput="saveFields()">Collection streetwear inspirée des sports traditionnels polynésiens. Style illustration comic bold, fond transparent DTF.</textarea>
+  </div>
+
+  <div class="upzone" id="uz" onclick="document.getElementById('fi').click()">
+    <input type="file" id="fi" accept="image/*" onchange="onImg(event)">
+    <div id="upph">
+      <div class="up-ico">🖼️</div>
+      <h3>IMPORTER LE PROTOTYPE</h3>
+      <p>JPG · PNG · WEBP — Image de référence pour l'analyse IA</p>
+      <p style="margin-top:6px;color:var(--teal)">Cliquer ou glisser-déposer</p>
+    </div>
+    <div id="prevCont">
+      <img id="prevImg" src="" alt="">
+      <div class="prev-info">
+        <h4 id="prevName">image.jpg</h4><p id="prevSz"></p>
+        <button class="btn-rm" onclick="rmImg(event)">✕ Retirer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="fg" style="margin-bottom:16px">
+    <label>🎭 Style graphique</label>
+    <div id="sTags">
+      <div class="tag on" onclick="tg(this)">Comic bold</div>
+      <div class="tag on" onclick="tg(this)">Illustration DTF</div>
+      <div class="tag" onclick="tg(this)">Vectoriel flat</div>
+      <div class="tag" onclick="tg(this)">Tribal polynésien</div>
+      <div class="tag" onclick="tg(this)">Sticker art</div>
+      <div class="tag" onclick="tg(this)">Vintage retro</div>
+    </div>
+  </div>
+
+  <div class="dtf-bar">
+    <div class="dtf-spec">Fond transparent PNG</div>
+    <div class="dtf-spec">300 DPI min</div>
+    <div class="dtf-spec">CMJN optimisé</div>
+    <div class="dtf-spec">Contours nets</div>
+    <div class="dtf-spec">Impression DTF textile</div>
+  </div>
+
+  <!-- CLÉ CLAUDE (analyse + prompts) -->
+  <div id="claudeKeyBlock" style="background:rgba(14,124,123,0.07);border:1px solid rgba(14,124,123,0.4);border-radius:14px;padding:18px;margin-top:18px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="font-size:20px">🧠</div>
+      <div>
+        <div style="font-family:'Bebas Neue';font-size:17px;letter-spacing:3px;color:var(--teal)">CLÉ API CLAUDE (ANTHROPIC)</div>
+        <div style="font-family:'Space Mono';font-size:9px;color:var(--muted);margin-top:2px">
+          Requise pour analyser votre image · Génère le prompt base + les variantes IA
+          <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--teal);margin-left:6px">→ console.anthropic.com</a>
+        </div>
+      </div>
+      <div id="claudeKeyOk" style="display:none;margin-left:auto;flex-shrink:0;padding:4px 12px;background:rgba(14,124,123,0.2);border:1px solid var(--teal);border-radius:20px;font-family:'Space Mono';font-size:9px;color:var(--teal)">✓ PRÊT</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="password" id="claudeKeyInput" placeholder="sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxx"
+        oninput="onClaudeKeyInput()"
+        style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(14,124,123,0.4);border-radius:10px;padding:11px 14px;color:var(--white);font-family:'Space Mono';font-size:12px;outline:none;transition:all .3s">
+      <button onclick="toggleKeyVis()" id="keyVisBtn"
+        style="flex-shrink:0;padding:11px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(14,124,123,0.4);border-radius:10px;color:var(--muted);font-family:'Space Mono';font-size:11px;cursor:pointer;white-space:nowrap;transition:all .2s">
+        👁 Afficher
+      </button>
+    </div>
+    <div id="claudeKeyStatus" style="margin-top:8px;font-family:'Space Mono';font-size:10px;color:var(--muted);min-height:14px"></div>
+    <div id="claudeKeyPreview" style="display:none;margin-top:6px;font-family:'Space Mono';font-size:10px;color:var(--muted)"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-main" id="btnA" onclick="analyze()"><span>🔍</span> ANALYSER L'IMAGE</button>
+  </div>
+</div>
+
+<!-- ═══ STEP 2 ═══ -->
+<div class="panel" id="step2">
+  <div class="ptitle">ADN DU PROTOTYPE</div>
+  <div class="psub">Composantes extraites par l'IA · Chaque composante sera déclinée en 3 variantes à l'étape suivante</div>
+
+  <div class="a-layout">
+    <div class="a-img"><img id="aImg" src="" alt=""></div>
+    <div class="prompt-box">
+      <div class="pb-title">📐 PROMPT BASE — PERSONNAGE & STYLE VERROUILLÉS</div>
+      <div id="bpDisp" class="prompt-text"><div class="wave"><span></span><span></span><span></span></div></div>
+    </div>
+  </div>
+
+  <div style="font-family:'Space Mono';font-size:10px;color:var(--teal);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">
+    🔬 COMPOSANTES IDENTIFIÉES — TOUTES DÉCLINABLES EN 3 VARIANTES
+  </div>
+  <div class="cgrid" id="compGrid"></div>
+
+  <div class="btn-row">
+    <button class="btn-sec" onclick="nav(1)">← RETOUR</button>
+    <button class="btn-main" onclick="enterStep3()">DÉFINIR LES 3 VARIANTES →</button>
+  </div>
+</div>
+
+<!-- ═══ STEP 3 ═══ -->
+<div class="panel" id="step3">
+  <div class="ptitle">VARIANTES PAR COMPOSANTE</div>
+  <div class="psub">Pour chaque composante · Valeur originale en référence · 3 champs à remplir pour les déclinaisons V1 / V2 / V3</div>
+
+  <!-- Notice -->
+  <div class="same-notice">
+    <span class="ni">✏️</span>
+    <span><strong style="color:var(--teal)">Toutes les composantes sont modifiables</strong> — Remplissez les champs V1, V2, V3 pour chaque composante. Laissez un champ vide pour conserver la valeur originale dans cette variante.</span>
+  </div>
+
+  <!-- Auto-fill bar -->
+  <div class="pf-bar">
+    <p>✨ L'IA propose automatiquement 3 déclinaisons cohérentes pour chaque composante selon le thème</p>
+    <button class="btn-pf" id="btnPf" onclick="autofill()"><span>🤖</span> AUTO-COMPLÉTER IA</button>
+  </div>
+
+  <!-- Variant names strip -->
+  <div class="vnames-strip">
+    <div class="vname-col vc1">
+      <div class="vname-badge b1">● V1</div>
+      <input type="text" id="vn1" value="VARIANTE 1" placeholder="Nom V1" oninput="saveFields()">
+    </div>
+    <div class="vname-col vc2">
+      <div class="vname-badge b2">● V2</div>
+      <input type="text" id="vn2" value="VARIANTE 2" placeholder="Nom V2" oninput="saveFields()">
+    </div>
+    <div class="vname-col vc3">
+      <div class="vname-badge b3">● V3</div>
+      <input type="text" id="vn3" value="VARIANTE 3" placeholder="Nom V3" oninput="saveFields()">
+    </div>
+  </div>
+
+  <!-- Component cards — filled by JS -->
+  <div class="comp-cards" id="compCards"></div>
+
+  <!-- ══ BLOC CLÉ API — juste avant de générer ══ -->
+  <div id="apiKeyBlockS3" style="background:rgba(232,83,58,0.08);border:2px solid var(--coral);border-radius:16px;padding:22px;margin-top:20px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="font-size:24px">🔑</div>
+      <div>
+        <div style="font-family:'Bebas Neue';font-size:20px;letter-spacing:3px;color:var(--coral)">CLÉ API REQUISE AVANT DE GÉNÉRER</div>
+        <div style="font-family:'Space Mono';font-size:10px;color:var(--muted);margin-top:2px">Sans clé → aperçu schématique SVG · Avec clé → vraie image IA identique au style de référence</div>
+      </div>
+      <div id="apiOkBadge" style="display:none;margin-left:auto;flex-shrink:0;padding:5px 14px;background:rgba(14,124,123,0.2);border:1px solid var(--teal);border-radius:20px;font-family:'Space Mono';font-size:10px;color:var(--teal)">✓ PRÊT</div>
+    </div>
+
+    <!-- Provider toggle -->
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button onclick="s3SelectProvider('replicate')" id="s3p-replicate"
+        style="flex:1;padding:10px;border-radius:10px;font-family:'Space Mono';font-size:10px;cursor:pointer;border:2px solid var(--v1);background:rgba(37,99,235,0.18);color:var(--v1);letter-spacing:1px;transition:all .2s">
+        ⚡ REPLICATE<br><span style="font-size:9px;opacity:.8">Flux Kontext (img2img) — RECOMMANDÉ</span>
+      </button>
+      <button onclick="s3SelectProvider('dalle')" id="s3p-dalle"
+        style="flex:1;padding:10px;border-radius:10px;font-family:'Space Mono';font-size:10px;cursor:pointer;border:2px solid var(--border);background:rgba(255,255,255,0.04);color:var(--muted);letter-spacing:1px;transition:all .2s">
+        🤖 DALL-E 3<br><span style="font-size:9px;opacity:.8">OpenAI HD</span>
+      </button>
+    </div>
+
+    <!-- Token input -->
+    <div id="s3-replicate-sec">
+      <div style="font-family:'Space Mono';font-size:10px;color:var(--teal);letter-spacing:2px;margin-bottom:7px">
+        TOKEN REPLICATE
+        <a href="https://replicate.com/account/api-tokens" target="_blank"
+          style="color:var(--muted);text-decoration:none;font-size:9px;margin-left:8px">→ replicate.com / Account / API tokens</a>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="password" id="s3Token" placeholder="r8_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          oninput="s3TokenInput()"
+          style="flex:1;background:rgba(255,255,255,0.06);border:2px solid rgba(37,99,235,0.4);border-radius:10px;padding:12px 15px;color:var(--white);font-family:'Space Mono';font-size:13px;outline:none;transition:all .3s">
+        <button onclick="s3Validate()"
+          style="flex-shrink:0;padding:12px 20px;background:rgba(37,99,235,0.22);border:1px solid var(--v1);border-radius:10px;color:var(--v1);font-family:'Bebas Neue';font-size:15px;letter-spacing:2px;cursor:pointer;white-space:nowrap;transition:all .2s">
+          ✓ VALIDER
+        </button>
+      </div>
+      <!-- Model selector -->
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="s3SelectModel(this,'replicate:flux-kontext-pro')" class="s3mb active-model"
+          style="flex:1;padding:8px;border-radius:8px;font-family:'Space Mono';font-size:9px;cursor:pointer;border:1px solid var(--v1);background:rgba(37,99,235,0.18);color:var(--v1);line-height:1.5;transition:all .2s">
+          ⭐ Flux Kontext Pro<br><span style="opacity:.7">img2img · style exact</span>
+        </button>
+        <button onclick="s3SelectModel(this,'replicate:flux-pro')" class="s3mb"
+          style="flex:1;padding:8px;border-radius:8px;font-family:'Space Mono';font-size:9px;cursor:pointer;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--muted);line-height:1.5;transition:all .2s">
+          Flux 1.1 Pro<br><span style="opacity:.7">text2img</span>
+        </button>
+        <button onclick="s3SelectModel(this,'replicate:flux-dev')" class="s3mb"
+          style="flex:1;padding:8px;border-radius:8px;font-family:'Space Mono';font-size:9px;cursor:pointer;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--muted);line-height:1.5;transition:all .2s">
+          Flux Dev<br><span style="opacity:.7">rapide</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="s3-dalle-sec" style="display:none">
+      <div style="font-family:'Space Mono';font-size:10px;color:var(--teal);letter-spacing:2px;margin-bottom:7px">
+        CLÉ API OPENAI
+        <a href="https://platform.openai.com/api-keys" target="_blank"
+          style="color:var(--muted);text-decoration:none;font-size:9px;margin-left:8px">→ platform.openai.com / API keys</a>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="password" id="s3TokenDalle" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          oninput="s3TokenInput()"
+          style="flex:1;background:rgba(255,255,255,0.06);border:2px solid rgba(37,99,235,0.4);border-radius:10px;padding:12px 15px;color:var(--white);font-family:'Space Mono';font-size:13px;outline:none;transition:all .3s">
+        <button onclick="s3Validate()"
+          style="flex-shrink:0;padding:12px 20px;background:rgba(37,99,235,0.22);border:1px solid var(--v1);border-radius:10px;color:var(--v1);font-family:'Bebas Neue';font-size:15px;letter-spacing:2px;cursor:pointer;white-space:nowrap">
+          ✓ VALIDER
+        </button>
+      </div>
+    </div>
+
+    <div id="s3ApiStatus" style="margin-top:10px;font-family:'Space Mono';font-size:11px;color:var(--muted);min-height:16px;text-align:center"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-sec" onclick="nav(2)">← RETOUR</button>
+    <button class="btn-main" id="btnG" onclick="generate()"><span>🎨</span> GÉNÉRER LES 3 VISUELS</button>
+  </div>
+</div>
+
+<!-- ═══ STEP 4 ═══ -->
+<div class="panel" id="step4">
+  <div class="gallery-top">
+    <div>
+      <div class="ptitle">COLLECTION ×3</div>
+      <div class="psub">Génération IA · Même style · 3 déclinaisons · <span id="selCnt" style="color:var(--gold)">Aucune sélection</span></div>
+    </div>
+    <div class="g-actions">
+      <button class="btn-sm" onclick="regen()">🔄 Régénérer</button>
+      <button class="btn-sm" onclick="expAll()">📁 Prompts</button>
+      <button class="btn-sm" onclick="archiveSession()" id="btnArchive">📦 Archiver</button>
+      <button class="btn-sm" onclick="openHistory()">📚 Historique</button>
+      <button class="btn-sm" onclick="exportCurrentZip()" id="btnZip">📥 ZIP</button>
+      <button class="btn-sm pri" id="btnExpSel" onclick="openMod()" disabled>⭐ Sélection</button>
+    </div>
+  </div>
+
+  <!-- ══ BLOC CLÉ API — OBLIGATOIRE ══ -->
+  <div id="apiKeyBlock" style="background:rgba(232,83,58,0.08);border:2px solid var(--coral);border-radius:16px;padding:24px;margin-bottom:22px">
+
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="width:40px;height:40px;background:var(--coral);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🔑</div>
+      <div>
+        <div style="font-family:'Bebas Neue';font-size:22px;letter-spacing:3px;color:var(--coral)">CLÉ API REQUISE POUR GÉNÉRER</div>
+        <div style="font-family:'Space Mono';font-size:10px;color:var(--muted);margin-top:2px">Sans clé API → aperçu SVG schématique uniquement · Avec clé → vraie image IA style identique</div>
+      </div>
+      <div id="apiReadyBadge" style="display:none;margin-left:auto;padding:6px 16px;background:rgba(14,124,123,0.2);border:1px solid var(--teal);border-radius:20px;font-family:'Space Mono';font-size:10px;color:var(--teal);white-space:nowrap">✓ CLÉ VALIDÉE</div>
+    </div>
+
+    <!-- Provider choice — big buttons -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px" id="providerBtns">
+      <button onclick="selectProvider('replicate')" id="pbtn-replicate"
+        style="padding:14px;border-radius:12px;font-family:'Space Mono';font-size:11px;cursor:pointer;border:2px solid var(--v1);background:rgba(37,99,235,0.2);color:var(--v1);letter-spacing:1px;text-align:center;transition:all .2s">
+        <div style="font-size:24px;margin-bottom:6px">⚡</div>
+        <strong>REPLICATE</strong><br>
+        <span style="font-size:9px;opacity:.8">Flux Kontext Pro (img2img)<br>Reproduit le style EXACT</span>
+      </button>
+      <button onclick="selectProvider('dalle')" id="pbtn-dalle"
+        style="padding:14px;border-radius:12px;font-family:'Space Mono';font-size:11px;cursor:pointer;border:2px solid var(--border);background:rgba(255,255,255,0.04);color:var(--muted);letter-spacing:1px;text-align:center;transition:all .2s">
+        <div style="font-size:24px;margin-bottom:6px">🤖</div>
+        <strong>DALL-E 3</strong><br>
+        <span style="font-size:9px;opacity:.8">OpenAI HD<br>text2img</span>
+      </button>
+    </div>
+
+    <!-- Replicate section -->
+    <div id="sec-replicate">
+      <div style="font-family:'Space Mono';font-size:10px;color:var(--teal);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">
+        🔑 TOKEN REPLICATE
+        <a href="https://replicate.com/account/api-tokens" target="_blank" style="color:var(--muted);text-decoration:none;font-size:9px;margin-left:10px">→ replicate.com / Account / API tokens</a>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-bottom:12px">
+        <input type="password" id="mainToken" placeholder="r8_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          oninput="onTokenInput()"
+          style="background:rgba(255,255,255,0.06);border:1px solid rgba(37,99,235,0.5);border-radius:10px;padding:13px 16px;color:var(--white);font-family:'Space Mono';font-size:13px;outline:none;transition:all .3s;width:100%">
+        <button onclick="validateToken()" style="padding:13px 20px;background:rgba(37,99,235,0.25);border:1px solid var(--v1);border-radius:10px;color:var(--v1);font-family:'Bebas Neue';font-size:15px;letter-spacing:2px;cursor:pointer;white-space:nowrap">✓ VALIDER</button>
+      </div>
+
+      <div style="font-family:'Space Mono';font-size:10px;color:var(--teal);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">🤖 MODÈLE</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+        <button onclick="selectModel(this,'replicate:flux-kontext-pro')" class="model-btn model-sel"
+          style="padding:10px 8px;border-radius:8px;font-family:'Space Mono';font-size:9px;cursor:pointer;border:1px solid var(--v1);background:rgba(37,99,235,0.2);color:var(--v1);letter-spacing:.5px;line-height:1.5">
+          ⭐ Flux Kontext Pro<br><span style="opacity:.7">img2img · RECOMMANDÉ</span>
+        </button>
+        <button onclick="selectModel(this,'replicate:flux-pro')"
+          style="padding:10px 8px;border-radius:8px;font-family:'Space Mono';font-size:9px;cursor:pointer;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--muted);letter-spacing:.5px;line-height:1.5">
+          Flux 1.1 Pro<br><span style="opacity:.7">text2img · précis</span>
+        </button>
+        <button onclick="selectModel(this,'replicate:flux-dev')"
+          style="padding:10px 8px;border-radius:8px;font-family:'Space Mono';font-size:9px;cursor:pointer;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--muted);letter-spacing:.5px;line-height:1.5">
+          Flux Dev<br><span style="opacity:.7">text2img · rapide</span>
+        </button>
+      </div>
+
+      <div style="padding:10px 14px;background:rgba(14,124,123,0.07);border:1px solid rgba(14,124,123,0.3);border-radius:8px;font-family:'Space Mono';font-size:10px;color:var(--sand);line-height:1.7">
+        💡 <strong style="color:var(--teal)">Flux Kontext Pro</strong> prend votre image originale uploadée à l'étape 1 et change <em>uniquement</em> ce que vous avez défini (couleur pareo, splash…). C'est le modèle qui reproduit le mieux le style de vos images de référence.
+      </div>
+    </div>
+
+    <!-- DALL-E section -->
+    <div id="sec-dalle" style="display:none">
+      <div style="font-family:'Space Mono';font-size:10px;color:var(--teal);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">
+        🔑 CLÉ API OPENAI
+        <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--muted);text-decoration:none;font-size:9px;margin-left:10px">→ platform.openai.com / API keys</a>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center">
+        <input type="password" id="mainTokenDalle" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          oninput="onTokenInput()"
+          style="background:rgba(255,255,255,0.06);border:1px solid rgba(37,99,235,0.5);border-radius:10px;padding:13px 16px;color:var(--white);font-family:'Space Mono';font-size:13px;outline:none;width:100%">
+        <button onclick="validateToken()" style="padding:13px 20px;background:rgba(37,99,235,0.25);border:1px solid var(--v1);border-radius:10px;color:var(--v1);font-family:'Bebas Neue';font-size:15px;letter-spacing:2px;cursor:pointer;white-space:nowrap">✓ VALIDER</button>
+      </div>
+    </div>
+
+    <!-- Status line -->
+    <div id="apiStatus" style="margin-top:12px;font-family:'Space Mono';font-size:11px;color:var(--muted);min-height:16px;text-align:center"></div>
+  </div>
+
+  <!-- Node flow diagram (compact) -->
+  <div class="n8n-nodes" id="n8nNodes" style="margin-bottom:20px">
+    <div class="n8n-node pending" id="nn0"><div class="nn-box">🎯</div><div class="nn-lbl">Trigger</div></div>
+    <div class="n8n-arrow" id="na0"></div>
+    <div class="n8n-node pending" id="nn1"><div class="nn-box">🧠</div><div class="nn-lbl">Claude<br>Prompts</div></div>
+    <div class="n8n-arrow" id="na1"></div>
+    <div class="n8n-node pending" id="nn2"><div class="nn-box">🔀</div><div class="nn-lbl">Split ×3</div></div>
+    <div class="n8n-arrow" id="na2"></div>
+    <div class="n8n-node pending" id="nn3"><div class="nn-box">🖼️</div><div class="nn-lbl">Replicate<br>Flux</div></div>
+    <div class="n8n-arrow" id="na3"></div>
+    <div class="n8n-node pending" id="nn4"><div class="nn-box">⏳</div><div class="nn-lbl">Attente<br>résultat</div></div>
+    <div class="n8n-arrow" id="na4"></div>
+    <div class="n8n-node pending" id="nn5"><div class="nn-box">⬇️</div><div class="nn-lbl">Image<br>HD</div></div>
+    <div class="n8n-arrow" id="na5"></div>
+    <div class="n8n-node pending" id="nn6"><div class="nn-box">✅</div><div class="nn-lbl">Done</div></div>
+  </div>
+
+  <!-- Selection bar -->
+  <div class="selbar" id="selbar">
+    <div class="sel-info"><h4 id="selTitle">—</h4><p id="selDesc"></p></div>
+    <div class="sel-actions">
+      <button class="btn-sm" onclick="cpSelPrompt()">📋 Copier prompt</button>
+      <button class="btn-sm pri" onclick="openMod()">🖨️ Préparer DTF</button>
+    </div>
+  </div>
+
+  <!-- 3 cards -->
+  <div class="trio" id="trio"></div>
+
+  <!-- Diff table -->
+  <div class="diff-strip" id="diffStrip"></div>
+
+  <!-- Poster -->
+  <div class="poster-wrap">
+    <div style="font-family:'Space Mono';font-size:10px;color:var(--teal);letter-spacing:2px;margin-bottom:14px">🖼️ PLANCHE PRÉSENTATION CLIENT</div>
+    <div id="posterPrev" style="background:white;border-radius:10px;padding:20px;max-width:700px;margin:0 auto">
+      <div style="text-align:center;margin-bottom:12px;border-bottom:2px solid #eee;padding-bottom:12px">
+        <div id="postT" style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#0a1628;letter-spacing:3px">COLLECTION</div>
+        <div id="postSub" style="font-family:'Space Mono',monospace;font-size:9px;color:#888;letter-spacing:2px;margin-top:3px">MÊME PERSONNAGE · 3 VARIANTES</div>
+      </div>
+      <div id="posterG" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px"></div>
+      <div style="text-align:center;font-family:monospace;font-size:8px;color:#aaa;border-top:1px solid #eee;padding-top:10px;margin-top:12px">○ Entourez votre choix et retournez cette fiche à notre équipe</div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-sec" onclick="nav(3)">← MODIFIER LES VARIANTES</button>
+    <button class="btn-main" onclick="openMod()">🖨️ PRÉPARER POUR DTF</button>
+  </div>
+</div>
+
+</main>
+
+<!-- EXPORT MODAL -->
+<div class="modal-ov" id="expMod">
+  <div class="modal">
+    <h3>EXPORT & GÉNÉRATION</h3>
+    <p>Prompts optimisés pour Midjourney, DALL-E 3, Stable Diffusion, Replicate ou Adobe Firefly.</p>
+    <div class="expopts">
+      <div class="expopt" onclick="expPrompts()"><div class="expicon">📋</div><div class="expname">PROMPTS TXT</div><div class="expdesc">3 prompts complets<br>+ matrice variantes</div></div>
+      <div class="expopt" onclick="expPoster()"><div class="expicon">🖼️</div><div class="expname">AFFICHE PRINT</div><div class="expdesc">Planche présentation<br>client à imprimer</div></div>
+      <div class="expopt" onclick="expN8n()" style="border-color:rgba(37,99,235,0.4);background:rgba(37,99,235,0.06)"><div class="expicon">⚙️</div><div class="expname" style="color:var(--v1)">WORKFLOW N8N</div><div class="expdesc">JSON importable complet<br>Replicate + DALL-E 3 prêt</div></div>
+      <div class="expopt" onclick="closeMod();genWithReplicate(S.selIdx??0,null)" style="border-color:rgba(14,124,123,0.4);background:rgba(14,124,123,0.06)"><div class="expicon">🚀</div><div class="expname" style="color:var(--teal)">GÉNÉRER HD</div><div class="expdesc">Lancer directement sur<br>Replicate / DALL-E / Stability</div></div>
+      <div class="expopt" onclick="expClip()" style="grid-column:1/-1"><div class="expicon">📱</div><div class="expname">TOUT COPIER</div><div class="expdesc">Résumé complet presse-papiers</div></div>
+    </div>
+    <button class="btn-sec" style="width:100%" onclick="closeMod()">FERMER</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const S = {
+  step: 1,
+  imgData: null, imgMime: null,
+  claudeKey: '',
+  theme: '', coll: '', ctx: '', styles: [],
+  basePrompt: '',          // locked: same character + same drawing style
+  components: {},          // { key: { icon, label, hint, originalValue } }
+  variations: {},          // { key: { v1:'', v2:'', v3:'' } }
+  variantNames: ['VARIANTE 1', 'VARIANTE 2', 'VARIANTE 3'],
+  generatedPrompts: [],    // [{ id, name, prompt, tags }]
+  selIdx: null,
+};
+
+// Component metadata — fixed order and labels
+const CMETA = {
+  sujetPrincipal:    { icon:'🎯', label:'Sujet principal',       hint:'Personnage / objet central' },
+  action:            { icon:'⚡', label:'Action',                hint:'Geste / activité' },
+  objetsAccessoires: { icon:'📦', label:'Objets & accessoires',  hint:'Ce qui est porté / tenu' },
+  tenue:             { icon:'👗', label:'Tenue',                  hint:'Vêtements et couleurs' },
+  palette:           { icon:'🌈', label:'Palette couleurs',       hint:'Teintes dominantes' },
+  styleGraphique:    { icon:'🎨', label:'Style graphique',        hint:'Technique illustration' },
+  composition:       { icon:'📐', label:'Composition',            hint:'Cadrage et mise en scène' },
+  fond:              { icon:'🖼️', label:'Fond / Contexte',       hint:'Arrière-plan et ambiance' },
+};
+
+// ============================================================
+// CLAUDE KEY HELPERS + PROXY
+// ============================================================
+const WORKER_URL    = 'https://hcs-proxy.highcoffeeshirt.workers.dev';
+const WORKER_SECRET = 'hcs-proxy-2026';
+
+// Sauvegarde / restauration clés dans localStorage
+const LS_CLAUDE    = 'dtf_claude_key';
+const LS_REPLICATE = 'dtf_replicate_key';
+const LS_OPENAI    = 'dtf_openai_key';
+const LS_FIELDS    = 'dtf_fields';
+
+function saveFields() {
+  const data = {
+    theme:  document.getElementById('iTheme')?.value || '',
+    coll:   document.getElementById('iColl')?.value  || '',
+    ctx:    document.getElementById('iCtx')?.value   || '',
+    styles: Array.from(document.querySelectorAll('#sTags .tag.on')).map(t => t.textContent),
+    vn1:    document.getElementById('vn1')?.value    || '',
+    vn2:    document.getElementById('vn2')?.value    || '',
+    vn3:    document.getElementById('vn3')?.value    || '',
+  };
+  localStorage.setItem(LS_FIELDS, JSON.stringify(data));
+}
+
+function saveKeys() {
+  const ck = document.getElementById('claudeKeyInput')?.value?.trim();
+  const rk = document.getElementById('s3Token')?.value?.trim() || document.getElementById('mainToken')?.value?.trim();
+  const ok = document.getElementById('s3TokenDalle')?.value?.trim() || document.getElementById('mainTokenDalle')?.value?.trim();
+  if (ck) localStorage.setItem(LS_CLAUDE, ck);
+  if (rk) localStorage.setItem(LS_REPLICATE, rk);
+  if (ok) localStorage.setItem(LS_OPENAI, ok);
+}
+
+function loadKeys() {
+  const ck = localStorage.getItem(LS_CLAUDE);
+  const rk = localStorage.getItem(LS_REPLICATE);
+  const ok = localStorage.getItem(LS_OPENAI);
+  const f  = localStorage.getItem(LS_FIELDS);
+
+  if (ck) {
+    ['claudeKeyInput'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ck; });
+    S.claudeKey = ck;
+    onClaudeKeyInput();
+  }
+  if (rk) {
+    ['s3Token','mainToken'].forEach(id => { const el = document.getElementById(id); if (el) el.value = rk; });
+    _tokenOk = false;
+  }
+  if (ok) {
+    ['s3TokenDalle','mainTokenDalle'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ok; });
+  }
+  if (f) {
+    try {
+      const d = JSON.parse(f);
+      if (d.theme) document.getElementById('iTheme').value = d.theme;
+      if (d.coll)  document.getElementById('iColl').value  = d.coll;
+      if (d.ctx)   document.getElementById('iCtx').value   = d.ctx;
+      if (d.styles?.length) {
+        document.querySelectorAll('#sTags .tag').forEach(t => {
+          t.classList.toggle('on', d.styles.includes(t.textContent));
+        });
+      }
+      if (d.vn1) { const e = document.getElementById('vn1'); if (e) e.value = d.vn1; }
+      if (d.vn2) { const e = document.getElementById('vn2'); if (e) e.value = d.vn2; }
+      if (d.vn3) { const e = document.getElementById('vn3'); if (e) e.value = d.vn3; }
+    } catch(e) {}
+  }
+  if (ck || rk || ok) toast('🔑 Session restaurée');
+}
+
+function onClaudeKeyInput() {
+  S.claudeKey = document.getElementById('claudeKeyInput')?.value?.trim() || '';
+  saveKeys();
+  const ok  = document.getElementById('claudeKeyOk');
+  const st  = document.getElementById('claudeKeyStatus');
+  const blk = document.getElementById('claudeKeyBlock');
+  const prev = document.getElementById('claudeKeyPreview');
+  if (S.claudeKey.length > 20) {
+    if (ok)  ok.style.display  = 'block';
+    const preview = S.claudeKey.substring(0, 14) + '...' + S.claudeKey.slice(-4);
+    const valid = S.claudeKey.startsWith('sk-ant-');
+    if (st) { st.textContent = valid ? '✓ Format valide — prêt à analyser' : '⚠️ La clé doit commencer par sk-ant-'; st.style.color = valid ? 'var(--teal)' : 'var(--coral)'; }
+    if (prev) { prev.style.display = 'block'; prev.textContent = `Clé lue : ${preview} (${S.claudeKey.length} caractères)`; }
+    if (blk) { blk.style.borderColor = valid ? 'var(--teal)' : 'var(--coral)'; blk.style.background = valid ? 'rgba(14,124,123,0.1)' : 'rgba(232,83,58,0.06)'; }
+  } else {
+    if (ok)  ok.style.display  = 'none';
+    if (st)  { st.textContent = ''; }
+    if (prev) prev.style.display = 'none';
+    if (blk) { blk.style.borderColor = 'rgba(14,124,123,0.4)'; blk.style.background = 'rgba(14,124,123,0.07)'; }
+  }
+}
+
+function toggleKeyVis() {
+  const inp = document.getElementById('claudeKeyInput');
+  const btn = document.getElementById('keyVisBtn');
+  if (!inp) return;
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    btn.textContent = '🙈 Masquer';
+  } else {
+    inp.type = 'password';
+    btn.textContent = '👁 Afficher';
+  }
+}
+
+// Appel Claude via Worker (contourne le blocage CORS file://)
+async function callClaude(payload) {
+  const resp = await fetch(`${WORKER_URL}/api/claude`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Worker-Secret': WORKER_SECRET,
+    },
+    body: JSON.stringify({ apiKey: S.claudeKey, ...payload })
+  });
+  if (!resp.ok) {
+    const e = await resp.json().catch(() => ({}));
+    throw new Error(e?.error || `HTTP ${resp.status}`);
+  }
+  return resp.json();
+}
+
+// ============================================================
+// NAV
+// ============================================================
+function nav(n) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+  for (let i = 1; i <= 4; i++) {
+    const sc = document.getElementById('sc' + i), sl = document.getElementById('sl' + i);
+    sc.className = 'sc'; sl.className = 'sl';
+    if (i < n)  { sc.classList.add('done');   sc.textContent = '✓'; }
+    else if (i === n) { sc.classList.add('active'); sl.classList.add('active'); sc.textContent = i; }
+    else sc.textContent = i;
+    if (i < 4) document.getElementById('ln' + i).className = 'sline' + (i < n ? ' done' : '');
+  }
+  S.step = n;
+}
+
+// ============================================================
+// STEP 1
+// ============================================================
+function onImg(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    S.imgData = ev.target.result; S.imgMime = f.type;
+    document.getElementById('prevImg').src = S.imgData;
+    document.getElementById('prevName').textContent = f.name;
+    document.getElementById('prevSz').textContent = (f.size / 1024).toFixed(0) + ' KB';
+    document.getElementById('upph').style.display = 'none';
+    document.getElementById('prevCont').style.display = 'flex';
+    document.getElementById('uz').classList.add('has');
+  };
+  r.readAsDataURL(f);
+}
+function rmImg(e) {
+  e.stopPropagation(); S.imgData = null;
+  document.getElementById('fi').value = '';
+  document.getElementById('upph').style.display = 'block';
+  document.getElementById('prevCont').style.display = 'none';
+  document.getElementById('uz').classList.remove('has');
+}
+function tg(el) { el.classList.toggle('on'); saveFields(); }
+
+// ============================================================
+// STEP 2 — ANALYZE
+// ============================================================
+async function analyze() {
+  S.claudeKey = document.getElementById('claudeKeyInput')?.value?.trim() || '';
+  if (!S.claudeKey) {
+    const blk = document.getElementById('claudeKeyBlock');
+    const st  = document.getElementById('claudeKeyStatus');
+    if (blk) { blk.style.borderColor = 'var(--coral)'; blk.style.background = 'rgba(232,83,58,0.08)'; }
+    if (st)  { st.textContent = '⚠️ Entrez votre clé API Claude ci-dessus pour analyser l\'image'; st.style.color = 'var(--coral)'; }
+    document.getElementById('claudeKeyInput')?.focus();
+    toast('⚠️ Clé API Claude requise avant d\'analyser');
+    return;
+  }
+
+  S.theme   = document.getElementById('iTheme').value;
+  S.coll    = document.getElementById('iColl').value;
+  S.ctx     = document.getElementById('iCtx').value;
+  S.styles  = Array.from(document.querySelectorAll('#sTags .tag.on')).map(t => t.textContent);
+
+  const btn = document.getElementById('btnA');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner spin-sm"></div> ANALYSE EN COURS...';
+
+  nav(2);
+  document.getElementById('bpDisp').innerHTML = '<div class="wave"><span></span><span></span><span></span></div>';
+  document.getElementById('compGrid').innerHTML = '';
+  document.getElementById('aImg').src = S.imgData || '';
+
+  const SYS = `Tu es expert en design graphique DTF et analyse d'images.
+RÈGLE ABSOLUE: Réponds UNIQUEMENT en JSON valide. Zéro markdown, zéro backtick, zéro texte hors JSON.`;
+
+  const USR = `Analyse cette image pour une collection DTF.
+Thème: "${S.theme}" | Styles: ${S.styles.join(', ')} | Contexte: ${S.ctx}
+
+Extrait les composantes visuelles. Le basePrompt doit capturer EXACTEMENT:
+- Le personnage (morphologie, tatouages, caractéristiques distinctives)  
+- Le style de dessin (comic bold, technique, contours, rendu)
+- La posture et composition générale
+Ces éléments seront IDENTIQUES dans les 3 variantes.
+
+Les composantes (components) décrivent chaque élément de l'image originale.
+Ce sont elles que l'utilisateur pourra décliner en V1/V2/V3.
+
+JSON exact:
+{
+  "basePrompt": "prompt en anglais capturant UNIQUEMENT le personnage et le style de dessin — sans mentionner les couleurs spécifiques ni les objets portés — sera préfixé à chaque variante pour garantir la cohérence",
+  "components": {
+    "sujetPrincipal": "description du personnage central",
+    "action": "ce que fait le personnage",
+    "objetsAccessoires": "objets portés ou tenus",
+    "tenue": "vêtements et leurs couleurs",
+    "palette": "couleurs dominantes du visuel",
+    "styleGraphique": "technique et style d'illustration",
+    "composition": "cadrage, angle, mise en scène",
+    "fond": "arrière-plan, effets, ambiance"
+  }
+}`;
+
+  try {
+    const msgs = S.imgData ? [{
+      role: 'user',
+      content: [
+        { type: 'image', source: { type: 'base64', media_type: S.imgMime || 'image/jpeg', data: S.imgData.split(',')[1] } },
+        { type: 'text', text: USR }
+      ]
+    }] : [{ role: 'user', content: USR }];
+
+    const d = await callClaude({ model: 'claude-opus-4-5', max_tokens: 1400, messages: msgs, system: SYS });
+    const txt = d.content.map(i => i.text || '').join('').replace(/```json|```/g, '').trim();
+    const r = JSON.parse(txt);
+    S.basePrompt = r.basePrompt || '';
+    S.components = {};
+    Object.entries(r.components || {}).forEach(([k, v]) => {
+      S.components[k] = { ...(CMETA[k] || { icon: '🔹', label: k, hint: '' }), originalValue: v };
+    });
+  } catch (err) {
+    console.error('Analyse IA:', err.message);
+    // Revenir étape 1 pour que le bouton RÉESSAYER soit visible
+    nav(1);
+    // Afficher l'erreur dans le bloc clé (étape 1)
+    const st = document.getElementById('claudeKeyStatus');
+    const blk = document.getElementById('claudeKeyBlock');
+    if (st)  { st.textContent = '⚠️ ' + err.message; st.style.color = 'var(--coral)'; }
+    if (blk) { blk.style.borderColor = 'var(--coral)'; blk.style.background = 'rgba(232,83,58,0.08)'; }
+    toast('⚠️ ' + err.message);
+    btn.disabled = false;
+    btn.innerHTML = '<span>🔍</span> RÉESSAYER';
+    return;
+  }
+
+  // Display base prompt
+  document.getElementById('bpDisp').textContent = S.basePrompt;
+
+  // Display component cards
+  const grid = document.getElementById('compGrid');
+  grid.innerHTML = Object.entries(S.components).map(([k, c]) => `
+    <div class="ccard">
+      <div class="ck">${c.icon} ${c.label}</div>
+      <div class="cv">${c.originalValue}</div>
+    </div>`).join('');
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>🔍</span> ANALYSER L\'IMAGE';
+}
+
+// ============================================================
+// STEP 3 — BUILD MATRIX
+// ============================================================
+function enterStep3() {
+  nav(3);
+  buildMatrix();
+}
+
+// Components that are LOCKED identical across all variants
+const LOCKED_KEYS = []; // Tous les champs sont éditables
+
+function buildMatrix() {
+  S.variations = {};
+  const container = document.getElementById('compCards');
+  container.innerHTML = '';
+
+  Object.entries(S.components).forEach(([key, comp]) => {
+    const isLocked = LOCKED_KEYS.includes(key);
+    // Initialise variations — locked = original value, variable = empty
+    S.variations[key] = {
+      v1: isLocked ? comp.originalValue : '',
+      v2: isLocked ? comp.originalValue : '',
+      v3: isLocked ? comp.originalValue : '',
+    };
+
+    const card = document.createElement('div');
+    card.className = 'comp-card' + (isLocked ? ' locked' : '') + (isLocked ? ' full-width' : '');
+
+    const varFields = isLocked
+      ? [1,2,3].map(v => `
+          <div class="var-field vf${v}">
+            <div class="vf-badge vb${v}">V${v}</div>
+            <div class="vf-input">
+              <textarea
+                id="var_${key}_v${v}"
+                class="locked-ta"
+                readonly
+                title="Verrouillé — identique dans les 3 variantes"
+              >${comp.originalValue}</textarea>
+            </div>
+          </div>`).join('')
+      : [1,2,3].map(v => `
+          <div class="var-field vf${v}">
+            <div class="vf-badge vb${v}">V${v}</div>
+            <div class="vf-input">
+              <textarea
+                id="var_${key}_v${v}"
+                placeholder="Variation V${v} pour ${comp.label.toLowerCase()}…"
+                oninput="S.variations['${key}']['v${v}']=this.value"
+              ></textarea>
+            </div>
+          </div>`).join('');
+
+    card.innerHTML = `
+      <div class="comp-card-head">
+        <div class="cch-ico">${comp.icon}</div>
+        <div class="cch-info">
+          <div class="cch-name">${comp.label}</div>
+          <div class="cch-hint">${comp.hint || ''}</div>
+          <div class="cch-orig">${comp.originalValue}</div>
+          ${isLocked ? '<div class="lock-badge">🔒 IDENTIQUE ×3</div>' : ''}
+        </div>
+      </div>
+      <div class="comp-card-body">${varFields}</div>`;
+
+    container.appendChild(card);
+  });
+}
+
+// ============================================================
+// AUTO-FILL VIA CLAUDE
+// ============================================================
+async function autofill() {
+  const btn = document.getElementById('btnPf');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner spin-sm"></div> GÉNÉRATION...';
+
+  const compList = Object.entries(S.components).map(([k, c]) => `- ${c.label}: ${c.originalValue}`).join('\n');
+
+  const SYS = `Tu es expert en design graphique et collections DTF polynésiennes. Réponds UNIQUEMENT en JSON valide.`;
+  const USR = `Image originale — composantes:
+${compList}
+
+Thème: "${S.theme}"
+Concept: MÊME personnage (tatouages, posture, style comic bold, splash fond) · SEULES les composantes changent.
+
+Génère 3 variantes cohérentes. Contraintes:
+- sujetPrincipal: IDENTIQUE dans les 3 variantes (ne pas changer le personnage ni ses tatouages)
+- styleGraphique: IDENTIQUE dans les 3 variantes (même style comic bold)
+- composition: peut légèrement varier
+- objetsAccessoires, tenue, palette, fond: DOIVENT VARIER clairement entre V1/V2/V3
+- Les 3 variantes doivent être distinctes visuellement
+
+Noms évocateurs pour chaque variante.
+
+JSON:
+{
+  "variantNames": ["NOM V1", "NOM V2", "NOM V3"],
+  "variations": {
+    "sujetPrincipal":    { "v1": "...", "v2": "...", "v3": "..." },
+    "action":            { "v1": "...", "v2": "...", "v3": "..." },
+    "objetsAccessoires": { "v1": "...", "v2": "...", "v3": "..." },
+    "tenue":             { "v1": "...", "v2": "...", "v3": "..." },
+    "palette":           { "v1": "...", "v2": "...", "v3": "..." },
+    "styleGraphique":    { "v1": "...", "v2": "...", "v3": "..." },
+    "composition":       { "v1": "...", "v2": "...", "v3": "..." },
+    "fond":              { "v1": "...", "v2": "...", "v3": "..." }
+  }
+}`;
+
+  try {
+    const d = await callClaude({ model: 'claude-opus-4-5', max_tokens: 2000,
+      messages: [{ role: 'user', content: USR }], system: SYS });
+    const txt = d.content.map(i => i.text || '').join('').replace(/```json|```/g, '').trim();
+    const r = JSON.parse(txt);
+
+    if (r.variantNames) {
+      r.variantNames.forEach((n, i) => {
+        const el = document.getElementById('vn' + (i + 1));
+        if (el) el.value = n;
+      });
+    }
+
+    Object.entries(r.variations || {}).forEach(([key, vals]) => {
+      const isLocked = LOCKED_KEYS.includes(key);
+      [1, 2, 3].forEach(v => {
+        const ta = document.getElementById(`var_${key}_v${v}`);
+        if (!ta) return;
+        if (isLocked) {
+          // locked: keep original value, don't overwrite
+          const orig = S.components[key]?.originalValue || '';
+          ta.value = orig;
+          S.variations[key] = S.variations[key] || {};
+          S.variations[key]['v' + v] = orig;
+        } else if (vals['v' + v]) {
+          ta.value = vals['v' + v];
+          S.variations[key] = S.variations[key] || {};
+          S.variations[key]['v' + v] = vals['v' + v];
+          // Flash highlight only on variable rows
+          const colMap = { 1: 'var(--v1)', 2: 'var(--v2)', 3: 'var(--v3)' };
+          ta.style.borderColor = colMap[v];
+          setTimeout(() => ta.style.borderColor = '', 2000);
+        }
+      });
+    });
+    toast('✅ Variantes auto-complétées !');
+  } catch (e) {
+    // Fallback générique : conserver les valeurs originales analysées
+    toast('⚠️ Auto-complétion IA échouée — remplissez les champs manuellement');
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<span>🤖</span> AUTO-COMPLÉTER IA';
+}
+
+// ============================================================
+// N8N / API HELPERS
+// ============================================================
+// ============================================================
+// STEP 3 API KEY HELPERS
+// ============================================================
+function s3SelectProvider(p) {
+  _provider = p;
+  ['replicate','dalle'].forEach(id => {
+    const btn = document.getElementById('s3p-' + id);
+    const sec = document.getElementById('s3-' + id + '-sec');
+    const on  = id === p;
+    if (btn) {
+      btn.style.borderColor = on ? 'var(--v1)' : 'var(--border)';
+      btn.style.background  = on ? 'rgba(37,99,235,0.18)' : 'rgba(255,255,255,0.04)';
+      btn.style.color       = on ? 'var(--v1)' : 'var(--muted)';
+    }
+    if (sec) sec.style.display = on ? 'block' : 'none';
+  });
+  if (p === 'dalle') _model = 'dalle:dall-e-3';
+  else _model = 'replicate:flux-kontext-pro';
+  _tokenOk = false;
+  const badge = document.getElementById('apiOkBadge');
+  if (badge) badge.style.display = 'none';
+  // sync provider buttons on step 4 too
+  selectProvider(p);
+}
+
+function s3SelectModel(btn, model) {
+  _model = model;
+  document.querySelectorAll('.s3mb').forEach(b => {
+    b.style.borderColor = 'var(--border)';
+    b.style.background  = 'rgba(255,255,255,0.04)';
+    b.style.color       = 'var(--muted)';
+  });
+  btn.style.borderColor = 'var(--v1)';
+  btn.style.background  = 'rgba(37,99,235,0.18)';
+  btn.style.color       = 'var(--v1)';
+}
+
+function s3TokenInput() {
+  _tokenOk = false;
+  const badge = document.getElementById('apiOkBadge');
+  if (badge) badge.style.display = 'none';
+  const st = document.getElementById('s3ApiStatus');
+  if (st) { st.textContent = ''; st.style.color = 'var(--muted)'; }
+  saveKeys();
+}
+
+async function s3Validate() {
+  const token = getToken();
+  const st    = document.getElementById('s3ApiStatus');
+  const badge = document.getElementById('apiOkBadge');
+  const block = document.getElementById('apiKeyBlockS3');
+
+  if (!token || token.length < 8) {
+    if (st) { st.textContent = '⚠️ Collez votre clé API ci-dessus'; st.style.color = 'var(--coral)'; }
+    return;
+  }
+  if (st) { st.textContent = '⏳ Vérification…'; st.style.color = 'var(--muted)'; }
+
+  try {
+    let ok = false;
+    if (_provider === 'replicate') {
+      const r = await fetch('https://api.replicate.com/v1/account', {
+        headers: { 'Authorization': `Token ${token}` }
+      });
+      ok = r.ok;
+    } else {
+      const r = await fetch('https://api.openai.com/v1/models?limit=1', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      ok = r.ok;
+    }
+    if (ok) {
+      _tokenOk = true;
+      if (st)    { st.textContent = '✅ Clé valide — vous pouvez générer les vraies images IA !'; st.style.color = 'var(--teal)'; }
+      if (badge) badge.style.display = 'block';
+      if (block) { block.style.borderColor = 'var(--teal)'; block.style.background = 'rgba(14,124,123,0.06)'; }
+      const btnG = document.getElementById('btnG');
+      if (btnG) btnG.style.boxShadow = '0 0 20px rgba(14,124,123,0.6)';
+      toast('✅ Clé validée — génération IA activée !');
+    } else {
+      if (st) { st.textContent = '❌ Clé invalide ou expirée — vérifiez sur le site du provider'; st.style.color = 'var(--coral)'; }
+    }
+  } catch(e) {
+    // CORS block — accept anyway
+    _tokenOk = true;
+    if (st)    { st.textContent = '⚠️ Vérification impossible (CORS) — token accepté, on tente la génération'; st.style.color = 'var(--gold)'; }
+    if (badge) badge.style.display = 'block';
+    if (block) { block.style.borderColor = 'var(--gold)'; block.style.background = 'rgba(240,165,0,0.05)'; }
+  }
+}
+
+// ============================================================
+// API KEY SETUP HELPERS (step 4 compat)
+// ============================================================
+let _provider = 'replicate';
+let _model    = 'replicate:flux-kontext-pro';
+let _tokenOk  = false;
+
+function selectProvider(p) {
+  _provider = p;
+  ['replicate','dalle'].forEach(id => {
+    const btn = document.getElementById('pbtn-' + id);
+    const sec = document.getElementById('sec-' + id);
+    const isActive = id === p;
+    if (btn) {
+      btn.style.borderColor = isActive ? 'var(--v1)' : 'var(--border)';
+      btn.style.background  = isActive ? 'rgba(37,99,235,0.2)' : 'rgba(255,255,255,0.04)';
+      btn.style.color       = isActive ? 'var(--v1)' : 'var(--muted)';
+    }
+    if (sec) sec.style.display = isActive ? 'block' : 'none';
+  });
+  if (p === 'dalle') _model = 'dalle:dall-e-3';
+  else _model = 'replicate:flux-kontext-pro';
+  _tokenOk = false;
+  const badge = document.getElementById('apiReadyBadge');
+  if (badge) badge.style.display = 'none';
+}
+
+function selectModel(btn, model) {
+  _model = model;
+  document.querySelectorAll('.model-btn').forEach(b => {
+    b.style.borderColor = 'var(--border)';
+    b.style.background  = 'rgba(255,255,255,0.04)';
+    b.style.color       = 'var(--muted)';
+  });
+  btn.style.borderColor = 'var(--v1)';
+  btn.style.background  = 'rgba(37,99,235,0.2)';
+  btn.style.color       = 'var(--v1)';
+}
+
+function onTokenInput() {
+  _tokenOk = false;
+  const badge = document.getElementById('apiReadyBadge');
+  if (badge) badge.style.display = 'none';
+  const st = document.getElementById('apiStatus');
+  if (st) { st.textContent = ''; st.style.color = 'var(--muted)'; }
+  saveKeys();
+}
+
+function getToken() {
+  // Step 3 inputs take priority (that's where the user enters the key)
+  if (_provider === 'dalle') {
+    return document.getElementById('s3TokenDalle')?.value?.trim()
+        || document.getElementById('mainTokenDalle')?.value?.trim()
+        || '';
+  }
+  return document.getElementById('s3Token')?.value?.trim()
+      || document.getElementById('mainToken')?.value?.trim()
+      || '';
+}
+
+async function validateToken() {
+  const token = getToken();
+  const st = document.getElementById('apiStatus');
+  const badge = document.getElementById('apiReadyBadge');
+  if (!token || token.length < 8) {
+    if (st) { st.textContent = '⚠️ Entrez votre clé API avant de valider'; st.style.color = 'var(--coral)'; }
+    return;
+  }
+  if (st) { st.textContent = '⏳ Vérification en cours…'; st.style.color = 'var(--muted)'; }
+  try {
+    let ok = false;
+    if (_provider === 'replicate') {
+      // Test: list account info (lightweight call)
+      const r = await fetch('https://api.replicate.com/v1/account', {
+        headers: { 'Authorization': `Token ${token}` }
+      });
+      ok = r.ok || r.status === 200;
+    } else {
+      // DALL-E: test with models list
+      const r = await fetch('https://api.openai.com/v1/models?limit=1', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      ok = r.ok;
+    }
+    if (ok) {
+      _tokenOk = true;
+      if (st) { st.textContent = '✅ Clé valide — prêt à générer les vraies images IA !'; st.style.color = 'var(--teal)'; }
+      if (badge) badge.style.display = 'block';
+      // Change border of block to green
+      const block = document.getElementById('apiKeyBlock');
+      if (block) { block.style.borderColor = 'var(--teal)'; block.style.background = 'rgba(14,124,123,0.06)'; }
+      toast('✅ Clé API validée — génération IA activée !');
+    } else {
+      if (st) { st.textContent = '❌ Clé invalide — vérifiez sur le site du provider'; st.style.color = 'var(--coral)'; }
+    }
+  } catch(e) {
+    // CORS might block — accept the token anyway with warning
+    _tokenOk = true;
+    if (st) { st.textContent = '⚠️ Impossible de vérifier (CORS) — token accepté, on tente la génération'; st.style.color = 'var(--gold)'; }
+    if (badge) badge.style.display = 'block';
+  }
+}
+
+// Legacy compatibility
+function onModelChange() {}
+function testN8n() { validateToken(); }
+function onTokenInput_legacy() { onTokenInput(); }
+
+async function testN8n() {
+  const url = document.getElementById('n8nWebhook')?.value?.trim();
+  const statusEl = document.getElementById('n8nStatus');
+  const statusTxt = document.getElementById('n8nStatusTxt');
+  if (!url || url.length < 5) {
+    toast('⚠️ Entrez une URL webhook ou un token API');
+    return;
+  }
+  statusEl.className = 'n8n-status offline';
+  statusTxt.textContent = 'TEST EN COURS…';
+  try {
+    // Test with a ping payload
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'ping', source: 'dtf-studio' })
+    });
+    if (resp.ok) {
+      statusEl.className = 'n8n-status online';
+      statusTxt.textContent = 'CONNECTÉ ✓';
+      toast('✅ Webhook n8n connecté !');
+    } else {
+      throw new Error(resp.status);
+    }
+  } catch(e) {
+    // For direct API tokens, just validate format
+    statusEl.className = 'n8n-status online';
+    statusTxt.textContent = 'API DIRECTE ✓';
+    toast('✅ Mode API directe configuré');
+  }
+}
+
+function setNodeState(idx, state) {
+  const node = document.getElementById('nn' + idx);
+  const arrow = document.getElementById('na' + idx);
+  if (node) node.className = 'n8n-node ' + state;
+  if (arrow && state === 'done') arrow.className = 'n8n-arrow lit';
+}
+
+function animateNodes(activeIdx) {
+  for (let i = 0; i <= 6; i++) {
+    if (i < activeIdx) setNodeState(i, 'done');
+    else if (i === activeIdx) setNodeState(i, 'running');
+    else setNodeState(i, 'pending');
+  }
+}
+
+// ============================================================
+// STEP 4 — GENERATE: Build prompts then generate each image
+// ============================================================
+async function generate() {
+  // Check API key before proceeding
+  const token = getToken();
+  if (!token) {
+    toast('⚠️ Entrez votre clé API Replicate dans le bloc rouge ci-dessus');
+    const field = document.getElementById('s3Token');
+    if (field) {
+      field.style.borderColor = 'var(--coral)';
+      field.focus();
+      setTimeout(() => field.style.borderColor = 'rgba(37,99,235,0.4)', 2000);
+    }
+    const block = document.getElementById('apiKeyBlockS3');
+    if (block) {
+      block.style.borderColor = 'var(--coral)';
+      block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    return;
+  }
+  // Collect UI values
+  S.variantNames = [1, 2, 3].map(v => document.getElementById('vn' + v)?.value || 'VARIANTE ' + v);
+  Object.keys(S.components).forEach(key => {
+    const isLocked = LOCKED_KEYS.includes(key);
+    [1, 2, 3].forEach(v => {
+      if (isLocked) {
+        S.variations[key] = S.variations[key] || {};
+        S.variations[key]['v' + v] = S.components[key].originalValue;
+      } else {
+        const ta = document.getElementById(`var_${key}_v${v}`);
+        if (ta) { S.variations[key] = S.variations[key] || {}; S.variations[key]['v' + v] = ta.value; }
+      }
+    });
+  });
+
+  const btn = document.getElementById('btnG');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner spin-sm"></div> GÉNÉRATION...';
+
+  nav(4);
+  document.getElementById('postT').textContent = S.coll || 'COLLECTION';
+  document.getElementById('postSub').textContent = S.theme;
+  animateNodes(0);
+
+  // Placeholder cards
+  const trio = document.getElementById('trio');
+  trio.innerHTML = [0,1,2].map(i => `
+    <div class="lcard vc${i+1}" id="card${i}">
+      <div class="cvbadge b${i+1}">V${i+1}</div>
+      <div class="sstar">★ SÉLECTIONNÉ</div>
+      <div class="lvisual">
+        <div class="genstatus">
+          <div class="spinner"></div>
+          <div class="genmsg">⏳ En attente du pipeline<br><span style="color:var(--teal)">${S.variantNames[i]}</span></div>
+        </div>
+        <div class="gen-progress"><div class="gen-progress-bar" id="pb${i}"></div></div>
+      </div>
+      <div class="linfo"><h4>${S.variantNames[i]}</h4></div>
+    </div>`).join('');
+
+  // Step 1: Build optimised prompts via Claude
+  animateNodes(1);
+  await buildPromptsWithClaude();
+
+  // Step 2: Generate each image
+  for (let i = 0; i < 3; i++) {
+    animateNodes(i < 2 ? 2 : 3);
+    await genVariantImage(S.generatedPrompts[i], i);
+    animateNodes(i < 2 ? 3 : 5);
+  }
+
+  animateNodes(6);
+  buildDiff();
+  buildPoster();
+  btn.disabled = false;
+  btn.innerHTML = '<span>🎨</span> GÉNÉRER LES 3 VISUELS';
+}
+
+// ============================================================
+// STEP A: BUILD PROMPTS (style-locked, reference-image aware)
+// ============================================================
+async function buildPromptsWithClaude() {
+  const variantDescs = [1,2,3].map(v => {
+    const lines = Object.entries(S.components).map(([k,c]) => {
+      const val = S.variations[k]?.['v'+v];
+      return val ? `${c.label}: ${val}` : null;
+    }).filter(Boolean);
+    return `V${v} "${S.variantNames[v-1]}":\n${lines.join('\n')}`;
+  }).join('\n\n');
+
+  const model = document.getElementById('genModel')?.value || '';
+  const isKontext = model.includes('kontext');
+
+  // Precise style description matching the reference images exactly
+  const styleRef = `STYLE DE RÉFÉRENCE EXACT (reproduire fidèlement):
+- Illustration comic book hyperdetailed, rendu semi-réaliste, qualité professionnelle
+- Homme polynésien très musclé, vu de DOS à 3/4 gauche, torse nu, posture dynamique
+- TATOUAGES TRIBAUX MAORI: couvrent intégralement le dos, les deux épaules et les deux bras
+  → Motifs denses: spirales, koru, formes géométriques, lignes épaisses et fines entremêlées
+  → Rendu réaliste avec ombres et éclats de lumière sur la peau bronzée (peau #c2783c)
+- Porte un LOURD RÉGIME DE BANANES VERTES sur une perche en bois posée sur l'épaule droite
+  → Les bananes sont réalistes, vertes brillantes, attachées par une corde beige/dorée tressée
+  → La perche sort du cadre en haut à droite
+- BRAS GAUCHE: tendu vers l'arrière, poing serré, contre-balançant le poids
+- PAREO: tissu enroulé à la taille, avec motifs polynésiens en relief
+- ARRIÈRE-PLAN SPLASH: explosion de peinture circulaire derrière le personnage
+  → Cercles et gouttes de peinture irréguliers style graffiti/street art
+  → Mélange de cercles solides, demi-cercles et éclaboussures projetées vers l'extérieur
+  → Crée un halo dynamique autour du personnage
+- Contours noirs épais (bold ink lines) sur tous les éléments — style bande dessinée USA
+- Fond BLANC/TRANSPARENT — uniquement le personnage + splash (pas de décor)`;
+
+  const SYS = `Tu es expert en prompts pour générateurs d'images IA (Midjourney, Flux, DALL-E).
+Spécialiste reproduction de style DTF. JSON uniquement, sans markdown.`;
+
+  const USR = isKontext
+    ? `Génère 3 instructions d'édition pour Flux Kontext (img2img).
+L'IMAGE SOURCE montre déjà le personnage dans le bon style.
+Flux Kontext prend l'image source et modifie UNIQUEMENT ce qu'on lui dit.
+
+RÈGLE ABSOLUE: Ne jamais régénérer le personnage depuis zéro.
+Chaque instruction doit dire EXACTEMENT ce qui change et ce qui reste.
+
+VARIANTES:
+${variantDescs}
+
+Pour chaque variante, génère une instruction courte et précise du type:
+"Change the pareo color to [COLOR]. Change the paint splash background to [COLOR1] and [COLOR2] circles. Keep the character, tattoos, bananas, and posture EXACTLY identical."
+
+JSON:
+{"variants":[
+  {"id":1,"name":"...","prompt":"instruction Flux Kontext courte et précise","tags":["pareo","splash","DTF"],"changements":"pareo X · splash Y"},
+  {"id":2,...},
+  {"id":3,...}
+]}`
+    : `Génère 3 prompts text2img très précis pour ce style de collection DTF.
+
+${styleRef}
+
+PERSONNAGE (identique dans les 3 variantes — NE JAMAIS CHANGER):
+${S.basePrompt}
+
+VARIANTES (SEULES les couleurs et objets changent):
+${variantDescs}
+
+STRUCTURE OBLIGATOIRE pour chaque prompt:
+1. "comic book illustration, hyperdetailed, Polynesian male athlete seen from back 3/4 left view,"
+2. "full body maori tribal tattoos covering entire back shoulders and both arms, dense black ink spiral geometric patterns, realistic skin shading #c2783c,"
+3. "carrying heavy green banana bunch on wooden pole over right shoulder tied with beige rope, left arm extended back with clenched fist,"
+4. "[COULEUR PAREO] pareo sarong with polynesian motifs tied at waist,"
+5. "dynamic circular paint explosion background in [COULEUR1] [COULEUR2] and [COULEUR3] solid circles droplets spray paint graffiti style halo behind figure,"
+6. "white isolated background, transparent background DTF print ready, 300 DPI, bold black outlines, clean edges, no background, professional digital illustration"
+
+JSON:
+{"variants":[
+  {"id":1,"name":"...","prompt":"prompt complet","tags":["tag1","tag2"],"changements":"pareo X + splash Y"},
+  {"id":2,"name":"...","prompt":"...","tags":[...],"changements":"..."},
+  {"id":3,"name":"...","prompt":"...","tags":[...],"changements":"..."}
+]}`;
+
+  try {
+    const msgs = [];
+    if (S.imgData) {
+      msgs.push({ type: 'image', source: { type: 'base64', media_type: S.imgMime || 'image/jpeg', data: S.imgData.split(',')[1] } });
+    }
+    msgs.push({ type: 'text', text: USR });
+
+    const d = await callClaude({ model: 'claude-opus-4-5', max_tokens: 3000, system: SYS,
+      messages: [{ role: 'user', content: msgs }] });
+    const txt = d.content.map(i => i.text || '').join('').replace(/```json|```/g, '').trim();
+    S.generatedPrompts = JSON.parse(txt).variants;
+  } catch(e) {
+    // Fallback prompts based on variation values
+    S.generatedPrompts = [1,2,3].map(v => {
+      const pareoVal = S.variations['tenue']?.['v'+v] || '';
+      const fondVal  = S.variations['fond']?.['v'+v] || '';
+      const objVal   = S.variations['objetsAccessoires']?.['v'+v] || 'heavy green banana bunch';
+      const pareoHex = extractColor(pareoVal, ['#2563eb','#dc2626','#ca8a04'][v-1]);
+      const [sp1, sp2] = extractSplashColors(fondVal + ' ' + (S.variations['palette']?.['v'+v]||''),
+        ['#e8533a','#dc2626','#ca8a04'][v-1], '#f97316');
+      const promptBase = isKontext
+        ? `Change the pareo to ${pareoVal || ['blue','red','black'][v-1]} color. Change the paint splash background to ${sp1} and ${sp2} circles and droplets. Keep the character, tribal tattoos, bananas, wooden pole, posture and all other elements EXACTLY identical.`
+        : `comic book illustration, hyperdetailed, Polynesian male athlete seen from back 3/4 left view, full body maori tribal tattoos covering entire back shoulders and both arms, dense black ink spiral geometric patterns, realistic skin shading, carrying heavy ${objVal} on wooden pole over right shoulder tied with beige rope, left arm extended back with clenched fist, ${pareoVal || ['royal blue','vivid red','black and gold'][v-1]} pareo sarong with polynesian motifs tied at waist, dynamic circular paint explosion background in ${sp1} and ${sp2} and orange solid circles droplets spray paint graffiti style halo behind figure, white isolated background, transparent background DTF print ready, 300 DPI, bold black outlines, clean edges, no background`;
+      return {
+        id: v, name: S.variantNames[v-1],
+        tags: [S.theme, S.variantNames[v-1], 'DTF'],
+        changements: `${pareoVal || '—'} · splash ${sp1}/${sp2}`,
+        prompt: promptBase
+      };
+    });
+  }
+}
+
+// ============================================================
+// STEP B: GENERATE ONE IMAGE via n8n webhook or direct API
+// ============================================================
+async function genVariantImage(vt, i) {
+  const card = document.getElementById('card' + i);
+  const tc   = ['t1','t2','t3'][i];
+  const v    = i + 1;
+  const pb   = document.getElementById('pb' + i);
+
+  const pareoColor = extractColor(S.variations['tenue']?.['v'+v] || '', ['#2563eb','#dc2626','#ca8a04'][i]);
+  const [sp1, sp2] = extractSplashColors(
+    (S.variations['fond']?.['v'+v] || '') + ' ' + (S.variations['palette']?.['v'+v] || ''),
+    ['#e8533a','#f97316','#ca8a04'][i], '#f97316'
+  );
+
+  // Update card status
+  if (card) {
+    const vis = card.querySelector('.lvisual');
+    if (vis) vis.innerHTML = `
+      <div class="genstatus">
+        <div class="spinner"></div>
+        <div class="genmsg">🖼️ Génération V${v} en cours…<br>
+          <span style="color:var(--teal)">${vt.name}</span><br>
+          <span style="font-size:9px;opacity:.6;margin-top:4px;display:block">
+            ${document.getElementById('genModel')?.options[document.getElementById('genModel')?.selectedIndex]?.text || 'IA'}
+          </span>
+        </div>
+      </div>
+      <div class="gen-progress"><div class="gen-progress-bar" id="pb${i}"></div></div>`;
+  }
+
+  const model  = _model || document.getElementById('genModel')?.value || 'replicate:flux-kontext-pro';
+  const token  = getToken() || document.getElementById('apiTokenDirect')?.value?.trim() || '';
+  const webhook = document.getElementById('n8nWebhook')?.value?.trim() || '';
+  const format = document.getElementById('genFormat')?.value || '1024x1024';
+  const [fw, fh] = format.split('x').map(Number);
+
+  let imgUrl = null;
+
+  try {
+    if (model === 'n8n:webhook' && webhook) {
+      // ── Route via n8n webhook ──
+      imgUrl = await callN8nWebhook(webhook, vt, v, fw, fh);
+
+    } else if (model.startsWith('replicate:') && token) {
+      // ── Direct Replicate API ──
+      imgUrl = await callReplicateAPI(token, model.split(':')[1], vt.prompt, fw, fh, pb);
+
+    } else if (model === 'dalle:dall-e-3' && token) {
+      // ── Direct DALL-E 3 ──
+      imgUrl = await callDalleAPI(token, vt.prompt, fw, fh);
+
+    } else if (model.startsWith('stability:') && token) {
+      // ── Direct Stability AI ──
+      imgUrl = await callStabilityAPI(token, vt.prompt, fw, fh);
+
+    } else {
+      // ── No API configured: use Claude SVG preview ──
+      await genVariantSVG(vt, i);
+      return;
+    }
+  } catch(e) {
+    console.warn('Image generation failed:', e.message);
+    // Afficher l'erreur dans la carte — ne pas générer SVG silencieusement
+    if (card) {
+      const vis = card.querySelector('.lvisual');
+      if (vis) vis.innerHTML = `<div style="padding:16px;text-align:center;color:var(--coral);font-family:'Space Mono';font-size:11px;line-height:1.7">
+        ❌ Erreur génération<br>
+        <span style="font-size:9px;opacity:.7;display:block;margin-top:4px;max-width:160px;margin-left:auto;margin-right:auto">${e.message}</span>
+        <button onclick="genVariantImage(S.generatedPrompts[${i}],${i})"
+          style="margin-top:12px;padding:8px 16px;background:var(--coral);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'Space Mono';font-size:10px;letter-spacing:1px">
+          🔄 RÉESSAYER
+        </button>
+      </div>`;
+    }
+    return;
+  }
+
+  // Store result & render card
+  vt.imgUrl = imgUrl;
+  if (card) {
+    card.innerHTML = `
+      <div class="cvbadge b${v}">V${vt.id}</div>
+      <div class="sstar">★ SÉLECTIONNÉ</div>
+      <div class="lvisual" style="background:white;padding:0">
+        <img class="gen-result" src="${imgUrl}" alt="V${v}" onerror="this.parentElement.innerHTML=\`${buildPreviewSVG(vt,i,pareoColor,sp1,sp2,'#f0a500').replace(/`/g,"'")}\`">
+      </div>
+      <div class="linfo">
+        <h4>${vt.name}</h4>
+        <div class="ltags">${(vt.tags||[]).map(t=>`<span class="ltag ${tc}">${t}</span>`).join('')}</div>
+        <div style="font-family:'Space Mono';font-size:10px;color:var(--teal);margin-bottom:6px">↳ ${vt.changements||''}</div>
+        <div class="prompt-pill">${vt.prompt}</div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="cpbtn" style="flex:1" onclick="cpPrompt(${i},event)">📋 Prompt</button>
+          <a href="${imgUrl}" download="dtf-v${v}-${S.coll.replace(/\s/g,'-')}.png" target="_blank"
+            class="cpbtn" style="flex:1;text-align:center;text-decoration:none" onclick="event.stopPropagation()">⬇️ PNG HD</a>
+        </div>
+      </div>`;
+    card.onclick = () => selCard(i);
+  }
+}
+
+// ── Replicate API (text2img + Flux Kontext img2img) ──
+async function callReplicateAPI(token, modelSlug, prompt, fw, fh, pb) {
+  const isKontext = modelSlug.includes('kontext');
+
+  const modelMap = {
+    'flux-kontext-pro': 'black-forest-labs/flux-kontext-pro',
+    'flux-kontext-dev': 'black-forest-labs/flux-kontext-dev',
+    'flux-pro':         'black-forest-labs/flux-1.1-pro',
+    'flux-dev':         'black-forest-labs/flux-dev',
+    'sdxl':             'stability-ai/sdxl',
+  };
+  const modelId = modelMap[modelSlug] || 'black-forest-labs/flux-kontext-pro';
+
+  let input;
+  if (isKontext && S.imgData) {
+    input = { prompt, input_image: S.imgData, output_format: 'png', safety_tolerance: 6 };
+  } else if (isKontext) {
+    input = { prompt, output_format: 'png', aspect_ratio: '1:1' };
+  } else {
+    input = {
+      prompt,
+      negative_prompt: 'blurry, low quality, watermark, ugly, deformed, extra limbs, text, logo, bad anatomy',
+      width: fw, height: fh, num_inference_steps: 30, guidance_scale: 7.5, output_format: 'png',
+    };
+  }
+
+  if (pb) pb.style.width = '20%';
+
+  // Soumission via le Worker (contourne le CORS file://)
+  const resp = await fetch(`${WORKER_URL}/api/replicate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Worker-Secret': WORKER_SECRET },
+    body: JSON.stringify({ token, modelId, input })
+  });
+
+  if (!resp.ok) {
+    const e = await resp.json().catch(() => ({}));
+    throw new Error(e?.error || `Replicate HTTP ${resp.status}`);
+  }
+
+  const data = await resp.json();
+
+  // Résultat immédiat (< 25s)
+  if (data.status === 'succeeded' && data.url) {
+    if (pb) pb.style.width = '100%';
+    return data.url;
+  }
+
+  // Pas encore fini → poller depuis le navigateur (évite le timeout CF 30s)
+  const predictionId = data.predictionId;
+  if (!predictionId) throw new Error('Pas d\'ID de prédiction retourné');
+
+  if (pb) pb.style.width = '35%';
+
+  for (let i = 0; i < 60; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    if (pb) pb.style.width = `${35 + Math.min(i * 1, 55)}%`;
+
+    const pollResp = await fetch(`${WORKER_URL}/api/replicate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Worker-Secret': WORKER_SECRET },
+      body: JSON.stringify({ token, predictionId })
+    });
+
+    if (!pollResp.ok) {
+      const e = await pollResp.json().catch(() => ({}));
+      throw new Error(e?.error || `Replicate poll HTTP ${pollResp.status}`);
+    }
+
+    const poll = await pollResp.json();
+    if (poll.status === 'succeeded' && poll.url) {
+      if (pb) pb.style.width = '100%';
+      return poll.url;
+    }
+    if (poll.status === 'failed' || poll.status === 'canceled') {
+      throw new Error(`Replicate ${poll.status}`);
+    }
+  }
+
+  throw new Error('Timeout Replicate (3 min)');
+}
+
+// ── DALL-E 3 API ──
+async function callDalleAPI(token, prompt, fw, fh) {
+  const r = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'dall-e-3', prompt, size: `${fw}x${fh}`, quality: 'hd', n: 1 })
+  });
+  if (!r.ok) throw new Error(`DALL-E ${r.status}`);
+  const d = await r.json();
+  return d.data?.[0]?.url;
+}
+
+// ── Stability AI API ──
+async function callStabilityAPI(token, prompt, fw, fh) {
+  const fd = new FormData();
+  fd.append('prompt', prompt);
+  fd.append('negative_prompt', 'blurry, low quality, watermark');
+  fd.append('aspect_ratio', fw >= fh ? (fw > fh ? '4:3' : '1:1') : '3:4');
+  fd.append('output_format', 'png');
+  const r = await fetch('https://api.stability.ai/v2beta/stable-image/generate/ultra', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'image/*' },
+    body: fd
+  });
+  if (!r.ok) throw new Error(`Stability ${r.status}`);
+  const blob = await r.blob();
+  return URL.createObjectURL(blob);
+}
+
+// ── n8n Webhook ──
+async function callN8nWebhook(webhookUrl, vt, variantNum, fw, fh) {
+  const r = await fetch(webhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'generate_image',
+      variant: {
+        id: vt.id,
+        name: vt.name,
+        prompt: vt.prompt,
+        variantNum,
+        width: fw, height: fh,
+        collection: S.coll,
+        theme: S.theme,
+      }
+    })
+  });
+  if (!r.ok) throw new Error(`Webhook ${r.status}`);
+  const d = await r.json();
+  // Expect { imageUrl: "..." } or { output: ["url"] }
+  return d.imageUrl || d.url || d.output?.[0] || null;
+}
+
+// ============================================================
+// SMART COLOR EXTRACTOR
+// ============================================================
+function extractColor(text, fallback) {
+  if (!text) return fallback;
+  // 1. Try hex
+  const hex = text.match(/#[0-9a-fA-F]{6}/);
+  if (hex) return hex[0];
+  // 2. Color keyword map
+  const map = {
+    'bleu royal':'#2563eb','bleu':'#2563eb','blue':'#2563eb',
+    'rouge':'#dc2626','red':'#dc2626',
+    'or ':'#ca8a04','gold':'#ca8a04','doré':'#ca8a04','noir et or':'#ca8a04',
+    'noir':'#1a1a2e','black':'#1a1a2e',
+    'turquoise':'#0e7c7b','teal':'#0e7c7b',
+    'vert':'#16a34a','green':'#16a34a',
+    'orange':'#ea580c','corail':'#e8533a','coral':'#e8533a',
+    'violet':'#7c3aed','purple':'#7c3aed',
+    'rose':'#db2777','pink':'#db2777','fuchsia':'#db2777',
+    'blanc':'#f8f8f8','white':'#f8f8f8',
+  };
+  const low = text.toLowerCase();
+  for (const [kw, col] of Object.entries(map)) {
+    if (low.includes(kw)) return col;
+  }
+  return fallback;
+}
+
+function extractSplashColors(text, fallback1, fallback2) {
+  if (!text) return [fallback1, fallback2];
+  const hexes = text.match(/#[0-9a-fA-F]{6}/g);
+  if (hexes && hexes.length >= 2) return [hexes[0], hexes[1]];
+  if (hexes && hexes.length === 1) return [hexes[0], fallback2];
+  // Keywords for splash
+  const low = text.toLowerCase();
+  if (low.includes('rouge') || low.includes('red'))   return ['#e8533a','#f97316'];
+  if (low.includes('bleu') || low.includes('blue'))   return ['#3b82f6','#60a5fa'];
+  if (low.includes('or') || low.includes('gold') || low.includes('doré')) return ['#ca8a04','#fbbf24'];
+  if (low.includes('noir') || low.includes('black'))  return ['#374151','#ca8a04'];
+  if (low.includes('vert') || low.includes('green'))  return ['#16a34a','#4ade80'];
+  if (low.includes('violet'))                          return ['#7c3aed','#a78bfa'];
+  return [fallback1, fallback2];
+}
+
+// ============================================================
+// GENERATE SVG VIA CLAUDE — Vision + style reproduction
+// ============================================================
+async function genVariantSVG(vt, i) {
+  const card = document.getElementById('card' + i);
+  const tc = ['t1','t2','t3'][i];
+  const v = i + 1;
+
+  // Collect all variation values for this variant
+  const tenueVal   = S.variations['tenue']?.['v'+v]   || S.components['tenue']?.originalValue || '';
+  const paletteVal = S.variations['palette']?.['v'+v] || S.components['palette']?.originalValue || '';
+  const fondVal    = S.variations['fond']?.['v'+v]    || S.components['fond']?.originalValue || '';
+  const objetVal   = S.variations['objetsAccessoires']?.['v'+v] || S.components['objetsAccessoires']?.originalValue || '';
+  const actionVal  = S.variations['action']?.['v'+v]  || S.components['action']?.originalValue || '';
+  const compoVal   = S.variations['composition']?.['v'+v] || S.components['composition']?.originalValue || '';
+
+  const pareoColor  = extractColor(tenueVal, ['#2563eb','#dc2626','#ca8a04'][i]);
+  const [splash1, splash2] = extractSplashColors(fondVal + ' ' + paletteVal,
+    ['#e8533a','#f97316','#ca8a04'][i], ['#f97316','#fbbf24','#fbbf24'][i]);
+  const accentColor = extractColor(paletteVal, '#f0a500');
+
+  // Update card loading state
+  if (card) {
+    const vis = card.querySelector('.lvisual');
+    if (vis) vis.innerHTML = `<div class="svg-gen-overlay">
+      <div class="spinner"></div>
+      <div class="prog">🎨 Dessin V${v}<br><span style="color:var(--teal)">${vt.name}</span><br><br>
+      <span style="font-size:9px;opacity:.7">Reproduction du style…</span></div>
+    </div>`;
+  }
+
+  // Build the vision-aware prompt — Claude sees the original image
+  const SYS = `Tu es un illustrateur SVG expert spécialisé en reproduction de style graphique.
+Tu analyses des images de référence et reproduis EXACTEMENT leur style de dessin en SVG.
+Tu génères UNIQUEMENT du code SVG valide. Aucun texte avant ou après le SVG. Aucun markdown.`;
+
+  // Describe all variable components that change in this variant
+  const variantContext = [
+    `Couleur tenue/pareo: ${tenueVal} → utiliser hex ${pareoColor}`,
+    `Objet porté: ${objetVal}`,
+    `Action/posture: ${actionVal}`,
+    `Palette couleurs: ${paletteVal}`,
+    `Fond/splash: ${fondVal} → couleurs ${splash1} et ${splash2}`,
+    `Composition: ${compoVal}`,
+  ].join('\n');
+
+  const promptText = `${S.imgData ? "En te basant sur l'image de référence ci-jointe, reproduis" : "Génère"} un visuel SVG 400×400 de style DTF pour la variante V${v} "${vt.name}".
+
+STYLE DE BASE VERROUILLÉ — reproduis EXACTEMENT ces éléments identiques dans les 3 variantes:
+${S.basePrompt}
+
+ÉLÉMENTS QUI CHANGENT POUR CETTE VARIANTE V${v}:
+${variantContext}
+
+INSTRUCTIONS TECHNIQUES ABSOLUES:
+1. viewBox="0 0 400 400", fond blanc pour preview (sera transparent en DTF final)
+2. Reproduis le personnage VU DE DOS en 3/4 — même silhouette, même posture athlétique
+3. Tatouages tribaux polynésiens sur le dos et les bras — même densité et placement
+4. Style comic book bold: contours noirs stroke-width="3" à "5" sur TOUS les éléments
+5. Aplats de couleurs vives et saturées — NO gradients complexes sauf splash
+6. Pareo de couleur ${pareoColor} avec motifs polynésiens et noué à la taille
+7. Splash de peinture en arrière-plan: couleur principale ${splash1}, secondaire ${splash2}
+   → Ellipses superposées + cercles/éclaboussures irrégulières autour du personnage
+8. L'objet porté: ${objetVal} — suspendu à une perche en bois sur l'épaule droite
+9. Badge cercle V${v} en haut gauche couleur ${pareoColor}
+10. Badge DTF rectangle noir en haut droite
+11. Bande couleur ${pareoColor} en bas avec nom "${vt.name}"
+
+ORDRE DE RENDU (du fond vers l'avant):
+1. Fond blanc
+2. Splash de couleur (ellipses + éclaboussures)
+3. Perche en bois
+4. Objet porté (${objetVal})
+5. Corps/torso (peau #c2783c)
+6. Tatouages (traits noirs sur la peau)
+7. Pareo ${pareoColor}
+8. Bras gauche tendu vers l'arrière
+9. Tête (vue de dos, cheveux noirs)
+10. Badges et texte
+
+Génère le SVG complet maintenant:`;
+
+  let svgCode = '';
+  try {
+    // Build message with optional image context
+    const msgContent = [];
+    if (S.imgData) {
+      msgContent.push({
+        type: 'image',
+        source: { type: 'base64', media_type: S.imgMime || 'image/jpeg', data: S.imgData.split(',')[1] }
+      });
+    }
+    msgContent.push({ type: 'text', text: promptText });
+
+    const d = await callClaude({
+      model: 'claude-opus-4-5',
+      max_tokens: 6000,
+      system: SYS,
+      messages: [{ role: 'user', content: msgContent }]
+    });
+    let raw = d.content.map(c => c.text || '').join('').trim();
+    raw = raw.replace(/```svg|```xml|```html|```/g, '').trim();
+    const match = raw.match(/<svg[\s\S]*?<\/svg>/i);
+    if (match) {
+      svgCode = match[0];
+      // Ensure proper viewBox
+      if (!svgCode.includes('viewBox')) {
+        svgCode = svgCode.replace('<svg', '<svg viewBox="0 0 400 400"');
+      }
+      // Ensure responsive sizing
+      svgCode = svgCode.replace(/width=["']\d+["']/, 'width="100%"').replace(/height=["']\d+["']/, 'height="100%"');
+    } else {
+      svgCode = buildPreviewSVG(vt, i, pareoColor, splash1, splash2, accentColor);
+    }
+  } catch(e) {
+    console.warn('SVG gen failed:', e);
+    svgCode = buildPreviewSVG(vt, i, pareoColor, splash1, splash2, accentColor);
+  }
+
+  // Store SVG for export
+  vt.svgCode = svgCode;
+
+  // Render final card
+  if (card) {
+    card.innerHTML = `
+      <div class="cvbadge b${i+1}">V${vt.id}</div>
+      <div class="sstar">★ SÉLECTIONNÉ</div>
+      <div class="lvisual" style="background:white">${svgCode}</div>
+      <div class="linfo">
+        <h4>${vt.name}</h4>
+        <div class="ltags">${(vt.tags||[]).map(t=>`<span class="ltag ${tc}">${t}</span>`).join('')}</div>
+        <div style="font-family:'Space Mono';font-size:10px;color:var(--teal);margin-bottom:6px">↳ ${vt.changements||''}</div>
+        <div class="prompt-pill">${vt.prompt}</div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="cpbtn" style="flex:1" onclick="cpPrompt(${i},event)">📋 Copier prompt</button>
+          <button class="cpbtn" style="flex:1" onclick="genWithReplicate(${i},event)">🚀 Générer HD</button>
+        </div>
+      </div>`;
+    card.onclick = () => selCard(i);
+  }
+}
+
+// ============================================================
+// Preview SVG — smart color extraction from variations
+// ============================================================
+function buildPreviewSVG(v, i, pareoCol, sp1, sp2, acc) {
+  // If called without colors, extract from variations
+  const vn = i + 1;
+  if (!pareoCol) {
+    const t = S.variations['tenue']?.['v'+vn] || '';
+    const p = S.variations['palette']?.['v'+vn] || '';
+    const f = S.variations['fond']?.['v'+vn] || '';
+    pareoCol = extractColor(t, ['#2563eb','#dc2626','#ca8a04'][i]);
+    [sp1, sp2] = extractSplashColors(f+' '+p, ['#e8533a','#f97316','#ca8a04'][i], ['#f97316','#fbbf24','#fbbf24'][i]);
+    acc = extractColor(p.replace(pareoCol,''), '#f0a500');
+  }
+  acc = acc || '#f0a500';
+
+  // Banana color: V3 might be golden bananas based on variation
+  const objVal = (S.variations['objetsAccessoires']?.['v'+vn] || '').toLowerCase();
+  const bananaFill = objVal.includes('or') || objVal.includes('mûr') || objVal.includes('jaune') ? '#c8b820' : '#5a9c38';
+
+  return `<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="300" fill="white"/>
+  <!-- Splash BG — variant color -->
+  <ellipse cx="155" cy="145" rx="95" ry="100" fill="${sp1}" opacity="0.22"/>
+  <ellipse cx="145" cy="158" rx="78" ry="82" fill="${sp2}" opacity="0.17"/>
+  <circle cx="88" cy="108" r="12" fill="${sp1}" opacity="0.35"/>
+  <circle cx="72" cy="130" r="7" fill="${sp2}" opacity="0.45"/>
+  <circle cx="220" cy="190" r="9" fill="${sp1}" opacity="0.3"/>
+  <circle cx="235" cy="165" r="5" fill="${sp2}" opacity="0.5"/>
+  <circle cx="60" cy="175" r="6" fill="${sp1}" opacity="0.4"/>
+  <circle cx="250" cy="120" r="8" fill="${sp2}" opacity="0.35"/>
+  <circle cx="100" cy="220" r="5" fill="${sp1}" opacity="0.45"/>
+  <circle cx="200" cy="240" r="7" fill="${sp2}" opacity="0.3"/>
+  <circle cx="170" cy="68" r="4" fill="${sp1}" opacity="0.4"/>
+  <circle cx="125" cy="58" r="6" fill="${sp2}" opacity="0.35"/>
+
+  <!-- Head (back view) -->
+  <circle cx="150" cy="102" r="29" fill="#c2783c" stroke="#111" stroke-width="3"/>
+  <path d="M123,96 Q128,74 150,71 Q172,74 177,96 Q166,87 150,85 Q134,87 123,96Z" fill="#1a1a1a"/>
+  <rect x="122" y="96" width="56" height="8" rx="4" fill="#6b3e1a"/>
+
+  <!-- Neck -->
+  <rect x="142" y="128" width="16" height="16" rx="4" fill="#c2783c" stroke="#111" stroke-width="2"/>
+
+  <!-- Torso (back view) — IDENTICAL -->
+  <path d="M115,144 Q108,192 118,234 L148,244 L152,244 L182,234 Q192,192 185,144 Z" fill="#c2783c" stroke="#111" stroke-width="3"/>
+
+  <!-- Tattoo patterns on back — same in all variants -->
+  <path d="M135,152 Q148,146 163,152 Q160,168 148,173 Q136,168 135,152Z" fill="none" stroke="#4a2808" stroke-width="2" opacity="0.7"/>
+  <path d="M138,170 L148,182 L158,170" fill="none" stroke="#4a2808" stroke-width="2" opacity="0.65"/>
+  <path d="M127,157 Q118,165 121,176" fill="none" stroke="#4a2808" stroke-width="2" opacity="0.6"/>
+  <path d="M169,157 Q178,165 175,176" fill="none" stroke="#4a2808" stroke-width="2" opacity="0.6"/>
+  <path d="M130,182 Q120,195 124,208" fill="none" stroke="#4a2808" stroke-width="1.5" opacity="0.5"/>
+  <path d="M166,182 Q176,195 172,208" fill="none" stroke="#4a2808" stroke-width="1.5" opacity="0.5"/>
+  <path d="M120,162 Q112,178 115,192" fill="none" stroke="#4a2808" stroke-width="1.5" opacity="0.45"/>
+  <path d="M148,148 L145,158 L151,158 L148,148Z" fill="#4a2808" opacity="0.5"/>
+
+  <!-- Pareo — CHANGES color per variant -->
+  <path d="M114,213 Q116,244 118,264 L124,268 L148,248 L152,248 L176,268 L182,264 Q184,244 186,213 Z" fill="${pareoCol}" stroke="#111" stroke-width="2.5"/>
+  <line x1="122" y1="222" x2="178" y2="222" stroke="${acc}" stroke-width="1.5" opacity="0.7"/>
+  <line x1="119" y1="233" x2="181" y2="233" stroke="${acc}" stroke-width="1.5" opacity="0.7"/>
+  <line x1="117" y1="244" x2="183" y2="244" stroke="${acc}" stroke-width="1.5" opacity="0.6"/>
+  <!-- Pareo knot -->
+  <ellipse cx="150" cy="216" rx="10" ry="6" fill="${pareoCol}" stroke="#111" stroke-width="2"/>
+
+  <!-- Left arm extended back -->
+  <path d="M116,160 Q92,178 72,200" stroke="#c2783c" stroke-width="21" stroke-linecap="round" fill="none"/>
+  <path d="M116,160 Q92,178 72,200" stroke="#111" stroke-width="21" stroke-linecap="round" fill="none" opacity="0.15"/>
+  <!-- Arm tattoo -->
+  <path d="M108,167 Q100,178 96,190" fill="none" stroke="#4a2808" stroke-width="1.5" opacity="0.5"/>
+  <path d="M103,172 Q94,183 90,196" fill="none" stroke="#4a2808" stroke-width="1.5" opacity="0.45"/>
+
+  <!-- Right arm holding pole -->
+  <path d="M184,156 Q207,140 224,113" stroke="#c2783c" stroke-width="20" stroke-linecap="round" fill="none"/>
+  <path d="M184,156 Q207,140 224,113" stroke="#111" stroke-width="20" stroke-linecap="round" fill="none" opacity="0.15"/>
+
+  <!-- Pole -->
+  <line x1="219" y1="118" x2="278" y2="22" stroke="#6b3e1a" stroke-width="8" stroke-linecap="round"/>
+  <line x1="219" y1="118" x2="278" y2="22" stroke="#c4813d" stroke-width="5" stroke-linecap="round" opacity="0.5"/>
+  <!-- Rope -->
+  <path d="M235,98 Q238,94 242,98 Q245,102 248,98" stroke="#c4813d" stroke-width="3" fill="none"/>
+  <path d="M232,104 Q235,100 238,104" stroke="#c4813d" stroke-width="3" fill="none"/>
+
+  <!-- Bananas cluster — identical structure, color from variant -->
+  <ellipse cx="265" cy="35" rx="30" ry="20" fill="${bananaFill}" stroke="#111" stroke-width="2.5"/>
+  <ellipse cx="268" cy="28" rx="24" ry="13" fill="${bananaFill === '#5a9c38' ? '#6ab840' : '#d4c030'}" stroke="#111" stroke-width="2"/>
+  <path d="M248,42 Q252,28 256,40" stroke="#3a6020" stroke-width="2.5" fill="${bananaFill}" stroke-linecap="round"/>
+  <path d="M255,44 Q259,30 263,42" stroke="#3a6020" stroke-width="2.5" fill="${bananaFill}" stroke-linecap="round"/>
+  <path d="M262,44 Q266,30 270,42" stroke="#3a6020" stroke-width="2.5" fill="${bananaFill}" stroke-linecap="round"/>
+  <path d="M269,42 Q273,29 277,40" stroke="#3a6020" stroke-width="2.5" fill="${bananaFill}" stroke-linecap="round"/>
+
+  <!-- Feet -->
+  <ellipse cx="130" cy="275" rx="14" ry="6" fill="#c2783c" stroke="#111" stroke-width="2"/>
+  <ellipse cx="168" cy="275" rx="14" ry="6" fill="#c2783c" stroke="#111" stroke-width="2"/>
+
+  <!-- V badge — variant color -->
+  <circle cx="24" cy="24" r="19" fill="${pareoCol}" stroke="#111" stroke-width="2"/>
+  <text x="24" y="31" font-family="'Bebas Neue',monospace" font-size="17" font-weight="bold" fill="white" text-anchor="middle">V${v.id}</text>
+
+  <!-- DTF badge -->
+  <rect x="252" y="8" width="42" height="24" rx="7" fill="#111"/>
+  <text x="273" y="24" font-family="monospace" font-size="11" fill="white" text-anchor="middle" font-weight="bold">DTF</text>
+
+  <!-- Color band bottom -->
+  <rect x="18" y="285" width="264" height="7" rx="3.5" fill="${pareoCol}"/>
+  <text x="150" y="297" font-family="'Bebas Neue',monospace" font-size="11" fill="#444" text-anchor="middle" letter-spacing="2">${v.name.toUpperCase().substring(0,24)}</text>
+</svg>`;
+}
+
+// ============================================================
+// DIFF TABLE
+// ============================================================
+function buildDiff() {
+  const strip = document.getElementById('diffStrip');
+  const cols = `140px 1fr 1fr 1fr`;
+  const rows = Object.entries(S.components).map(([key, comp]) => {
+    const v = S.variations[key] || {};
+    return `<div class="dsr" style="grid-template-columns:${cols}">
+      <div class="dsrc k">${comp.icon} ${comp.label}</div>
+      <div class="dsrc dv1">${v.v1 || '<span style="opacity:.3">—</span>'}</div>
+      <div class="dsrc dv2">${v.v2 || '<span style="opacity:.3">—</span>'}</div>
+      <div class="dsrc dv3">${v.v3 || '<span style="opacity:.3">—</span>'}</div>
+    </div>`;
+  }).join('');
+  strip.innerHTML = `
+    <div class="dsh" style="grid-template-columns:${cols}">
+      <div class="dshc">COMPOSANTE</div>
+      <div class="dshc v1">V1 — ${S.variantNames[0]}</div>
+      <div class="dshc v2">V2 — ${S.variantNames[1]}</div>
+      <div class="dshc v3">V3 — ${S.variantNames[2]}</div>
+    </div>${rows}`;
+}
+
+// ============================================================
+// POSTER
+// ============================================================
+function buildPoster() {
+  const pg = document.getElementById('posterG');
+  const cols = ['#2563eb', '#dc2626', '#ca8a04'];
+  pg.innerHTML = S.generatedPrompts.map((v, i) => {
+    const vn = i + 1;
+    const t = S.variations['tenue']?.['v'+vn] || '';
+    const p = S.variations['palette']?.['v'+vn] || '';
+    const f = S.variations['fond']?.['v'+vn] || '';
+    const pareoCol = extractColor(t, cols[i]);
+    const [sp1, sp2] = extractSplashColors(f+' '+p, '#e8533a', '#f97316');
+    // Utiliser l'image HD si dispo, sinon l'image originale uploadée, sinon SVG
+    const imgSrc = v.imgUrl || v.hdImageUrl || S.imgData || null;
+    const visual = imgSrc
+      ? `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:contain" alt="V${vn}">`
+      : buildPreviewSVG(v, i, pareoCol, sp1, sp2, '#f0a500');
+    return `
+    <div style="border:2px solid ${pareoCol};border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all .2s" onclick="selCard(${i})">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:${pareoCol};letter-spacing:2px;margin-bottom:5px">V${v.id} — ${v.name}</div>
+      <div style="background:white;border-radius:6px;aspect-ratio:1;overflow:hidden;margin-bottom:7px">${visual}</div>
+      <div style="font-size:8px;color:#555;font-family:monospace;line-height:1.4">${v.changements || ''}</div>
+      <div style="height:4px;background:${pareoCol};border-radius:2px;margin-top:7px;opacity:.5"></div>
+    </div>`}).join('');
+}
+
+// ============================================================
+// CARD ACTIONS
+// ============================================================
+function selCard(i) {
+  document.querySelectorAll('.lcard').forEach(c => c.className = c.className.replace(/\bs\d\b/g, '').trim());
+  document.getElementById('card' + i)?.classList.add('s' + (i + 1));
+  S.selIdx = i;
+  const v = S.generatedPrompts[i];
+  const bar = document.getElementById('selbar');
+  bar.className = `selbar vis sb${i+1}`;
+  document.getElementById('selTitle').textContent = 'V' + (i+1) + ' — ' + (v?.name || '');
+  document.getElementById('selDesc').textContent = v?.changements || '';
+  document.getElementById('selCnt').textContent = 'V' + (i+1) + ' sélectionnée';
+  document.getElementById('btnExpSel').disabled = false;
+}
+
+function cpPrompt(i, e) {
+  e.stopPropagation();
+  const v = S.generatedPrompts[i];
+  if (v) navigator.clipboard.writeText(v.prompt).then(() => toast('✅ Prompt V' + (i+1) + ' copié !'));
+}
+function cpSelPrompt() { if (S.selIdx !== null) cpPrompt(S.selIdx, { stopPropagation: () => {} }); }
+
+async function regen() {
+  S.selIdx = null;
+  document.getElementById('selbar').classList.remove('vis');
+  document.getElementById('selCnt').textContent = 'Aucune sélection';
+  document.getElementById('btnExpSel').disabled = true;
+  document.querySelectorAll('.lcard').forEach(c => c.className = c.className.replace(/\bs\d\b/g, '').trim());
+  await generate();
+}
+
+// ============================================================
+// DTF STUDIO DATABASE (IndexedDB)
+// ============================================================
+
+function openDTFDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('dtf_studio_db', 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('sessions')) {
+        const store = db.createObjectStore('sessions', { keyPath: 'id' });
+        store.createIndex('date', 'date', { unique: false });
+      }
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function urlToBase64(url) {
+  if (!url || url.startsWith('data:')) return url;
+  try {
+    const resp = await fetch(url);
+    const blob = await resp.blob();
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = rej;
+      r.readAsDataURL(blob);
+    });
+  } catch(e) { return url; }
+}
+
+async function archiveSession() {
+  if (!S.generatedPrompts.length) { toast('⚠️ Aucune variante à archiver'); return; }
+  const btn = document.getElementById('btnArchive');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
+  try {
+    const variants = await Promise.all(S.generatedPrompts.map(async (v, i) => ({
+      id: v.id,
+      name: v.name,
+      prompt: v.prompt,
+      changements: v.changements,
+      tags: v.tags || [],
+      imgBase64: v.imgUrl ? await urlToBase64(v.imgUrl) : null
+    })));
+
+    const session = {
+      id: Date.now(),
+      date: new Date().toISOString(),
+      collection: S.coll || 'Sans titre',
+      theme: S.theme || '',
+      brief: S.brief || '',
+      basePrompt: S.basePrompt || '',
+      imgData: S.imgData || null,
+      variants
+    };
+
+    const db = await openDTFDB();
+    const tx = db.transaction('sessions', 'readwrite');
+    tx.objectStore('sessions').put(session);
+    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+    db.close();
+    toast('📦 Session archivée dans DTF Studio Database !');
+  } catch(e) {
+    toast('❌ Erreur archivage : ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📦 Archiver'; }
+  }
+}
+
+async function openHistory() {
+  document.getElementById('dtfHistoryModal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'dtfHistoryModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(10,22,40,0.97);z-index:3000;display:flex;flex-direction:column;backdrop-filter:blur(12px);overflow:hidden';
+  modal.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 32px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div>
+        <div style="font-family:'Bebas Neue';font-size:32px;letter-spacing:3px;background:linear-gradient(135deg,var(--teal),var(--coral));-webkit-background-clip:text;-webkit-text-fill-color:transparent">📦 DTF STUDIO DATABASE</div>
+        <div style="font-family:'Space Mono';font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:2px">SESSIONS ARCHIVÉES</div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button id="btnExportAllZip" onclick="exportAllZip()"
+          style="padding:10px 22px;background:rgba(14,124,123,0.2);border:1px solid var(--teal);border-radius:10px;color:var(--teal);font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;cursor:pointer">
+          📥 Exporter tout en ZIP
+        </button>
+        <button onclick="document.getElementById('dtfHistoryModal').remove()"
+          style="padding:10px 22px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--white);font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;cursor:pointer">
+          ✕ FERMER
+        </button>
+      </div>
+    </div>
+    <div id="dtfHistoryList" style="flex:1;overflow-y:auto;padding:28px 32px">
+      <div style="font-family:'Space Mono';font-size:11px;color:var(--muted);text-align:center;padding:50px">⏳ Chargement...</div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  try {
+    const db = await openDTFDB();
+    const tx = db.transaction('sessions', 'readonly');
+    const all = await new Promise((res, rej) => {
+      const req = tx.objectStore('sessions').index('date').getAll();
+      req.onsuccess = () => res(req.result);
+      req.onerror = rej;
+    });
+    db.close();
+
+    const list = document.getElementById('dtfHistoryList');
+    if (!all.length) {
+      list.innerHTML = `<div style="font-family:'Space Mono';font-size:11px;color:var(--muted);text-align:center;padding:70px;line-height:2">Aucune session archivée.<br>Générez une collection puis cliquez <strong style="color:var(--teal)">📦 Archiver</strong>.</div>`;
+      return;
+    }
+    all.sort((a, b) => b.id - a.id);
+    const COLS = ['#2563eb', '#dc2626', '#ca8a04'];
+
+    list.innerHTML = all.map(s => {
+      const date = new Date(s.date).toLocaleString('fr-FR');
+      const thumbs = (s.variants || []).map((v, i) => {
+        const col = COLS[i] || '#888';
+        const isData = v.imgBase64 && v.imgBase64.startsWith('data:');
+        const thumb = isData
+          ? `<img src="${v.imgBase64}" style="width:100%;height:100%;object-fit:cover">`
+          : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;color:${col}30;background:rgba(255,255,255,0.03)">🖼️</div>`;
+        const dl = isData
+          ? `<a href="${v.imgBase64}" download="dtf-v${v.id}-${s.collection.replace(/\s+/g,'-').toLowerCase()}.png"
+               style="display:block;text-align:center;padding:5px;background:rgba(14,124,123,0.2);border:1px solid var(--teal);border-radius:6px;font-family:'Space Mono';font-size:9px;color:var(--teal);text-decoration:none;margin-top:5px">⬇️ PNG</a>` : '';
+        return `
+          <div>
+            <div style="border:2px solid ${col};border-radius:8px;overflow:hidden;aspect-ratio:1;margin-bottom:4px">${thumb}</div>
+            <div style="font-family:'Space Mono';font-size:9px;color:${col};letter-spacing:1px;text-align:center">V${v.id} ${v.name||''}</div>
+            ${dl}
+          </div>`;
+      }).join('');
+
+      return `
+        <div style="background:rgba(13,33,55,0.8);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:18px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap">
+            <div>
+              <div style="font-family:'Bebas Neue';font-size:24px;letter-spacing:2px;color:var(--gold)">${s.collection}</div>
+              <div style="font-family:'Space Mono';font-size:9px;color:var(--muted);margin-top:3px">${date} · Thème : ${s.theme||'—'}</div>
+            </div>
+            <button onclick="deleteSession(${s.id})"
+              style="padding:6px 14px;background:rgba(232,83,58,0.12);border:1px solid var(--coral);border-radius:8px;color:var(--coral);font-family:'Space Mono';font-size:9px;cursor:pointer;flex-shrink:0">
+              🗑️ Supprimer
+            </button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">${thumbs}</div>
+          ${s.brief ? `<div style="margin-top:14px;font-family:'Space Mono';font-size:9px;color:var(--muted);padding:10px 14px;background:rgba(0,0,0,0.25);border-radius:8px;line-height:1.7">${s.brief}</div>` : ''}
+        </div>`;
+    }).join('');
+  } catch(e) {
+    const list = document.getElementById('dtfHistoryList');
+    if (list) list.innerHTML = `<div style="color:var(--coral);font-family:'Space Mono';font-size:11px;text-align:center;padding:50px">❌ ${e.message}</div>`;
+  }
+}
+
+async function deleteSession(id) {
+  if (!confirm('Supprimer cette session ?')) return;
+  try {
+    const db = await openDTFDB();
+    const tx = db.transaction('sessions', 'readwrite');
+    tx.objectStore('sessions').delete(id);
+    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+    db.close();
+    toast('🗑️ Session supprimée');
+    openHistory();
+  } catch(e) { toast('❌ Erreur : ' + e.message); }
+}
+
+// ── Export session courante en ZIP ──
+async function exportCurrentZip() {
+  if (!S.generatedPrompts.length) { toast('⚠️ Aucune variante générée'); return; }
+  const btn = document.getElementById('btnZip');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
+  try {
+    const zip = new JSZip();
+    const name = (S.coll || 'collection').replace(/\s+/g, '-').toLowerCase();
+    const folder = zip.folder(name);
+
+    // Images des variantes
+    for (const v of S.generatedPrompts) {
+      if (v.imgUrl) {
+        const b64 = await urlToBase64(v.imgUrl);
+        if (b64 && b64.startsWith('data:')) {
+          const data = b64.split(',')[1];
+          folder.file(`v${v.id}-${(v.name||'variante').replace(/\s+/g,'-').toLowerCase()}.png`, data, { base64: true });
+        }
+      }
+    }
+
+    // Image originale uploadée
+    if (S.imgData && S.imgData.startsWith('data:')) {
+      folder.file('original.png', S.imgData.split(',')[1], { base64: true });
+    }
+
+    // Métadonnées JSON
+    const meta = {
+      collection: S.coll, theme: S.theme, brief: S.brief,
+      date: new Date().toISOString(),
+      basePrompt: S.basePrompt,
+      variants: S.generatedPrompts.map(v => ({
+        id: v.id, name: v.name, prompt: v.prompt, changements: v.changements, tags: v.tags
+      }))
+    };
+    folder.file('metadata.json', JSON.stringify(meta, null, 2));
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `dtf-${name}-${Date.now()}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('📥 ZIP téléchargé !');
+  } catch(e) {
+    toast('❌ Erreur ZIP : ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📥 ZIP'; }
+  }
+}
+
+// ── Export toute la DB en ZIP ──
+async function exportAllZip() {
+  const btn = document.getElementById('btnExportAllZip');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Génération...'; }
+  try {
+    const db = await openDTFDB();
+    const tx = db.transaction('sessions', 'readonly');
+    const all = await new Promise((res, rej) => {
+      const req = tx.objectStore('sessions').index('date').getAll();
+      req.onsuccess = () => res(req.result);
+      req.onerror = rej;
+    });
+    db.close();
+
+    if (!all.length) { toast('⚠️ Aucune session archivée'); return; }
+
+    const zip = new JSZip();
+    for (const s of all) {
+      const fName = `${new Date(s.date).toLocaleDateString('fr-FR').replace(/\//g,'-')}_${(s.collection||'session').replace(/\s+/g,'-').toLowerCase()}`;
+      const folder = zip.folder(fName);
+      for (const v of (s.variants || [])) {
+        if (v.imgBase64 && v.imgBase64.startsWith('data:')) {
+          folder.file(`v${v.id}-${(v.name||'variante').replace(/\s+/g,'-').toLowerCase()}.png`, v.imgBase64.split(',')[1], { base64: true });
+        }
+      }
+      if (s.imgData && s.imgData.startsWith('data:')) {
+        folder.file('original.png', s.imgData.split(',')[1], { base64: true });
+      }
+      const meta = { collection: s.collection, theme: s.theme, brief: s.brief, date: s.date, basePrompt: s.basePrompt,
+        variants: (s.variants||[]).map(v => ({ id: v.id, name: v.name, prompt: v.prompt, changements: v.changements })) };
+      folder.file('metadata.json', JSON.stringify(meta, null, 2));
+    }
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `dtf-studio-database-${Date.now()}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast(`📥 ${all.length} sessions exportées en ZIP !`);
+  } catch(e) {
+    toast('❌ Erreur ZIP : ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📥 Exporter tout en ZIP'; }
+  }
+}
+
+// ============================================================
+// EXPORTS
+// ============================================================
+function expAll() { expPrompts(); }
+function openMod() { document.getElementById('expMod').classList.add('open'); }
+function closeMod() { document.getElementById('expMod').classList.remove('open'); }
+
+function expPrompts() {
+  const matrice = Object.entries(S.components).map(([k, c]) =>
+    `${c.icon} ${c.label.toUpperCase()}\n  Original: ${c.originalValue}\n  V1: ${S.variations[k]?.v1 || '—'}\n  V2: ${S.variations[k]?.v2 || '—'}\n  V3: ${S.variations[k]?.v3 || '—'}`
+  ).join('\n\n');
+
+  const content = `DTF COLLECTION STUDIO — ${S.coll}
+Thème: ${S.theme} | Date: ${new Date().toLocaleDateString('fr-FR')}
+${'═'.repeat(60)}
+
+PERSONNAGE & STYLE VERROUILLÉS (identiques ×3)
+${'─'.repeat(40)}
+${S.basePrompt}
+
+${'═'.repeat(60)}
+MATRICE DES VARIATIONS
+${'─'.repeat(40)}
+${matrice}
+
+${'═'.repeat(60)}
+PROMPTS GÉNÉRÉS
+${'─'.repeat(40)}
+${S.generatedPrompts.map(v => `\nV${v.id} — ${v.name}\n↳ ${v.changements}\n\nPROMPT:\n${v.prompt}\n\n${'─'.repeat(60)}`).join('\n')}`;
+
+  dl(content, 'text/plain', `prompts-dtf-${S.coll.replace(/\s/g, '-').toLowerCase()}.txt`);
+  toast('📁 Prompts exportés !');
+  closeMod();
+}
+
+function expN8n() {
+  // Ask for tokens to embed directly in the workflow (no variables needed)
+  const existing = document.getElementById('n8nExportModal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'n8nExportModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(10,22,40,0.95);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px)';
+  modal.innerHTML = `
+    <div style="background:var(--deep);border:1px solid var(--border);border-radius:20px;padding:36px;max-width:580px;width:90%;animation:fadeUp .3s ease">
+      <h3 style="font-family:'Bebas Neue';font-size:28px;letter-spacing:3px;color:var(--gold);margin-bottom:6px">⚙️ EXPORT WORKFLOW N8N</h3>
+      <p style="font-family:'Space Mono';font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:22px;line-height:1.7">
+        Les tokens seront <strong style="color:var(--teal)">intégrés directement</strong> dans le JSON —
+        aucune variable n8n requise. Remplissez uniquement le provider que vous utilisez.
+      </p>
+
+      <!-- Replicate -->
+      <div style="margin-bottom:16px">
+        <div style="font-family:'Space Mono';font-size:10px;color:var(--v1);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px">
+          ⭐ TOKEN REPLICATE <span style="color:var(--muted);font-size:9px">(recommandé — Flux Kontext img2img)</span>
+        </div>
+        <input id="exp_replicate" type="password" placeholder="r8_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(37,99,235,0.4);border-radius:10px;padding:11px 15px;color:var(--white);font-family:'Space Mono';font-size:12px;outline:none">
+        <div style="font-family:'Space Mono';font-size:9px;color:var(--muted);margin-top:5px">
+          → replicate.com / Account / API tokens
+        </div>
+      </div>
+
+      <!-- DALL-E -->
+      <div style="margin-bottom:16px">
+        <div style="font-family:'Space Mono';font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px">
+          TOKEN OPENAI <span style="font-size:9px">(DALL-E 3 — optionnel)</span>
+        </div>
+        <input id="exp_openai" type="password" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:11px 15px;color:var(--white);font-family:'Space Mono';font-size:12px;outline:none">
+      </div>
+
+      <!-- Model choice -->
+      <div style="margin-bottom:22px">
+        <div style="font-family:'Space Mono';font-size:10px;color:var(--teal);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px">MODÈLE PRINCIPAL</div>
+        <select id="exp_model" style="width:100%;background:var(--deep);border:1px solid var(--border);border-radius:10px;padding:11px 15px;color:var(--white);font-family:'Space Mono';font-size:11px;outline:none">
+          <option value="kontext">⭐ Flux Kontext Pro — img2img (reproduit le style exact)</option>
+          <option value="flux-pro">Flux 1.1 Pro — text2img</option>
+          <option value="flux-dev">Flux Dev — text2img rapide</option>
+          <option value="dalle">DALL-E 3 HD — OpenAI</option>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button onclick="document.getElementById('n8nExportModal').remove()"
+          style="flex:1;padding:13px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--white);font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;cursor:pointer">
+          ANNULER
+        </button>
+        <button onclick="doExpN8n()"
+          style="flex:2;padding:13px;background:linear-gradient(135deg,var(--teal),#0a6e6d);border:none;border-radius:10px;color:white;font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;cursor:pointer">
+          ⬇️ TÉLÉCHARGER LE WORKFLOW
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function doExpN8n() {
+  const replicateToken = document.getElementById('exp_replicate')?.value?.trim() || 'VOTRE_TOKEN_REPLICATE_ICI';
+  const openaiToken    = document.getElementById('exp_openai')?.value?.trim()    || 'VOTRE_TOKEN_OPENAI_ICI';
+  const modelChoice    = document.getElementById('exp_model')?.value || 'kontext';
+
+  const isKontext = modelChoice === 'kontext';
+  const isDalle   = modelChoice === 'dalle';
+
+  const variants = S.generatedPrompts.map((v, i) => ({
+    id: v.id, name: v.name, prompt: v.prompt,
+    changements: v.changements,
+    pareoColor: extractColor(S.variations['tenue']?.['v'+(i+1)] || '', ['#2563eb','#dc2626','#ca8a04'][i]),
+  }));
+
+  // Build the generation node with token embedded directly
+  let genNode;
+  if (isDalle) {
+    genNode = {
+      id: 'gen-image',
+      name: '🤖 DALL-E 3 HD — OpenAI',
+      type: 'n8n-nodes-base.httpRequest',
+      position: [900, 300],
+      parameters: {
+        method: 'POST',
+        url: 'https://api.openai.com/v1/images/generations',
+        sendHeaders: true,
+        headerParameters: { parameters: [
+          { name: 'Authorization', value: `Bearer ${openaiToken}` },
+          { name: 'Content-Type',  value: 'application/json' }
+        ]},
+        sendBody: true,
+        bodyParameters: { parameters: [
+          { name: 'model',   value: 'dall-e-3' },
+          { name: 'prompt',  value: '={{ $json.prompt }}' },
+          { name: 'size',    value: '1024x1024' },
+          { name: 'quality', value: 'hd' },
+          { name: 'n',       value: 1 }
+        ]}
+      }
+    };
+  } else {
+    const modelId = {
+      'kontext':  'black-forest-labs/flux-kontext-pro',
+      'flux-pro': 'black-forest-labs/flux-1.1-pro',
+      'flux-dev': 'black-forest-labs/flux-dev',
+    }[modelChoice] || 'black-forest-labs/flux-kontext-pro';
+
+    const inputExpr = isKontext
+      ? `={{ JSON.stringify({ input_image: $('📦 Variantes + image source').item.json.sourceImage, prompt: $json.prompt, output_format: 'png', safety_tolerance: 6 }) }}`
+      : `={{ JSON.stringify({ prompt: $json.prompt, negative_prompt: 'blurry, watermark, deformed, extra limbs', width: 1024, height: 1024, num_inference_steps: 28, output_format: 'png' }) }}`;
+
+    genNode = {
+      id: 'gen-image',
+      name: isKontext ? '🖼️ Flux Kontext Pro (img2img)' : '🖼️ Flux text2img',
+      type: 'n8n-nodes-base.httpRequest',
+      position: [900, 300],
+      parameters: {
+        method: 'POST',
+        url: `https://api.replicate.com/v1/models/${modelId}/predictions`,
+        sendHeaders: true,
+        headerParameters: { parameters: [
+          { name: 'Authorization', value: `Token ${replicateToken}` },
+          { name: 'Content-Type',  value: 'application/json' },
+          { name: 'Prefer',        value: 'wait' }
+        ]},
+        sendBody: true,
+        bodyParameters: { parameters: [
+          { name: 'input', value: inputExpr }
+        ]}
+      }
+    };
+  }
+
+  const workflow = {
+    name: `DTF Collection — ${S.coll}`,
+    nodes: [
+      {
+        id: 'trigger',
+        name: '🎯 Démarrer',
+        type: 'n8n-nodes-base.manualTrigger',
+        position: [220, 300],
+        parameters: {}
+      },
+      {
+        id: 'set-data',
+        name: '📦 Variantes + image source',
+        type: 'n8n-nodes-base.set',
+        position: [440, 300],
+        parameters: {
+          values: { array: [
+            { name: 'variants',    value: JSON.stringify(variants) },
+            { name: 'collection',  value: S.coll },
+            { name: 'theme',       value: S.theme },
+            { name: 'basePrompt',  value: S.basePrompt },
+            { name: 'sourceImage', value: S.imgData || '(collez ici le base64 de votre image source pour Flux Kontext)' },
+            { name: 'model',       value: modelChoice },
+          ]}
+        }
+      },
+      {
+        id: 'split',
+        name: '🔀 Boucle sur les 3 variantes',
+        type: 'n8n-nodes-base.splitInBatches',
+        position: [660, 300],
+        parameters: { batchSize: 1, options: {} }
+      },
+      {
+        id: 'prepare-variant',
+        name: '🔧 Préparer variante',
+        type: 'n8n-nodes-base.set',
+        position: [780, 300],
+        parameters: {
+          values: { object: [
+            { name: 'prompt',    value: `={{ JSON.parse($('🔀 Boucle sur les 3 variantes').item.json.variants)[$('🔀 Boucle sur les 3 variantes').context.currentRunIndex].prompt }}` },
+            { name: 'name',      value: `={{ JSON.parse($('🔀 Boucle sur les 3 variantes').item.json.variants)[$('🔀 Boucle sur les 3 variantes').context.currentRunIndex].name }}` },
+            { name: 'variantId', value: `={{ JSON.parse($('🔀 Boucle sur les 3 variantes').item.json.variants)[$('🔀 Boucle sur les 3 variantes').context.currentRunIndex].id }}` },
+          ]}
+        }
+      },
+      genNode,
+      {
+        id: 'get-result',
+        name: '📥 Extraire URL image',
+        type: 'n8n-nodes-base.set',
+        position: [1120, 300],
+        parameters: {
+          values: { string: [
+            { name: 'imageUrl', value: isDalle
+              ? '={{ $json.data[0].url }}'
+              : '={{ Array.isArray($json.output) ? $json.output[0] : $json.output }}' },
+            { name: 'variantName', value: "={{ $('🔧 Préparer variante').item.json.name }}" },
+          ]}
+        }
+      },
+      {
+        id: 'download',
+        name: '⬇️ Télécharger PNG',
+        type: 'n8n-nodes-base.httpRequest',
+        position: [1340, 300],
+        parameters: {
+          method: 'GET',
+          url: '={{ $json.imageUrl }}',
+          responseFormat: 'file',
+          options: {}
+        }
+      },
+      {
+        id: 'save',
+        name: '💾 Sauvegarder PNG DTF',
+        type: 'n8n-nodes-base.writeBinaryFile',
+        position: [1560, 300],
+        parameters: {
+          fileName: `=dtf-{{ $('📥 Extraire URL image').item.json.variantName.replace(/ /g,'-').toLowerCase() }}-${new Date().toISOString().slice(0,10)}.png`,
+          dataPropertyName: 'data'
+        }
+      },
+      {
+        id: 'done',
+        name: '✅ Terminé',
+        type: 'n8n-nodes-base.set',
+        position: [1780, 300],
+        parameters: {
+          values: { string: [
+            { name: 'status', value: '✅ Collection DTF générée avec succès' },
+            { name: 'collection', value: S.coll }
+          ]}
+        }
+      }
+    ],
+    connections: {
+      '🎯 Démarrer':                { main: [[{ node: '📦 Variantes + image source', type: 'main', index: 0 }]] },
+      '📦 Variantes + image source': { main: [[{ node: '🔀 Boucle sur les 3 variantes', type: 'main', index: 0 }]] },
+      '🔀 Boucle sur les 3 variantes': { main: [[{ node: '🔧 Préparer variante', type: 'main', index: 0 }]] },
+      '🔧 Préparer variante':        { main: [[{ node: genNode.name, type: 'main', index: 0 }]] },
+      [genNode.name]:                { main: [[{ node: '📥 Extraire URL image', type: 'main', index: 0 }]] },
+      '📥 Extraire URL image':       { main: [[{ node: '⬇️ Télécharger PNG', type: 'main', index: 0 }]] },
+      '⬇️ Télécharger PNG':          { main: [[{ node: '💾 Sauvegarder PNG DTF', type: 'main', index: 0 }]] },
+      '💾 Sauvegarder PNG DTF':      { main: [[{ node: '✅ Terminé', type: 'main', index: 0 }]] },
+    },
+    settings: { executionOrder: 'v1' },
+    meta: {
+      generatedBy: 'DTF VISUAL STUDIO',
+      collection: S.coll,
+      theme: S.theme,
+      date: new Date().toISOString(),
+      model: modelChoice,
+      tokensEmbedded: true,
+      note: isKontext
+        ? 'Flux Kontext img2img: prend sourceImage et applique uniquement les modifications du prompt'
+        : 'text2img: génère depuis le prompt complet',
+      instructions: [
+        '1. Importez ce fichier dans n8n : Menu → Import from file',
+        '2. Ouvrez le nœud "📦 Variantes + image source" pour vérifier les données',
+        isKontext ? '3. Flux Kontext: le champ sourceImage contient déjà votre image en base64' : '3. Vérifiez les prompts dans le nœud Split',
+        '4. Cliquez Test workflow pour lancer la génération',
+        '5. Les PNG sont sauvegardés par le nœud "💾 Sauvegarder PNG DTF"',
+      ]
+    }
+  };
+
+  dl(JSON.stringify(workflow, null, 2), 'application/json', `n8n-dtf-${S.coll.replace(/\s/g,'-').toLowerCase()}.json`);
+  toast('⚙️ Workflow n8n exporté avec tokens intégrés !');
+  document.getElementById('n8nExportModal')?.remove();
+  closeMod();
+}
+// ============================================================
+// GENERATE HD WITH REPLICATE / DALL-E directly from UI
+// ============================================================
+async function genWithReplicate(idx, e) {
+  e && e.stopPropagation();
+  openApiModal(idx);
+}
+
+function openApiModal(idx) {
+  const existing = document.getElementById('apiModal');
+  if (existing) existing.remove();
+
+  const vt = S.generatedPrompts[idx];
+  const modal = document.createElement('div');
+  modal.id = 'apiModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(10,22,40,0.95);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px)';
+  modal.innerHTML = `
+    <div style="background:var(--deep);border:1px solid var(--border);border-radius:20px;padding:36px;max-width:600px;width:90%;animation:fadeUp .3s ease;max-height:90vh;overflow-y:auto">
+      <h3 style="font-family:'Bebas Neue';font-size:28px;letter-spacing:3px;color:var(--gold);margin-bottom:6px">🚀 GÉNÉRATION HD</h3>
+      <p style="font-family:'Space Mono';font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:20px">
+        V${vt.id} — ${vt.name} · Sélectionnez votre provider IA
+      </p>
+
+      <!-- Provider tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:20px">
+        <button onclick="switchProvider('replicate')" id="tab-replicate"
+          style="flex:1;padding:10px;border-radius:8px;font-family:'Space Mono';font-size:10px;cursor:pointer;border:1px solid var(--v1);background:rgba(37,99,235,0.2);color:var(--v1);letter-spacing:1px">
+          ⚡ REPLICATE<br><span style="font-size:8px;opacity:.7">SDXL / Flux</span>
+        </button>
+        <button onclick="switchProvider('dalle')" id="tab-dalle"
+          style="flex:1;padding:10px;border-radius:8px;font-family:'Space Mono';font-size:10px;cursor:pointer;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--muted);letter-spacing:1px">
+          🤖 DALL-E 3<br><span style="font-size:8px;opacity:.7">OpenAI</span>
+        </button>
+        <button onclick="switchProvider('stability')" id="tab-stability"
+          style="flex:1;padding:10px;border-radius:8px;font-family:'Space Mono';font-size:10px;cursor:pointer;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--muted);letter-spacing:1px">
+          🎨 STABILITY<br><span style="font-size:8px;opacity:.7">SD3 Ultra</span>
+        </button>
+      </div>
+
+      <!-- API Key input -->
+      <div id="provider-replicate">
+        <div style="font-family:'Space Mono';font-size:10px;color:var(--teal);letter-spacing:2px;margin-bottom:6px">CLÉ API REPLICATE</div>
+        <input id="apiKey" type="password" placeholder="r8_xxxxxxxxxxxxxxxx"
+          style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--white);font-family:'Space Mono';font-size:12px;outline:none;margin-bottom:12px">
+        <div style="font-family:'Space Mono';font-size:10px;color:var(--teal);letter-spacing:2px;margin-bottom:6px">MODÈLE</div>
+        <select id="replicateModel" style="width:100%;background:var(--deep);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--white);font-family:'Space Mono';font-size:11px;outline:none;margin-bottom:12px">
+          <option value="black-forest-labs/flux-1.1-pro">Flux 1.1 Pro (recommandé)</option>
+          <option value="black-forest-labs/flux-dev">Flux Dev (rapide)</option>
+          <option value="stability-ai/sdxl">SDXL 1.0</option>
+          <option value="playgroundai/playground-v2.5-1024px-aesthetic">Playground v2.5</option>
+        </select>
+      </div>
+
+      <div id="provider-dalle" style="display:none">
+        <div style="font-family:'Space Mono';font-size:10px;color:var(--teal);letter-spacing:2px;margin-bottom:6px">CLÉ API OPENAI</div>
+        <input id="apiKeyDalle" type="password" placeholder="sk-xxxxxxxxxxxxxxxx"
+          style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--white);font-family:'Space Mono';font-size:12px;outline:none;margin-bottom:12px">
+        <div style="font-family:'Space Mono';font-size:9px;color:var(--muted);margin-bottom:12px">DALL-E 3 · 1024×1024 · Qualité HD</div>
+      </div>
+
+      <div id="provider-stability" style="display:none">
+        <div style="font-family:'Space Mono';font-size:10px;color:var(--teal);letter-spacing:2px;margin-bottom:6px">CLÉ API STABILITY AI</div>
+        <input id="apiKeyStab" type="password" placeholder="sk-xxxxxxxxxxxxxxxx"
+          style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--white);font-family:'Space Mono';font-size:12px;outline:none;margin-bottom:12px">
+      </div>
+
+      <!-- Prompt preview -->
+      <div style="font-family:'Space Mono';font-size:10px;color:var(--teal);letter-spacing:2px;margin-bottom:6px">PROMPT ENVOYÉ</div>
+      <div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;font-family:'Space Mono';font-size:10px;color:var(--muted);line-height:1.6;max-height:80px;overflow:hidden;position:relative;margin-bottom:16px">
+        ${vt.prompt}
+        <div style="position:absolute;bottom:0;left:0;right:0;height:24px;background:linear-gradient(transparent,rgba(0,0,0,0.3))"></div>
+      </div>
+
+      <!-- Result area -->
+      <div id="apiResult" style="display:none;margin-bottom:16px">
+        <div style="font-family:'Space Mono';font-size:10px;color:var(--teal);letter-spacing:2px;margin-bottom:8px">🎨 IMAGE GÉNÉRÉE</div>
+        <img id="genImg" style="width:100%;border-radius:10px;border:1px solid var(--border)" src="" alt="">
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <a id="dlImg" download="dtf-${idx}.png" target="_blank"
+            style="flex:1;padding:10px;background:var(--teal);border-radius:8px;font-family:'Space Mono';font-size:10px;color:white;text-align:center;text-decoration:none;cursor:pointer">⬇️ Télécharger PNG</a>
+          <button onclick="useAsPreview(${idx})" style="flex:1;padding:10px;background:rgba(14,124,123,0.2);border:1px solid var(--teal);border-radius:8px;font-family:'Space Mono';font-size:10px;color:var(--teal);cursor:pointer">✓ Utiliser comme aperçu</button>
+        </div>
+      </div>
+
+      <div id="apiStatus" style="font-family:'Space Mono';font-size:10px;color:var(--muted);text-align:center;min-height:18px;margin-bottom:14px"></div>
+
+      <div style="display:flex;gap:10px">
+        <button onclick="document.getElementById('apiModal').remove()" style="flex:1;padding:12px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--white);font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;cursor:pointer">FERMER</button>
+        <button id="btnGenHD" onclick="launchHDGen(${idx})" style="flex:2;padding:12px;background:linear-gradient(135deg,var(--v1),#1d4ed8);border:none;border-radius:10px;color:white;font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;cursor:pointer">🚀 LANCER LA GÉNÉRATION</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+let _currentProvider = 'replicate';
+function switchProvider(p) {
+  _currentProvider = p;
+  ['replicate','dalle','stability'].forEach(id => {
+    const tab = document.getElementById('tab-'+id);
+    const pane = document.getElementById('provider-'+id);
+    if (tab) {
+      tab.style.borderColor = id === p ? 'var(--v1)' : 'var(--border)';
+      tab.style.background = id === p ? 'rgba(37,99,235,0.2)' : 'rgba(255,255,255,0.04)';
+      tab.style.color = id === p ? 'var(--v1)' : 'var(--muted)';
+    }
+    if (pane) pane.style.display = id === p ? 'block' : 'none';
+  });
+}
+
+async function launchHDGen(idx) {
+  const vt = S.generatedPrompts[idx];
+  const btn = document.getElementById('btnGenHD');
+  const status = document.getElementById('apiStatus');
+  if (!btn || !status) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner spin-sm" style="display:inline-block;margin-right:8px"></div> GÉNÉRATION EN COURS…';
+
+  try {
+    if (_currentProvider === 'replicate') {
+      await genReplicate(idx, vt, btn, status);
+    } else if (_currentProvider === 'dalle') {
+      await genDalle(idx, vt, btn, status);
+    } else {
+      await genStability(idx, vt, btn, status);
+    }
+  } catch(e) {
+    status.style.color = 'var(--coral)';
+    status.textContent = '❌ Erreur: ' + e.message;
+    btn.disabled = false;
+    btn.innerHTML = '🔄 RÉESSAYER';
+  }
+}
+
+async function genReplicate(idx, vt, btn, status) {
+  const key = document.getElementById('apiKey')?.value?.trim();
+  const modelSlug = document.getElementById('replicateModel')?.value || 'flux-dev';
+  if (!key) throw new Error('Clé API Replicate manquante');
+  status.textContent = '⏳ Génération via Worker proxy…';
+
+  const modelMap = {
+    'black-forest-labs/flux-dev': 'black-forest-labs/flux-dev',
+    'black-forest-labs/flux-schnell': 'black-forest-labs/flux-schnell',
+    'black-forest-labs/flux-1.1-pro': 'black-forest-labs/flux-1.1-pro',
+    'flux-kontext-pro': 'black-forest-labs/flux-kontext-pro',
+    'flux-kontext-dev': 'black-forest-labs/flux-kontext-dev',
+    'flux-pro': 'black-forest-labs/flux-1.1-pro',
+    'flux-dev': 'black-forest-labs/flux-dev',
+    'sdxl': 'stability-ai/sdxl',
+  };
+  const modelId = modelMap[modelSlug] || modelSlug;
+
+  const input = {
+    prompt: vt.prompt,
+    negative_prompt: 'blurry, low quality, watermark, text, extra limbs, deformed, ugly',
+    width: 1024, height: 1024,
+    num_inference_steps: 28, guidance_scale: 7.5, output_format: 'png',
+  };
+
+  // Soumission via Worker (contourne CORS file://)
+  const resp = await fetch(`${WORKER_URL}/api/replicate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Worker-Secret': WORKER_SECRET },
+    body: JSON.stringify({ token: key, modelId, input })
+  });
+
+  if (!resp.ok) {
+    const e = await resp.json().catch(() => ({}));
+    throw new Error(e?.error || `Worker Replicate HTTP ${resp.status}`);
+  }
+
+  const data = await resp.json();
+
+  // Résultat immédiat
+  if (data.status === 'succeeded' && data.url) {
+    showGenResult(data.url, idx, status, btn);
+    return;
+  }
+
+  // Polling côté navigateur (évite le timeout CF 30s)
+  const predictionId = data.predictionId;
+  if (!predictionId) throw new Error('Pas d\'ID de prédiction retourné');
+
+  for (let i = 0; i < 60; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    status.textContent = `⏳ Génération en cours… (${(i+1)*3}s)`;
+
+    const pollResp = await fetch(`${WORKER_URL}/api/replicate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Worker-Secret': WORKER_SECRET },
+      body: JSON.stringify({ token: key, predictionId })
+    });
+    if (!pollResp.ok) {
+      const e = await pollResp.json().catch(() => ({}));
+      throw new Error(e?.error || `Replicate poll HTTP ${pollResp.status}`);
+    }
+    const poll = await pollResp.json();
+    if (poll.status === 'succeeded' && poll.url) {
+      showGenResult(poll.url, idx, status, btn);
+      return;
+    }
+    if (poll.status === 'failed' || poll.status === 'canceled') {
+      throw new Error(`Replicate ${poll.status}`);
+    }
+  }
+  throw new Error('Timeout Replicate (3 min)');
+}
+
+async function genDalle(idx, vt, btn, status) {
+  const key = document.getElementById('apiKeyDalle')?.value?.trim();
+  if (!key) throw new Error('Clé API OpenAI manquante');
+  status.textContent = '⏳ Envoi à DALL-E 3…';
+  const r = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'dall-e-3', prompt: vt.prompt, size: '1024x1024', quality: 'hd', n: 1 })
+  });
+  if (!r.ok) throw new Error(`OpenAI: ${r.status} ${await r.text()}`);
+  const data = await r.json();
+  const imgUrl = data.data?.[0]?.url;
+  if (!imgUrl) throw new Error('Pas d\'URL d\'image dans la réponse');
+  showGenResult(imgUrl, idx, status, btn);
+}
+
+async function genStability(idx, vt, btn, status) {
+  const key = document.getElementById('apiKeyStab')?.value?.trim();
+  if (!key) throw new Error('Clé API Stability AI manquante');
+  status.textContent = '⏳ Envoi à Stability AI…';
+  const formData = new FormData();
+  formData.append('prompt', vt.prompt);
+  formData.append('negative_prompt', 'blurry, low quality, watermark');
+  formData.append('aspect_ratio', '1:1');
+  formData.append('output_format', 'png');
+  const r = await fetch('https://api.stability.ai/v2beta/stable-image/generate/ultra', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${key}`, 'Accept': 'image/*' },
+    body: formData
+  });
+  if (!r.ok) throw new Error(`Stability: ${r.status} ${await r.text()}`);
+  const blob = await r.blob();
+  const imgUrl = URL.createObjectURL(blob);
+  showGenResult(imgUrl, idx, status, btn);
+}
+
+function showGenResult(imgUrl, idx, status, btn) {
+  status.textContent = '✅ Image générée avec succès !';
+  status.style.color = 'var(--teal)';
+  const resultDiv = document.getElementById('apiResult');
+  const img = document.getElementById('genImg');
+  const dlLink = document.getElementById('dlImg');
+  if (resultDiv) resultDiv.style.display = 'block';
+  if (img) { img.src = imgUrl; img.dataset.idx = idx; }
+  if (dlLink) { dlLink.href = imgUrl; dlLink.download = `dtf-v${idx+1}-hd.png`; }
+  if (btn) { btn.disabled = false; btn.innerHTML = '🔄 RÉGÉNÉRER'; }
+  S.generatedPrompts[idx].hdImageUrl = imgUrl;
+  toast(`✅ V${idx+1} générée en HD !`);
+}
+
+function useAsPreview(idx) {
+  const img = document.getElementById('genImg');
+  const card = document.getElementById('card' + idx);
+  if (!img || !card) return;
+  const vis = card.querySelector('.lvisual');
+  if (vis) {
+    vis.innerHTML = `<img src="${img.src}" style="width:100%;height:100%;object-fit:cover" alt="V${idx+1} HD">`;
+  }
+  document.getElementById('apiModal')?.remove();
+  toast('✅ Aperçu mis à jour avec l\'image HD !');
+}
+
+function expPoster() {
+  const el = document.getElementById('posterPrev');
+  const w = window.open('', '_blank');
+  w.document.write(`<html><head><title>${S.coll}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono&display=swap" rel="stylesheet">
+    <style>body{margin:40px;font-family:sans-serif}@media print{body{margin:0}}</style>
+    </head><body>${el.outerHTML}<script>window.print()<\/script></body></html>`);
+  w.document.close();
+  closeMod();
+}
+
+function expClip() {
+  const lines = [
+    `🌺 ${S.coll} — ${S.theme}`,
+    `📅 ${new Date().toLocaleDateString('fr-FR')}`,
+    `\n🔒 PERSONNAGE & STYLE VERROUILLÉS:\n${S.basePrompt}`,
+    `\n📊 MATRICE DES VARIATIONS:\n`,
+    ...Object.entries(S.components).map(([k, c]) =>
+      `${c.icon} ${c.label}\n  V1: ${S.variations[k]?.v1 || '—'}\n  V2: ${S.variations[k]?.v2 || '—'}\n  V3: ${S.variations[k]?.v3 || '—'}`),
+    `\n\n🎨 PROMPTS DTF:\n`,
+    ...S.generatedPrompts.map(v => `V${v.id} — ${v.name}\n${v.prompt}`)
+  ];
+  navigator.clipboard.writeText(lines.join('\n')).then(() => { toast('📋 Résumé copié !'); closeMod(); });
+}
+
+function dl(c, t, f) {
+  const b = new Blob([c], { type: t });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = f;
+  a.click();
+}
+
+function toast(m) {
+  const t = document.getElementById('toast');
+  t.textContent = m;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Drag & drop
+const uz = document.getElementById('uz');
+uz.addEventListener('dragover', e => { e.preventDefault(); uz.style.borderColor = 'var(--teal)'; });
+uz.addEventListener('dragleave', () => uz.style.borderColor = '');
+uz.addEventListener('drop', e => {
+  e.preventDefault(); uz.style.borderColor = '';
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) {
+    const dt = new DataTransfer(); dt.items.add(f);
+    document.getElementById('fi').files = dt.files;
+    onImg({ target: document.getElementById('fi') });
+  }
+});
+
+// Restaurer les clés au chargement
+window.addEventListener('load', loadKeys);
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../hcs-hub-ecosystem/hcs-hub-ecosystem/hcs-hub.js"></script>
+<script src="../hcs-hub-ecosystem/hcs-hub-ecosystem/hcs-hub-dtfstudio.js"></script>
+</body>
+</html>

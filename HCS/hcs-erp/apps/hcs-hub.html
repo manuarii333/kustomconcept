@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HCS — Centre de Contrôle</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',sans-serif;background:#0a0a14;color:#e0e0f0;min-height:100vh}
+  header{background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #f0c040;box-shadow:0 4px 20px rgba(240,192,64,.2)}
+  .logo{display:flex;align-items:center;gap:14px}
+  .logo-icon{width:48px;height:48px;background:linear-gradient(135deg,#f0c040,#d4a020);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px}
+  .logo-text h1{font-size:22px;color:#f0c040;font-weight:700;letter-spacing:1px}
+  .logo-text p{font-size:12px;color:#8888aa;margin-top:2px}
+  .header-right{display:flex;align-items:center;gap:16px}
+  .time{font-size:13px;color:#8888aa}
+  #clock{color:#f0c040;font-weight:600}
+  .status-global{display:flex;align-items:center;gap:6px;background:#0f2f0f;border:1px solid #2d7a2d;border-radius:20px;padding:6px 14px;font-size:12px;color:#4caf50}
+  .dot{width:8px;height:8px;border-radius:50%;background:#4caf50;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  main{padding:24px 32px;max-width:1600px;margin:0 auto}
+
+  /* KPIs globaux */
+  .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:28px}
+  .kpi{background:#12122a;border:1px solid #1e1e3a;border-radius:12px;padding:18px;text-align:center;position:relative;overflow:hidden;transition:transform .2s}
+  .kpi:hover{transform:translateY(-2px);border-color:#f0c040}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+  .kpi.gold::before{background:#f0c040}
+  .kpi.blue::before{background:#4a9eff}
+  .kpi.green::before{background:#4caf50}
+  .kpi.orange::before{background:#ff7043}
+  .kpi.purple::before{background:#9c27b0}
+  .kpi-val{font-size:28px;font-weight:700;color:#f0c040;margin-bottom:4px}
+  .kpi.blue .kpi-val{color:#4a9eff}
+  .kpi.green .kpi-val{color:#4caf50}
+  .kpi.orange .kpi-val{color:#ff7043}
+  .kpi.purple .kpi-val{color:#ce93d8}
+  .kpi-label{font-size:11px;color:#666688;text-transform:uppercase;letter-spacing:.5px}
+  .kpi-sub{font-size:10px;color:#444466;margin-top:4px}
+
+  /* Grille agents */
+  .section-title{font-size:16px;font-weight:600;color:#8888aa;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .section-title::after{content:'';flex:1;height:1px;background:#1e1e3a}
+
+  .agents-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:32px}
+  .agent-card{background:#12122a;border:1px solid #1e1e3a;border-radius:14px;padding:20px;cursor:pointer;transition:all .25s;text-decoration:none;color:inherit;display:block;position:relative;overflow:hidden}
+  .agent-card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(240,192,64,.15)}
+  .agent-card.active{border-color:#2d7a2d}
+  .agent-card.active:hover{border-color:#4caf50}
+  .agent-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+  .agent-num{font-size:11px;color:#444466;text-transform:uppercase;letter-spacing:1px}
+  .agent-badge{font-size:10px;padding:3px 10px;border-radius:20px;font-weight:600}
+  .badge-ok{background:#0f2f0f;color:#4caf50;border:1px solid #2d7a2d}
+  .badge-pending{background:#2a1800;color:#ff9800;border:1px solid #5a3000}
+  .badge-new{background:#1a0a2e;color:#ce93d8;border:1px solid #4a1a6a}
+  .agent-icon{font-size:36px;margin-bottom:8px}
+  .agent-name{font-size:15px;font-weight:700;color:#e0e0f0;margin-bottom:4px}
+  .agent-desc{font-size:12px;color:#666688;line-height:1.5;margin-bottom:12px}
+  .agent-stats{display:flex;gap:12px;flex-wrap:wrap}
+  .agent-stat{font-size:11px;background:#0d0d20;border-radius:6px;padding:4px 10px;color:#8888aa}
+  .agent-stat span{color:#f0c040;font-weight:600}
+  .agent-link{margin-top:14px;font-size:12px;color:#4a9eff;display:flex;align-items:center;gap:4px}
+  .agent-card-accent{position:absolute;bottom:0;left:0;right:0;height:3px}
+
+  /* Activité récente */
+  .bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .panel{background:#12122a;border:1px solid #1e1e3a;border-radius:12px;padding:20px}
+  .panel-title{font-size:13px;font-weight:600;color:#8888aa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+  .activity-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #0d0d20;font-size:12px}
+  .activity-item:last-child{border-bottom:none}
+  .act-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+  .act-time{color:#444466;font-size:11px;margin-left:auto;white-space:nowrap}
+  .act-text{color:#a0a0c0;flex:1}
+  .act-text strong{color:#e0e0f0}
+
+  /* Chart */
+  .chart-wrap{position:relative;height:200px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">☕</div>
+    <div class="logo-text">
+      <h1>HIGH COFFEE SHIRT</h1>
+      <p>Centre de Contrôle — 9 Agents IA</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="time">🕐 <span id="clock"></span></div>
+    <div class="status-global"><div class="dot"></div>Système opérationnel</div>
+  </div>
+</header>
+
+<main>
+  <!-- KPIs globaux -->
+  <div class="kpi-row" id="kpiRow">
+    <div class="kpi gold"><div class="kpi-val" id="kpiCA">—</div><div class="kpi-label">CA Jour (XPF)</div><div class="kpi-sub">depuis Finances</div></div>
+    <div class="kpi blue"><div class="kpi-val" id="kpiDevis">—</div><div class="kpi-label">Devis en cours</div><div class="kpi-sub">depuis Triage</div></div>
+    <div class="kpi green"><div class="kpi-val" id="kpiProd">—</div><div class="kpi-label">Commandes prod.</div><div class="kpi-sub">depuis Planning</div></div>
+    <div class="kpi orange"><div class="kpi-val" id="kpiAlertes">—</div><div class="kpi-label">Alertes actives</div><div class="kpi-sub">depuis Supervision</div></div>
+    <div class="kpi purple"><div class="kpi-val" id="kpiMachines">7</div><div class="kpi-label">Machines</div><div class="kpi-sub">2 presses · 2 casq · 3 traceurs</div></div>
+  </div>
+
+  <!-- Agents -->
+  <div class="section-title">🤖 Agents IA</div>
+  <div class="agents-grid" id="agentsGrid"></div>
+
+  <!-- Bas de page -->
+  <div class="bottom-row">
+    <div class="panel">
+      <div class="panel-title">⚡ Activité récente <span style="font-size:10px;color:#444466">auto-refresh 30s</span></div>
+      <div id="activityFeed"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">📊 CA — 7 derniers jours</div>
+      <div class="chart-wrap"><canvas id="caChart"></canvas></div>
+    </div>
+  </div>
+</main>
+
+<script>
+// === HORLOGE ===
+function tick(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('fr-FR')}
+tick(); setInterval(tick,1000);
+
+// === AGENTS CONFIG ===
+const AGENTS = [
+  {
+    num:'01', icon:'📥', name:'Triage & Réception', color:'#4a9eff',
+    desc:'Classification IA des messages entrants (Gmail + Messenger). Routage vers les bons agents.',
+    file:'agents/agent1_triage/triage-dashboard.html',
+    badges:['Gmail','Messenger','OpenAI'],
+    lsKey:null, statLabel:'Messages/jour', statDemo:'12'
+  },
+  {
+    num:'02', icon:'💼', name:'Commercial & Devis', color:'#f0c040',
+    desc:'Création automatique de devis Odoo depuis les emails clients. Lignes générées par IA.',
+    file:'agents/agent2_commercial/commercial-dashboard.html',
+    badges:['Odoo','Gmail','OpenAI'],
+    lsKey:null, statLabel:'Devis/semaine', statDemo:'8'
+  },
+  {
+    num:'03', icon:'🎨', name:'Production Visuelle', color:'#e91e63',
+    desc:'Détourage PicWish, amélioration image, archivage Dropbox. Interface mockup client.',
+    file:'agents/agent3_visuel/picwish-pipeline.html',
+    badges:['PicWish','Dropbox'],
+    lsKey:null, statLabel:'Logos traités', statDemo:'24'
+  },
+  {
+    num:'04', icon:'📦', name:'Stock & Fournisseurs', color:'#ff7043',
+    desc:'Réservations fournisseurs (Taaroa, Anémone, DTF USA). Suivi groupages et tracking.',
+    file:'agents/agent4_stock/stock-dashboard.html',
+    badges:['Taaroa','DTF USA'],
+    lsKey:null, statLabel:'Réservations', statDemo:'5'
+  },
+  {
+    num:'05', icon:'📅', name:'Planning Production', color:'#26c6da',
+    desc:'Kanban 5 colonnes, 7 machines, alertes délai 48h, export CSV. · <a href="agents/agent5_planning/atelier-production.html" style="color:#f0c040;text-decoration:none;">⚒️ Atelier ↗</a>',
+    file:'agents/agent5_planning/planning-dashboard.html',
+    badges:['7 machines','⚒️ Atelier'],
+    lsKey:'hcs_planning', statLabel:'En production', statDemo:'3'
+  },
+  {
+    num:'06', icon:'📸', name:'Contenu & Marketing', color:'#66bb6a',
+    desc:'Posts réseaux sociaux (GPT-4o), logos DALL-E 3, fiches WooCommerce SEO.',
+    file:'agents/agent6_contenu/content-generator.html',
+    badges:['DALL-E 3','GPT-4o'],
+    lsKey:null, statLabel:'Posts générés', statDemo:'17'
+  },
+  {
+    num:'07', icon:'📊', name:'Supervision & KPIs', color:'#ab47bc',
+    desc:'Vue globale entreprise : KPIs, alertes, finances, planning machines, export rapport.',
+    file:'agents/agent7_supervision/supervision-dashboard.html',
+    badges:['KPIs','Alertes'],
+    lsKey:'hcs_planning', statLabel:'Alertes actives', statDemo:'2'
+  },
+  {
+    num:'08', icon:'🏪', name:'Interface Boutique', color:'#ffa726',
+    desc:'Kaina — assistante IA vocale en boutique. Mode vendeur + mode client autonome.',
+    file:'agents/agent8_boutique/boutique-assistant.html',
+    badges:['Vocal','Canvas'],
+    lsKey:'hcs_boutique_orders', statLabel:'Commandes boutique', statDemo:'6'
+  },
+  {
+    num:'09', icon:'💰', name:'Finances & Comptabilité', color:'#ef5350',
+    desc:'OCR factures, P&L mensuel, routines quotidiennes, dashboard financier complet.',
+    file:'agents/agent9_finances/finance-dashboard.html',
+    badges:['OCR','P&L'],
+    lsKey:'hcs_transactions', statLabel:'Transactions/mois', statDemo:'34'
+  }
+];
+
+function buildAgents(){
+  const grid = document.getElementById('agentsGrid');
+  AGENTS.forEach(a => {
+    // Lire stat depuis localStorage si possible
+    let statVal = a.statDemo;
+    if(a.lsKey){
+      try{
+        const d=JSON.parse(localStorage.getItem(a.lsKey)||'null');
+        if(d&&Array.isArray(d)) statVal=d.length;
+      }catch(e){}
+    }
+    const card = document.createElement('a');
+    card.href = a.file;
+    card.className = 'agent-card';
+    card.innerHTML = `
+      <div class="agent-card-top">
+        <span class="agent-num">Agent ${a.num}</span>
+        <span class="agent-badge badge-ok">✅ Opérationnel</span>
+      </div>
+      <div class="agent-icon">${a.icon}</div>
+      <div class="agent-name">${a.name}</div>
+      <div class="agent-desc">${a.desc}</div>
+      <div class="agent-stats">
+        <div class="agent-stat">${a.statLabel} : <span>${statVal}</span></div>
+        ${a.badges.map(b=>`<div class="agent-stat">${b}</div>`).join('')}
+      </div>
+      <div class="agent-link">Ouvrir l'interface →</div>
+      <div class="agent-card-accent" style="background:${a.color}"></div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// === KPIs depuis localStorage ===
+function loadKPIs(){
+  // CA depuis hcs_transactions
+  try{
+    const tx=JSON.parse(localStorage.getItem('hcs_transactions')||'[]');
+    const today=new Date().toLocaleDateString('fr-FR');
+    const ca=tx.filter(t=>t.type==='recette'&&new Date(t.date).toLocaleDateString('fr-FR')===today)
+               .reduce((s,t)=>s+(parseFloat(t.montant)||0),0);
+    document.getElementById('kpiCA').textContent=ca>0?ca.toLocaleString('fr-FR'):'12 400';
+  }catch(e){document.getElementById('kpiCA').textContent='12 400';}
+
+  // Planning
+  try{
+    const pl=JSON.parse(localStorage.getItem('hcs_planning')||'[]');
+    const enProd=pl.filter(c=>c.statut==='production'||c.col==='production').length;
+    document.getElementById('kpiProd').textContent=enProd||3;
+    const alertes=pl.filter(c=>{
+      if(!c.deadline)return false;
+      return new Date(c.deadline)<new Date();
+    }).length;
+    document.getElementById('kpiAlertes').textContent=alertes||2;
+  }catch(e){document.getElementById('kpiProd').textContent='3';document.getElementById('kpiAlertes').textContent='2';}
+
+  document.getElementById('kpiDevis').textContent='8';
+}
+
+// === ACTIVITÉ RÉCENTE (démo) ===
+const activities=[
+  {icon:'📥',bg:'#0d1a2e',text:'<strong>Gmail</strong> — Nouveau devis reçu de Marie Tamatoa',time:'il y a 3 min'},
+  {icon:'✅',bg:'#0d2a0d',text:'<strong>Agent 2</strong> — Devis #SO-2847 créé dans Odoo',time:'il y a 8 min'},
+  {icon:'🎨',bg:'#2a0d1a',text:'<strong>PicWish</strong> — Logo détouré pour Jean-Pierre Teriimana',time:'il y a 12 min'},
+  {icon:'📦',bg:'#2a1400',text:'<strong>Stock</strong> — Commande DTF groupée (14 transferts)',time:'il y a 25 min'},
+  {icon:'💬',bg:'#0d0d2a',text:'<strong>Messenger</strong> — Demande info produit de Hina',time:'il y a 31 min'},
+  {icon:'💰',bg:'#2a0d0d',text:'<strong>Finance</strong> — Facture scannée : Taaroa Stock 8 400 XPF',time:'il y a 47 min'},
+];
+function buildActivity(){
+  const feed=document.getElementById('activityFeed');
+  activities.forEach(a=>{
+    const div=document.createElement('div');
+    div.className='activity-item';
+    div.innerHTML=`<div class="act-icon" style="background:${a.bg}">${a.icon}</div>
+      <div class="act-text">${a.text}</div>
+      <div class="act-time">${a.time}</div>`;
+    feed.appendChild(div);
+  });
+}
+
+// === CHART CA 7 jours ===
+function buildChart(){
+  const ctx=document.getElementById('caChart').getContext('2d');
+  const labels=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  let data=[0,0,0,0,0,0,0];
+  try{
+    const tx=JSON.parse(localStorage.getItem('hcs_transactions')||'[]');
+    if(tx.length>3){
+      const now=new Date();
+      tx.forEach(t=>{
+        const d=new Date(t.date);
+        const diff=Math.floor((now-d)/86400000);
+        if(diff>=0&&diff<7&&t.type==='recette') data[6-diff]+=(parseFloat(t.montant)||0);
+      });
+    }
+  }catch(e){}
+  if(data.every(v=>v===0)) data=[8200,12400,9800,15600,11200,18900,12400];
+  new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[{data,borderColor:'#f0c040',backgroundColor:'rgba(240,192,64,.08)',
+      borderWidth:2,pointBackgroundColor:'#f0c040',pointRadius:3,tension:.4,fill:true}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:'#1e1e3a'},ticks:{color:'#666688',font:{size:10}}},
+              y:{grid:{color:'#1e1e3a'},ticks:{color:'#666688',font:{size:10},
+                callback:v=>(v/1000).toFixed(0)+'k'}}}}
+  });
+}
+
+buildAgents();
+loadKPIs();
+buildActivity();
+buildChart();
+setInterval(()=>{loadKPIs();},30000);
+</script>
+</body>
+</html>

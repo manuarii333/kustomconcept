@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>KustomKoncept</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0e1018; color: #e8eaf0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+}
+
+/* ── HEADER ── */
+#hdr {
+  height: 50px; background: #161926; border-bottom: 1px solid #252a40;
+  display: flex; align-items: center; padding: 0 20px; gap: 12px; flex-shrink: 0;
+}
+.logo { font-weight: 900; font-size: 17px; letter-spacing: 2px; }
+.logo em { color: #ff4d00; font-style: normal; }
+.step-pills { display: flex; gap: 6px; margin-left: auto; align-items: center; }
+.pill {
+  padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
+  background: #1c2032; border: 1px solid #252a40; color: #6b7080; cursor: pointer;
+  transition: all .2s;
+}
+.pill.active { background: #ff4d00; border-color: #ff4d00; color: #fff; }
+.pill.done { background: rgba(34,197,94,.15); border-color: #22c55e; color: #22c55e; }
+
+/* ── BODY ── */
+#body { flex: 1; overflow: hidden; display: flex; }
+
+/* ── WIZARD PANEL ── */
+#wizard {
+  width: 380px; flex-shrink: 0; background: #161926; border-right: 1px solid #252a40;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+#wiz-content { flex: 1; overflow-y: auto; padding: 24px 20px; }
+#wiz-content::-webkit-scrollbar { width: 3px; }
+#wiz-content::-webkit-scrollbar-thumb { background: #252a40; }
+#wiz-footer { padding: 16px 20px; border-top: 1px solid #252a40; display: flex; gap: 8px; }
+
+/* ── CANVAS ── */
+#canvas-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+#c-toolbar {
+  display: flex; align-items: center; gap: 6px; padding: 8px 14px;
+  background: #161926; border-bottom: 1px solid #252a40; flex-shrink: 0;
+}
+#c-wrap {
+  flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center;
+  background: #090b12;
+  background-image: radial-gradient(#1a1d2a 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* ── TYPOGRAPHY ── */
+.wiz-step-num { font-size: 11px; font-weight: 700; color: #ff4d00; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+.wiz-title { font-size: 22px; font-weight: 800; line-height: 1.2; margin-bottom: 8px; }
+.wiz-desc { font-size: 13px; color: #8b90a0; line-height: 1.6; margin-bottom: 20px; }
+
+/* ── BIG UPLOAD ── */
+.big-upload {
+  border: 2px dashed #252a40; border-radius: 14px; padding: 32px 20px;
+  text-align: center; cursor: pointer; transition: all .2s;
+  position: relative; overflow: hidden; background: #1c2032;
+}
+.big-upload:hover, .big-upload.over { border-color: #ff4d00; background: rgba(255,77,0,.05); }
+.big-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.big-upload .ico { font-size: 44px; margin-bottom: 10px; display: block; }
+.big-upload .title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.big-upload .hint { font-size: 12px; color: #6b7080; }
+.thumb-preview {
+  width: 100%; border-radius: 10px; margin-top: 12px; max-height: 130px;
+  object-fit: contain; display: none; border: 1px solid #252a40; background: #0e1018;
+}
+.thumb-preview.show { display: block; }
+.loaded-badge {
+  display: flex; align-items: center; gap: 8px; margin-top: 10px;
+  background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3);
+  border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #22c55e;
+}
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 20px; border-radius: 10px; border: none; cursor: pointer;
+  font-size: 13px; font-weight: 700; transition: all .15s;
+}
+.btn-orange { background: #ff4d00; color: #fff; }
+.btn-orange:hover { background: #ff6a2a; transform: translateY(-1px); }
+.btn-ghost { background: #1c2032; color: #8b90a0; border: 1px solid #252a40; }
+.btn-ghost:hover { color: #e8eaf0; border-color: #6b7080; }
+.btn-green { background: #22c55e; color: #fff; }
+.btn-green:hover { background: #16a34a; }
+.btn-full { width: 100%; }
+.btn-sm { padding: 7px 14px; font-size: 12px; }
+.btn[disabled] { opacity: .3; pointer-events: none; }
+
+/* ── LOGO GRID ── */
+#logo-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px;
+}
+.logo-card {
+  background: #1c2032; border: 2px solid #252a40; border-radius: 10px;
+  overflow: hidden; cursor: pointer; transition: all .15s; aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center; position: relative;
+}
+.logo-card:hover { border-color: #ff4d00; transform: scale(1.03); }
+.logo-card img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+.logo-card .rm { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 50%; background: rgba(239,68,68,.8); color: #fff; font-size: 11px; display: none; align-items: center; justify-content: center; border: none; cursor: pointer; }
+.logo-card:hover .rm { display: flex; }
+
+/* ── TOOLBAR BUTTONS ── */
+.tbtn {
+  width: 32px; height: 32px; border-radius: 6px; border: 1px solid #252a40;
+  background: none; color: #6b7080; cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; transition: all .15s;
+}
+.tbtn:hover { background: #1c2032; color: #e8eaf0; }
+.tbtn.on { background: rgba(255,77,0,.15); color: #ff4d00; border-color: #ff4d00; }
+.tsep { width: 1px; height: 22px; background: #252a40; margin: 0 4px; }
+
+/* ── PROPS ── */
+#obj-props {
+  display: none; align-items: center; gap: 10px; padding: 6px 14px; flex-wrap: wrap;
+  background: #161926; border-top: 1px solid #252a40; font-size: 11px;
+}
+.pg { display: flex; align-items: center; gap: 4px; }
+.pg label { color: #6b7080; }
+.pg input[type=number] { width: 54px; background: #0e1018; border: 1px solid #252a40; border-radius: 4px; color: #e8eaf0; padding: 4px 6px; font-size: 11px; outline: none; }
+.pg input[type=color] { width: 28px; height: 26px; padding: 1px; border-radius: 4px; cursor: pointer; border: 1px solid #252a40; }
+.pg input[type=range] { width: 60px; accent-color: #ff4d00; }
+
+/* ── TOAST ── */
+#toasts { position: fixed; bottom: 16px; right: 16px; z-index: 999; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+.toast {
+  background: #1c2032; border: 1px solid #252a40; border-radius: 10px;
+  padding: 9px 14px; font-size: 12px; display: flex; align-items: center; gap: 8px;
+  animation: fadeUp .2s ease;
+}
+.toast.ok { border-color: #22c55e; }
+.toast.err { border-color: #ef4444; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── STEP 3 SPECIAL ── */
+.section-label { font-size: 10px; font-weight: 700; color: #6b7080; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+
+/* ── EXPORT CARDS ── */
+.export-card {
+  background: #1c2032; border: 1px solid #252a40; border-radius: 12px;
+  padding: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer;
+  transition: all .15s; margin-bottom: 10px;
+}
+.export-card:hover { border-color: #ff4d00; }
+.export-card .eico { font-size: 28px; flex-shrink: 0; }
+.export-card .etxt strong { display: block; font-size: 13px; margin-bottom: 2px; }
+.export-card .etxt span { font-size: 11px; color: #6b7080; }
+
+/* ── IA PANEL ── */
+#ia-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 200;
+  display: none; align-items: flex-start; justify-content: flex-end;
+}
+#ia-overlay.open { display: flex; }
+#ia-drawer {
+  width: 860px; max-width: 95vw; height: 100vh;
+  background: #161926; border-left: 1px solid #252a40;
+  display: flex; flex-direction: column; overflow: hidden;
+  animation: slideLeft .25s ease;
+}
+@keyframes slideLeft { from{transform:translateX(40px);opacity:0} to{transform:none;opacity:1} }
+#ia-hdr {
+  padding: 14px 18px; border-bottom: 1px solid #252a40;
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+#ia-hdr h2 { font-size: 15px; font-weight: 800; }
+#ia-hdr h2 span { color: #ff4d00; }
+.ia-tabs { display: flex; gap: 4px; margin-left: auto; }
+.ia-tab {
+  padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700;
+  background: #1c2032; border: 1px solid #252a40; color: #6b7080; cursor: pointer; transition: all .15s;
+}
+.ia-tab.on { background: #ff4d00; border-color: #ff4d00; color: #fff; }
+#ia-body { flex: 1; overflow: hidden; display: flex; }
+.ia-pane { flex: 1; overflow-y: auto; padding: 16px; display: none; gap: 14px; flex-direction: column; }
+.ia-pane.on { display: flex; }
+.ia-pane::-webkit-scrollbar { width: 4px; }
+.ia-pane::-webkit-scrollbar-thumb { background: #252a40; border-radius: 2px; }
+
+/* IA cards */
+.ia-card { background: #1c2032; border: 1px solid #252a40; border-radius: 12px; padding: 14px; }
+.ia-card h3 { font-size: 12px; font-weight: 700; color: #8b90a0; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+
+/* Zone items */
+.zone-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  border-radius: 8px; border: 1px solid #252a40; background: #12151f;
+  cursor: pointer; transition: all .15s;
+}
+.zone-item:hover { border-color: #ff4d00; }
+.zone-item.sel { border-color: #ff4d00; background: rgba(255,77,0,.08); }
+.zone-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.zone-name { flex: 1; font-size: 12px; }
+.zone-pts { font-size: 10px; color: #6b7080; }
+.zone-del { background: none; border: none; color: #6b7080; cursor: pointer; font-size: 14px; padding: 0 2px; }
+.zone-del:hover { color: #ef4444; }
+
+/* Canvas zones */
+#ia-canvas-wrap {
+  position: relative; border-radius: 10px; overflow: hidden;
+  background: #000; display: inline-block;
+}
+#ia-photo-canvas { display: block; }
+#ia-zone-canvas {
+  position: absolute; inset: 0; cursor: crosshair;
+}
+
+/* AI result */
+.ai-result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ai-result-card { border-radius: 8px; overflow: hidden; border: 1px solid #252a40; position: relative; }
+.ai-result-card canvas { display: block; width: 100%; }
+.ai-result-label {
+  position: absolute; bottom: 0; left: 0; right: 0; padding: 6px 10px;
+  background: linear-gradient(transparent,rgba(0,0,0,.8));
+  font-size: 10px; font-weight: 700; color: #fff; letter-spacing: 1px;
+}
+
+/* Progress bar */
+.ia-progress { height: 4px; background: #252a40; border-radius: 2px; overflow: hidden; margin-top: 8px; }
+.ia-progress-bar { height: 100%; background: linear-gradient(90deg,#ff4d00,#ff8c42); border-radius: 2px; transition: width .3s; }
+
+/* Logo selector in IA */
+.ia-logo-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; }
+.ia-logo-item {
+  aspect-ratio: 1; border-radius: 6px; border: 2px solid #252a40;
+  background: #12151f; cursor: pointer; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; transition: all .15s;
+}
+.ia-logo-item:hover, .ia-logo-item.sel { border-color: #ff4d00; background: rgba(255,77,0,.08); }
+.ia-logo-item img { width: 100%; height: 100%; object-fit: contain; padding: 4px; }
+
+/* Strength slider */
+.strength-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #6b7080; }
+.strength-row input[type=range] { flex: 1; accent-color: #ff4d00; }
+.strength-val { min-width: 28px; color: #e8eaf0; font-weight: 600; }
+
+/* ── Sticker presets ── */
+.sticker-preset, .border-preset {
+  flex:1; padding:7px 6px; border-radius:8px; border:1px solid #252a40;
+  background:#12151f; color:#8b90a0; cursor:pointer; font-size:11px; font-weight:700; transition:all .15s;
+}
+.sticker-preset:hover, .border-preset:hover { border-color:#ff4d00; color:#e8eaf0; }
+.sticker-preset.on, .border-preset.on { background:rgba(255,77,0,.15); border-color:#ff4d00; color:#ff8c42; }
+
+/* IA badge */
+.ia-badge {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+  border-radius: 20px; font-size: 10px; font-weight: 700;
+  background: linear-gradient(135deg,rgba(255,77,0,.15),rgba(138,43,226,.15));
+  border: 1px solid rgba(255,77,0,.4); color: #ff8c42;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="hdr">
+  <div class="logo">KUSTOM<em>KONCEPT</em></div>
+  <div class="step-pills">
+    <div class="pill active" id="p1" onclick="goStep(1)">1 · Photo</div>
+    <div class="pill" id="p2" onclick="goStep(2)">2 · Gabarit</div>
+    <div class="pill" id="p3" onclick="goStep(3)">3 · Design</div>
+    <div class="pill" id="p4" onclick="goStep(4)">4 · Export</div>
+  </div>
+</div>
+
+<!-- BODY -->
+<div id="body">
+
+  <!-- WIZARD -->
+  <div id="wizard">
+    <div id="wiz-content"><!-- injecté --></div>
+    <div id="wiz-footer">
+      <button class="btn btn-ghost btn-sm" id="btn-back" style="display:none" onclick="goStep(S.step-1)">← Retour</button>
+      <button class="btn btn-orange btn-full" id="btn-next" onclick="nextStep()">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div id="canvas-area">
+    <div id="c-toolbar">
+      <button class="tbtn on" id="tsel" onclick="setTool('select')" title="Sélectionner">↖</button>
+      <div class="tsep"></div>
+      <button class="tbtn" onclick="doDelete()" title="Supprimer">🗑</button>
+      <button class="tbtn" onclick="doUndo()" title="Annuler (Ctrl+Z)">↩</button>
+      <button class="tbtn" onclick="doRedo()" title="Rétablir (Ctrl+Y)">↪</button>
+      <button class="tbtn" onclick="dupeSel()" title="Dupliquer (Ctrl+D)">⊕</button>
+      <div class="tsep"></div>
+      <button class="tbtn" onclick="bringFwd()" title="Avant-plan">⬆</button>
+      <button class="tbtn" onclick="sendBwd()" title="Arrière-plan">⬇</button>
+      <div class="tsep"></div>
+      <button class="tbtn" onclick="zoom(-0.15)">−</button>
+      <span id="zlbl" style="font-size:11px;color:#6b7080;min-width:34px;text-align:center;">100%</span>
+      <button class="tbtn" onclick="zoom(0.15)">+</button>
+      <button class="tbtn" onclick="resetZoom()" title="Reset">⊙</button>
+      <div class="tsep"></div>
+      <button class="tbtn" onclick="openIA()" title="Module IA" style="background:linear-gradient(135deg,rgba(255,77,0,.2),rgba(138,43,226,.2));border-color:rgba(255,77,0,.5);color:#ff8c42;font-size:13px;">🤖</button>
+    </div>
+    <div id="c-wrap"><canvas id="c"></canvas></div>
+    <div id="obj-props">
+      <div class="pg"><label>X</label><input type="number" id="px" oninput="sp('left',+this.value)"/></div>
+      <div class="pg"><label>Y</label><input type="number" id="py" oninput="sp('top',+this.value)"/></div>
+      <div class="pg"><label>L</label><input type="number" id="pw" oninput="ss('w',+this.value)"/></div>
+      <div class="pg"><label>H</label><input type="number" id="ph" oninput="ss('h',+this.value)"/></div>
+      <div class="pg"><label>°</label><input type="number" id="pr" oninput="sp('angle',+this.value)"/></div>
+      <div class="pg"><label>Opacité</label><input type="range" id="po" min="0" max="100" value="100" oninput="sp('opacity',this.value/100)"/></div>
+      <div class="pg"><label>Couleur</label><input type="color" id="pc" value="#ff4d00" oninput="sc(this.value)"/></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- IA PANEL -->
+<div id="ia-overlay" onclick="closeIAIfOutside(event)">
+  <div id="ia-drawer">
+    <div id="ia-hdr">
+      <div>🤖</div>
+      <h2>Module <span>IA</span> — Fusion Carénage</h2>
+      <div class="ia-badge">Vision par ordinateur</div>
+      <div class="ia-tabs">
+        <button class="ia-tab on" onclick="switchIATab('zones')">🎯 Zones</button>
+        <button class="ia-tab" onclick="switchIATab('fusion')">✨ Fusion</button>
+        <button class="ia-tab" onclick="switchIATab('visu')">👁 Visualisation</button>
+      </div>
+      <button onclick="closeIA()" style="background:none;border:none;color:#6b7080;cursor:pointer;font-size:18px;margin-left:8px;">✕</button>
+    </div>
+
+    <div id="ia-body">
+
+      <!-- TAB ZONES -->
+      <div class="ia-pane on" id="tab-zones">
+        <div class="ia-card">
+          <h3>📷 Photo de référence</h3>
+          <div id="ia-canvas-wrap">
+            <canvas id="ia-photo-canvas"></canvas>
+            <canvas id="ia-zone-canvas"
+              onmousedown="zoneMouseDown(event)"
+              onmousemove="zoneMouseMove(event)"
+              ondblclick="zoneClose(event)"></canvas>
+          </div>
+          <div style="margin-top:8px;font-size:11px;color:#6b7080;">Double-clic pour fermer une zone. Clic droit pour annuler le dernier point.</div>
+        </div>
+
+        <div class="ia-card">
+          <h3>🎯 Zones de carénage</h3>
+          <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+            <button class="btn btn-orange btn-sm" onclick="startDrawZone('Avant')" id="btn-draw-zone">+ Dessiner une zone</button>
+            <select id="zone-preset" onchange="applyZonePreset(this.value)"
+              style="background:#12151f;border:1px solid #252a40;border-radius:6px;color:#e8eaf0;padding:5px 8px;font-size:11px;outline:none;">
+              <option value="">Préréglage...</option>
+              <option value="Carénage avant">Carénage avant</option>
+              <option value="Carénage arrière">Carénage arrière</option>
+              <option value="Réservoir">Réservoir</option>
+              <option value="Garde-boue">Garde-boue</option>
+              <option value="Selle">Selle</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="clearAllZones()">↺ Tout effacer</button>
+          </div>
+          <div id="zones-list" style="display:flex;flex-direction:column;gap:6px;">
+            <div style="color:#6b7080;font-size:11px;padding:10px 0;">Aucune zone — dessinez une zone sur la photo</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB FUSION -->
+      <div class="ia-pane" id="tab-fusion">
+
+        <!-- HERO CTA -->
+        <div style="background:linear-gradient(135deg,rgba(255,77,0,.12),rgba(138,43,226,.12));border:1px solid rgba(255,77,0,.3);border-radius:14px;padding:18px;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:4px;">🤖 Auto-Rendu Sticker IA</div>
+          <div style="font-size:11px;color:#8b90a0;line-height:1.5;margin-bottom:12px;">
+            L'IA place le logo, applique le masque de détourage sur chaque zone et incruste le sticker directement sur le canvas.
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-orange btn-full" onclick="applyAllStickersToCanvas()" style="font-size:13px;padding:11px;">
+              ✨ Incruster dans toutes les zones
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="runAutoSticker()" title="Aperçu offscreen avant d'appliquer">👁</button>
+          </div>
+        </div>
+
+        <div class="ia-card">
+          <h3>🖼 Logos disponibles</h3>
+          <div id="ia-logo-grid" class="ia-logo-grid">
+            <div style="grid-column:1/-1;color:#6b7080;font-size:11px;padding:8px 0;">Ajoutez des images à l'étape 3 d'abord</div>
+          </div>
+          <div style="font-size:11px;color:#6b7080;margin-top:8px;">Clique pour sélectionner le logo à utiliser</div>
+        </div>
+
+        <div class="ia-card">
+          <h3>🎯 Zones à remplir</h3>
+          <div id="ia-zone-sel" style="display:flex;flex-direction:column;gap:6px;">
+            <div style="color:#6b7080;font-size:11px;">Dessinez des zones dans l'onglet Zones d'abord</div>
+          </div>
+        </div>
+
+        <div class="ia-card">
+          <h3>🎨 Finition sticker</h3>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+
+            <div style="display:flex;gap:6px;">
+              <button class="sticker-preset on" id="sp-gloss" onclick="setStickerPreset('gloss')">✨ Brillant</button>
+              <button class="sticker-preset" id="sp-mat" onclick="setStickerPreset('mat')">🔲 Mat</button>
+              <button class="sticker-preset" id="sp-chrome" onclick="setStickerPreset('chrome')">💿 Chrome</button>
+            </div>
+
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <div style="font-size:11px;color:#6b7080;width:100%;margin-bottom:2px;">Bordure sticker</div>
+              <button class="border-preset on" id="bp-white" onclick="setBorderPreset('white')">⬜ Blanc</button>
+              <button class="border-preset" id="bp-black" onclick="setBorderPreset('black')">⬛ Noir</button>
+              <button class="border-preset" id="bp-none" onclick="setBorderPreset('none')">Ø Sans</button>
+            </div>
+
+            <div class="strength-row">
+              <span>Épousage courbes</span>
+              <input type="range" id="warp-strength" min="0" max="35" value="16"
+                oninput="document.getElementById('warp-val').textContent=this.value"/>
+              <span class="strength-val" id="warp-val">16</span>
+            </div>
+            <div class="strength-row">
+              <span>Taille dans la zone</span>
+              <input type="range" id="logo-fill" min="40" max="95" value="75"
+                oninput="document.getElementById('fill-val').textContent=this.value+'%'"/>
+              <span class="strength-val" id="fill-val">75%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ia-progress" id="fusion-progress" style="display:none;">
+          <div class="ia-progress-bar" id="fusion-bar" style="width:0%"></div>
+        </div>
+        <div id="fusion-status" style="font-size:11px;color:#8b90a0;text-align:center;display:none;"></div>
+
+        <div class="ia-card" id="fusion-result" style="display:none;">
+          <h3>✅ Rendu sticker réaliste</h3>
+          <canvas id="fusion-result-canvas" style="width:100%;border-radius:8px;border:1px solid #252a40;"></canvas>
+          <div style="display:flex;gap:6px;margin-top:10px;">
+            <button class="btn btn-orange btn-sm btn-full" onclick="applyFusionToMainCanvas()">⬆ Sur le canvas</button>
+            <button class="btn btn-ghost btn-sm btn-full" onclick="exportFusion()">⬇ Exporter JPG</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB VISUALISATION -->
+      <div class="ia-pane" id="tab-visu">
+        <div class="ia-card">
+          <h3>🔍 Analyse de la photo</h3>
+          <p style="font-size:12px;color:#8b90a0;line-height:1.6;margin-bottom:10px;">
+            L'IA analyse la photo de ta moto pour générer différentes vues utiles au travail de déco.
+          </p>
+          <button class="btn btn-orange btn-full" onclick="runPhotoAnalysis()" id="btn-analyze">
+            🤖 Analyser la photo
+          </button>
+          <div class="ia-progress" id="analyze-progress" style="display:none;">
+            <div class="ia-progress-bar" id="analyze-bar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div id="visu-results" style="display:none;flex-direction:column;gap:12px;">
+          <div class="ai-result-grid">
+            <div class="ai-result-card">
+              <canvas id="visu-original"></canvas>
+              <div class="ai-result-label">ORIGINAL</div>
+            </div>
+            <div class="ai-result-card">
+              <canvas id="visu-edges"></canvas>
+              <div class="ai-result-label">CONTOURS</div>
+            </div>
+            <div class="ai-result-card">
+              <canvas id="visu-blank"></canvas>
+              <div class="ai-result-label">VUE BLANK (déco)</div>
+            </div>
+            <div class="ai-result-card">
+              <canvas id="visu-depth"></canvas>
+              <div class="ai-result-label">CARTE DE PROFONDEUR</div>
+            </div>
+          </div>
+          <div class="ia-card">
+            <h3>🎨 Aperçu déco sur vue Blank</h3>
+            <canvas id="visu-deco" style="width:100%;border-radius:6px;border:1px solid #252a40;"></canvas>
+            <button class="btn btn-ghost btn-sm" style="margin-top:8px;width:100%;" onclick="exportVisuDeco()">Exporter cet aperçu</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /#ia-body -->
+  </div><!-- /#ia-drawer -->
+</div><!-- /#ia-overlay -->
+
+<div id="toasts"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────
+const S = { step:1, zoom:1, refPhoto:null, templateData:null, scaleFactor:null, mode:null };
+const libs = [];   // { url, name }
+let fc, hist=[], histIdx=-1;
+
+// ─── CANVAS INIT ─────────────────────────────
+function initCanvas() {
+  const wrap = document.getElementById('c-wrap');
+  fc = new fabric.Canvas('c', {
+    width: Math.max(wrap.clientWidth - 32, 700),
+    height: Math.max(wrap.clientHeight - 32, 480),
+    backgroundColor: '#ffffff', preserveObjectStacking: true,
+  });
+  fc.on('mouse:down', e => {
+    if (S.calibMode) { S.calibP1 = fc.getPointer(e.e); return; }
+  });
+  fc.on('mouse:move', e => {
+    if (S.calibMode && S.calibP1 && S.calibLine) {
+      const p = fc.getPointer(e.e);
+      S.calibLine.set({x2:p.x,y2:p.y}); fc.renderAll();
+    }
+  });
+  fc.on('mouse:up', e => {
+    if (S.calibMode && S.calibP1) {
+      const p = fc.getPointer(e.e);
+      const dx=p.x-S.calibP1.x, dy=p.y-S.calibP1.y;
+      S.calibPx = Math.sqrt(dx*dx+dy*dy);
+      endCalib();
+      const mm = parseFloat(document.getElementById('calib-mm')?.value || 0);
+      if (mm>0 && S.calibPx>0) applyCalib(mm);
+      else { const v=prompt('Valeur réelle en mm ?'); if(v&&+v>0) applyCalib(+v); }
+    }
+  });
+  fc.on('selection:created', syncProps);
+  fc.on('selection:updated', syncProps);
+  fc.on('selection:cleared', ()=>{ document.getElementById('obj-props').style.display='none'; });
+  fc.on('object:modified', ()=>pushHist());
+  pushHist();
+}
+
+// ─── STEPPER ─────────────────────────────────
+function goStep(n) {
+  S.step = n;
+  ['p1','p2','p3','p4'].forEach((id,i)=>{
+    const el = document.getElementById(id);
+    el.className = 'pill' + (i+1===n?' active': i+1<n?' done':'');
+  });
+  document.getElementById('btn-back').style.display = n>1?'':'none';
+  document.getElementById('btn-next').textContent = n===4 ? '✓ Terminé' : 'Continuer →';
+  renderWizard();
+}
+
+function nextStep() {
+  if (S.step === 1 && !S.refPhoto) { toast('Charge une photo de ta moto d\'abord !','err'); return; }
+  if (S.step === 2 && !S.mode) { toast('Choisis un mode de travail','err'); return; }
+  if (S.step === 4) return;
+  goStep(S.step + 1);
+}
+
+// ─── WIZARD CONTENT ──────────────────────────
+function renderWizard() {
+  const el = document.getElementById('wiz-content');
+  el.innerHTML = '';
+  [null, wStep1, wStep2, wStep3, wStep4][S.step](el);
+}
+
+// STEP 1
+function wStep1(el) {
+  el.innerHTML = `
+    <div class="wiz-step-num">Étape 1 sur 4</div>
+    <div class="wiz-title">Photo de ta moto 📷</div>
+    <div class="wiz-desc">Glisse ou clique sur la zone ci-dessous pour charger une photo de ta moto (vue de côté ou 3/4).</div>
+    <div class="big-upload" id="zu1">
+      <input type="file" accept="image/*" onchange="loadPhoto(this)"/>
+      <span class="ico">${S.refPhoto ? '✅' : '📷'}</span>
+      <div class="title">${S.refPhoto ? 'Photo chargée !' : 'Charge ta photo ici'}</div>
+      <div class="hint">${S.refPhoto ? 'Clique pour en changer' : 'JPG ou PNG — vue de côté ou 3/4'}</div>
+    </div>
+    ${S.refPhoto ? `<img class="thumb-preview show" src="${S.refPhoto}" id="th1"/>` : ''}
+  `;
+}
+
+// STEP 2
+function wStep2(el) {
+  const hasScale = !!S.scaleFactor;
+
+  // If mode already chosen, show relevant UI
+  if (S.mode === 'photo') {
+    el.innerHTML = `
+      <div class="wiz-step-num">Étape 2 sur 4</div>
+      <div class="wiz-title">Mode photo 📷</div>
+      <div class="wiz-desc">Ta photo est utilisée comme fond. Tu pourras placer tes logos directement dessus.</div>
+      <div class="loaded-badge" style="margin-bottom:14px;">✅ Photo utilisée comme fond de travail</div>
+      <img class="thumb-preview show" src="${S.refPhoto}" style="margin-bottom:16px;"/>
+      <button class="btn btn-ghost btn-full btn-sm" onclick="S.mode=null;renderWizard()">← Changer de mode</button>
+    `;
+    return;
+  }
+
+  if (S.mode === 'template') {
+    el.innerHTML = `
+      <div class="wiz-step-num">Étape 2 sur 4</div>
+      <div class="wiz-title">Le gabarit 📐</div>
+      <div class="wiz-desc">Charge le gabarit technique de ta carrosserie (SVG ou PNG).</div>
+      <div class="big-upload" id="zu2">
+        <input type="file" accept=".svg,image/*" onchange="loadTemplate(this)"/>
+        <span class="ico">${S.templateData ? '✅' : '📐'}</span>
+        <div class="title">${S.templateData ? 'Gabarit chargé !' : 'Charge le gabarit ici'}</div>
+        <div class="hint">SVG ou PNG</div>
+      </div>
+      ${S.templateData ? `<img class="thumb-preview show" src="${S.templateData}"/>` : ''}
+      <div style="margin-top:16px;">
+        <div class="section-label">Calibration d'échelle (optionnel)</div>
+        <div style="font-size:12px;color:#8b90a0;line-height:1.5;margin-bottom:10px;">
+          Pour un PDF à la bonne taille réelle. Sinon, passe à l'étape suivante.
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <input id="calib-mm" type="number" placeholder="mm connus (ex: 1000)"
+            style="flex:1;background:#0e1018;border:1px solid #252a40;border-radius:8px;color:#e8eaf0;padding:9px 12px;font-size:12px;outline:none;"/>
+          <button class="btn btn-ghost btn-sm" onclick="toggleCalib()">📏 Tracer</button>
+        </div>
+        ${hasScale ? `<div class="loaded-badge">✅ 1 px = ${S.scaleFactor.toFixed(3)} mm</div>` : ''}
+      </div>
+      <button class="btn btn-ghost btn-full btn-sm" style="margin-top:12px;" onclick="S.mode=null;renderWizard()">← Changer de mode</button>
+    `;
+    return;
+  }
+
+  // Mode selector (default)
+  el.innerHTML = `
+    <div class="wiz-step-num">Étape 2 sur 4</div>
+    <div class="wiz-title">Comment veux-tu travailler ?</div>
+    <div class="wiz-desc">Choisis selon ce que tu as disponible.</div>
+
+    <div class="mode-card" onclick="chooseMode('photo')" style="cursor:pointer;background:#1c2032;border:2px solid #252a40;border-radius:14px;padding:20px;margin-bottom:12px;transition:all .2s;" onmouseenter="this.style.borderColor='#ff4d00'" onmouseleave="this.style.borderColor='#252a40'">
+      <div style="font-size:32px;margin-bottom:8px;">📷</div>
+      <div style="font-size:15px;font-weight:800;margin-bottom:4px;">Je travaille sur la photo</div>
+      <div style="font-size:12px;color:#8b90a0;line-height:1.5;">Je place mes logos directement sur la photo de la moto. Simple et rapide.</div>
+      <div style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;background:rgba(255,77,0,.12);border:1px solid rgba(255,77,0,.3);border-radius:20px;padding:4px 10px;font-size:11px;color:#ff4d00;font-weight:700;">Recommandé si tu n'as pas de gabarit</div>
+    </div>
+
+    <div class="mode-card" onclick="chooseMode('template')" style="cursor:pointer;background:#1c2032;border:2px solid #252a40;border-radius:14px;padding:20px;transition:all .2s;" onmouseenter="this.style.borderColor='#ff4d00'" onmouseleave="this.style.borderColor='#252a40'">
+      <div style="font-size:32px;margin-bottom:8px;">📐</div>
+      <div style="font-size:15px;font-weight:800;margin-bottom:4px;">J'ai un gabarit technique</div>
+      <div style="font-size:12px;color:#8b90a0;line-height:1.5;">J'uploade le gabarit SVG/PNG de ma carrosserie. Export PDF à l'échelle réelle.</div>
+      <div style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:20px;padding:4px 10px;font-size:11px;color:#22c55e;font-weight:700;">Précision millimétrique</div>
+    </div>
+  `;
+}
+
+// STEP 3
+function wStep3(el) {
+  const desc = S.mode === 'photo'
+    ? 'Ajoute tes logos directement sur la photo de la moto. Glisse-les pour les repositionner.'
+    : 'Ajoute tes logos sur le gabarit. Glisse-les pour les repositionner.';
+  el.innerHTML = `
+    <div class="wiz-step-num">Étape 3 sur 4</div>
+    <div class="wiz-title">Ton design 🎨</div>
+    <div class="wiz-desc">${desc}</div>
+
+    <button class="btn btn-orange btn-full" onclick="document.getElementById('lib-inp').click()" style="margin-bottom:14px;">
+      + Ajouter une image ou logo
+    </button>
+    <input type="file" id="lib-inp" style="display:none;" accept="image/*,.svg" multiple onchange="addFromLib(this)"/>
+
+    <div class="section-label">Mes images</div>
+    <div id="logo-grid">
+      ${libs.map((img,i)=>`
+        <div class="logo-card" onclick="addToCanvas('${img.url}','${img.name}')">
+          <img src="${img.url}"/>
+          <button class="rm" onclick="event.stopPropagation();removeLib(${i})">✕</button>
+        </div>`).join('')}
+      ${libs.length===0 ? '<div style="grid-column:1/-1;padding:20px;text-align:center;color:#6b7080;font-size:12px;">Aucune image ajoutée</div>' : ''}
+    </div>
+
+    <div style="margin-top:16px;">
+      <div class="section-label">Conseils</div>
+      <div style="font-size:12px;color:#8b90a0;line-height:1.8;">
+        🖱 <strong style="color:#e8eaf0">Glisse</strong> pour déplacer<br/>
+        ↔ <strong style="color:#e8eaf0">Les poignées</strong> pour redimensionner<br/>
+        🔄 La <strong style="color:#e8eaf0">poignée ronde</strong> pour pivoter<br/>
+        🗑 <strong style="color:#e8eaf0">Suppr</strong> pour effacer<br/>
+        ↩ <strong style="color:#e8eaf0">Ctrl+Z</strong> pour annuler
+      </div>
+    </div>
+  `;
+}
+
+// STEP 4
+function wStep4(el) {
+  el.innerHTML = `
+    <div class="wiz-step-num">Étape 4 sur 4</div>
+    <div class="wiz-title">Export ⬇</div>
+    <div class="wiz-desc">Ton design est prêt. Choisis ce que tu veux télécharger.</div>
+
+    <div class="export-card" onclick="exportPDF()" ${S.scaleFactor?'':'style="opacity:.5;pointer-events:none;"'}>
+      <div class="eico">📄</div>
+      <div class="etxt">
+        <strong>PDF 300 DPI — Production</strong>
+        <span>Fichier prêt pour l'imprimeur avec repères de coupe</span>
+      </div>
+    </div>
+    ${!S.scaleFactor ? '<p style="font-size:11px;color:#ff4d00;margin:-6px 0 10px;">⚠ Calibre l\'échelle à l\'étape 2 pour activer le PDF.</p>' : ''}
+
+    <div class="export-card" onclick="exportJPG()">
+      <div class="eico">🖼</div>
+      <div class="etxt">
+        <strong>JPEG Haute qualité</strong>
+        <span>Image du design (aperçu, réseaux sociaux…)</span>
+      </div>
+    </div>
+
+    <div class="export-card" onclick="saveProject()">
+      <div class="eico">💾</div>
+      <div class="etxt">
+        <strong>Sauvegarder le projet</strong>
+        <span>Pour reprendre le travail plus tard</span>
+      </div>
+    </div>
+
+    <div class="export-card" onclick="loadProject()">
+      <div class="eico">📂</div>
+      <div class="etxt">
+        <strong>Ouvrir un projet</strong>
+        <span>Reprendre un projet existant</span>
+      </div>
+    </div>
+  `;
+}
+
+// ─── MODE SELECTION ──────────────────────────
+function chooseMode(mode) {
+  S.mode = mode;
+  if (mode === 'photo') {
+    // Place the ref photo as locked background on canvas
+    usePhotoAsBase();
+  }
+  renderWizard();
+}
+
+function usePhotoAsBase() {
+  if (!S.refPhoto) return;
+  fabric.Image.fromURL(S.refPhoto, img => {
+    fc.getObjects().filter(o => o.data?.base || o.data?.tmpl).forEach(o => fc.remove(o));
+    const sx = fc.width / img.width, sy = fc.height / img.height;
+    const sc = Math.min(sx, sy, 1);
+    const offX = (fc.width  - img.width  * sc) / 2;
+    const offY = (fc.height - img.height * sc) / 2;
+    img.set({
+      left: offX, top: offY, scaleX: sc, scaleY: sc,
+      selectable: false, evented: false, opacity: 1,
+      data: { base: true, locked: true }
+    });
+    // Store mapping info for IA coord conversion
+    S._photoFabricSc   = sc;
+    S._photoFabricOffX = offX;
+    S._photoFabricOffY = offY;
+    fc.add(img); fc.sendToBack(img); fc.renderAll();
+    toast('Photo placée comme fond ✓', 'ok');
+  });
+}
+
+// ─── UPLOADS ─────────────────────────────────
+function loadPhoto(input) {
+  const file = input.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    S.refPhoto = e.target.result;
+    // Store original dimensions for IA coord mapping
+    const img = new Image();
+    img.onload = () => { S._photoW = img.width; S._photoH = img.height; };
+    img.src = e.target.result;
+    renderWizard();
+    toast('Photo chargée ✓','ok');
+  };
+  r.readAsDataURL(file);
+}
+
+function loadTemplate(input) {
+  const file = input.files[0]; if (!file) return;
+  const isSVG = file.type==='image/svg+xml' || file.name.endsWith('.svg');
+  const r = new FileReader();
+  r.onload = e => {
+    if (isSVG) {
+      const b64 = btoa(unescape(encodeURIComponent(e.target.result)));
+      S.templateData = 'data:image/svg+xml;base64,'+b64;
+      fabric.loadSVGFromString(e.target.result, (objs,opts) => placeTemplate(fabric.util.groupSVGElements(objs,opts)));
+    } else {
+      S.templateData = e.target.result;
+      fabric.Image.fromURL(e.target.result, img => placeTemplate(img));
+    }
+    renderWizard();
+    toast('Gabarit chargé ✓','ok');
+  };
+  if (isSVG) r.readAsText(file); else r.readAsDataURL(file);
+}
+
+function placeTemplate(obj) {
+  fc.getObjects().filter(o=>o.data?.tmpl).forEach(o=>fc.remove(o));
+  const sx=fc.width*.9/obj.width, sy=fc.height*.9/obj.height, sc=Math.min(sx,sy,1);
+  obj.set({ left:(fc.width-obj.width*sc)/2, top:(fc.height-obj.height*sc)/2,
+    scaleX:sc, scaleY:sc, selectable:false, evented:false, opacity:.5,
+    data:{tmpl:true,locked:true} });
+  fc.add(obj); fc.sendToBack(obj); fc.renderAll();
+}
+
+// ─── CALIBRATION ─────────────────────────────
+Object.assign(S, { calibMode:false, calibP1:null, calibPx:null, calibLine:null });
+
+function toggleCalib() {
+  if (S.calibMode) { endCalib(); return; }
+  S.calibMode = true;
+  fc.defaultCursor = 'crosshair';
+  fc.selection = false;
+  fc.forEachObject(o => o.selectable = false);
+  toast('Tracez une ligne sur le gabarit','ok');
+}
+function endCalib() {
+  S.calibMode = false; S.calibP1 = null;
+  fc.defaultCursor = 'default'; fc.selection = true;
+  fc.forEachObject(o => { if(!o.data?.locked) o.selectable=true; });
+  if (S.calibLine) { fc.remove(S.calibLine); S.calibLine = null; }
+}
+function applyCalib(mm) {
+  S.scaleFactor = mm / S.calibPx;
+  document.getElementById('btn-export') && document.getElementById('btn-export').removeAttribute('disabled');
+  renderWizard();
+  toast(`Calibré : 1px = ${S.scaleFactor.toFixed(3)} mm`,'ok');
+}
+
+// ─── LIBRARY ─────────────────────────────────
+function addFromLib(input) {
+  Array.from(input.files).forEach(file => {
+    const r = new FileReader();
+    r.onload = e => {
+      libs.push({ url:e.target.result, name:file.name });
+      addToCanvas(e.target.result, file.name);
+      renderWizard();
+    };
+    r.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function removeLib(i) {
+  libs.splice(i, 1); renderWizard();
+}
+
+function addToCanvas(url, name) {
+  const isSVG = name && name.endsWith('.svg');
+  if (isSVG) {
+    fabric.loadSVGFromURL(url, (objs,opts) => {
+      const g = fabric.util.groupSVGElements(objs,opts);
+      const sc = Math.min(180/g.width, 180/g.height, 1);
+      g.set({ left:80,top:80,scaleX:sc,scaleY:sc });
+      fc.add(g); fc.setActiveObject(g); fc.renderAll(); pushHist();
+    });
+  } else {
+    fabric.Image.fromURL(url, img => {
+      const sc = Math.min(180/img.width, 180/img.height, 1);
+      img.set({ left:80,top:80,scaleX:sc,scaleY:sc });
+      fc.add(img); fc.setActiveObject(img); fc.renderAll(); pushHist();
+    });
+  }
+}
+
+// ─── TOOLS ───────────────────────────────────
+function setTool(t) {
+  document.querySelectorAll('.tbtn[id^="t"]').forEach(b=>b.classList.remove('on'));
+  const b=document.getElementById('t'+t); if(b) b.classList.add('on');
+  fc.isDrawingMode = t==='draw';
+  if(t==='draw'){fc.freeDrawingBrush.width=3;fc.freeDrawingBrush.color='#ff4d00';}
+}
+function doDelete() {
+  fc.getActiveObjects().filter(o=>!o.data?.locked).forEach(o=>fc.remove(o));
+  fc.discardActiveObject(); fc.renderAll(); pushHist();
+}
+function doUndo() { if(histIdx<=0) return; histIdx--; fc.loadFromJSON(hist[histIdx],()=>fc.renderAll()); }
+function doRedo() { if(histIdx>=hist.length-1) return; histIdx++; fc.loadFromJSON(hist[histIdx],()=>fc.renderAll()); }
+function bringFwd() { const o=fc.getActiveObject(); if(o&&!o.data?.locked) { fc.bringForward(o); fc.renderAll(); } }
+function sendBwd() { const o=fc.getActiveObject(); if(o&&!o.data?.locked) { fc.sendBackwards(o); fc.renderAll(); } }
+function dupeSel() {
+  const o=fc.getActiveObject(); if(!o) return;
+  o.clone(c=>{c.set({left:o.left+20,top:o.top+20});fc.add(c);fc.setActiveObject(c);fc.renderAll();pushHist();});
+}
+
+// ─── PROPS BAR ───────────────────────────────
+function syncProps() {
+  const o=fc.getActiveObject(); if(!o) return;
+  document.getElementById('obj-props').style.display='flex';
+  document.getElementById('px').value=Math.round(o.left);
+  document.getElementById('py').value=Math.round(o.top);
+  document.getElementById('pw').value=Math.round(o.getScaledWidth());
+  document.getElementById('ph').value=Math.round(o.getScaledHeight());
+  document.getElementById('pr').value=Math.round(o.angle);
+  document.getElementById('po').value=Math.round(o.opacity*100);
+}
+function sp(k,v){const o=fc.getActiveObject();if(o&&!o.data?.locked){o.set(k,v);fc.renderAll();}}
+function ss(ax,v){const o=fc.getActiveObject();if(!o||o.data?.locked)return;ax==='w'?o.scaleX=v/o.width:o.scaleY=v/o.height;fc.renderAll();}
+function sc(v){const o=fc.getActiveObject();if(!o||o.data?.locked)return;o.type==='image'?(o.filters=[new fabric.Image.filters.BlendColor({color:v,mode:'multiply'})],o.applyFilters()):o.set('fill',v);fc.renderAll();}
+
+// ─── ZOOM ────────────────────────────────────
+function zoom(d){S.zoom=Math.min(Math.max(S.zoom+d,.2),5);fc.setZoom(S.zoom);fc.renderAll();document.getElementById('zlbl').textContent=Math.round(S.zoom*100)+'%';}
+function resetZoom(){S.zoom=1;fc.setZoom(1);fc.renderAll();document.getElementById('zlbl').textContent='100%';}
+
+// ─── HISTORY ─────────────────────────────────
+function pushHist(){const j=JSON.stringify(fc.toJSON(['data']));hist.splice(histIdx+1);hist.push(j);histIdx=hist.length-1;}
+
+// ─── EXPORT ──────────────────────────────────
+function exportPDF() {
+  if(!S.scaleFactor){toast('Calibre l\'échelle à l\'étape 2','err');return;}
+  const {jsPDF}=window.jspdf;
+  const wMM=fc.width*S.scaleFactor, hMM=fc.height*S.scaleFactor;
+  const doc=new jsPDF({orientation:wMM>hMM?'landscape':'portrait',unit:'mm',format:[wMM,hMM]});
+  doc.addImage(fc.toDataURL({multiplier:Math.min(4,300/25.4*S.scaleFactor),format:'png'}),'PNG',0,0,wMM,hMM);
+  const m=3;
+  doc.setDrawColor(255,0,0);doc.setLineWidth(.1);
+  doc.line(0,0,m,0);doc.line(0,0,0,m);
+  doc.line(wMM,0,wMM-m,0);doc.line(wMM,0,wMM,m);
+  doc.line(0,hMM,m,hMM);doc.line(0,hMM,0,hMM-m);
+  doc.line(wMM,hMM,wMM-m,hMM);doc.line(wMM,hMM,wMM,hMM-m);
+  doc.save('kit-deco-300dpi.pdf');
+  toast('PDF exporté ✓','ok');
+}
+function exportJPG(){const a=document.createElement('a');a.href=fc.toDataURL({multiplier:2,format:'jpeg',quality:.95});a.download='design.jpg';a.click();toast('JPEG exporté ✓','ok');}
+
+// ─── SAVE / LOAD ─────────────────────────────
+function saveProject(){
+  const d={v:3,mode:S.mode,scaleFactor:S.scaleFactor,canvas:fc.toJSON(['data']),refPhoto:S.refPhoto,templateData:S.templateData,libs,savedAt:new Date().toISOString()};
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(d)],{type:'application/json'}));
+  a.download='kit-deco.json';a.click();toast('Projet sauvegardé ✓','ok');
+}
+function loadProject(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const d=JSON.parse(ev.target.result);
+        if(d.mode)S.mode=d.mode;
+        if(d.scaleFactor)S.scaleFactor=d.scaleFactor;
+        if(d.refPhoto)S.refPhoto=d.refPhoto;
+        if(d.templateData)S.templateData=d.templateData;
+        if(d.libs){libs.length=0;d.libs.forEach(i=>libs.push(i));}
+        fc.loadFromJSON(d.canvas,()=>{fc.renderAll();pushHist();});
+        renderWizard();toast('Projet chargé ✓','ok');
+      }catch{toast('Fichier invalide','err');}
+    };
+    r.readAsText(e.target.files[0]);
+  };
+  inp.click();
+}
+
+// ─── KEYBOARD ────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;
+  if(e.key==='Delete'||e.key==='Backspace')doDelete();
+  if(e.ctrlKey&&e.key==='z'){e.preventDefault();doUndo();}
+  if(e.ctrlKey&&e.key==='y'){e.preventDefault();doRedo();}
+  if(e.ctrlKey&&e.key==='d'){e.preventDefault();dupeSel();}
+});
+
+// ─── DRAG & DROP on upload zones ─────────────
+document.addEventListener('dragover',e=>{const z=e.target.closest('.big-upload');if(z){e.preventDefault();z.classList.add('over');}});
+document.addEventListener('dragleave',e=>{const z=e.target.closest('.big-upload');if(z)z.classList.remove('over');});
+document.addEventListener('drop',e=>{
+  const z=e.target.closest('.big-upload');if(!z)return;
+  e.preventDefault();z.classList.remove('over');
+  const files=e.dataTransfer?.files;if(!files?.length)return;
+  const inp=z.querySelector('input[type=file]');if(!inp)return;
+  const dt=new DataTransfer();dt.items.add(files[0]);inp.files=dt.files;inp.dispatchEvent(new Event('change'));
+});
+
+// ═══════════════════════════════════════════════════════════
+// MODULE IA
+// ═══════════════════════════════════════════════════════════
+const IA = {
+  zones: [],             // { id, name, points, color }
+  selectedZone: null,
+  selectedLogo: null,
+  drawingZone: false,
+  currentPts: [],
+  zoneColors: ['#ff4d00','#44aaff','#22c55e','#f59e0b','#a855f7','#ec4899'],
+  fusionResult: null,
+};
+
+// ── PANEL OPEN/CLOSE ──────────────────────────────────────
+function openIA() {
+  if (!S.refPhoto) { toast('Charge une photo d\'abord (étape 1)','err'); return; }
+  document.getElementById('ia-overlay').classList.add('open');
+  initIAPhotoCanvas();
+  refreshIAZonesList();
+  refreshIALogoGrid();
+}
+function closeIA() { document.getElementById('ia-overlay').classList.remove('open'); }
+function closeIAIfOutside(e) { if (e.target === document.getElementById('ia-overlay')) closeIA(); }
+
+function switchIATab(tab) {
+  document.querySelectorAll('.ia-pane').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.ia-tab').forEach(b => b.classList.remove('on'));
+  document.getElementById('tab-'+tab).classList.add('on');
+  document.querySelectorAll('.ia-tab').forEach((b,i) => {
+    if (['zones','fusion','visu'][i] === tab) b.classList.add('on');
+  });
+  if (tab === 'fusion') { refreshIALogoGrid(); refreshIAZoneSel(); }
+}
+
+// ── PHOTO CANVAS INIT ────────────────────────────────────
+function initIAPhotoCanvas() {
+  const photo = new Image();
+  photo.onload = () => {
+    const maxW = 540, maxH = 360;
+    const sc = Math.min(maxW/photo.width, maxH/photo.height, 1);
+    const W = Math.round(photo.width*sc), H = Math.round(photo.height*sc);
+
+    const pc = document.getElementById('ia-photo-canvas');
+    const zc = document.getElementById('ia-zone-canvas');
+    pc.width = W; pc.height = H;
+    zc.width = W; zc.height = H;
+    pc.style.width = W+'px'; pc.style.height = H+'px';
+    zc.style.width = W+'px'; zc.style.height = H+'px';
+
+    pc.getContext('2d').drawImage(photo, 0, 0, W, H);
+    IA._photoScale = sc;
+    renderZoneOverlay();
+  };
+  photo.src = S.refPhoto;
+}
+
+// ── ZONE DRAWING ─────────────────────────────────────────
+function startDrawZone(name) {
+  if (!S.refPhoto) { toast('Photo requise','err'); return; }
+  IA.drawingZone = true;
+  IA.currentPts = [];
+  IA._pendingName = name || 'Zone ' + (IA.zones.length + 1);
+  document.getElementById('btn-draw-zone').textContent = '⏹ Terminer (double-clic)';
+  document.getElementById('btn-draw-zone').style.background = '#22c55e';
+  toast('Cliquez pour placer des points. Double-clic pour fermer.','ok');
+}
+
+function applyZonePreset(name) {
+  if (!name) return;
+  startDrawZone(name);
+  document.getElementById('zone-preset').value = '';
+}
+
+function zoneMouseDown(e) {
+  if (!IA.drawingZone) return;
+  if (e.button === 2) { // right click = remove last point
+    IA.currentPts.pop();
+    renderZoneOverlay(); return;
+  }
+  const rect = e.target.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (e.target.width / rect.width);
+  const y = (e.clientY - rect.top) * (e.target.height / rect.height);
+  IA.currentPts.push({x, y});
+  renderZoneOverlay();
+}
+
+function zoneMouseMove(e) {
+  if (!IA.drawingZone || !IA.currentPts.length) return;
+  const rect = e.target.getBoundingClientRect();
+  IA._cursor = {
+    x: (e.clientX - rect.left) * (e.target.width / rect.width),
+    y: (e.clientY - rect.top) * (e.target.height / rect.height)
+  };
+  renderZoneOverlay();
+}
+
+function zoneClose(e) {
+  if (!IA.drawingZone || IA.currentPts.length < 3) return;
+  const color = IA.zoneColors[IA.zones.length % IA.zoneColors.length];
+  IA.zones.push({ id: Date.now(), name: IA._pendingName, points: [...IA.currentPts], color });
+  IA.currentPts = [];
+  IA.drawingZone = false;
+  IA._cursor = null;
+  document.getElementById('btn-draw-zone').textContent = '+ Dessiner une zone';
+  document.getElementById('btn-draw-zone').style.background = '';
+  renderZoneOverlay();
+  refreshIAZonesList();
+  toast(`Zone "${IA._pendingName}" créée ✓`, 'ok');
+}
+
+function renderZoneOverlay() {
+  const zc = document.getElementById('ia-zone-canvas');
+  if (!zc) return;
+  const ctx = zc.getContext('2d');
+  ctx.clearRect(0, 0, zc.width, zc.height);
+
+  // Draw existing zones
+  IA.zones.forEach(zone => {
+    if (!zone.points.length) return;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(zone.points[0].x, zone.points[0].y);
+    zone.points.forEach((p,i) => i > 0 && ctx.lineTo(p.x, p.y));
+    ctx.closePath();
+    ctx.fillStyle = zone.color + '33';
+    ctx.fill();
+    ctx.strokeStyle = zone.color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Label
+    const cx = zone.points.reduce((s,p)=>s+p.x,0)/zone.points.length;
+    const cy = zone.points.reduce((s,p)=>s+p.y,0)/zone.points.length;
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,.8)';
+    ctx.shadowBlur = 4;
+    ctx.fillText(zone.name, cx, cy);
+    ctx.restore();
+    // Corner dots
+    zone.points.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4, 0, Math.PI*2);
+      ctx.fillStyle = zone.color;
+      ctx.fill();
+    });
+  });
+
+  // Draw in-progress zone
+  if (IA.drawingZone && IA.currentPts.length) {
+    ctx.save();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5,4]);
+    ctx.beginPath();
+    ctx.moveTo(IA.currentPts[0].x, IA.currentPts[0].y);
+    IA.currentPts.forEach((p,i) => i > 0 && ctx.lineTo(p.x, p.y));
+    if (IA._cursor) ctx.lineTo(IA._cursor.x, IA._cursor.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    IA.currentPts.forEach((p,i) => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, i===0?6:4, 0, Math.PI*2);
+      ctx.fillStyle = i===0?'#ff4d00':'#fff';
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+}
+
+function clearAllZones() {
+  IA.zones = []; IA.currentPts = []; IA.drawingZone = false;
+  renderZoneOverlay(); refreshIAZonesList();
+}
+
+function deleteZone(id) {
+  IA.zones = IA.zones.filter(z => z.id !== id);
+  renderZoneOverlay(); refreshIAZonesList(); refreshIAZoneSel();
+}
+
+function selectZone(id) {
+  IA.selectedZone = IA.zones.find(z=>z.id===id) || null;
+  refreshIAZonesList(); refreshIAZoneSel();
+}
+
+function refreshIAZonesList() {
+  const el = document.getElementById('zones-list');
+  if (!el) return;
+  if (!IA.zones.length) {
+    el.innerHTML = '<div style="color:#6b7080;font-size:11px;padding:10px 0;">Aucune zone — dessinez une zone sur la photo</div>';
+    return;
+  }
+  el.innerHTML = IA.zones.map(z => `
+    <div class="zone-item ${IA.selectedZone?.id===z.id?'sel':''}" onclick="selectZone(${z.id})">
+      <div class="zone-dot" style="background:${z.color};"></div>
+      <span class="zone-name">${z.name}</span>
+      <span class="zone-pts">${z.points.length} pts</span>
+      <button class="zone-del" title="Blanchir" onclick="event.stopPropagation();blankZone(${z.id})" style="color:#8b90a0;font-size:11px;">⬜</button>
+      <button class="zone-del" title="Incruster sticker" onclick="event.stopPropagation();applyStickerInZone(IA.zones.find(z=>z.id===${z.id}))" style="color:#ff8c42;font-size:11px;">🏷</button>
+      <button class="zone-del" onclick="event.stopPropagation();deleteZone(${z.id})">🗑</button>
+    </div>`).join('');
+}
+
+function refreshIAZoneSel() {
+  const el = document.getElementById('ia-zone-sel');
+  if (!el) return;
+  if (!IA.zones.length) { el.innerHTML = '<div style="color:#6b7080;font-size:11px;">Dessinez des zones dans l\'onglet Zones d\'abord</div>'; return; }
+  el.innerHTML = IA.zones.map(z => `
+    <div class="zone-item ${IA.selectedZone?.id===z.id?'sel':''}" onclick="selectZone(${z.id})">
+      <div class="zone-dot" style="background:${z.color};"></div>
+      <span class="zone-name">${z.name}</span>
+    </div>`).join('');
+}
+
+// ── LOGO GRID IN IA ──────────────────────────────────────
+function refreshIALogoGrid() {
+  const el = document.getElementById('ia-logo-grid');
+  if (!el) return;
+  if (!libs.length) { el.innerHTML = '<div style="grid-column:1/-1;color:#6b7080;font-size:11px;padding:10px 0;">Ajoutez des images à l\'étape 3 d\'abord</div>'; return; }
+  el.innerHTML = libs.map((img,i) => `
+    <div class="ia-logo-item ${IA.selectedLogo===i?'sel':''}" onclick="selectIALogo(${i})">
+      <img src="${img.url}"/>
+    </div>`).join('');
+}
+
+function selectIALogo(i) {
+  IA.selectedLogo = i;
+  refreshIALogoGrid();
+}
+
+// ═══════════════════════════════════════════════════════════
+// IMAGE PROCESSING ENGINE
+// ═══════════════════════════════════════════════════════════
+
+// Sobel edge detection → returns { magData, gxData, gyData }
+function sobelAnalysis(imgData, W, H) {
+  const src = imgData.data;
+  const mag = new Float32Array(W*H);
+  const gx  = new Float32Array(W*H);
+  const gy  = new Float32Array(W*H);
+  const Kx = [-1,0,1,-2,0,2,-1,0,1];
+  const Ky = [-1,-2,-1,0,0,0,1,2,1];
+  for (let y=1;y<H-1;y++) for (let x=1;x<W-1;x++) {
+    let sx=0,sy=0;
+    for (let ky=-1;ky<=1;ky++) for (let kx=-1;kx<=1;kx++) {
+      const pi=((y+ky)*W+(x+kx))*4;
+      const v=(src[pi]*0.299+src[pi+1]*0.587+src[pi+2]*0.114);
+      const ki=(ky+1)*3+(kx+1);
+      sx+=v*Kx[ki]; sy+=v*Ky[ki];
+    }
+    const i=y*W+x;
+    gx[i]=sx; gy[i]=sy;
+    mag[i]=Math.sqrt(sx*sx+sy*sy);
+  }
+  return {mag,gx,gy};
+}
+
+// Gaussian blur (box approximation 3 passes)
+function gaussBlur(data,W,H,r=2) {
+  const out = new Float32Array(data.length);
+  // horizontal
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    let s=0,c=0;
+    for(let k=-r;k<=r;k++){const nx=Math.max(0,Math.min(W-1,x+k));s+=data[y*W+nx];c++;}
+    out[y*W+x]=s/c;
+  }
+  const out2=new Float32Array(data.length);
+  // vertical
+  for(let x=0;x<W;x++) for(let y=0;y<H;y++){
+    let s=0,c=0;
+    for(let k=-r;k<=r;k++){const ny=Math.max(0,Math.min(H-1,y+k));s+=out[ny*W+x];c++;}
+    out2[y*W+x]=s/c;
+  }
+  return out2;
+}
+
+// Point in polygon test
+function ptInPoly(px, py, poly) {
+  let inside = false;
+  for (let i=0,j=poly.length-1;i<poly.length;j=i++) {
+    const xi=poly[i].x,yi=poly[i].y,xj=poly[j].x,yj=poly[j].y;
+    if(((yi>py)!==(yj>py))&&(px<(xj-xi)*(py-yi)/(yj-yi)+xi)) inside=!inside;
+  }
+  return inside;
+}
+
+// Get bounding box of zone
+function zoneBBox(pts) {
+  const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+  return {minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};
+}
+
+// ── IA FUSION ────────────────────────────────────────────
+async function runIAFusion() {
+  if (IA.selectedLogo === null) { toast('Sélectionne un logo dans l\'onglet','err'); return; }
+  if (!IA.selectedZone) { toast('Sélectionne une zone cible','err'); return; }
+  if (!S.refPhoto) { toast('Photo requise','err'); return; }
+
+  const strength  = +document.getElementById('warp-strength').value;
+  const opacity   = +document.getElementById('fusion-opacity').value / 100;
+  const blendMode = document.getElementById('ia-blend-mode').value;
+  const autoFit   = document.getElementById('auto-fit').checked;
+  const zone      = IA.selectedZone;
+  const logoUrl   = libs[IA.selectedLogo].url;
+
+  showProgress('fusion', true);
+  await sleep(50);
+
+  // 1. Load photo into offscreen canvas
+  const photo = await loadImg(S.refPhoto);
+  const phW = photo.width, phH = photo.height;
+  const offPh = makeCanvas(phW, phH);
+  offPh.ctx.drawImage(photo, 0, 0);
+  const phData = offPh.ctx.getImageData(0, 0, phW, phH);
+  setProgress('fusion', 15);
+
+  // 2. Compute gradient/displacement map from photo
+  const {mag, gx, gy} = sobelAnalysis(phData, phW, phH);
+  const blurredGx = gaussBlur(gx, phW, phH, 3);
+  const blurredGy = gaussBlur(gy, phW, phH, 3);
+  setProgress('fusion', 30);
+
+  // 3. Load logo
+  const logo = await loadImg(logoUrl);
+  setProgress('fusion', 45);
+
+  // 4. Scale/fit logo to zone (auto-placement IA)
+  const sc = IA._photoScale || 1; // zone pts are in canvas coords
+  const bbox = zoneBBox(zone.points);
+  const zoneW = (bbox.maxX - bbox.minX) / sc;
+  const zoneH = (bbox.maxY - bbox.minY) / sc;
+  const zoneCX = ((bbox.minX + bbox.maxX) / 2) / sc;
+  const zoneCY = ((bbox.minY + bbox.maxY) / 2) / sc;
+
+  let logoScale = autoFit
+    ? Math.min(zoneW / logo.width, zoneH / logo.height) * 0.85
+    : Math.min(200 / logo.width, 200 / logo.height, 1);
+
+  const lW = Math.round(logo.width * logoScale);
+  const lH = Math.round(logo.height * logoScale);
+  const lX = Math.round(zoneCX - lW/2);
+  const lY = Math.round(zoneCY - lH/2);
+  setProgress('fusion', 55);
+
+  // 5. Render logo to temp canvas scaled
+  const logoCanvas = makeCanvas(lW, lH);
+  logoCanvas.ctx.drawImage(logo, 0, 0, lW, lH);
+  const logoData = logoCanvas.ctx.getImageData(0, 0, lW, lH);
+  setProgress('fusion', 65);
+
+  // 6. Apply displacement warp to logo
+  const warpedData = applyDisplacementWarp(logoData, lW, lH, blurredGx, blurredGy, phW, phH, lX, lY, strength);
+  setProgress('fusion', 80);
+
+  // 7. Composite result: photo + warped logo masked to zone
+  const result = makeCanvas(phW, phH);
+  result.ctx.drawImage(photo, 0, 0);
+
+  // Clip to zone
+  const scaledZonePts = zone.points.map(p => ({ x: p.x / sc, y: p.y / sc }));
+  result.ctx.save();
+  result.ctx.beginPath();
+  result.ctx.moveTo(scaledZonePts[0].x, scaledZonePts[0].y);
+  scaledZonePts.forEach((p,i) => i>0 && result.ctx.lineTo(p.x,p.y));
+  result.ctx.closePath();
+  result.ctx.clip();
+
+  // Draw warped logo
+  const tmpLogo = makeCanvas(phW, phH);
+  tmpLogo.ctx.putImageData(warpedData, 0, 0);
+  result.ctx.globalCompositeOperation = blendMode;
+  result.ctx.globalAlpha = opacity;
+  result.ctx.drawImage(tmpLogo.canvas, 0, 0);
+  result.ctx.restore();
+
+  // Draw zone outline
+  result.ctx.save();
+  result.ctx.strokeStyle = zone.color;
+  result.ctx.lineWidth = 2;
+  result.ctx.setLineDash([6,4]);
+  result.ctx.beginPath();
+  result.ctx.moveTo(scaledZonePts[0].x, scaledZonePts[0].y);
+  scaledZonePts.forEach((p,i)=>i>0&&result.ctx.lineTo(p.x,p.y));
+  result.ctx.closePath(); result.ctx.stroke(); result.ctx.restore();
+
+  setProgress('fusion', 100);
+
+  // 8. Show result
+  IA.fusionResult = result;
+  const rc = document.getElementById('fusion-result-canvas');
+  const maxW = 500;
+  const rsc = Math.min(maxW / phW, 1);
+  rc.width = Math.round(phW*rsc); rc.height = Math.round(phH*rsc);
+  rc.style.width = '100%';
+  rc.getContext('2d').drawImage(result.canvas, 0, 0, rc.width, rc.height);
+  document.getElementById('fusion-result').style.display = 'block';
+
+  await sleep(300);
+  showProgress('fusion', false);
+  toast('Fusion IA calculée ✓','ok');
+}
+
+function applyDisplacementWarp(logoData, lW, lH, gx, gy, phW, phH, lX, lY, strength) {
+  // logoData can be ImageData or {data, width, height}
+  const srcData = logoData.data;
+  const srcW = logoData.width  || lW;
+  const srcH = logoData.height || lH;
+  const out = new ImageData(phW, phH);
+  for (let y=0;y<srcH;y++) for (let x=0;x<srcW;x++) {
+    const px = lX+x, py = lY+y;
+    if (px<0||px>=phW||py<0||py>=phH) continue;
+    const pi = (py*phW+px);
+    const maxG = 255;
+    const dx = Math.round(gx[pi] / maxG * strength);
+    const dy = Math.round(gy[pi] / maxG * strength);
+    const sx = Math.max(0,Math.min(srcW-1, x-dx));
+    const sy = Math.max(0,Math.min(srcH-1, y-dy));
+    const si = (sy*srcW+sx)*4;
+    const di = (py*phW+px)*4;
+    out.data[di]   = srcData[si];
+    out.data[di+1] = srcData[si+1];
+    out.data[di+2] = srcData[si+2];
+    out.data[di+3] = srcData[si+3];
+  }
+  return out;
+}
+
+// ── STICKER PRESETS ──────────────────────────────────────
+const stickerOpts = { finish: 'gloss', border: 'white' };
+
+function setStickerPreset(p) {
+  stickerOpts.finish = p;
+  ['gloss','mat','chrome'].forEach(x => document.getElementById('sp-'+x)?.classList.toggle('on', x===p));
+}
+function setBorderPreset(p) {
+  stickerOpts.border = p;
+  ['white','black','none'].forEach(x => document.getElementById('bp-'+x)?.classList.toggle('on', x===p));
+}
+
+// ── AUTO STICKER — MAIN ───────────────────────────────────
+async function runAutoSticker() {
+  if (!S.refPhoto)       { toast('Photo requise (étape 1)','err'); return; }
+  if (!libs.length)      { toast('Ajoute un logo à l\'étape 3','err'); return; }
+  if (!IA.zones.length)  { toast('Dessine au moins une zone (onglet Zones)','err'); return; }
+
+  showProgress('fusion', true);
+  setStatus('Chargement de la photo…');
+  await sleep(60);
+
+  const photo  = await loadImg(S.refPhoto);
+  const phW    = photo.width, phH = photo.height;
+
+  // Offscreen photo canvas
+  const base = makeCanvas(phW, phH);
+  base.ctx.drawImage(photo, 0, 0);
+  const phImgData = base.ctx.getImageData(0, 0, phW, phH);
+
+  // Sobel gradient
+  setStatus('Analyse des courbes de surface…');
+  setProgress('fusion', 12);
+  await sleep(40);
+  const { mag, gx, gy } = sobelAnalysis(phImgData, phW, phH);
+  const bGx = gaussBlur(gx, phW, phH, 4);
+  const bGy = gaussBlur(gy, phW, phH, 4);
+
+  // Result canvas = copy of photo
+  const result = makeCanvas(phW, phH);
+  result.ctx.drawImage(photo, 0, 0);
+
+  const sc = IA._photoScale || 1;
+  const pct = 100 / IA.zones.length;
+
+  for (let zi = 0; zi < IA.zones.length; zi++) {
+    const zone = IA.zones[zi];
+    const logo = await loadImg(libs[IA.selectedLogo !== null ? IA.selectedLogo : zi % libs.length].url);
+    setStatus(`Zone "${zone.name}" — placement en cours…`);
+    setProgress('fusion', 12 + pct * zi);
+    await sleep(30);
+
+    // Zone pts in photo coordinates
+    const pts = zone.points.map(p => ({ x: p.x / sc, y: p.y / sc }));
+    const bbox = zoneBBox(pts);
+    const zW = bbox.maxX - bbox.minX;
+    const zH = bbox.maxY - bbox.minY;
+    const cX = (bbox.minX + bbox.maxX) / 2;
+    const cY = (bbox.minY + bbox.maxY) / 2;
+
+    // Fill % from slider
+    const fillPct = (+document.getElementById('logo-fill').value) / 100;
+    const logoSc  = Math.min(zW / logo.width, zH / logo.height) * fillPct;
+    const lW = Math.max(1, Math.round(logo.width  * logoSc));
+    const lH = Math.max(1, Math.round(logo.height * logoSc));
+    const lX = Math.round(cX - lW / 2);
+    const lY = Math.round(cY - lH / 2);
+
+    // 1. Blank zone (paint white base under sticker)
+    setStatus(`Zone "${zone.name}" — rendu blank…`);
+    result.ctx.save();
+    clipPath(result.ctx, pts);
+    result.ctx.fillStyle = '#f5f5f5';
+    result.ctx.fill();
+    result.ctx.restore();
+
+    // 2. Build sticker image: white bg + logo + finish
+    const sticker = buildStickerCanvas(logo, lW, lH);
+
+    // 3. Apply displacement warp to sticker
+    const stickerFull = makeCanvas(phW, phH);
+    stickerFull.ctx.drawImage(sticker.canvas, lX, lY);
+    const stickerData = stickerFull.ctx.getImageData(0, 0, phW, phH);
+
+    const strength = +document.getElementById('warp-strength').value;
+    const warpedData = applyDisplacementWarp(
+      { data: stickerData.data, width: phW, height: phH },
+      phW, phH, bGx, bGy, phW, phH, 0, 0, strength
+    );
+
+    // 4. Composite sticker onto result, clipped to zone
+    result.ctx.save();
+    clipPath(result.ctx, pts);
+
+    // Shadow
+    result.ctx.shadowColor = 'rgba(0,0,0,0.45)';
+    result.ctx.shadowBlur  = 10;
+    result.ctx.shadowOffsetX = 3;
+    result.ctx.shadowOffsetY = 4;
+
+    const tmpWarped = makeCanvas(phW, phH);
+    tmpWarped.ctx.putImageData(warpedData, 0, 0);
+    result.ctx.globalCompositeOperation = 'source-over';
+    result.ctx.drawImage(tmpWarped.canvas, 0, 0);
+
+    result.ctx.shadowColor = 'transparent';
+    result.ctx.shadowBlur  = 0;
+    result.ctx.shadowOffsetX = 0;
+    result.ctx.shadowOffsetY = 0;
+
+    // Multiply with surface (picks up lighting/shadows of carénage)
+    result.ctx.globalCompositeOperation = 'multiply';
+    result.ctx.globalAlpha = 0.18;
+    result.ctx.drawImage(photo, 0, 0);
+    result.ctx.restore();
+    result.ctx.globalAlpha = 1;
+    result.ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // Zone outlines
+  IA.zones.forEach(zone => {
+    const pts = zone.points.map(p => ({ x: p.x / sc, y: p.y / sc }));
+    result.ctx.save();
+    result.ctx.strokeStyle = zone.color + 'cc';
+    result.ctx.lineWidth = 1.5;
+    result.ctx.setLineDash([5,4]);
+    beginPath(result.ctx, pts);
+    result.ctx.stroke();
+    result.ctx.restore();
+  });
+
+  IA.fusionResult = result;
+  setProgress('fusion', 100);
+
+  // Display
+  const rc = document.getElementById('fusion-result-canvas');
+  const rsc = Math.min(500 / phW, 1);
+  rc.width  = Math.round(phW * rsc);
+  rc.height = Math.round(phH * rsc);
+  rc.getContext('2d').drawImage(result.canvas, 0, 0, rc.width, rc.height);
+  document.getElementById('fusion-result').style.display = 'block';
+
+  await sleep(300);
+  showProgress('fusion', false);
+  setStatus('');
+  toast('Rendu sticker réaliste généré ✓','ok');
+}
+
+// ── STICKER CANVAS BUILDER ────────────────────────────────
+function buildStickerCanvas(logo, lW, lH) {
+  const pad = Math.round(Math.max(lW, lH) * 0.06);
+  const tW  = lW + pad * 2;
+  const tH  = lH + pad * 2;
+  const off = makeCanvas(tW, tH);
+  const ctx = off.ctx;
+
+  const r = Math.round(Math.min(tW, tH) * 0.1);
+
+  // Border
+  if (stickerOpts.border !== 'none') {
+    ctx.save();
+    roundRect(ctx, 0, 0, tW, tH, r + 2);
+    ctx.fillStyle = stickerOpts.border === 'white' ? '#ffffff' : '#111111';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // White base background
+  ctx.save();
+  roundRect(ctx, 2, 2, tW - 4, tH - 4, r);
+  ctx.fillStyle = '#f8f8f8';
+  ctx.fill();
+  ctx.restore();
+
+  // Logo
+  ctx.drawImage(logo, pad, pad, lW, lH);
+
+  // Finish layer
+  if (stickerOpts.finish === 'gloss') {
+    ctx.save();
+    roundRect(ctx, 2, 2, tW - 4, tH - 4, r);
+    ctx.clip();
+    const grd = ctx.createLinearGradient(0, 0, tW * 0.6, tH * 0.5);
+    grd.addColorStop(0,   'rgba(255,255,255,0.45)');
+    grd.addColorStop(0.4, 'rgba(255,255,255,0.12)');
+    grd.addColorStop(1,   'rgba(255,255,255,0)');
+    ctx.fillStyle = grd;
+    ctx.fill();
+    // Bottom specular
+    const grd2 = ctx.createLinearGradient(0, tH * 0.75, 0, tH);
+    grd2.addColorStop(0, 'rgba(255,255,255,0)');
+    grd2.addColorStop(1, 'rgba(255,255,255,0.08)');
+    ctx.fillStyle = grd2;
+    ctx.fillRect(0, 0, tW, tH);
+    ctx.restore();
+  } else if (stickerOpts.finish === 'mat') {
+    ctx.save();
+    roundRect(ctx, 2, 2, tW - 4, tH - 4, r);
+    ctx.clip();
+    ctx.fillStyle = 'rgba(200,200,200,0.06)';
+    ctx.fillRect(0, 0, tW, tH);
+    ctx.restore();
+  } else if (stickerOpts.finish === 'chrome') {
+    ctx.save();
+    roundRect(ctx, 2, 2, tW - 4, tH - 4, r);
+    ctx.clip();
+    const grdC = ctx.createLinearGradient(0, 0, tW, tH);
+    grdC.addColorStop(0,   'rgba(255,255,255,0.6)');
+    grdC.addColorStop(0.25,'rgba(180,220,255,0.3)');
+    grdC.addColorStop(0.5, 'rgba(255,255,255,0.05)');
+    grdC.addColorStop(0.75,'rgba(200,200,220,0.2)');
+    grdC.addColorStop(1,   'rgba(255,255,255,0.5)');
+    ctx.fillStyle = grdC;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  return off;
+}
+
+// ── COORD MAPPING : IA canvas → Fabric canvas ─────────────
+function iaPtToFabric(pt) {
+  // pt is in IA display canvas coords (scaled by IA._photoScale from original photo)
+  // → original photo px
+  const px = pt.x / (IA._photoScale || 1);
+  const py = pt.y / (IA._photoScale || 1);
+  // → Fabric canvas coords
+  const fsc  = S._photoFabricSc   || Math.min(fc.width  / (S._photoW||1), fc.height / (S._photoH||1), 1);
+  const offX = S._photoFabricOffX || 0;
+  const offY = S._photoFabricOffY || 0;
+  return { x: px * fsc + offX, y: py * fsc + offY };
+}
+
+// ── APPLY STICKER TO ONE ZONE (canvas + clipPath) ──────────
+async function applyStickerInZone(zone) {
+  if (!zone) { toast('Sélectionne une zone','err'); return; }
+  const logoIdx = IA.selectedLogo !== null ? IA.selectedLogo : 0;
+  if (!libs[logoIdx]) { toast('Sélectionne un logo dans l\'onglet Fusion','err'); return; }
+
+  const logo = await loadImg(libs[logoIdx].url);
+
+  // Convert zone pts → Fabric coords
+  const fPts = zone.points.map(p => iaPtToFabric(p));
+  const bbox  = zoneBBox(fPts);
+  const zW    = bbox.maxX - bbox.minX;
+  const zH    = bbox.maxY - bbox.minY;
+  const cX    = (bbox.minX + bbox.maxX) / 2;
+  const cY    = (bbox.minY + bbox.maxY) / 2;
+
+  // 1. Blank polygon (white base under sticker)
+  const blankPoly = new fabric.Polygon(
+    fPts.map(p => ({ x: p.x, y: p.y })),
+    {
+      fill: '#f5f5f5', stroke: '#d0d0d0', strokeWidth: 1,
+      selectable: true, evented: true,
+      data: { layer: 'design', zoneBlank: true, zoneName: zone.name }
+    }
+  );
+  fc.add(blankPoly);
+
+  // 2. Scale logo to fill zone
+  const fillPct = (+(document.getElementById('logo-fill')?.value || 75)) / 100;
+  const logoSc  = Math.min(zW / logo.width, zH / logo.height) * fillPct;
+  const lW = Math.max(4, Math.round(logo.width  * logoSc));
+  const lH = Math.max(4, Math.round(logo.height * logoSc));
+
+  // 3. Build sticker offscreen (logo + finish effects)
+  const stickerOff = buildStickerCanvas(logo, lW, lH);
+  const stickerUrl = stickerOff.canvas.toDataURL();
+
+  // 4. Warp sticker with surface displacement if photo available
+  let finalUrl = stickerUrl;
+  if (S.refPhoto && (S._photoW || 1) > 0) {
+    try {
+      const photo    = await loadImg(S.refPhoto);
+      const phW = photo.width, phH = photo.height;
+      const phOff    = makeCanvas(phW, phH);
+      phOff.ctx.drawImage(photo, 0, 0);
+      const phData   = phOff.ctx.getImageData(0, 0, phW, phH);
+      const { gx, gy } = sobelAnalysis(phData, phW, phH);
+      const bGx = gaussBlur(gx, phW, phH, 4);
+      const bGy = gaussBlur(gy, phW, phH, 4);
+
+      const strength = +(document.getElementById('warp-strength')?.value || 16);
+      const stickerImg = await loadImg(stickerUrl);
+
+      // Place sticker at center of zone in photo space
+      const fsc   = S._photoFabricSc   || 1;
+      const offX  = S._photoFabricOffX || 0;
+      const offY  = S._photoFabricOffY || 0;
+      const phCX  = Math.round((cX - offX) / fsc);
+      const phCY  = Math.round((cY - offY) / fsc);
+      const phLW  = Math.round(lW / fsc);
+      const phLH  = Math.round(lH / fsc);
+      const phLX  = phCX - Math.round(phLW / 2);
+      const phLY  = phCY - Math.round(phLH / 2);
+
+      const stkCanvas = makeCanvas(phLW, phLH);
+      stkCanvas.ctx.drawImage(stickerImg, 0, 0, phLW, phLH);
+      const stkData = stkCanvas.ctx.getImageData(0, 0, phLW, phLH);
+
+      const warped = applyDisplacementWarp(stkData, phLW, phLH, bGx, bGy, phW, phH, phLX, phLY, strength);
+
+      const warpFull = makeCanvas(phLW, phLH);
+      const warpFullData = warpFull.ctx.createImageData(phLW, phLH);
+      for (let y=0;y<phLH;y++) for (let x=0;x<phLW;x++) {
+        const si = ((y+phLY)*phW+(x+phLX))*4;
+        const di = (y*phLW+x)*4;
+        warpFullData.data[di]   = warped.data[si];
+        warpFullData.data[di+1] = warped.data[si+1];
+        warpFullData.data[di+2] = warped.data[si+2];
+        warpFullData.data[di+3] = warped.data[si+3];
+      }
+      warpFull.ctx.putImageData(warpFullData, 0, 0);
+      finalUrl = warpFull.canvas.toDataURL();
+    } catch(e) { /* skip warp on error */ }
+  }
+
+  // 5. Create Fabric image + clipPath polygon
+  fabric.Image.fromURL(finalUrl, img => {
+    img.set({
+      left:   cX - img.width  / 2,
+      top:    cY - img.height / 2,
+      originX: 'left', originY: 'top',
+      selectable: true, evented: true,
+      data: { layer: 'design', sticker: true, zoneName: zone.name }
+    });
+
+    // ClipPath = zone polygon (absolutePositioned = true = fixed on canvas, not relative to object)
+    const clip = new fabric.Polygon(
+      fPts.map(p => ({ x: p.x, y: p.y })),
+      { absolutePositioned: true }
+    );
+    img.clipPath = clip;
+
+    fc.add(img);
+    fc.setActiveObject(img);
+    fc.renderAll();
+    pushHist();
+    toast(`Sticker incrusté dans "${zone.name}" ✓`, 'ok');
+  });
+}
+
+// ── APPLY ALL ZONES AT ONCE ───────────────────────────────
+async function applyAllStickersToCanvas() {
+  if (!IA.zones.length) { toast('Aucune zone définie (onglet Zones)','err'); return; }
+  if (!libs.length)     { toast('Ajoute un logo à l\'étape 3','err'); return; }
+  for (let i=0; i < IA.zones.length; i++) {
+    IA.selectedLogo = IA.selectedLogo !== null ? IA.selectedLogo : i % libs.length;
+    await applyStickerInZone(IA.zones[i]);
+    await sleep(80);
+  }
+  closeIA();
+  toast(`${IA.zones.length} sticker(s) appliqué(s) ✓`, 'ok');
+}
+
+// ── BLANK ZONE ────────────────────────────────────────────
+async function blankZone(zoneId) {
+  const zone = IA.zones.find(z => z.id === zoneId);
+  if (!zone || !S.refPhoto) { toast('Photo et zone requises','err'); return; }
+
+  const photo = await loadImg(S.refPhoto);
+  const sc    = IA._photoScale || 1;
+  const pts   = zone.points.map(p => ({ x: p.x / sc, y: p.y / sc }));
+
+  // Create a fabric polygon on the main canvas as a white mask
+  const fabricPts = pts.map(p => ({
+    x: p.x * (fc.width / photo.width),
+    y: p.y * (fc.height / photo.height)
+  }));
+  const poly = new fabric.Polygon(fabricPts, {
+    fill: '#ffffff',
+    stroke: '#cccccc',
+    strokeWidth: 1,
+    opacity: 1,
+    selectable: true,
+    data: { layer: 'design', zoneBlank: true, zoneName: zone.name }
+  });
+  fc.add(poly);
+  fc.setActiveObject(poly);
+  fc.renderAll();
+  pushHist();
+  toast(`Zone "${zone.name}" blanchie ✓`, 'ok');
+}
+
+// ── HELPERS ──────────────────────────────────────────────
+function clipPath(ctx, pts) {
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  pts.forEach((p,i) => i > 0 && ctx.lineTo(p.x, p.y));
+  ctx.closePath(); ctx.clip();
+}
+function beginPath(ctx, pts) {
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  pts.forEach((p,i) => i > 0 && ctx.lineTo(p.x, p.y));
+  ctx.closePath();
+}
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+function setStatus(msg) {
+  const el = document.getElementById('fusion-status');
+  if (!el) return;
+  el.style.display = msg ? 'block' : 'none';
+  el.textContent = msg;
+}
+
+function applyFusionToMainCanvas() {
+  if (!IA.fusionResult) return;
+  const url = IA.fusionResult.canvas.toDataURL();
+  fabric.Image.fromURL(url, img => {
+    const sc = Math.min(fc.width/img.width, fc.height/img.height, 1);
+    img.set({ left:0, top:0, scaleX:sc, scaleY:sc, selectable:true });
+    fc.add(img); fc.setActiveObject(img); fc.renderAll(); pushHist();
+    closeIA(); goStep(3); toast('Sticker appliqué sur le canvas','ok');
+  });
+}
+
+function exportFusion() {
+  if (!IA.fusionResult) return;
+  const a = document.createElement('a');
+  a.href = IA.fusionResult.canvas.toDataURL('image/jpeg',.95);
+  a.download = 'sticker_ia.jpg'; a.click();
+}
+
+// ── VISUALISATION ─────────────────────────────────────────
+async function runPhotoAnalysis() {
+  if (!S.refPhoto) { toast('Photo requise','err'); return; }
+  showProgress('analyze', true);
+  await sleep(50);
+
+  const photo = await loadImg(S.refPhoto);
+  const W = photo.width, H = photo.height;
+  const maxW = 280;
+  const sc = Math.min(maxW/W, 1);
+  const vW = Math.round(W*sc), vH = Math.round(H*sc);
+
+  // Original
+  setVC('visu-original', vW, vH, ctx => ctx.drawImage(photo, 0, 0, vW, vH));
+  setProgress('analyze', 20);
+
+  // Source data
+  const src = makeCanvas(vW, vH);
+  src.ctx.drawImage(photo, 0, 0, vW, vH);
+  const imgData = src.ctx.getImageData(0, 0, vW, vH);
+  const {mag, gx, gy} = sobelAnalysis(imgData, vW, vH);
+  setProgress('analyze', 40);
+
+  // Edge view (inverted Sobel)
+  setVC('visu-edges', vW, vH, ctx => {
+    const out = ctx.createImageData(vW, vH);
+    for (let i=0;i<vW*vH;i++) {
+      const v = Math.min(255, mag[i]*1.5);
+      out.data[i*4]   = v;
+      out.data[i*4+1] = Math.round(v*0.3);
+      out.data[i*4+2] = 0;
+      out.data[i*4+3] = 255;
+    }
+    ctx.putImageData(out, 0, 0);
+  });
+  setProgress('analyze', 55);
+
+  // Blank (grayscale + edges for deco work)
+  setVC('visu-blank', vW, vH, ctx => {
+    const out = ctx.createImageData(vW, vH);
+    const d = imgData.data;
+    for (let i=0;i<vW*vH;i++) {
+      const gray = d[i*4]*0.299 + d[i*4+1]*0.587 + d[i*4+2]*0.114;
+      const edge = Math.min(80, mag[i]*0.8);
+      const v = Math.max(0, Math.min(255, gray * 0.4 + 140 - edge));
+      out.data[i*4]   = v;
+      out.data[i*4+1] = v;
+      out.data[i*4+2] = v;
+      out.data[i*4+3] = 255;
+    }
+    ctx.putImageData(out, 0, 0);
+  });
+  setProgress('analyze', 72);
+
+  // Depth estimate (gradient magnitude = curvature proxy)
+  setVC('visu-depth', vW, vH, ctx => {
+    const maxMag = Math.max(...Array.from(mag));
+    const out = ctx.createImageData(vW, vH);
+    for (let i=0;i<vW*vH;i++) {
+      const norm = mag[i] / (maxMag || 1);
+      // Blue = deep/flat, orange = edge/raised
+      out.data[i*4]   = Math.round(norm * 255);
+      out.data[i*4+1] = Math.round((1-norm)*120);
+      out.data[i*4+2] = Math.round((1-norm)*200);
+      out.data[i*4+3] = 255;
+    }
+    ctx.putImageData(out, 0, 0);
+  });
+  setProgress('analyze', 88);
+
+  // Deco preview: blank + zones + any logos from canvas
+  buildDecoVisuPreview(photo, vW, vH, mag);
+  setProgress('analyze', 100);
+
+  document.getElementById('visu-results').style.display = 'flex';
+  await sleep(300);
+  showProgress('analyze', false);
+  toast('Analyse photo terminée ✓','ok');
+}
+
+function buildDecoVisuPreview(photo, vW, vH, mag) {
+  const rc = document.getElementById('visu-deco');
+  rc.width = vW; rc.height = vH;
+  const ctx = rc.getContext('2d');
+  // Draw blank base
+  const src = makeCanvas(vW, vH);
+  src.ctx.drawImage(photo, 0, 0, vW, vH);
+  const imgData = src.ctx.getImageData(0, 0, vW, vH);
+  const blank = ctx.createImageData(vW, vH);
+  const d = imgData.data;
+  for (let i=0;i<vW*vH;i++) {
+    const gray = d[i*4]*0.299+d[i*4+1]*0.587+d[i*4+2]*0.114;
+    const edge = Math.min(80,mag[i]*0.8);
+    const v = Math.max(0,Math.min(255,gray*0.4+140-edge));
+    blank.data[i*4]=blank.data[i*4+1]=blank.data[i*4+2]=v; blank.data[i*4+3]=255;
+  }
+  ctx.putImageData(blank, 0, 0);
+
+  // Draw zones as colored overlays
+  const sc = IA._photoScale || 1;
+  IA.zones.forEach(zone => {
+    const pts = zone.points.map(p=>({x:p.x/sc*(vW/photo.width),y:p.y/sc*(vH/photo.height)}));
+    if (!pts.length) return;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x,pts[0].y);
+    pts.forEach((p,i)=>i>0&&ctx.lineTo(p.x,p.y));
+    ctx.closePath();
+    ctx.fillStyle = zone.color+'55'; ctx.fill();
+    ctx.strokeStyle = zone.color; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.restore();
+  });
+}
+
+function exportVisuDeco() {
+  const c = document.getElementById('visu-deco');
+  const a = document.createElement('a'); a.href = c.toDataURL('image/jpeg',.95); a.download = 'visu_deco.jpg'; a.click();
+}
+
+// ── HELPERS ──────────────────────────────────────────────
+function setVC(id, w, h, draw) {
+  const c = document.getElementById(id);
+  c.width = w; c.height = h;
+  draw(c.getContext('2d'));
+}
+function makeCanvas(w, h) {
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  return { canvas, ctx: canvas.getContext('2d') };
+}
+function loadImg(src) {
+  return new Promise(res => { const img = new Image(); img.onload = () => res(img); img.src = src; });
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function showProgress(id, show) {
+  const el = document.getElementById(id+'-progress');
+  if (el) el.style.display = show ? 'block' : 'none';
+  if (show) setProgress(id, 0);
+}
+function setProgress(id, pct) {
+  const el = document.getElementById(id+'-bar');
+  if (el) el.style.width = pct+'%';
+}
+
+// ─── TOAST ───────────────────────────────────
+function toast(msg,type='ok'){
+  const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;
+  document.getElementById('toasts').appendChild(t);setTimeout(()=>t.remove(),3000);
+}
+
+// ─── INIT ────────────────────────────────────
+window.addEventListener('load',()=>{
+  initCanvas();
+  goStep(1);
+});
+</script>
+</body>
+</html>

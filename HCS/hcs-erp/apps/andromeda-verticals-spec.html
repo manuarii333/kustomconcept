@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Andromeda — Spécifications des 8 verticales</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a14;--surface:#11111d;--card:#16162a;--border:#252540;--accent:#a18cd1;--accent2:#fa709a;--accent3:#43e97b;--text:#e8e8f0;--muted:#8888a8;--dim:#555570}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;line-height:1.7;padding:0 0 80px}
+header{padding:40px;border-bottom:1px solid var(--border);text-align:center}
+header h1{font-size:clamp(1.4rem,3vw,2.2rem);font-weight:800;letter-spacing:3px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+header p{font-family:'Space Mono';font-size:.7rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:6px}
+.container{max-width:960px;margin:0 auto;padding:0 24px}
+
+/* Vertical card */
+.vert{margin:40px 0;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--surface)}
+.vert-head{padding:20px 28px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s}
+.vert-head:hover{background:var(--card)}
+.vert-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.vert-meta h2{font-size:1.05rem;font-weight:800;letter-spacing:1px}
+.vert-meta .sub{font-family:'Space Mono';font-size:.62rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+.vert-status{margin-left:auto;font-family:'Space Mono';font-size:.6rem;padding:4px 12px;border-radius:12px;letter-spacing:1px;font-weight:700;flex-shrink:0}
+.s-done{background:rgba(67,233,123,.12);color:#43e97b;border:1px solid rgba(67,233,123,.3)}
+.s-new{background:rgba(161,140,209,.12);color:#a18cd1;border:1px solid rgba(161,140,209,.3)}
+.vert-body{padding:28px}
+
+/* Context block */
+.ctx{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:24px}
+.ctx-title{font-family:'Space Mono';font-size:.6rem;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-weight:700}
+.ctx p{font-size:.85rem;color:var(--text);line-height:1.8}
+
+/* Steps */
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:0}
+.step-gutter{width:42px;display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding-top:4px}
+.step-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Space Mono';font-size:.65rem;font-weight:700;color:var(--muted);flex-shrink:0}
+.step-dot.active{border-color:var(--accent);color:var(--accent);background:rgba(161,140,209,.1)}
+.step-line{flex:1;width:2px;background:var(--border);margin-top:6px}
+.step-content{flex:1;padding:0 0 24px 12px}
+.step-content h3{font-size:.88rem;font-weight:700;margin-bottom:6px}
+.step-content p{font-size:.78rem;color:var(--muted);line-height:1.8}
+.step-content .detail{font-family:'Space Mono';font-size:.62rem;color:var(--dim);line-height:1.7;margin-top:8px;padding:10px 12px;background:rgba(255,255,255,.02);border-left:2px solid var(--border);border-radius:0 6px 6px 0}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.tag{font-family:'Space Mono';font-size:.55rem;padding:3px 10px;border-radius:10px;letter-spacing:.5px;font-weight:700}
+.t-pink{background:rgba(250,112,154,.12);color:#fa709a;border:1px solid rgba(250,112,154,.25)}
+.t-teal{background:rgba(67,233,123,.1);color:#43e97b;border:1px solid rgba(67,233,123,.2)}
+.t-blue{background:rgba(79,172,254,.1);color:#4facfe;border:1px solid rgba(79,172,254,.2)}
+.t-amber{background:rgba(246,211,101,.1);color:#f6d365;border:1px solid rgba(246,211,101,.2)}
+.t-purple{background:rgba(161,140,209,.12);color:#a18cd1;border:1px solid rgba(161,140,209,.25)}
+.t-coral{background:rgba(253,160,133,.1);color:#fda085;border:1px solid rgba(253,160,133,.2)}
+
+/* Revenue model */
+.rev{margin-top:20px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.rev-head{font-family:'Space Mono';font-size:.6rem;color:var(--accent3);letter-spacing:2px;text-transform:uppercase;padding:10px 16px;border-bottom:1px solid var(--border);font-weight:700;background:rgba(67,233,123,.04)}
+.rev-body{padding:12px 16px}
+.rev-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.rev-row:last-child{border:none}
+.rev-item{font-size:.72rem;color:var(--muted)}
+.rev-price{font-family:'Space Mono';font-size:.72rem;font-weight:700;color:var(--text)}
+
+/* Diff vs */
+.diff{margin-top:20px;padding:14px 16px;border:1px dashed var(--border);border-radius:10px}
+.diff-title{font-family:'Space Mono';font-size:.6rem;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px}
+.diff p{font-size:.72rem;color:var(--muted);line-height:1.7;padding:2px 0}
+
+/* Connection pipeline */
+.pipe{margin-top:20px;padding:14px 16px;background:rgba(161,140,209,.04);border:1px solid rgba(161,140,209,.15);border-radius:10px}
+.pipe-title{font-family:'Space Mono';font-size:.6rem;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700}
+.pipe p{font-size:.68rem;color:var(--muted);line-height:1.8;padding-left:12px;border-left:2px solid var(--border);margin-bottom:4px}
+
+@media(max-width:640px){
+  .vert-head{flex-wrap:wrap}
+  .vert-status{margin-left:0}
+  .vert-body{padding:20px}
+}
+</style>
+</head>
+<body>
+
+<header>
+<h1>ANDROMEDA — 8 VERTICALES</h1>
+<p>Spécifications parcours client · HCS Tahiti · Avril 2026</p>
+</header>
+
+<div class="container">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     V0 — STICKER AUTO (existant)
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="vert">
+<div class="vert-head">
+  <div class="vert-icon" style="background:linear-gradient(135deg,#ff6584,#ff9966)">🚗</div>
+  <div class="vert-meta"><h2>0. Sticker Auto</h2><div class="sub">Pare-brise promo · Sticker sur mesure</div></div>
+  <div class="vert-status s-done">OPÉRATIONNEL</div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     V1 — T-SHIRT CLASSIC (existant)
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="vert">
+<div class="vert-head">
+  <div class="vert-icon" style="background:linear-gradient(135deg,#4facfe,#00f2fe)">👕</div>
+  <div class="vert-meta"><h2>1. T-Shirt Classic</h2><div class="sub">Édition collector mensuelle · Parcours complet</div></div>
+  <div class="vert-status s-done">OPÉRATIONNEL</div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     V2 — CASQUETTE (existant)
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="vert">
+<div class="vert-head">
+  <div class="vert-icon" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">🧢</div>
+  <div class="vert-meta"><h2>2. Casquette</h2><div class="sub">Édition limitée · Broderie & DTF</div></div>
+  <div class="vert-status s-done">OPÉRATIONNEL</div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     V3 — DTF ORIGINALS (nouveau parcours)
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="vert">
+<div class="vert-head">
+  <div class="vert-icon" style="background:linear-gradient(135deg,#fa709a,#fee140)">🏄</div>
+  <div class="vert-meta"><h2>3. DTF Originals — Collections</h2><div class="sub">T-shirts premium · Logos exclusifs · Identité HCS</div></div>
+  <div class="vert-status s-new">NOUVEAU PARCOURS</div>
+</div>
+<div class="vert-body">
+
+  <div class="ctx">
+    <div class="ctx-title">Contexte stratégique</div>
+    <p>T-shirts qualité supérieure avec logos de collection exclusifs et authentiques. Chaque mois, une nouvelle collection thématique ancrée dans la culture polynésienne : modes, cultures, appartenances ethniques, traditions, légendes, mèmes locaux. C'est l'identité de marque du magasin High Coffee Shirt. Les transferts DTF sont élaborés avec des logos à forte valeur ajoutée exclusifs créés via DTF Studio. 12 thèmes annuels : Matahiti Api (jan), Aroha (fév), Taure'a (mars), Tautai (avr), Mama (mai), Va'a (juin), Heiva (juil), Surf (août), Tupuna (sep), Taata Tahiti (oct), Rugby Māohi (nov), Noera (déc).</p>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">1</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h3>Découvrir la collection du mois</h3>
+        <p>Hero immersif avec le thème du mois en Reo Tahiti. Les 3 variantes du logo (générées par DTF Studio) sont présentées comme des éditions limitées avec storytelling culturel. Chaque variante a un nom propre et une description.</p>
+        <div class="detail">Hero plein écran gradient thématique · Titre "Collection [Mois] — [Thème Reo Tahiti]" · Sous-titre narratif culturel · 3 cards variantes côte à côte, aspect-ratio 1:1 fond transparent · Badge "Édition limitée [mois] 2026" · Sélection = bordure primary + check</div>
+        <div class="tags"><span class="tag t-pink">3 variantes DTF Studio</span><span class="tag t-coral">Storytelling culturel Māohi</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">2</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h3>Choisir le t-shirt + taille</h3>
+        <p>Sélection couleur textile (blanc, noir, coloris du mois en vedette) et taille XS→4XL. Aperçu mockup dynamique généré par MockupForge montrant la variante choisie sur le t-shirt sélectionné.</p>
+        <div class="detail">2-3 coloris avec pastilles + nom · Coloris du mois mis en avant (ex: bleu ocean pour Va'a) · Grille tailles XS→4XL · Aperçu dynamique : 3 variantes × 2-3 coloris = 6-9 mockups pré-générés via MockupForge · Prix unique : 3 900 XPF</div>
+        <div class="tags"><span class="tag t-teal">Mockups MockupForge</span><span class="tag t-amber">Coloris du mois</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">3</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h3>Quantité + pack collection</h3>
+        <p>Sélecteur quantité. Upsell "Pack Trio" : les 3 variantes à -15%. Recap visuel complet avec miniatures mockups.</p>
+        <div class="detail">Quantité +/- (1→10) · Pack Trio : 3 × 3 900 = 11 700 → 9 900 XPF · Présenté comme "la collection complète" · Recap card : miniature, nom variante, coloris, taille, prix, sous-total · Prix barré pour le pack</div>
+        <div class="tags"><span class="tag t-amber">Pack trio collector -15%</span><span class="tag t-blue">Prix barré + promo</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">4</div></div>
+      <div class="step-content">
+        <h3>Coordonnées + paiement PayZen</h3>
+        <p>Même modal checkout que V1/V2. Confirmation avec teaser collection suivante + capture email "Prévenez-moi".</p>
+        <div class="detail">Formulaire : nom, tél, email · Livraison : retrait Papeete (gratuit) / envoi îles (500 XPF) · PayZen worker existant · Confirmation : n° commande + "Prêt sous 48h" + teaser mois suivant + opt-in email relance</div>
+        <div class="tags"><span class="tag t-blue">PayZen réutilisé</span><span class="tag t-pink">Boucle rétention</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rev">
+    <div class="rev-head">Grille tarifaire</div>
+    <div class="rev-body">
+      <div class="rev-row"><span class="rev-item">T-shirt DTF Original unitaire</span><span class="rev-price">3 900 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Pack Trio (3 variantes)</span><span class="rev-price">9 900 XPF (-15%)</span></div>
+      <div class="rev-row"><span class="rev-item">Envoi inter-îles</span><span class="rev-price">500 XPF</span></div>
+    </div>
+  </div>
+
+  <div class="pipe">
+    <div class="pipe-title">Pipeline production mensuelle</div>
+    <p>① DTF Studio → 3 variantes IA sur le thème du mois</p>
+    <p>② PicWish Pipeline → détourage/amélioration si nécessaire</p>
+    <p>③ MockupForge → mockups unitaires (3 variantes × 2-3 coloris)</p>
+    <p>④ Mockup Studio → grille 3×3 pour réseaux sociaux</p>
+    <p>⑤ Builder → LP vitrine + vidéo promo Suno</p>
+    <p>⑥ Andromeda → campagne FB + LP de vente active</p>
+  </div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     V4 — PACK COLLECTOR DTF PERSONNEL + ATELIER CLIENT
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="vert">
+<div class="vert-head">
+  <div class="vert-icon" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb)">📋</div>
+  <div class="vert-meta"><h2>4. Pack Collector DTF + Atelier Client</h2><div class="sub">Gang sheet personnel · Pressage libre-service · Accessoires premium</div></div>
+  <div class="vert-status s-new">NOUVEAU PARCOURS</div>
+</div>
+<div class="vert-body">
+
+  <div class="ctx">
+    <div class="ctx-title">Contexte stratégique</div>
+    <p>Le client compose sa collection personnelle de logos DTF sur une surface de 22" × 1 yard (gang sheet). Tarif attractif grâce à la mutualisation de l'espace. L'achat du Pack Collector débloque l'accès à l'Atelier Client HCS : un espace en boutique où le client presse lui-même ses t-shirts. L'atelier propose des accessoires thermocollants additionnels (patchs brodés, lettres 3D, strass, transferts décoratifs) pour enrichir la customisation et augmenter le panier moyen. Le client peut apporter ses propres textiles ou acheter en boutique. Accès sur réservation, tarif horaire réduit pour les détenteurs du Pack. Donne aussi accès aux apps HCS (PicWish, MockupForge) pour la création numérique de logos.</p>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">1</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h3>Composer sa planche DTF</h3>
+        <p>Interface de composition visuelle : le client place ses logos sur une grille 22" × 36" (1 yard). Il uploade ses propres logos ou choisit dans le catalogue HCS Originals. Un calculateur montre en temps réel combien de logos tiennent selon les dimensions choisies. Optimisation automatique du placement.</p>
+        <div class="detail">Zone de travail 22" × 36" avec grille · Upload logos client (passent par PicWish auto) · Catalogue logos HCS Originals intégré · Choix dimension par logo : S (5×5cm), M (10×10), L (20×20), XL (30×30) · Compteur temps réel "X logos placés / Y encore possibles" · Auto-placement optimal (gang sheet nesting) · Preview de la planche finale</div>
+        <div class="tags"><span class="tag t-purple">Compositeur gang sheet</span><span class="tag t-teal">PicWish intégré</span><span class="tag t-amber">Calcul auto nesting</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">2</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h3>Choisir le pack + options atelier</h3>
+        <p>3 tiers de pack selon le niveau d'inclusion. Chaque pack donne accès à l'atelier. Options : apporter son textile ou acheter en boutique. Réservation du créneau atelier intégrée.</p>
+        <div class="detail">Pack Essentiel : gang sheet seul (impression US + livraison) · Pack Atelier : gang sheet + 1h atelier + 1 t-shirt basique · Pack Premium : gang sheet + 2h atelier + 2 t-shirts premium + accessoires offerts · Calendrier réservation créneaux (1h slots) · Choix : "J'apporte mes textiles" ou "J'achète en boutique" (catalogue t-shirts blancs/noirs/couleurs avec prix)</div>
+        <div class="tags"><span class="tag t-purple">3 tiers de pack</span><span class="tag t-blue">Réservation créneaux</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">3</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h3>Accessoires thermocollants (upsell)</h3>
+        <p>Catalogue d'accessoires additionnels : patchs brodés thermocollants, lettres/chiffres 3D, strass, transferts décoratifs pré-imprimés (motifs polynésiens, drapeaux, citations). Le client compose son "kit déco" en plus de ses logos DTF. Affichage prix progressif.</p>
+        <div class="detail">Grille d'accessoires par catégorie : Patchs brodés (à partir de 300 XPF), Lettres 3D flocage (200 XPF/pièce), Strass motifs (500 XPF/planche), Transferts déco pré-imprimés (400 XPF) · Chaque item est ajouté au panier avec miniature · Sous-total accessoires visible · Message "Ces accessoires seront disponibles lors de votre session atelier"</div>
+        <div class="tags"><span class="tag t-coral">Upsell accessoires</span><span class="tag t-amber">Panier moyen ++</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">4</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h3>Récapitulatif + réservation atelier</h3>
+        <p>Recap complet : planche DTF + pack choisi + textiles + accessoires + créneau atelier. Le client voit le coût total décomposé. Sélection du créneau de réservation si pack atelier.</p>
+        <div class="detail">Recap visuel : miniature planche composée + liste logos + dimensions · Détail prix : gang sheet (base) + options atelier + textiles boutique + accessoires · Créneau : calendrier semaine avec slots disponibles (vert) / occupés (gris) · Durée réduite pour détenteurs Pack : -30% sur le tarif horaire · Message : "Accès apps HCS (PicWish, MockupForge) inclus pendant votre session"</div>
+        <div class="tags"><span class="tag t-teal">Calendrier résa</span><span class="tag t-purple">Accès apps inclus</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">5</div></div>
+      <div class="step-content">
+        <h3>Coordonnées + paiement PayZen</h3>
+        <p>Même checkout PayZen. Confirmation avec récap commande + date réservation atelier + consignes de venue ("Apportez vos textiles si option choisie") + QR code de réservation.</p>
+        <div class="detail">PayZen worker existant · Total = pack + textiles + accessoires · Confirmation email : n° commande, date/heure résa, consignes, QR code accès atelier · Délai impression gang sheet : 7-14 jours (commande US HTV4U) · SMS rappel J-1 avant résa atelier</div>
+        <div class="tags"><span class="tag t-blue">PayZen réutilisé</span><span class="tag t-teal">QR code résa</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rev">
+    <div class="rev-head">Grille tarifaire</div>
+    <div class="rev-body">
+      <div class="rev-row"><span class="rev-item">Gang sheet 22" × 1 yard (base)</span><span class="rev-price">8 500 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Pack Essentiel (gang sheet seul)</span><span class="rev-price">8 500 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Pack Atelier (+ 1h + 1 tee)</span><span class="rev-price">12 000 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Pack Premium (+ 2h + 2 tees + accessoires)</span><span class="rev-price">18 000 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Heure atelier supplémentaire (Pack)</span><span class="rev-price">1 500 XPF (-30%)</span></div>
+      <div class="rev-row"><span class="rev-item">Heure atelier (sans pack)</span><span class="rev-price">2 200 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">T-shirt basique boutique</span><span class="rev-price">1 200 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">T-shirt premium boutique</span><span class="rev-price">2 000 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Patchs brodés (à partir de)</span><span class="rev-price">300 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Lettres 3D flocage (pièce)</span><span class="rev-price">200 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Strass motifs (planche)</span><span class="rev-price">500 XPF</span></div>
+    </div>
+  </div>
+
+  <div class="diff">
+    <div class="diff-title">Ce qui rend cette verticale unique</div>
+    <p>→ Seule verticale qui donne accès à un espace physique (l'atelier client)</p>
+    <p>→ Le gang sheet mutualise le coût d'impression US — le client obtient 10-30 logos pour le prix d'un seul t-shirt imprimé ailleurs</p>
+    <p>→ Les accessoires thermocollants sont le principal levier de panier moyen (un client vient pour presser un logo, repart avec 3 patchs et du strass en plus)</p>
+    <p>→ L'accès aux apps HCS (PicWish, MockupForge) pendant la session crée un effet "wow" et fidélise</p>
+    <p>→ La réservation créneau harmonise le flux client et protège l'espace de travail</p>
+    <p>→ Passerelle directe vers V7 (services numériques) : le client découvre les outils IA pendant sa session</p>
+  </div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     V5 — FORMATION TEXTILE DTF PRO
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="vert">
+<div class="vert-head">
+  <div class="vert-icon" style="background:linear-gradient(135deg,#f093fb,#f5576c)">🎓</div>
+  <div class="vert-meta"><h2>5. Formation Textile DTF Pro</h2><div class="sub">Modules théorie + pratique atelier · Certification HCS</div></div>
+  <div class="vert-status s-new">NOUVEAU PARCOURS</div>
+</div>
+<div class="vert-body">
+
+  <div class="ctx">
+    <div class="ctx-title">Contexte stratégique</div>
+    <p>Programme de formation professionnelle à l'impression textile DTF. Destiné aux entrepreneurs locaux polynésiens qui veulent lancer ou professionnaliser leur activité d'impression. 3 niveaux progressifs avec pratique en atelier HCS. La formation inclut l'accès aux outils numériques HCS (PicWish, MockupForge, DTF Studio) et à l'atelier physique. Certification HCS à la clé. C'est aussi un canal d'acquisition B2B : les formés deviennent des clients récurrents pour les consommables (encres, films, textiles).</p>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">1</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h3>Choisir le module de formation</h3>
+        <p>3 cards modules avec programme détaillé, durée, prérequis, et témoignages. Le module Débutant est accessible sans prérequis, l'Avancé nécessite le Débutant, la Formation Complète inclut les deux + certification.</p>
+        <div class="detail">Module Débutant (1 jour) : théorie DTF, préparation fichiers, premiers pressages · Module Avancé (1 jour) : couleurs avancées, textiles techniques, gang sheets, dépannage · Formation Complète (3 jours) : les 2 modules + journée projet personnel + certification · Chaque card : durée, nombre de places, prochaine date, prix · Badge "Prochaine session : [date]"</div>
+        <div class="tags"><span class="tag t-pink">3 modules progressifs</span><span class="tag t-purple">Certification HCS</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">2</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h3>Choisir la session + nombre de participants</h3>
+        <p>Calendrier des sessions disponibles. Possibilité d'inscrire plusieurs personnes (formation entreprise). Détails du lieu (atelier HCS Papeete) et des horaires.</p>
+        <div class="detail">Calendrier mensuel avec sessions disponibles (max 4 personnes/session) · Sélecteur participants (1-4) avec dégressivité entreprise : 2 pers = -10%, 3-4 pers = -20% · Détail session : date, horaires 8h-16h, adresse atelier, ce qui est fourni (matériel, textiles pratique, déjeuner) · Ce qu'il faut apporter : clé USB avec ses fichiers</div>
+        <div class="tags"><span class="tag t-blue">Calendrier sessions</span><span class="tag t-amber">Dégressivité entreprise</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">3</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h3>Informations participant(s)</h3>
+        <p>Formulaire par participant : nom, email, téléphone, niveau d'expérience, objectif (lancer une activité, améliorer ses compétences, former son équipe). Ces infos permettent d'adapter le contenu.</p>
+        <div class="detail">Pour chaque participant : nom complet, email, tél, select niveau (débutant/intermédiaire/avancé), textarea objectif · Champ "Entreprise" optionnel (pour facture pro) · Case "Je souhaite recevoir les supports de cours par email"</div>
+        <div class="tags"><span class="tag t-teal">Personnalisation contenu</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">4</div></div>
+      <div class="step-content">
+        <h3>Récap + paiement PayZen</h3>
+        <p>Récap : module, date session, participants, total. Paiement PayZen. Confirmation avec convocation email détaillée.</p>
+        <div class="detail">Recap : module choisi, date/heure, liste participants, prix unitaire × nb, réduction si applicable, total · PayZen · Confirmation : email convocation avec plan d'accès atelier, programme de la journée, check-list matériel · Facturation pro possible (n° TAHITI, RIB entreprise)</div>
+        <div class="tags"><span class="tag t-blue">PayZen réutilisé</span><span class="tag t-coral">Facturation pro</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rev">
+    <div class="rev-head">Grille tarifaire</div>
+    <div class="rev-body">
+      <div class="rev-row"><span class="rev-item">Module Débutant (1 jour)</span><span class="rev-price">15 000 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Module Avancé (1 jour)</span><span class="rev-price">25 000 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Formation Complète (3 jours + certif)</span><span class="rev-price">35 000 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Réduction 2 participants</span><span class="rev-price">-10%</span></div>
+      <div class="rev-row"><span class="rev-item">Réduction 3-4 participants</span><span class="rev-price">-20%</span></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     V6 — ABONNEMENTS HCS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="vert">
+<div class="vert-head">
+  <div class="vert-icon" style="background:linear-gradient(135deg,#30cfd0,#330867)">🎊</div>
+  <div class="vert-meta"><h2>6. Abonnements HCS</h2><div class="sub">Accès privilège · Collections mensuelles · Atelier illimité</div></div>
+  <div class="vert-status s-new">NOUVEAU PARCOURS</div>
+</div>
+<div class="vert-body">
+
+  <div class="ctx">
+    <div class="ctx-title">Contexte stratégique</div>
+    <p>Programme d'abonnement mensuel qui donne accès aux collections DTF Originals en avant-première, à des tarifs réduits sur l'atelier et les accessoires, et à des avantages exclusifs. 3 tiers : Starter (accès collections), Pro (+ atelier réduit), Premium (+ t-shirts inclus + accessoires offerts). L'abonnement crée un revenu récurrent prévisible et fidélise les clients les plus engagés. Lien direct avec V3 (collections mensuelles) et V4 (atelier client) — l'abonnement est la couche de fidélisation qui enveloppe les deux.</p>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">1</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h3>Comparer les formules</h3>
+        <p>3 cards côte à côte avec le détail de chaque tier. Le tier Pro est mis en avant comme "le plus populaire". Chaque avantage est listé avec indication de la valeur économisée.</p>
+        <div class="detail">Starter (1 800 XPF/mois) : accès avant-première collections, -10% sur tout, 1 logo HCS offert/mois, newsletter exclusive · Pro (3 500 XPF/mois) : tout Starter + 1h atelier offerte/mois, -20% accessoires, accès apps HCS illimité, badge "Membre Pro" · Premium (5 500 XPF/mois) : tout Pro + 1 t-shirt collection offert/mois, 2h atelier, -30% accessoires, accès prioritaire nouvelles collections, invitation événements HCS · Encadré "Plus populaire" sur Pro · Calcul d'économie : "Un client régulier économise X XPF/an avec Pro"</div>
+        <div class="tags"><span class="tag t-teal">3 tiers</span><span class="tag t-amber">Calcul économie</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">2</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h3>Engagement + personnalisation</h3>
+        <p>Choix durée d'engagement : mensuel (sans engagement), 3 mois (-5%), 6 mois (-10%), 12 mois (-15%). Choix de la taille t-shirt par défaut (pour Premium). Préférences de style (pour les logos offerts).</p>
+        <div class="detail">Grille engagement avec prix mensuel recalculé · Taille par défaut pour les envois mensuels (Premium) · Préférences : styles préférés (tribal, sportif, humoristique, traditionnel) pour personnaliser les logos offerts · Case "Je souhaite recevoir les collections par courrier" (+ 500 XPF/mois envoi île)</div>
+        <div class="tags"><span class="tag t-purple">Engagement dégressif</span><span class="tag t-pink">Personnalisation style</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">3</div></div>
+      <div class="step-content">
+        <h3>Coordonnées + premier paiement PayZen</h3>
+        <p>Formulaire complet + premier paiement. Le montant PayZen = premier mois (ou premier trimestre/semestre/année selon engagement). Confirmation avec carte de membre numérique et QR code.</p>
+        <div class="detail">Formulaire : nom, email, tél, adresse (pour envois Premium) · PayZen : montant = 1er terme selon engagement · Confirmation : carte de membre numérique (nom, tier, date début, QR code), code promo personnel -10% à partager (parrainage), accès espace membre (à développer) · Email bienvenue avec récap avantages + date prochaine collection</div>
+        <div class="tags"><span class="tag t-blue">PayZen premier terme</span><span class="tag t-teal">Carte membre QR</span><span class="tag t-coral">Parrainage</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rev">
+    <div class="rev-head">Grille tarifaire</div>
+    <div class="rev-body">
+      <div class="rev-row"><span class="rev-item">Starter mensuel</span><span class="rev-price">1 800 XPF/mois</span></div>
+      <div class="rev-row"><span class="rev-item">Pro mensuel</span><span class="rev-price">3 500 XPF/mois</span></div>
+      <div class="rev-row"><span class="rev-item">Premium mensuel</span><span class="rev-price">5 500 XPF/mois</span></div>
+      <div class="rev-row"><span class="rev-item">Engagement 3 mois</span><span class="rev-price">-5%</span></div>
+      <div class="rev-row"><span class="rev-item">Engagement 6 mois</span><span class="rev-price">-10%</span></div>
+      <div class="rev-row"><span class="rev-item">Engagement 12 mois</span><span class="rev-price">-15%</span></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     V7 — SERVICES NUMÉRIQUES IA
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="vert">
+<div class="vert-head">
+  <div class="vert-icon" style="background:linear-gradient(135deg,#f6d365,#fda085)">✏️</div>
+  <div class="vert-meta"><h2>7. Services Numériques IA</h2><div class="sub">Création logos IA · Détourage · Vectorisation · MockupForge</div></div>
+  <div class="vert-status s-new">NOUVEAU PARCOURS</div>
+</div>
+<div class="vert-body">
+
+  <div class="ctx">
+    <div class="ctx-title">Contexte stratégique</div>
+    <p>Monétisation des outils numériques HCS (PicWish Pipeline, MockupForge, DTF Studio) comme services à la carte. Le client qui a découvert les apps lors de sa session atelier (V4) ou sa formation (V5) peut y accéder à distance. 3 niveaux : services unitaires (détourage, vectorisation), pack création (logo IA personnalisé via DTF Studio), et accès autonome aux apps (pour les plus avancés). C'est la verticale qui transforme l'investissement tech HCS en source de revenus directe.</p>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">1</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h3>Choisir le service</h3>
+        <p>3 catégories de services présentées en cards avec exemples avant/après. Détourage IA (PicWish), Création logo IA (DTF Studio assisté), Accès apps HCS (autonomie).</p>
+        <div class="detail">Détourage / Amélioration IA : upload image → résultat en 2min, avant/après slider · Vectorisation : conversion bitmap → SVG, livraison fichiers sources · Création Logo IA : brief client → 3 propositions DTF Studio → révisions → livraison HD · Pack Graphique : détourage + vectorisation + 3 variations couleur · Accès Apps HCS : PicWish + MockupForge en autonomie (1 jour / 1 semaine / 1 mois) · Chaque service a un exemple visuel avant/après</div>
+        <div class="tags"><span class="tag t-amber">Services unitaires</span><span class="tag t-purple">Pack création IA</span><span class="tag t-teal">Accès autonome apps</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">2</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h3>Brief + upload fichiers</h3>
+        <p>Selon le service choisi : upload d'image pour détourage, formulaire de brief pour création logo, ou simple choix de durée d'accès pour les apps. Zone de dépôt multi-fichiers avec preview.</p>
+        <div class="detail">Détourage : drop zone multi-images (jusqu'à 10), preview grille, tarif dégressif (1 = 1 500 XPF, 5 = 5 000 XPF, 10 = 8 000 XPF) · Création Logo : formulaire brief (thème, couleurs souhaitées, style, texte à intégrer, référence visuelle optionnelle) + upload logo existant à moderniser si applicable · Accès Apps : sélecteur durée (1 jour 2 000 XPF, 1 semaine 5 000 XPF, 1 mois 12 000 XPF)</div>
+        <div class="tags"><span class="tag t-coral">Upload multi-fichiers</span><span class="tag t-blue">Dégressivité volume</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-gutter"><div class="step-dot active">3</div></div>
+      <div class="step-content">
+        <h3>Récap + paiement + livraison</h3>
+        <p>Récap du service + fichiers uploadés + prix. Paiement PayZen. Livraison numérique par email (détourage : résultat immédiat ou sous 24h ; création logo : 48-72h avec 2 tours de révision ; accès apps : immédiat avec lien + identifiants).</p>
+        <div class="detail">PayZen · Détourage : si possible, résultat immédiat dans la page (PicWish API en temps réel) avec download · Création Logo : confirmation avec délai 48-72h, suivi par email, 2 révisions incluses · Accès Apps : lien d'accès immédiat + guide d'utilisation PDF · Tous : facture PDF auto-générée · Upsell : "Ajoutez l'impression DTF de vos logos sur gang sheet" → renvoi vers V4</div>
+        <div class="tags"><span class="tag t-blue">PayZen</span><span class="tag t-teal">Livraison immédiate si possible</span><span class="tag t-pink">Passerelle vers V4</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rev">
+    <div class="rev-head">Grille tarifaire</div>
+    <div class="rev-body">
+      <div class="rev-row"><span class="rev-item">Détourage IA (1 image)</span><span class="rev-price">1 500 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Détourage IA (5 images)</span><span class="rev-price">5 000 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Détourage IA (10 images)</span><span class="rev-price">8 000 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Vectorisation simple</span><span class="rev-price">2 500 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Création Logo IA (3 propositions + 2 révisions)</span><span class="rev-price">8 000 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Pack Graphique complet</span><span class="rev-price">12 000 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Accès Apps HCS — 1 jour</span><span class="rev-price">2 000 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Accès Apps HCS — 1 semaine</span><span class="rev-price">5 000 XPF</span></div>
+      <div class="rev-row"><span class="rev-item">Accès Apps HCS — 1 mois</span><span class="rev-price">12 000 XPF</span></div>
+    </div>
+  </div>
+
+  <div class="diff">
+    <div class="diff-title">Passerelles entre verticales</div>
+    <p>→ V4 (Pack Collector) donne accès aux apps pendant la session atelier → découverte → upsell V7</p>
+    <p>→ V5 (Formation) forme les clients aux outils → ils deviennent clients réguliers V7</p>
+    <p>→ V6 (Abonnements Pro/Premium) inclut l'accès apps → V7 est le tier d'accès "à la carte" pour ceux qui ne veulent pas s'abonner</p>
+    <p>→ V7 génère des logos prêts à imprimer → renvoi vers V4 (gang sheet) ou V3 (t-shirt collection sur commande)</p>
+    <p>→ Le détourage temps réel via PicWish API pourrait devenir un "freemium" : 1 détourage gratuit pour tester, puis payant</p>
+  </div>
+
+</div>
+</div>
+
+</div><!-- container -->
+
+<div style="text-align:center;padding:40px;color:#555570;font-family:'Space Mono';font-size:.6rem;letter-spacing:2px;border-top:1px solid #252540">
+HIGH COFFEE SHIRT · PAPEETE · POLYNÉSIE FRANÇAISE · AVRIL 2026
+</div>
+
+</body>
+</html>

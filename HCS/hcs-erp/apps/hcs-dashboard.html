@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HCS Dashboard — Centre de pilotage</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #070d1a;
+  --surface: #0d1b2e;
+  --card: #0f2035;
+  --border: rgba(255,255,255,0.07);
+  --teal: #0e7c7b;
+  --teal2: #14a8a7;
+  --coral: #e8533a;
+  --gold: #f0a500;
+  --blue: #2563eb;
+  --purple: #7c3aed;
+  --green: #16a34a;
+  --white: #f0f4f8;
+  --muted: #6b7c93;
+  --glow-t: 0 0 24px rgba(14,124,123,0.35);
+  --glow-c: 0 0 24px rgba(232,83,58,0.3);
+  --glow-g: 0 0 24px rgba(240,165,0,0.3);
+}
+* { margin:0; padding:0; box-sizing:border-box }
+body { background:var(--bg); color:var(--white); font-family:'Syne',sans-serif; min-height:100vh; overflow-x:hidden }
+body::before { content:''; position:fixed; inset:0; background:
+  radial-gradient(ellipse at 10% 20%, rgba(14,124,123,0.12) 0%, transparent 50%),
+  radial-gradient(ellipse at 90% 80%, rgba(232,83,58,0.07) 0%, transparent 50%),
+  radial-gradient(ellipse at 50% 50%, rgba(37,99,235,0.05) 0%, transparent 60%);
+  pointer-events:none; z-index:0 }
+
+/* ── TOPBAR ── */
+.topbar { position:sticky; top:0; z-index:200; height:52px; background:rgba(7,13,26,0.92); border-bottom:1px solid var(--border); backdrop-filter:blur(20px); display:flex; align-items:center; padding:0 24px; gap:16px }
+.tb-brand { display:flex; align-items:center; gap:10px }
+.tb-logo { width:32px; height:32px; background:linear-gradient(135deg,var(--teal),var(--coral)); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue'; font-size:16px; color:white; flex-shrink:0 }
+.tb-title { font-family:'Bebas Neue'; font-size:18px; letter-spacing:3px }
+.tb-sub { font-family:'Space Mono'; font-size:9px; color:var(--muted); letter-spacing:1px; margin-left:2px }
+.tb-right { margin-left:auto; display:flex; align-items:center; gap:10px }
+.tb-pill { font-family:'Space Mono'; font-size:9px; padding:4px 10px; border-radius:20px; border:1px solid var(--border); color:var(--muted); letter-spacing:1px; cursor:default }
+.tb-pill.ok { border-color:rgba(22,163,74,0.4); color:#4ade80; background:rgba(22,163,74,0.08) }
+.tb-pill.err { border-color:rgba(232,83,58,0.4); color:var(--coral); background:rgba(232,83,58,0.08) }
+.tb-pill.chk { border-color:rgba(240,165,0,0.3); color:var(--gold); background:rgba(240,165,0,0.06) }
+#tb-clock { font-family:'Space Mono'; font-size:10px; color:var(--muted); border-left:1px solid var(--border); padding-left:12px }
+
+/* ── LAYOUT ── */
+.layout { position:relative; z-index:10; display:grid; grid-template-columns:200px 1fr; min-height:calc(100vh - 52px); gap:0 }
+@media(max-width:900px) { .layout { grid-template-columns:1fr } .sidenav { display:none } }
+
+/* ── SIDENAV ── */
+.sidenav { border-right:1px solid var(--border); padding:20px 0; background:rgba(13,27,46,0.6) }
+.snav-section { margin-bottom:6px }
+.snav-label { font-family:'Space Mono'; font-size:8px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; padding:10px 18px 4px }
+.snav-item { display:flex; align-items:center; gap:8px; padding:8px 18px; cursor:pointer; transition:all .2s; font-size:13px; color:rgba(255,255,255,0.6); border-left:2px solid transparent; text-decoration:none }
+.snav-item:hover { background:rgba(255,255,255,0.04); color:var(--white); border-left-color:var(--teal) }
+.snav-item.active { background:rgba(14,124,123,0.1); color:var(--teal); border-left-color:var(--teal) }
+.snav-icon { width:18px; text-align:center; flex-shrink:0 }
+
+/* ── MAIN ── */
+.main { padding:28px 32px; overflow-y:auto }
+
+/* ── SECTION TITLE ── */
+.sec-title { font-family:'Bebas Neue'; font-size:26px; letter-spacing:3px; margin-bottom:4px }
+.sec-sub { font-family:'Space Mono'; font-size:9px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid var(--border) }
+
+/* ── WORKFLOW PIPELINE ── */
+.pipeline { display:flex; align-items:stretch; gap:0; margin-bottom:32px; overflow-x:auto; padding-bottom:4px }
+.pipe-step { flex:1; min-width:110px; background:var(--card); border:1px solid var(--border); padding:14px 12px; position:relative; cursor:pointer; transition:all .25s; text-decoration:none; display:block }
+.pipe-step:first-child { border-radius:12px 0 0 12px }
+.pipe-step:last-child { border-radius:0 12px 12px 0 }
+.pipe-step + .pipe-step { border-left:none }
+.pipe-step:hover { background:rgba(14,124,123,0.12); border-color:var(--teal) }
+.pipe-step:hover .pipe-num { background:var(--teal) }
+.pipe-arrow { position:absolute; right:-10px; top:50%; transform:translateY(-50%); width:0; height:0; border-top:10px solid transparent; border-bottom:10px solid transparent; border-left:10px solid var(--border); z-index:2 }
+.pipe-step:hover .pipe-arrow { border-left-color:var(--teal) }
+.pipe-step:last-child .pipe-arrow { display:none }
+.pipe-num { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; background:rgba(255,255,255,0.08); border-radius:50%; font-family:'Space Mono'; font-size:10px; font-weight:700; margin-bottom:8px; transition:background .25s }
+.pipe-icon { font-size:20px; margin-bottom:6px; display:block }
+.pipe-name { font-family:'Bebas Neue'; font-size:13px; letter-spacing:1px; line-height:1.2; margin-bottom:3px }
+.pipe-desc { font-family:'Space Mono'; font-size:8px; color:var(--muted); line-height:1.5 }
+
+/* ── KPI ROW ── */
+.kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:32px }
+@media(max-width:1100px) { .kpi-row { grid-template-columns:repeat(2,1fr) } }
+.kpi-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px 20px; position:relative; overflow:hidden }
+.kpi-card::before { content:''; position:absolute; inset:0; opacity:0; transition:opacity .3s }
+.kpi-card:hover::before { opacity:1 }
+.kpi-card.t::before { background:radial-gradient(circle at 80% 50%, rgba(14,124,123,0.12), transparent 70%) }
+.kpi-card.c::before { background:radial-gradient(circle at 80% 50%, rgba(232,83,58,0.1), transparent 70%) }
+.kpi-card.g::before { background:radial-gradient(circle at 80% 50%, rgba(240,165,0,0.1), transparent 70%) }
+.kpi-card.b::before { background:radial-gradient(circle at 80% 50%, rgba(37,99,235,0.1), transparent 70%) }
+.kpi-label { font-family:'Space Mono'; font-size:8px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:10px }
+.kpi-val { font-family:'Bebas Neue'; font-size:36px; letter-spacing:2px; line-height:1 }
+.kpi-val.t { color:var(--teal2) }
+.kpi-val.c { color:var(--coral) }
+.kpi-val.g { color:var(--gold) }
+.kpi-val.b { color:#60a5fa }
+.kpi-sub { font-family:'Space Mono'; font-size:9px; color:var(--muted); margin-top:6px }
+.kpi-icon { position:absolute; right:16px; top:16px; font-size:28px; opacity:0.15 }
+
+/* ── APP GRID ── */
+.app-section { margin-bottom:30px }
+.app-cat { font-family:'Space Mono'; font-size:9px; color:var(--teal); letter-spacing:3px; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:10px }
+.app-cat::after { content:''; flex:1; height:1px; background:var(--border) }
+.app-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px }
+.app-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; cursor:pointer; transition:all .25s; text-decoration:none; display:block; position:relative; overflow:hidden }
+.app-card:hover { border-color:var(--teal); transform:translateY(-2px); box-shadow:var(--glow-t) }
+.app-card:hover .ac-icon { transform:scale(1.1) }
+.app-card.main-app { border-color:rgba(14,124,123,0.3) }
+.ac-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px }
+.ac-icon { font-size:28px; transition:transform .25s; line-height:1 }
+.ac-badge { font-family:'Space Mono'; font-size:8px; padding:3px 8px; border-radius:20px; letter-spacing:1px; flex-shrink:0 }
+.ac-badge.new { background:rgba(22,163,74,0.15); border:1px solid rgba(22,163,74,0.35); color:#4ade80 }
+.ac-badge.ai { background:rgba(124,58,237,0.15); border:1px solid rgba(124,58,237,0.35); color:#a78bfa }
+.ac-badge.prod { background:rgba(37,99,235,0.15); border:1px solid rgba(37,99,235,0.35); color:#60a5fa }
+.ac-badge.hub { background:rgba(240,165,0,0.12); border:1px solid rgba(240,165,0,0.3); color:var(--gold) }
+.ac-name { font-family:'Bebas Neue'; font-size:17px; letter-spacing:2px; margin-bottom:4px; line-height:1.1 }
+.ac-desc { font-family:'Space Mono'; font-size:9px; color:var(--muted); line-height:1.6 }
+.ac-link { position:absolute; inset:0 }
+
+/* ── DTF DB WIDGET ── */
+.dtf-db-widget { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:22px; margin-bottom:30px }
+.widget-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px }
+.widget-title { font-family:'Bebas Neue'; font-size:20px; letter-spacing:2px }
+.widget-action { font-family:'Space Mono'; font-size:9px; color:var(--teal); cursor:pointer; padding:5px 12px; border:1px solid rgba(14,124,123,0.3); border-radius:8px; background:rgba(14,124,123,0.08); letter-spacing:1px; transition:all .2s }
+.widget-action:hover { background:rgba(14,124,123,0.18) }
+.db-sessions { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px }
+.db-session-card { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:14px; transition:border-color .2s }
+.db-session-card:hover { border-color:rgba(14,124,123,0.4) }
+.dsc-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px }
+.dsc-name { font-family:'Bebas Neue'; font-size:15px; letter-spacing:1px; color:var(--gold) }
+.dsc-date { font-family:'Space Mono'; font-size:8px; color:var(--muted) }
+.dsc-thumbs { display:grid; grid-template-columns:repeat(3,1fr); gap:5px }
+.dsc-thumb { aspect-ratio:1; border-radius:5px; overflow:hidden; background:rgba(255,255,255,0.04); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--muted) }
+.dsc-thumb img { width:100%; height:100%; object-fit:cover }
+.db-empty { font-family:'Space Mono'; font-size:10px; color:var(--muted); text-align:center; padding:30px; line-height:2 }
+
+/* ── STATUS GRID ── */
+.status-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px; margin-bottom:30px }
+.status-item { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px; display:flex; align-items:center; gap:10px }
+.si-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0 }
+.si-dot.ok { background:#4ade80; box-shadow:0 0 8px rgba(74,222,128,0.5) }
+.si-dot.err { background:var(--coral); box-shadow:0 0 8px rgba(232,83,58,0.5) }
+.si-dot.chk { background:var(--gold); box-shadow:0 0 8px rgba(240,165,0,0.4); animation:pulse 1.5s infinite }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.si-info { flex:1; min-width:0 }
+.si-name { font-family:'Space Mono'; font-size:9px; color:var(--white); letter-spacing:1px }
+.si-val { font-family:'Space Mono'; font-size:8px; color:var(--muted); margin-top:2px }
+
+/* ── TOAST ── */
+.toast-box { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; align-items:flex-end }
+.toast { background:rgba(13,27,46,0.96); border:1px solid var(--border); border-radius:10px; padding:10px 18px; font-family:'Space Mono'; font-size:11px; color:var(--white); backdrop-filter:blur(12px); animation:toastIn .3s ease; max-width:320px }
+@keyframes toastIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+
+<!-- ═══ TOPBAR ═══ -->
+<header class="topbar">
+  <div class="tb-brand">
+    <div class="tb-logo">HCS</div>
+    <div>
+      <div class="tb-title">HCS DASHBOARD</div>
+      <div class="tb-sub">Centre de pilotage · Tahiti</div>
+    </div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-pill chk" id="pill-worker">⏳ Worker...</div>
+    <div class="tb-pill chk" id="pill-hub">⏳ Hub...</div>
+    <div class="tb-pill chk" id="pill-dtfdb">⏳ DTF DB...</div>
+    <div id="tb-clock">--:--</div>
+  </div>
+</header>
+
+<!-- ═══ LAYOUT ═══ -->
+<div class="layout">
+
+  <!-- SIDENAV -->
+  <nav class="sidenav">
+    <div class="snav-section">
+      <div class="snav-label">Création</div>
+      <a class="snav-item active" href="#creation"><span class="snav-icon">🎨</span>Visuels DTF</a>
+      <a class="snav-item" href="#marketing"><span class="snav-icon">🚀</span>Marketing</a>
+    </div>
+    <div class="snav-section">
+      <div class="snav-label">Production</div>
+      <a class="snav-item" href="#atelier"><span class="snav-icon">🖨️</span>Atelier</a>
+      <a class="snav-item" href="#gestion"><span class="snav-icon">📊</span>Gestion</a>
+    </div>
+    <div class="snav-section">
+      <div class="snav-label">Infrastructure</div>
+      <a class="snav-item" href="#infra"><span class="snav-icon">🔗</span>Hub & APIs</a>
+    </div>
+    <div class="snav-section" style="margin-top:auto;border-top:1px solid var(--border);padding-top:12px">
+      <div class="snav-label">Base de données</div>
+      <a class="snav-item" href="#dtfdb"><span class="snav-icon">📦</span>DTF Sessions</a>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- KPI ROW -->
+    <div class="kpi-row" style="margin-bottom:28px">
+      <div class="kpi-card t">
+        <div class="kpi-label">Sessions DTF archivées</div>
+        <div class="kpi-val t" id="kpi-sessions">—</div>
+        <div class="kpi-sub">dans DTF Studio Database</div>
+        <div class="kpi-icon">🎨</div>
+      </div>
+      <div class="kpi-card c">
+        <div class="kpi-label">Entrées HCS Hub</div>
+        <div class="kpi-val c" id="kpi-hub">—</div>
+        <div class="kpi-sub">logos · variantes · assets</div>
+        <div class="kpi-icon">🔗</div>
+      </div>
+      <div class="kpi-card g">
+        <div class="kpi-label">Worker proxy</div>
+        <div class="kpi-val g" id="kpi-worker">—</div>
+        <div class="kpi-sub">hcs-proxy · Claude · Replicate</div>
+        <div class="kpi-icon">⚡</div>
+      </div>
+      <div class="kpi-card b">
+        <div class="kpi-label">Applications HCS</div>
+        <div class="kpi-val b">18</div>
+        <div class="kpi-sub">outils disponibles</div>
+        <div class="kpi-icon">🏠</div>
+      </div>
+    </div>
+
+    <!-- WORKFLOW PIPELINE -->
+    <div class="sec-title" id="creation">WORKFLOW DTF — DE L'IMAGE AU PRODUIT VENDU</div>
+    <div class="sec-sub">Pipeline complet · Étapes dans l'ordre logique</div>
+    <div class="pipeline">
+      <a class="pipe-step" href="dtf-studio/dtf studio.html" target="_blank">
+        <div class="pipe-num">1</div>
+        <span class="pipe-icon">🎨</span>
+        <div class="pipe-name">DTF Studio</div>
+        <div class="pipe-desc">Analyse IA · Génération 3 variantes · Archive</div>
+        <div class="pipe-arrow"></div>
+      </a>
+      <a class="pipe-step" href="picwish-pipeline.html" target="_blank">
+        <div class="pipe-num">2</div>
+        <span class="pipe-icon">✂️</span>
+        <div class="pipe-name">PicWish</div>
+        <div class="pipe-desc">Détourage IA · Fond transparent</div>
+        <div class="pipe-arrow"></div>
+      </a>
+      <a class="pipe-step" href="mockup-forge-v12.html" target="_blank">
+        <div class="pipe-num">3</div>
+        <span class="pipe-icon">👕</span>
+        <div class="pipe-name">MockupForge</div>
+        <div class="pipe-desc">Placement logo · Mockup produit</div>
+        <div class="pipe-arrow"></div>
+      </a>
+      <a class="pipe-step" href="hcs-builder-v2-fixed.html" target="_blank">
+        <div class="pipe-num">4</div>
+        <span class="pipe-icon">🏗️</span>
+        <div class="pipe-name">LP Builder</div>
+        <div class="pipe-desc">Landing page · Prix XPF · CTA</div>
+        <div class="pipe-arrow"></div>
+      </a>
+      <a class="pipe-step" href="campaign/andromeda-campaign.html" target="_blank">
+        <div class="pipe-num">5</div>
+        <span class="pipe-icon">🚀</span>
+        <div class="pipe-name">Andromeda</div>
+        <div class="pipe-desc">Campagne FB · Export Ad+LP</div>
+        <div class="pipe-arrow"></div>
+      </a>
+      <a class="pipe-step" href="campaign/andromeda-campaign.html#checkout" target="_blank">
+        <div class="pipe-num">6</div>
+        <span class="pipe-icon">💳</span>
+        <div class="pipe-name">Paiement</div>
+        <div class="pipe-desc">Checkout 4 étapes · PayZen OSB</div>
+        <div class="pipe-arrow"></div>
+      </a>
+    </div>
+
+    <!-- STATUTS SERVICES -->
+    <div class="sec-title">STATUTS SERVICES</div>
+    <div class="sec-sub">Connectivité en temps réel</div>
+    <div class="status-grid" style="margin-bottom:28px">
+      <div class="status-item">
+        <div class="si-dot chk" id="dot-worker"></div>
+        <div class="si-info">
+          <div class="si-name">hcs-proxy Worker</div>
+          <div class="si-val" id="lbl-worker">Vérification...</div>
+        </div>
+      </div>
+      <div class="status-item">
+        <div class="si-dot chk" id="dot-payzen"></div>
+        <div class="si-info">
+          <div class="si-name">payzen-hcs Worker</div>
+          <div class="si-val" id="lbl-payzen">Vérification...</div>
+        </div>
+      </div>
+      <div class="status-item">
+        <div class="si-dot ok" id="dot-dtfdb2"></div>
+        <div class="si-info">
+          <div class="si-name">DTF Studio DB</div>
+          <div class="si-val" id="lbl-dtfdb">IndexedDB locale</div>
+        </div>
+      </div>
+      <div class="status-item">
+        <div class="si-dot ok" id="dot-hub2"></div>
+        <div class="si-info">
+          <div class="si-name">HCS Hub</div>
+          <div class="si-val" id="lbl-hub">IndexedDB locale</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- APPS — CRÉATION VISUELS -->
+    <div class="app-section" id="visuels">
+      <div class="app-cat">🎨 Création Visuels</div>
+      <div class="app-grid">
+        <a class="app-card main-app" href="dtf-studio/dtf studio.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">🎨</span><span class="ac-badge ai">IA</span></div>
+          <div class="ac-name">DTF Studio</div>
+          <div class="ac-desc">Analyse image IA · 3 variantes · Archive IndexedDB</div>
+        </a>
+        <a class="app-card" href="mockup-forge-v12.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">👕</span><span class="ac-badge prod">STUDIO</span></div>
+          <div class="ac-name">MockupForge v12</div>
+          <div class="ac-desc">Placement logo · Avant/Dos · Export canvas</div>
+        </a>
+        <a class="app-card" href="picwish-pipeline.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">✂️</span><span class="ac-badge ai">IA</span></div>
+          <div class="ac-name">PicWish Pipeline</div>
+          <div class="ac-desc">Détourage auto IA · Fond transparent</div>
+        </a>
+        <a class="app-card" href="agents/agent3_visuel/dtf-composer-v4.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">🎛️</span><span class="ac-badge prod">PROD</span></div>
+          <div class="ac-name">DTF Composer v4</div>
+          <div class="ac-desc">Composition motifs DTF · Export prêt presse</div>
+        </a>
+        <a class="app-card" href="mix composer  forge/mix-composer-forge-v1.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">🔀</span><span class="ac-badge new">MIX</span></div>
+          <div class="ac-name">Mix Composer Forge</div>
+          <div class="ac-desc">Composition mixte · Forge créative</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- APPS — MARKETING & VENTES -->
+    <div class="app-section" id="marketing">
+      <div class="app-cat">🚀 Marketing & Ventes</div>
+      <div class="app-grid">
+        <a class="app-card main-app" href="campaign/andromeda-campaign.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">🚀</span><span class="ac-badge ai">FULL</span></div>
+          <div class="ac-name">Andromeda Campaign</div>
+          <div class="ac-desc">Builder campagnes FB · 8 campagnes · Paiement OSB</div>
+        </a>
+        <a class="app-card" href="hcs-builder-v2-fixed.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">🏗️</span><span class="ac-badge prod">LP</span></div>
+          <div class="ac-name">HCS Builder v2</div>
+          <div class="ac-desc">Landing pages visuelles · Export HTML autonome</div>
+        </a>
+        <a class="app-card" href="calculateur-vinyl-hcs.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">🧮</span><span class="ac-badge new">CALC</span></div>
+          <div class="ac-name">Calculateur Vinyl</div>
+          <div class="ac-desc">Tarification stickers · Calcul XPF par unité</div>
+        </a>
+        <a class="app-card" href="hcs-erp ok/modules/boutique-assistant.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">🛍️</span><span class="ac-badge prod">SHOP</span></div>
+          <div class="ac-name">Boutique Assistant</div>
+          <div class="ac-desc">Assistant vente · Fiche produits clients</div>
+        </a>
+        <a class="app-card" href="agents/agent6_contenu/content-generator.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">✍️</span><span class="ac-badge ai">IA</span></div>
+          <div class="ac-name">Content Generator</div>
+          <div class="ac-desc">Génération contenu marketing · Posts · Captions</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- APPS — ATELIER -->
+    <div class="app-section" id="atelier">
+      <div class="app-cat">🖨️ Atelier Production</div>
+      <div class="app-grid">
+        <a class="app-card" href="agents/agent4_stock/dtf-atelier-usa.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">🖨️</span><span class="ac-badge prod">USA</span></div>
+          <div class="ac-name">DTF Atelier USA</div>
+          <div class="ac-desc">Suivi presse DTF · Files d'impression</div>
+        </a>
+        <a class="app-card" href="agents/agent4_stock/dtf-atelier-bn20-yannick.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">🖨️</span><span class="ac-badge prod">BN20</span></div>
+          <div class="ac-name">DTF Atelier BN20</div>
+          <div class="ac-desc">Presse BN20 Yannick · Suivi production</div>
+        </a>
+        <a class="app-card" href="dtf-plaques-transfert.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">📋</span><span class="ac-badge prod">STOCK</span></div>
+          <div class="ac-name">Plaques Transfert</div>
+          <div class="ac-desc">Gestion stock plaques · Inventaire DTF</div>
+        </a>
+        <a class="app-card" href="hcs-erp ok/modules/atelier-production.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">⚙️</span><span class="ac-badge prod">ERP</span></div>
+          <div class="ac-name">Atelier Production</div>
+          <div class="ac-desc">Planning production · Suivi commandes atelier</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- APPS — GESTION -->
+    <div class="app-section" id="gestion">
+      <div class="app-cat">📊 Gestion & Finance</div>
+      <div class="app-grid">
+        <a class="app-card main-app" href="hcs-erp ok/index.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">🏢</span><span class="ac-badge prod">ERP</span></div>
+          <div class="ac-name">HCS ERP</div>
+          <div class="ac-desc">ERP complet · 10 modules · CRM · Stock · Finance</div>
+        </a>
+        <a class="app-card" href="hcs-erp ok/modules/caisse-pos.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">💰</span><span class="ac-badge prod">POS</span></div>
+          <div class="ac-name">Caisse POS</div>
+          <div class="ac-desc">Point de vente · Tickets · Encaissements XPF</div>
+        </a>
+        <a class="app-card" href="agents/agent9_finances/finance-dashboard.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">📈</span><span class="ac-badge prod">FIN</span></div>
+          <div class="ac-name">Finance Dashboard</div>
+          <div class="ac-desc">P&L · Trésorerie · Rapports financiers</div>
+        </a>
+        <a class="app-card" href="agents/agent9_finances/rapport-pl.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">📊</span><span class="ac-badge new">P&L</span></div>
+          <div class="ac-name">Rapport P&L</div>
+          <div class="ac-desc">Pertes & profits · Export mensuel</div>
+        </a>
+        <a class="app-card" href="agents/agent9_finances/ocr-scanner.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">📷</span><span class="ac-badge ai">OCR</span></div>
+          <div class="ac-name">OCR Scanner</div>
+          <div class="ac-desc">Scan factures · Extraction automatique IA</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- APPS — INFRASTRUCTURE -->
+    <div class="app-section" id="infra">
+      <div class="app-cat">🔗 Infrastructure & Hub</div>
+      <div class="app-grid">
+        <a class="app-card" href="hcs-hub.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">🔗</span><span class="ac-badge hub">HUB</span></div>
+          <div class="ac-name">HCS Hub</div>
+          <div class="ac-desc">Bus de données inter-apps · IndexedDB partagé</div>
+        </a>
+        <a class="app-card" href="hcs-hub-ecosystem/hcs-hub-ecosystem/hcs-cockpit.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">🎛️</span><span class="ac-badge hub">COCKPIT</span></div>
+          <div class="ac-name">HCS Cockpit</div>
+          <div class="ac-desc">Tableau de bord pilotage · KPIs temps réel</div>
+        </a>
+        <a class="app-card" href="hcs-hub-ecosystem/hcs-hub-ecosystem/hcs-hub-diagnostic.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">🔬</span><span class="ac-badge hub">DIAG</span></div>
+          <div class="ac-name">Hub Diagnostic</div>
+          <div class="ac-desc">Inspection IndexedDB · Viewer entrées Hub</div>
+        </a>
+        <a class="app-card" href="agents/agent5_planning/planning-dashboard.html" target="_blank">
+          <div class="ac-top"><span class="ac-icon">📅</span><span class="ac-badge prod">PLAN</span></div>
+          <div class="ac-name">Planning</div>
+          <div class="ac-desc">Planning production & livraisons</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- DTF STUDIO DATABASE -->
+    <div class="sec-title" id="dtfdb">DTF STUDIO DATABASE</div>
+    <div class="sec-sub">Dernières sessions archivées · IndexedDB locale</div>
+    <div class="dtf-db-widget">
+      <div class="widget-head">
+        <div class="widget-title">📦 Sessions récentes</div>
+        <button class="widget-action" onclick="openDTFStudio()">+ Nouvelle session</button>
+      </div>
+      <div class="db-sessions" id="dbSessions">
+        <div class="db-empty">⏳ Chargement...</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast-box" id="toastBox"></div>
+
+<script>
+// ── CLOCK ──
+function tick() {
+  const now = new Date();
+  document.getElementById('tb-clock').textContent =
+    now.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'}) + ' · ' +
+    now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+tick();
+setInterval(tick, 1000);
+
+// ── TOAST ──
+function toast(msg, dur=3500) {
+  const box = document.getElementById('toastBox');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  box.appendChild(t);
+  setTimeout(() => t.remove(), dur);
+}
+
+// ── DTF STUDIO DB ──
+function openDTFDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('dtf_studio_db', 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('sessions')) {
+        const s = db.createObjectStore('sessions', { keyPath:'id' });
+        s.createIndex('date','date',{unique:false});
+      }
+    };
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = e => rej(e.target.error);
+  });
+}
+
+async function loadDTFSessions() {
+  try {
+    const db = await openDTFDB();
+    const tx = db.transaction('sessions','readonly');
+    const all = await new Promise((res,rej) => {
+      const req = tx.objectStore('sessions').index('date').getAll();
+      req.onsuccess = () => res(req.result);
+      req.onerror = rej;
+    });
+    db.close();
+
+    all.sort((a,b) => b.id - a.id);
+    const count = all.length;
+
+    // KPI
+    document.getElementById('kpi-sessions').textContent = count;
+    // Topbar pill
+    const p = document.getElementById('pill-dtfdb');
+    p.textContent = `📦 DTF DB · ${count}`;
+    p.className = 'tb-pill ok';
+
+    const container = document.getElementById('dbSessions');
+    if (!count) {
+      container.innerHTML = `<div class="db-empty">Aucune session archivée.<br>Ouvrez <strong>DTF Studio</strong> → générez → cliquez <strong>📦 Archiver</strong>.</div>`;
+      return;
+    }
+
+    const COLS = ['#2563eb','#dc2626','#ca8a04'];
+    const recent = all.slice(0, 6);
+    container.innerHTML = recent.map(s => {
+      const date = new Date(s.date).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+      const thumbs = (s.variants||[]).map((v,i) => {
+        const isData = v.imgBase64 && v.imgBase64.startsWith('data:');
+        const inner = isData
+          ? `<img src="${v.imgBase64}" alt="V${v.id}">`
+          : `<span>🖼️</span>`;
+        return `<div class="dsc-thumb" style="border-color:${COLS[i]||'var(--border)'}22">${inner}</div>`;
+      }).join('');
+      return `
+        <div class="db-session-card">
+          <div class="dsc-top">
+            <div class="dsc-name">${s.collection||'Sans titre'}</div>
+            <div class="dsc-date">${date}</div>
+          </div>
+          <div class="dsc-thumbs">${thumbs}</div>
+          ${s.theme ? `<div style="font-family:'Space Mono';font-size:8px;color:var(--muted);margin-top:8px">Thème : ${s.theme}</div>` : ''}
+        </div>`;
+    }).join('');
+
+    if (all.length > 6) {
+      container.innerHTML += `<div style="font-family:'Space Mono';font-size:9px;color:var(--muted);text-align:center;padding:12px;grid-column:1/-1">+ ${all.length-6} autres sessions dans DTF Studio</div>`;
+    }
+  } catch(e) {
+    document.getElementById('kpi-sessions').textContent = 'ERR';
+    document.getElementById('dbSessions').innerHTML = `<div class="db-empty" style="color:var(--coral)">❌ ${e.message}</div>`;
+  }
+}
+
+// ── HCS HUB ──
+async function loadHubCount() {
+  try {
+    const req = indexedDB.open('hcs_hub', 1);
+    req.onsuccess = e => {
+      const db = e.target.result;
+      const stores = Array.from(db.objectStoreNames);
+      if (!stores.length) { document.getElementById('kpi-hub').textContent = '0'; return; }
+      const tx = db.transaction(stores[0],'readonly');
+      const count = tx.objectStore(stores[0]).count();
+      count.onsuccess = () => {
+        document.getElementById('kpi-hub').textContent = count.result;
+        const p = document.getElementById('pill-hub');
+        p.textContent = `🔗 Hub · ${count.result}`;
+        p.className = 'tb-pill ok';
+        document.getElementById('lbl-hub').textContent = `${count.result} entrées (${stores[0]})`;
+      };
+      db.close();
+    };
+    req.onerror = () => { document.getElementById('kpi-hub').textContent = '0'; };
+  } catch(e) {
+    document.getElementById('kpi-hub').textContent = '?';
+  }
+}
+
+// ── WORKERS STATUS ──
+async function checkWorker(url, dotId, lblId, pillId, kpiId) {
+  const dot = document.getElementById(dotId);
+  const lbl = document.getElementById(lblId);
+  const pill = pillId ? document.getElementById(pillId) : null;
+  const kpi = kpiId ? document.getElementById(kpiId) : null;
+  try {
+    const t0 = Date.now();
+    const resp = await fetch(url, { method:'GET', signal: AbortSignal.timeout(5000) });
+    const ms = Date.now() - t0;
+    if (resp.ok || resp.status < 500) {
+      dot.className = 'si-dot ok';
+      lbl.textContent = `En ligne · ${ms}ms`;
+      if (pill) { pill.textContent = `✓ Worker · ${ms}ms`; pill.className = 'tb-pill ok'; }
+      if (kpi) kpi.textContent = `${ms}ms`;
+    } else {
+      throw new Error(`HTTP ${resp.status}`);
+    }
+  } catch(e) {
+    dot.className = 'si-dot err';
+    lbl.textContent = `Hors ligne · ${e.message}`;
+    if (pill) { pill.textContent = `✗ Worker`; pill.className = 'tb-pill err'; }
+    if (kpi) kpi.textContent = 'ERR';
+  }
+}
+
+function openDTFStudio() {
+  window.open("dtf-studio/dtf studio.html", "_blank");
+}
+
+// ── INIT ──
+window.addEventListener('load', () => {
+  loadDTFSessions();
+  loadHubCount();
+  checkWorker(
+    'https://hcs-proxy.highcoffeeshirt.workers.dev/',
+    'dot-worker','lbl-worker','pill-worker','kpi-worker'
+  );
+  checkWorker(
+    'https://payzen-hcs.highcoffeeshirt.workers.dev/',
+    'dot-payzen','lbl-payzen',null,null
+  );
+});
+
+// Nav smooth scroll
+document.querySelectorAll('.snav-item').forEach(a => {
+  a.addEventListener('click', e => {
+    const href = a.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      e.preventDefault();
+      document.querySelectorAll('.snav-item').forEach(x => x.classList.remove('active'));
+      a.classList.add('active');
+      const target = document.getElementById(href.slice(1));
+      if (target) target.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+  });
+});
+</script>
+</body>
+</html>

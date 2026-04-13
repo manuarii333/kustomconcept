@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HCS — Scénario B : Commande en ligne</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--primary:#43e97b;--accent:#38f9d7;--bg:#080812;--card:#12121f;--card2:#0e0e1c;--border:rgba(255,255,255,.07)}
+body{background:var(--bg);color:#fff;font-family:'Segoe UI',system-ui,sans-serif;overflow-x:hidden}
+.header{background:rgba(10,10,20,.95);padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.9rem;color:#080812}
+.header h1{font-weight:800;font-size:.95rem}
+.header p{font-size:.7rem;color:rgba(255,255,255,.3)}
+.badge-live{background:rgba(67,233,123,.1);border:1px solid rgba(67,233,123,.25);border-radius:20px;padding:4px 12px;font-size:.65rem;font-weight:700;color:var(--primary);letter-spacing:.5px;margin-left:auto}
+.back-btn{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:.72rem;color:rgba(255,255,255,.6);cursor:pointer;text-decoration:none;margin-left:auto}
+.layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 56px)}
+@media(max-width:700px){.layout{grid-template-columns:1fr}}
+.sidebar{background:var(--card2);border-right:1px solid var(--border);padding:20px 12px;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto}
+@media(max-width:700px){.sidebar{display:none}}
+.sidebar-title{font-size:.58rem;font-weight:800;color:rgba(255,255,255,.2);letter-spacing:1.5px;margin-bottom:16px}
+.tl-item{display:flex;gap:10px;align-items:flex-start;padding:9px 8px;border-radius:8px;cursor:pointer;transition:background .2s;margin-bottom:2px;border:1px solid transparent}
+.tl-item.active{background:rgba(67,233,123,.06);border-color:rgba(67,233,123,.2)}
+.tl-item.done .tl-dot{border-color:var(--primary);background:rgba(67,233,123,.15);color:var(--primary)}
+.tl-dot{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;transition:all .3s}
+.tl-item.active .tl-dot{border-color:var(--primary);background:var(--primary);color:#080812;font-weight:900}
+.tl-label strong{display:block;font-size:.76rem;font-weight:700}
+.tl-label span{color:rgba(255,255,255,.35);font-size:.67rem}
+.tl-connector{width:2px;height:14px;margin-left:20px;background:rgba(255,255,255,.07);margin-bottom:2px}
+.tl-connector.done{background:rgba(67,233,123,.3)}
+.main{overflow-y:auto}
+.step{display:none;animation:fadeIn .35s ease}
+.step.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.app-screen{min-height:380px;position:relative;overflow:hidden}
+.app-bar{background:#0a0a18;padding:11px 18px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.app-bar-dot{width:8px;height:8px;border-radius:50%}
+.app-bar-title{font-size:.72rem;color:rgba(255,255,255,.4);flex:1;text-align:center}
+.app-body{padding:20px}
+.phone-frame{max-width:270px;margin:0 auto;background:#111;border-radius:30px;padding:10px;border:3px solid #222;box-shadow:0 20px 60px rgba(0,0,0,.7)}
+.phone-screen{background:#0a0a14;border-radius:22px;overflow:hidden}
+.phone-top{background:#111;padding:8px 16px;text-align:center;font-size:.58rem;color:rgba(255,255,255,.25);letter-spacing:.5px}
+.step-info{padding:22px 22px 16px}
+.step-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.step-num{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.88rem;color:#080812;flex-shrink:0}
+.step-title-block strong{font-size:.98rem;font-weight:800;display:block}
+.step-title-block span{font-size:.72rem;color:rgba(255,255,255,.38)}
+.step-desc{font-size:.8rem;color:rgba(255,255,255,.62);line-height:1.75;margin-bottom:14px;background:rgba(255,255,255,.03);border-radius:10px;padding:13px;border-left:3px solid var(--primary)}
+.step-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.action-item{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:11px}
+.action-item strong{font-size:.73rem;display:block;margin-bottom:3px}
+.action-item span{font-size:.66rem;color:rgba(255,255,255,.38);line-height:1.5}
+.action-icon{font-size:1.1rem;margin-bottom:5px}
+.nav-bar{background:var(--card2);border-top:1px solid var(--border);padding:14px 22px;display:flex;align-items:center;justify-content:space-between}
+.btn-nav{padding:9px 22px;border-radius:8px;border:none;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-prev{background:rgba(255,255,255,.06);color:rgba(255,255,255,.65)}
+.btn-next{background:linear-gradient(135deg,var(--primary),var(--accent));color:#080812}
+.btn-next:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(67,233,123,.3)}
+.step-counter{font-size:.73rem;color:rgba(255,255,255,.35)}
+.badge-ok{background:rgba(67,233,123,.1);border:1px solid rgba(67,233,123,.25);border-radius:8px;padding:8px 12px;font-size:.76rem;color:var(--green,#43e97b);display:inline-flex;align-items:center;gap:6px;margin-top:8px}
+.tag{background:rgba(255,255,255,.06);border-radius:20px;padding:3px 9px;font-size:.62rem;color:rgba(255,255,255,.4);display:inline-block;margin:2px}
+.progress-bar{background:rgba(255,255,255,.07);border-radius:20px;height:7px;overflow:hidden;margin:12px 0}
+.progress-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width 1.2s ease}
+/* LP phone elements */
+.lp-hero{background:linear-gradient(160deg,#0d1f0d,#1a3a1a);padding:20px 16px;text-align:center}
+.lp-badge{font-size:.55rem;color:rgba(255,255,255,.4);letter-spacing:1px;margin-bottom:6px}
+.lp-h{font-size:.95rem;font-weight:900;line-height:1.2;margin-bottom:4px}
+.lp-sub{font-size:.65rem;color:rgba(255,255,255,.55)}
+.lp-cta{background:linear-gradient(135deg,var(--primary),var(--accent));color:#080812;border:none;border-radius:8px;padding:10px 0;font-size:.75rem;font-weight:800;width:100%;margin-top:10px;cursor:pointer}
+.lp-steps{padding:12px 14px}
+.lp-step-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:10px}
+.lp-step-num{width:20px;height:20px;border-radius:50%;background:var(--primary);color:#080812;display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:900;flex-shrink:0;margin-top:1px}
+.lp-step-txt strong{font-size:.68rem;display:block}
+.lp-step-txt span{font-size:.58rem;color:rgba(255,255,255,.4)}
+.prod-grid{padding:0 14px 12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.prod-mini{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:8px 4px;text-align:center;cursor:pointer;transition:all .2s}
+.prod-mini:hover,.prod-mini.sel{border-color:var(--primary);background:rgba(67,233,123,.06)}
+.prod-mini .emoji{font-size:1.4rem;display:block;margin-bottom:3px}
+.prod-mini .pname{font-size:.55rem;color:rgba(255,255,255,.6);line-height:1.2}
+.prod-mini .pprice{font-size:.6rem;font-weight:800;color:var(--primary)}
+.trio-box{margin:0 14px 12px;background:rgba(246,211,101,.06);border:1px solid rgba(246,211,101,.2);border-radius:10px;padding:10px 12px;text-align:center;cursor:pointer}
+.trio-box .trio-price{font-size:.9rem;font-weight:900;color:#f6d365}
+.trio-box .trio-label{font-size:.6rem;color:rgba(255,255,255,.5)}
+.ck-mini{padding:12px 14px}
+.ck-prog{display:flex;align-items:center;gap:4px;margin-bottom:14px}
+.ck-d{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:800}
+.ck-d.done{background:var(--primary);color:#080812}
+.ck-d.active{background:rgba(67,233,123,.2);border:1px solid var(--primary);color:var(--primary)}
+.ck-d.idle{background:rgba(255,255,255,.06);color:rgba(255,255,255,.3)}
+.ck-line{flex:1;height:1px;background:rgba(255,255,255,.08)}
+.ck-line.done{background:rgba(67,233,123,.3)}
+.ck-field{background:rgba(255,255,255,.05);border-radius:6px;padding:7px 10px;font-size:.62rem;color:rgba(255,255,255,.5);margin-bottom:5px}
+.btn-pay-mini{background:linear-gradient(135deg,var(--primary),var(--accent));color:#080812;border:none;border-radius:7px;padding:9px;font-size:.7rem;font-weight:800;width:100%;cursor:pointer;margin-top:6px}
+.success-box{text-align:center;padding:18px 14px}
+.success-box .s-icon{font-size:2.5rem;margin-bottom:8px}
+.success-box .s-title{font-size:.85rem;font-weight:900;color:var(--primary);margin-bottom:6px}
+.success-box .s-sub{font-size:.62rem;color:rgba(255,255,255,.45);line-height:1.6}
+.success-box .s-ref{background:rgba(67,233,123,.08);border:1px solid rgba(67,233,123,.2);border-radius:6px;padding:7px;font-size:.6rem;color:var(--primary);margin-top:8px}
+.builder-screen{background:linear-gradient(135deg,#0f1a0f,#1a2e1a);padding:16px}
+.builder-header{font-size:.7rem;color:rgba(255,255,255,.4);margin-bottom:10px}
+.camp-row{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:10px;margin-bottom:6px;cursor:pointer;transition:all .2s}
+.camp-row.active-camp{border-color:rgba(67,233,123,.3);background:rgba(67,233,123,.04)}
+.camp-icon2{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.camp-info2 strong{font-size:.76rem;display:block}
+.camp-info2 span{font-size:.64rem;color:rgba(255,255,255,.35)}
+.btn-export{background:linear-gradient(135deg,var(--primary),var(--accent));color:#080812;border:none;border-radius:7px;padding:6px 12px;font-size:.68rem;font-weight:800;cursor:pointer;margin-left:auto}
+.order-row{background:rgba(67,233,123,.05);border:1px solid rgba(67,233,123,.18);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.order-status{background:rgba(67,233,123,.15);color:#43e97b;border-radius:20px;padding:2px 8px;font-size:.6rem;font-weight:800;display:inline-block;margin-bottom:6px}
+.order-info{font-size:.7rem;color:rgba(255,255,255,.6);line-height:1.8}
+.pulse{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.bounce{animation:bounce 1.2s ease infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">HCS</div>
+  <div>
+    <div style="font-weight:800;font-size:.93rem">Scénario B — Commande en ligne</div>
+    <div style="font-size:.68rem;color:rgba(255,255,255,.3)">Client sur LP V3 Originals · Flow automatique</div>
+  </div>
+  <div class="badge-live">● DÉMO INTERACTIVE</div>
+  <a class="back-btn" href="hcs-cockpit.html">← Cockpit</a>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-title">ÉTAPES</div>
+    <div class="tl-item active" id="tl-0" onclick="goTo(0)"><div class="tl-dot">1</div><div class="tl-label"><strong>LP V3 en ligne</strong><span>Vérifier la campagne</span></div></div>
+    <div class="tl-connector" id="conn-0"></div>
+    <div class="tl-item" id="tl-1" onclick="goTo(1)"><div class="tl-dot">2</div><div class="tl-label"><strong>Client découvre</strong><span>Hero + parcours</span></div></div>
+    <div class="tl-connector" id="conn-1"></div>
+    <div class="tl-item" id="tl-2" onclick="goTo(2)"><div class="tl-dot">3</div><div class="tl-label"><strong>Choix variante</strong><span>3 designs · Pack Trio</span></div></div>
+    <div class="tl-connector" id="conn-2"></div>
+    <div class="tl-item" id="tl-3" onclick="goTo(3)"><div class="tl-dot">4</div><div class="tl-label"><strong>Checkout</strong><span>Coordonnées + paiement</span></div></div>
+    <div class="tl-connector" id="conn-3"></div>
+    <div class="tl-item" id="tl-4" onclick="goTo(4)"><div class="tl-dot">5</div><div class="tl-label"><strong>PAID</strong><span>Dashboard Builder</span></div></div>
+  </div>
+
+  <div class="main">
+    <!-- STEP 0 — Builder vérif -->
+    <div class="step active" id="step-0">
+      <div class="app-screen" style="background:linear-gradient(135deg,#0f1a0f,#1a2e1a)">
+        <div class="app-bar"><div class="app-bar-dot" style="background:#ff5f57"></div><div class="app-bar-dot" style="background:#febc2e"></div><div class="app-bar-dot" style="background:#28c840"></div><div class="app-bar-title">andromeda-campaign.html — V3 Originals</div></div>
+        <div class="app-body">
+          <div class="builder-screen" style="padding:0">
+            <div class="builder-header">Campagnes actives — Vérifier LP V3 avant envoi</div>
+            <div class="camp-row active-camp">
+              <div class="camp-icon2" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">🏄</div>
+              <div class="camp-info2"><strong>V3 — DTF Originals · Thème : Va'a</strong><span>3 variantes · Pack Trio 9 900 XPF · Mockups chargés ✓</span></div>
+              <button class="btn-export" onclick="simulatePublish()">🌐 Publier</button>
+            </div>
+            <div class="camp-row" style="opacity:.35"><div class="camp-icon2" style="background:linear-gradient(135deg,#f6d365,#fda085)">👕</div><div class="camp-info2"><strong>V1 — T-Shirt Perso</strong><span>Service personnalisé</span></div></div>
+            <div class="camp-row" style="opacity:.35"><div class="camp-icon2" style="background:linear-gradient(135deg,#a855f7,#ec4899)">🔄</div><div class="camp-info2"><strong>V6 — Abonnements</strong><span>Starter/Pro/Premium</span></div></div>
+            <div id="publish-status" style="display:none;margin-top:12px">
+              <div class="badge-ok pulse">⚙️ Publication en cours…</div>
+            </div>
+            <div id="publish-done" style="display:none;margin-top:12px">
+              <div class="badge-ok">✅ LP publiée — hcs.pf/originals-vaa · Lien copié</div>
+              <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><span class="tag">Thème Va'a</span><span class="tag">3 variantes</span><span class="tag">Pack Trio</span><span class="tag">PayZen intégré</span><span class="tag">Pass HCS</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="step-info">
+        <div class="step-header"><div class="step-num">1</div><div class="step-title-block"><strong>Vérifier et publier la LP V3</strong><span>Andromeda Campaign Builder</span></div></div>
+        <div class="step-desc">Avant d'envoyer le lien, vérifier que les mockups des 3 variantes du mois sont chargés et que le thème est à jour. Cliquer <strong>Publier</strong> pour mettre la LP en ligne ou exporter le fichier HTML.</div>
+        <div class="step-actions">
+          <div class="action-item"><div class="action-icon">🏄</div><strong>Thème Va'a</strong><span>Calculé automatiquement selon la date · Juin = Va'a</span></div>
+          <div class="action-item"><div class="action-icon">⚡</div><strong>1 clic</strong><span>LP complète avec checkout PayZen intégré</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 1 — Client découvre -->
+    <div class="step" id="step-1">
+      <div class="app-screen" style="background:#0a0a18">
+        <div class="app-bar"><div class="app-bar-dot" style="background:#ff5f57"></div><div class="app-bar-dot" style="background:#febc2e"></div><div class="app-bar-dot" style="background:#28c840"></div><div class="app-bar-title">hcs.pf/originals-vaa · Vue mobile client</div></div>
+        <div class="app-body" style="display:flex;justify-content:center;padding:12px">
+          <div class="phone-frame">
+            <div class="phone-screen">
+              <div class="phone-top">hcs.pf · 10:22 AM</div>
+              <div class="lp-hero" style="background:linear-gradient(160deg,#0d1f0d,#1a3a1a)">
+                <div class="lp-badge">🏄 ÉDITION AUTHENTIQUE · VA'A</div>
+                <div class="lp-h">DTF ORIGINALS<br>VA'A</div>
+                <div class="lp-sub">Logos exclusifs · Édition limitée · Culture polynésienne</div>
+                <button class="lp-cta" onclick="nextStep()">Voir la collection →</button>
+              </div>
+              <div class="lp-steps">
+                <div style="font-size:.62rem;font-weight:800;color:rgba(255,255,255,.5);margin-bottom:8px">Comment ça marche ?</div>
+                <div class="lp-step-row"><div class="lp-step-num">1</div><div class="lp-step-txt"><strong>Découvrez le thème</strong><span>Collection exclusive du mois</span></div></div>
+                <div class="lp-step-row"><div class="lp-step-num">2</div><div class="lp-step-txt"><strong>Choisissez votre variante</strong><span>3 designs collector</span></div></div>
+                <div class="lp-step-row"><div class="lp-step-num">3</div><div class="lp-step-txt"><strong>Commandez</strong><span>Paiement sécurisé OSB XPF</span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="step-info">
+        <div class="step-header"><div class="step-num">2</div><div class="step-title-block"><strong>Le client découvre la LP sur son téléphone</strong><span>Mobile first · Aucune app requise</span></div></div>
+        <div class="step-desc">Le client reçoit le lien par WhatsApp ou Instagram. Il ouvre la LP — hero immersif, thème du mois affiché, parcours client en 3 étapes. Le bouton CTA l'emmène directement à la collection.</div>
+        <div class="step-actions">
+          <div class="action-item"><div class="action-icon">📱</div><strong>100% mobile</strong><span>Responsive · Chargement instantané · Aucune app</span></div>
+          <div class="action-item"><div class="action-icon">🌺</div><strong>Thème auto</strong><span>Va'a en juin · Heiva en juillet · Calculé par la date</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 — Choix variante -->
+    <div class="step" id="step-2">
+      <div class="app-screen" style="background:#0a0a18">
+        <div class="app-bar"><div class="app-bar-dot" style="background:#ff5f57"></div><div class="app-bar-dot" style="background:#febc2e"></div><div class="app-bar-dot" style="background:#28c840"></div><div class="app-bar-title">LP V3 — Choisir la variante</div></div>
+        <div class="app-body" style="display:flex;justify-content:center;padding:12px">
+          <div class="phone-frame">
+            <div class="phone-screen">
+              <div class="phone-top">Collection Va'a · 3 variantes</div>
+              <div style="padding:10px 14px 6px;font-size:.65rem;font-weight:800;color:rgba(255,255,255,.6)">Choisissez votre variante</div>
+              <div class="prod-grid">
+                <div class="prod-mini" onclick="selectVariante(this,0)"><span class="emoji">🏄</span><div class="pname">Variante 1</div><div class="pprice">3 900 XPF</div></div>
+                <div class="prod-mini" onclick="selectVariante(this,1)"><span class="emoji">🚣</span><div class="pname">Variante 2</div><div class="pprice">3 900 XPF</div></div>
+                <div class="prod-mini" onclick="selectVariante(this,2)"><span class="emoji">🏉</span><div class="pname">Variante 3</div><div class="pprice">3 900 XPF</div></div>
+              </div>
+              <div class="trio-box bounce" id="trio-box" onclick="selectTrio()">
+                <div style="font-size:.6rem;color:rgba(255,255,255,.5);margin-bottom:3px">🎁 PACK TRIO — LES 3 VARIANTES</div>
+                <div class="trio-price">9 900 XPF</div>
+                <div class="trio-label"><s style="color:rgba(255,255,255,.3)">11 700 XPF</s> · Économisez 1 800 XPF</div>
+              </div>
+              <div id="variante-cta" style="display:none;padding:0 14px 10px">
+                <button class="lp-cta" style="padding:10px" onclick="nextStep()">Commander →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="step-info">
+        <div class="step-header"><div class="step-num">3</div><div class="step-title-block"><strong>Le client choisit sa variante</strong><span>3 designs + Pack Trio</span></div></div>
+        <div class="step-desc">3 variantes du thème Va'a affichées avec mockup. Le <strong>Pack Trio</strong> (les 3 en lot) est mis en avant avec une réduction de 1 800 XPF. Le client clique sa préférence et passe au checkout.</div>
+        <div class="step-actions">
+          <div class="action-item"><div class="action-icon">🎁</div><strong>Pack Trio</strong><span>9 900 XPF pour les 3 · Économie de 15% · Mis en avant visuellement</span></div>
+          <div class="action-item"><div class="action-icon">🖼️</div><strong>Mockups réels</strong><span>Images générées dans MockupForge · Visuel fidèle au rendu final</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 — Checkout -->
+    <div class="step" id="step-3">
+      <div class="app-screen" style="background:#0a0a18">
+        <div class="app-bar"><div class="app-bar-dot" style="background:#ff5f57"></div><div class="app-bar-dot" style="background:#febc2e"></div><div class="app-bar-dot" style="background:#28c840"></div><div class="app-bar-title">Checkout 3 étapes · OSB Polynésie</div></div>
+        <div class="app-body" style="display:flex;justify-content:center;padding:12px">
+          <div class="phone-frame">
+            <div class="phone-screen">
+              <div class="phone-top">Commande sécurisée · XPF</div>
+              <div class="ck-mini">
+                <div class="ck-prog" id="ck-prog">
+                  <div class="ck-d done">✓</div><div class="ck-line done"></div>
+                  <div class="ck-d active">2</div><div class="ck-line"></div>
+                  <div class="ck-d idle">3</div>
+                </div>
+                <div id="ck-contact-form">
+                  <div style="font-size:.65rem;color:rgba(255,255,255,.4);margin-bottom:8px">👤 Vos coordonnées</div>
+                  <div class="ck-field">Jean Tamarii</div>
+                  <div class="ck-field">jean@mail.pf</div>
+                  <div class="ck-field">87 12 34 56</div>
+                  <button class="btn-pay-mini" style="background:rgba(255,255,255,.08);color:#fff;margin-top:4px" onclick="goToPayment()">Paiement → </button>
+                </div>
+                <div id="ck-payment-form" style="display:none">
+                  <div style="font-size:.65rem;color:rgba(255,255,255,.4);margin-bottom:8px">💳 Paiement OSB · <strong style="color:#43e97b">3 900 XPF</strong></div>
+                  <div class="ck-field">4539 •••• •••• 1234</div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><div class="ck-field">06/28</div><div class="ck-field">•••</div></div>
+                  <div id="pass-btn-mini" style="display:none;background:rgba(253,160,133,.08);border:1px solid rgba(253,160,133,.2);border-radius:7px;padding:8px;text-align:center;font-size:.62rem;margin-bottom:6px;cursor:pointer" onclick="payWithPass()">🎫 Payer avec Pass HCS · <span id="pass-bal-mini">— XPF</span></div>
+                  <button class="btn-pay-mini" onclick="simulatePay()">🔒 Payer 3 900 XPF</button>
+                </div>
+                <div id="ck-success" style="display:none" class="success-box">
+                  <div class="s-icon">✅</div>
+                  <div class="s-title">Commande confirmée !</div>
+                  <div class="s-sub">Merci Jean !<br>T-Shirt Va'a Variante 1<br>Livraison 3–5 jours ouvrés</div>
+                  <div class="s-ref">HCS-V3-1714234567</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="step-info">
+        <div class="step-header"><div class="step-num">4</div><div class="step-title-block"><strong>Checkout 3 étapes</strong><span>Récap → Coordonnées → Paiement OSB</span></div></div>
+        <div class="step-desc">Le client renseigne ses coordonnées puis paye. <strong>OSB Polynésie (PayZen)</strong> gère le paiement sécurisé en XPF. Si le client a du solde Pass HCS, le bouton "Payer avec Pass" apparaît et permet un paiement instantané sans OSB.</div>
+        <div class="step-actions">
+          <div class="action-item"><div class="action-icon">🔒</div><strong>OSB Polynésie</strong><span>PayZen · 3DS · XPF · Certifié PCI-DSS</span></div>
+          <div class="action-item"><div class="action-icon">🎫</div><strong>Pass HCS</strong><span>Paiement instantané si solde suffisant · Sans formulaire carte</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 — Dashboard PAID -->
+    <div class="step" id="step-4">
+      <div class="app-screen" style="background:linear-gradient(135deg,#0a140a,#0f1f0f)">
+        <div class="app-bar"><div class="app-bar-dot" style="background:#ff5f57"></div><div class="app-bar-dot" style="background:#febc2e"></div><div class="app-bar-dot" style="background:#28c840"></div><div class="app-bar-title">Campaign Builder — Commandes reçues</div></div>
+        <div class="app-body">
+          <div style="font-size:.7rem;color:rgba(255,255,255,.35);margin-bottom:10px">Commandes du jour · LP V3 Originals</div>
+          <div class="order-row">
+            <div class="order-status">✓ PAID</div>
+            <div class="order-info">
+              <strong style="color:#fff">HCS-V3-1714234567</strong><br>
+              🏄 T-Shirt Va'a Variante 1 · <strong style="color:#43e97b">3 900 XPF</strong><br>
+              👤 Jean Tamarii · jean@mail.pf · 87 12 34 56<br>
+              📅 09/04/2026 · 10h38 · Livraison 3–5j
+            </div>
+          </div>
+          <div class="order-row" style="opacity:.5">
+            <div class="order-status">✓ PAID</div>
+            <div class="order-info">
+              <strong style="color:#fff">HCS-V3-1714198230</strong><br>
+              🎁 Pack Trio Va'a · <strong style="color:#43e97b">9 900 XPF</strong><br>
+              👤 Marie Tefaafana · marie@pf.pf<br>
+              📅 09/04/2026 · 09h14
+            </div>
+          </div>
+          <div style="background:rgba(67,233,123,.05);border:1px solid rgba(67,233,123,.15);border-radius:10px;padding:12px;margin-top:12px;text-align:center">
+            <div style="font-size:1.8rem;margin-bottom:4px">🎉</div>
+            <div style="font-size:.82rem;font-weight:800;color:#43e97b">2 commandes · 13 800 XPF encaissés</div>
+            <div style="font-size:.68rem;color:rgba(255,255,255,.35);margin-top:4px">Tout est automatique — aucune intervention manuelle</div>
+          </div>
+        </div>
+      </div>
+      <div class="step-info">
+        <div class="step-header"><div class="step-num" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">✓</div><div class="step-title-block"><strong>Commandes PAID dans le Builder</strong><span>Production DTF à lancer</span></div></div>
+        <div class="step-desc">Les commandes apparaissent automatiquement dans le Campaign Builder. Statut PAID, coordonnées client, montant XPF. Tu peux exporter en CSV et lancer la production DTF immédiatement. <strong>Zéro intervention manuelle pendant la vente.</strong></div>
+        <div class="step-actions">
+          <div class="action-item"><div class="action-icon">🖨️</div><strong>Production</strong><span>Lancer l'impression DTF depuis la fiche commande</span></div>
+          <div class="action-item"><div class="action-icon">📊</div><strong>CSV Export</strong><span>Exporter toutes les commandes du jour en CSV</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-bar">
+      <button class="btn-nav btn-prev" id="btn-prev" onclick="navStep(-1)" style="display:none">← Précédent</button>
+      <div class="step-counter" id="step-counter">Étape 1 / 5</div>
+      <button class="btn-nav btn-next" id="btn-next" onclick="navStep(1)">Suivant →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let cur=0,total=5;
+function goTo(n){
+  document.getElementById('step-'+cur).classList.remove('active');
+  document.getElementById('tl-'+cur).classList.remove('active');
+  if(cur<n)document.getElementById('tl-'+cur).classList.add('done');
+  cur=n;
+  document.getElementById('step-'+cur).classList.add('active');
+  for(let i=0;i<total-1;i++){const it=document.getElementById('tl-'+i);const co=document.getElementById('conn-'+i);if(!it)continue;it.classList.remove('active','done');if(co)co.classList.remove('done');if(i<cur){it.classList.add('done');if(co)co.classList.add('done');}if(i===cur)it.classList.add('active');}
+  document.getElementById('btn-prev').style.display=cur===0?'none':'block';
+  document.getElementById('btn-next').textContent=cur===total-1?'🔄 Recommencer':'Suivant →';
+  document.getElementById('step-counter').textContent='Étape '+(cur+1)+' / '+total;
+  if(cur===3)initCheckout();
+}
+function navStep(d){const n=cur+d;if(n<0)return;if(n>=total){goTo(0);return;}goTo(n);}
+function nextStep(){navStep(1);}
+function simulatePublish(){document.getElementById('publish-status').style.display='block';setTimeout(()=>{document.getElementById('publish-status').style.display='none';document.getElementById('publish-done').style.display='block';},1800);}
+function selectVariante(el,idx){document.querySelectorAll('.prod-mini').forEach(p=>p.classList.remove('sel'));el.classList.add('sel');document.getElementById('variante-cta').style.display='block';document.getElementById('trio-box').classList.remove('bounce');}
+function selectTrio(){document.querySelectorAll('.prod-mini').forEach(p=>p.classList.remove('sel'));document.getElementById('trio-box').style.borderColor='#43e97b';document.getElementById('trio-box').style.background='rgba(67,233,123,.08)';document.getElementById('variante-cta').style.display='block';}
+function initCheckout(){try{const d=JSON.parse(localStorage.getItem('hcs_pass')||'{}');const bal=d.balance||0;if(bal>=3900){const btn=document.getElementById('pass-btn-mini');btn.style.display='block';document.getElementById('pass-bal-mini').textContent=bal.toLocaleString('fr-FR')+' XPF';}}catch(e){}}
+function goToPayment(){document.getElementById('ck-contact-form').style.display='none';document.getElementById('ck-payment-form').style.display='block';const prog=document.getElementById('ck-prog');prog.innerHTML='<div class="ck-d done">✓</div><div class="ck-line done"></div><div class="ck-d done">✓</div><div class="ck-line done"></div><div class="ck-d active">3</div>';}
+function payWithPass(){document.getElementById('ck-payment-form').style.display='none';document.getElementById('ck-success').style.display='block';}
+function simulatePay(){const btn=event.currentTarget;btn.textContent='⏳ Connexion OSB…';btn.disabled=true;setTimeout(()=>{document.getElementById('ck-payment-form').style.display='none';document.getElementById('ck-success').style.display='block';},1800);}
+goTo(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HCS — Calculateur Vinyle</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1f1f1f;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --accent: #c8ff00;
+    --accent2: #00ffc8;
+    --text: #f0ede8;
+    --muted: #888;
+    --danger: #ff4d4d;
+    --warn: #ffaa00;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --r: 10px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .container { max-width: 720px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 0.5px solid var(--border2);
+  }
+
+  .logo {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.6rem;
+    letter-spacing: -.02em;
+    color: var(--text);
+  }
+
+  .logo span { color: var(--accent); }
+
+  .badge {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 0.5px solid var(--border2);
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  .field {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--r);
+    padding: .875rem 1rem;
+    transition: border-color .2s;
+  }
+
+  .field:focus-within { border-color: var(--border2); }
+
+  .field label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .field input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text);
+    caret-color: var(--accent);
+  }
+
+  .field .unit {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .divider {
+    height: 0.5px;
+    background: var(--border);
+    margin: 2rem 0;
+  }
+
+  .results {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--r);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .875rem 1.25rem;
+    border-bottom: 0.5px solid var(--border);
+    font-size: 13px;
+  }
+
+  .result-row:last-child { border-bottom: none; }
+
+  .result-row .label { color: var(--muted); }
+
+  .result-row .value {
+    font-weight: 500;
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .highlight-row {
+    background: var(--surface2);
+    padding: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: var(--r);
+    margin-bottom: 12px;
+  }
+
+  .highlight-row .hl-label {
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .highlight-row .hl-value {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .ca-row {
+    background: var(--accent);
+    padding: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: var(--r);
+    margin-bottom: 2rem;
+  }
+
+  .ca-row .hl-label { color: rgba(0,0,0,0.6); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+  .ca-row .hl-value { font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: #000; }
+
+  .presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 2rem;
+  }
+
+  .preset-btn {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .preset-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .tag-line {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 0.5px solid var(--border);
+    letter-spacing: .05em;
+  }
+
+  .section { margin-bottom: 2rem; }
+
+  @media (max-width: 500px) {
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo">HCS <span>\/\/</span> Vinyl Calc</div>
+    <div class="badge">Prix de revient</div>
+  </header>
+
+  <div class="section">
+    <p class="section-label">Paramètres du rouleau</p>
+    <div class="grid3">
+      <div class="field">
+        <label>Prix / yard (XPF)</label>
+        <input type="number" id="prix-yard" value="10000" min="1" step="1">
+        <div class="unit">XPF par yard</div>
+      </div>
+      <div class="field">
+        <label>Largeur rouleau</label>
+        <input type="number" id="larg-roll" value="30.48" min="1" step="0.01">
+        <div class="unit">cm (12" = 30.48)</div>
+      </div>
+      <div class="field">
+        <label>Longueur rouleau</label>
+        <input type="number" id="long-roll" value="91.44" min="1" step="0.01">
+        <div class="unit">cm (1 yard = 91.44)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <p class="section-label">Dimensions du projet</p>
+    <div class="grid2">
+      <div class="field">
+        <label>Largeur sticker</label>
+        <input type="number" id="w" value="10" min="0.1" step="0.5">
+        <div class="unit">cm</div>
+      </div>
+      <div class="field">
+        <label>Hauteur sticker</label>
+        <input type="number" id="h" value="10" min="0.1" step="0.5">
+        <div class="unit">cm</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <p class="section-label">Formats prédéfinis</p>
+    <div class="presets">
+      <button class="preset-btn" onclick="setSize(10,10)">10×10</button>
+      <button class="preset-btn" onclick="setSize(15,15)">15×15</button>
+      <button class="preset-btn" onclick="setSize(21,29.7)">A4</button>
+      <button class="preset-btn" onclick="setSize(29.7,42)">A3</button>
+      <button class="preset-btn" onclick="setSize(5,5)">5×5</button>
+      <button class="preset-btn" onclick="setSize(30,20)">30×20</button>
+      <button class="preset-btn" onclick="setSize(30.48,91.44)">Yard entier</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <p class="section-label">Quantité & marge</p>
+    <div class="grid2">
+      <div class="field">
+        <label>Quantité (pcs)</label>
+        <input type="number" id="qty" value="1" min="1" step="1">
+        <div class="unit">nombre de pièces</div>
+      </div>
+      <div class="field">
+        <label>Marge souhaitée</label>
+        <input type="number" id="marge" value="50" min="0" step="5">
+        <div class="unit">% sur coût matière</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <p class="section-label">Résultats</p>
+
+    <div class="highlight-row">
+      <div>
+        <div class="hl-label">Coût au cm²</div>
+      </div>
+      <div class="hl-value" id="r-cm2">— XPF</div>
+    </div>
+
+    <div class="results">
+      <div class="result-row">
+        <span class="label">Surface du rouleau</span>
+        <span class="value" id="r-surf-roll">— cm²</span>
+      </div>
+      <div class="result-row">
+        <span class="label">Surface par sticker</span>
+        <span class="value" id="r-surf-sticker">— cm²</span>
+      </div>
+      <div class="result-row">
+        <span class="label">Coût matière / sticker</span>
+        <span class="value" id="r-mat-unit">— XPF</span>
+      </div>
+      <div class="result-row">
+        <span class="label">Coût matière total (×qté)</span>
+        <span class="value" id="r-mat-tot">— XPF</span>
+      </div>
+      <div class="result-row">
+        <span class="label">Nb stickers / yard entier</span>
+        <span class="value" id="r-nb">— pcs</span>
+      </div>
+      <div class="result-row">
+        <span class="label">Prix de vente suggéré / pcs</span>
+        <span class="value" id="r-pvente">— XPF</span>
+      </div>
+    </div>
+
+    <div class="ca-row">
+      <div class="hl-label">CA total estimé</div>
+      <div class="hl-value" id="r-ca">— XPF</div>
+    </div>
+  </div>
+
+  <p class="tag-line">High Coffee Shirt · Papeete, Tahiti · calcul matière vinyle</p>
+
+</div>
+
+<script>
+  function fmt(n, d=2) {
+    return n.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+
+  function calc() {
+    const prixYard = parseFloat(document.getElementById('prix-yard').value) || 0;
+    const largRoll = parseFloat(document.getElementById('larg-roll').value) || 0;
+    const longRoll = parseFloat(document.getElementById('long-roll').value) || 0;
+    const w = parseFloat(document.getElementById('w').value) || 0;
+    const h = parseFloat(document.getElementById('h').value) || 0;
+    const qty = parseInt(document.getElementById('qty').value) || 1;
+    const marge = parseFloat(document.getElementById('marge').value) || 0;
+
+    const surfRoll = largRoll * longRoll;
+    const cpm2 = surfRoll > 0 ? prixYard / surfRoll : 0;
+    const surfSticker = w * h;
+    const matUnit = surfSticker * cpm2;
+    const matTot = matUnit * qty;
+    const nbYard = surfSticker > 0 ? Math.floor(surfRoll / surfSticker) : 0;
+    const pvente = matUnit * (1 + marge / 100);
+    const ca = pvente * qty;
+
+    document.getElementById('r-cm2').textContent = fmt(cpm2, 4) + ' XPF/cm²';
+    document.getElementById('r-surf-roll').textContent = fmt(surfRoll, 2) + ' cm²';
+    document.getElementById('r-surf-sticker').textContent = fmt(surfSticker, 2) + ' cm²';
+    document.getElementById('r-mat-unit').textContent = fmt(matUnit, 2) + ' XPF';
+    document.getElementById('r-mat-tot').textContent = fmt(matTot, 2) + ' XPF';
+    document.getElementById('r-nb').textContent = fmt(nbYard, 0) + ' pcs';
+    document.getElementById('r-pvente').textContent = fmt(pvente, 0) + ' XPF';
+    document.getElementById('r-ca').textContent = fmt(ca, 0) + ' XPF';
+  }
+
+  function setSize(w, h) {
+    document.getElementById('w').value = w;
+    document.getElementById('h').value = h;
+    calc();
+  }
+
+  document.querySelectorAll('input').forEach(el => el.addEventListener('input', calc));
+  calc();
+</script>
+</body>
+</html>

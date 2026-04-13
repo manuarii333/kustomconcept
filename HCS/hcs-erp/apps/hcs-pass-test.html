@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HCS Pass — Test</title>
+<style>
+  body{font-family:sans-serif;background:#0f0f1a;color:#fff;padding:24px;max-width:600px;margin:0 auto}
+  h1{font-size:1.4rem;margin-bottom:4px}
+  .card{background:#1a1a2e;border-radius:14px;padding:20px;margin:16px 0}
+  .balance{font-size:2.5rem;font-weight:900;color:#fda085}
+  label{font-size:.8rem;color:#9090b0;display:block;margin-bottom:4px}
+  input{width:100%;padding:10px;background:#2a2a4a;border:1px solid #3a3a6a;border-radius:8px;color:#fff;font-size:.95rem;box-sizing:border-box}
+  button{padding:12px 20px;border:none;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;margin:4px 0;width:100%}
+  .btn-green{background:#43e97b;color:#0f0f1a}
+  .btn-red{background:#ff6b6b;color:#fff}
+  .btn-gray{background:#2a2a4a;color:#9090b0}
+  .btn-reset{background:#333;color:#ff6b6b}
+  .hist-item{display:flex;justify-content:space-between;font-size:.78rem;padding:6px 0;border-bottom:1px solid #2a2a4a22}
+  .credit{color:#43e97b}
+  .debit{color:#ff6b6b}
+  .log{background:#0a0a14;border-radius:8px;padding:12px;font-size:.75rem;color:#43e97b;font-family:monospace;min-height:40px;margin-top:8px}
+  .suggestion{background:rgba(253,160,133,.1);border:1px solid rgba(253,160,133,.3);border-radius:8px;padding:12px;font-size:.78rem;color:rgba(255,255,255,.7);margin-top:8px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<h1>🎫 HCS Pass — Page de test</h1>
+<p style="font-size:.8rem;color:#9090b0">Les données sont dans <code>localStorage</code> de ce navigateur.</p>
+
+<!-- Solde -->
+<div class="card">
+  <div style="font-size:.75rem;color:#9090b0;margin-bottom:4px">SOLDE ACTUEL</div>
+  <div class="balance" id="balance">—</div>
+  <div style="font-size:.75rem;color:#9090b0;margin-top:4px">Total rechargé : <span id="total-reloaded">—</span></div>
+</div>
+
+<!-- Recharger -->
+<div class="card">
+  <div style="font-weight:700;margin-bottom:12px">💳 Recharger (+ 5% bonus)</div>
+  <label>Montant (XPF)</label>
+  <input type="number" id="credit-amt" value="5000" step="500">
+  <input type="text" id="credit-label" value="Rechargement test" style="margin-top:8px">
+  <button class="btn-green" style="margin-top:12px" onclick="doCredit()">+ Créditer</button>
+  <div class="log" id="credit-log"></div>
+</div>
+
+<!-- Débiter -->
+<div class="card">
+  <div style="font-weight:700;margin-bottom:12px">🛒 Débiter (simuler un achat)</div>
+  <label>Montant (XPF)</label>
+  <input type="number" id="debit-amt" value="3500" step="500">
+  <input type="text" id="debit-label" value="Atelier DTF 2h" style="margin-top:8px">
+  <button class="btn-red" style="margin-top:12px" onclick="doDebit()">− Débiter</button>
+  <div class="log" id="debit-log"></div>
+</div>
+
+<!-- Vérifier solde -->
+<div class="card">
+  <div style="font-weight:700;margin-bottom:12px">✅ canPay()</div>
+  <label>Montant à vérifier (XPF)</label>
+  <input type="number" id="check-amt" value="3500" step="500">
+  <button class="btn-gray" style="margin-top:12px" onclick="doCheck()">Vérifier</button>
+  <div class="log" id="check-log"></div>
+</div>
+
+<!-- Suggestion -->
+<div class="card">
+  <div style="font-weight:700;margin-bottom:8px">💡 Suggestion passerelle V6</div>
+  <button class="btn-gray" onclick="doSuggestion()">Calculer</button>
+  <div id="suggestion-box"></div>
+</div>
+
+<!-- Historique -->
+<div class="card">
+  <div style="font-weight:700;margin-bottom:12px">📋 Historique</div>
+  <div id="history"></div>
+</div>
+
+<!-- Reset -->
+<div class="card">
+  <button class="btn-reset" onclick="doReset()">🗑️ Reset complet (supprimer localStorage)</button>
+</div>
+
+<script src="hcs-pass.js"></script>
+<script>
+function refresh() {
+  const bal = HCSPass.getBalance();
+  document.getElementById('balance').textContent = bal.toLocaleString('fr-FR') + ' XPF';
+  const data = JSON.parse(localStorage.getItem('hcs_pass') || '{}');
+  document.getElementById('total-reloaded').textContent = (data.totalReloaded||0).toLocaleString('fr-FR') + ' XPF';
+  const hist = HCSPass.getHistory();
+  if (!hist.length) {
+    document.getElementById('history').innerHTML = '<div style="color:#9090b0;font-size:.8rem">Aucune transaction</div>';
+    return;
+  }
+  document.getElementById('history').innerHTML = hist.map(h => `
+    <div class="hist-item">
+      <span>${new Date(h.date).toLocaleString('fr-FR')} · ${h.label}</span>
+      <span class="${h.type}"><strong>${h.type==='credit'?'+':'-'}${h.amount.toLocaleString('fr-FR')} XPF</strong> → ${h.balance.toLocaleString('fr-FR')}</span>
+    </div>`).join('');
+}
+
+function doCredit() {
+  const amt = parseInt(document.getElementById('credit-amt').value);
+  const lbl = document.getElementById('credit-label').value || 'Rechargement';
+  if (!amt || amt <= 0) { document.getElementById('credit-log').textContent = '❌ Montant invalide'; return; }
+  const res = HCSPass.credit(amt, lbl);
+  document.getElementById('credit-log').textContent = `✓ +${res.credited.toLocaleString('fr-FR')} XPF crédités (dont ${res.bonus.toLocaleString('fr-FR')} bonus)`;
+  refresh();
+}
+
+function doDebit() {
+  const amt = parseInt(document.getElementById('debit-amt').value);
+  const lbl = document.getElementById('debit-label').value || 'Paiement';
+  if (!amt || amt <= 0) { document.getElementById('debit-log').textContent = '❌ Montant invalide'; return; }
+  const ok = HCSPass.debit(amt, lbl);
+  document.getElementById('debit-log').textContent = ok ? `✓ −${amt.toLocaleString('fr-FR')} XPF débités` : '❌ Solde insuffisant';
+  refresh();
+}
+
+function doCheck() {
+  const amt = parseInt(document.getElementById('check-amt').value);
+  const ok = HCSPass.canPay(amt);
+  document.getElementById('check-log').textContent = ok
+    ? `✅ canPay(${amt.toLocaleString('fr-FR')}) → true — solde suffisant`
+    : `❌ canPay(${amt.toLocaleString('fr-FR')}) → false — solde insuffisant`;
+}
+
+function doSuggestion() {
+  const s = HCSPass.getSuggestion();
+  const box = document.getElementById('suggestion-box');
+  box.innerHTML = s ? `<div class="suggestion">💡 ${s}</div>` : '<div style="color:#9090b0;font-size:.8rem;margin-top:8px">Pas encore de suggestion (rechargements insuffisants)</div>';
+}
+
+function doReset() {
+  if (!confirm('Supprimer toutes les données Pass HCS ?')) return;
+  HCSPass.reset();
+  document.getElementById('credit-log').textContent = '';
+  document.getElementById('debit-log').textContent = '';
+  document.getElementById('check-log').textContent = '';
+  document.getElementById('suggestion-box').innerHTML = '';
+  refresh();
+}
+
+refresh();
+</script>
+</body>
+</html>

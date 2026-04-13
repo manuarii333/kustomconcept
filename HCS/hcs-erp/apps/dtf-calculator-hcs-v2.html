@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎨 Calculateur Commande DTF - HCS Tahiti</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
+    .glass { backdrop-filter: blur(10px); }
+    input:focus { outline: none; }
+  </style>
+</head>
+<body class="bg-gray-900">
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useMemo } = React;
+
+    function DTFOrderCalculator() {
+      // Taux de change
+      const [usdToXpf, setUsdToXpf] = useState(109.5);
+      
+      // Afficher/masquer les tarifs
+      const [showPricing, setShowPricing] = useState(false);
+
+      // Tarifs HTV4U éditables selon les paliers (basés sur l'image)
+      const [htv4uPricing, setHtv4uPricing] = useState({
+        sheet: [
+          { qtyMin: 1, qtyMax: 5, price: 5.99, discount: 0 },
+          { qtyMin: 6, qtyMax: 10, price: 5.84, discount: 2.5 },
+          { qtyMin: 11, qtyMax: 19, price: 5.69, discount: 5 },
+          { qtyMin: 20, qtyMax: 999, price: 5.54, discount: 7.5 },
+        ],
+        yd1: [
+          { qtyMin: 1, qtyMax: 5, price: 16.99, discount: 0 },
+          { qtyMin: 6, qtyMax: 10, price: 16.57, discount: 2.5 },
+          { qtyMin: 11, qtyMax: 19, price: 16.14, discount: 5 },
+          { qtyMin: 20, qtyMax: 999, price: 15.72, discount: 7.5 },
+        ],
+        yd2: [
+          { qtyMin: 1, qtyMax: 5, price: 33.58, pricePerYd: 16.79 },
+          { qtyMin: 6, qtyMax: 10, price: 32.74, pricePerYd: 16.37 },
+          { qtyMin: 11, qtyMax: 19, price: 31.90, pricePerYd: 15.95 },
+          { qtyMin: 20, qtyMax: 999, price: 31.06, pricePerYd: 15.53 },
+        ],
+        yd3: [
+          { qtyMin: 1, qtyMax: 5, price: 49.77, pricePerYd: 16.59 },
+          { qtyMin: 6, qtyMax: 10, price: 48.53, pricePerYd: 16.17 },
+          { qtyMin: 11, qtyMax: 19, price: 47.28, pricePerYd: 15.76 },
+          { qtyMin: 20, qtyMax: 999, price: 46.04, pricePerYd: 15.34 },
+        ],
+        yd5: [
+          { qtyMin: 1, qtyMax: 5, price: 81.95, pricePerYd: 16.39 },
+          { qtyMin: 6, qtyMax: 10, price: 79.90, pricePerYd: 15.98 },
+          { qtyMin: 11, qtyMax: 19, price: 77.85, pricePerYd: 15.57 },
+          { qtyMin: 20, qtyMax: 999, price: 75.80, pricePerYd: 15.16 },
+        ],
+      });
+
+      // Mettre à jour un tarif
+      const updatePrice = (product, tierIndex, newPrice) => {
+        setHtv4uPricing(prev => ({
+          ...prev,
+          [product]: prev[product].map((tier, idx) => 
+            idx === tierIndex ? { ...tier, price: Math.max(0, Number(newPrice)) } : tier
+          )
+        }));
+      };
+
+      // Obtenir le prix selon la quantité commandée
+      const getPriceForQty = (product, qty) => {
+        const tiers = htv4uPricing[product];
+        const tier = tiers.find(t => qty >= t.qtyMin && qty <= t.qtyMax);
+        return tier ? tier.price : tiers[tiers.length - 1].price;
+      };
+
+      // Quantité totale de rouleaux à commander (pour déterminer le palier)
+      const [orderQtyTier, setOrderQtyTier] = useState(20);
+      
+      // Commande client - designs multiples
+      const [clientDesigns, setClientDesigns] = useState([
+        { id: 1, name: "Logo poitrine", width: 25, height: 30, qty: 15 },
+        { id: 2, name: "Logo dos", width: 30, height: 35, qty: 10 },
+      ]);
+
+      // Marge entre designs (cm)
+      const [designGap, setDesignGap] = useState(0.5);
+
+      // Largeur fixe du gang sheet
+      const SHEET_WIDTH_CM = 55.88; // 22 pouces
+
+      // Frais de port USPS (en XPF)
+      const shippingRatesXPF = useMemo(() => ({
+        flatRateEnvelope: Math.round(32.65 * usdToXpf),
+        smallFlatRateBox: Math.round(32.65 * usdToXpf),
+        mediumFlatRateBox: Math.round(90 * usdToXpf),
+        largeFlatRateBox: Math.round(120 * usdToXpf),
+      }), [usdToXpf]);
+
+      // Douane PF
+      const customsRates = {
+        importDuty: 0.07,
+        vat: 0.16,
+        brokerageXPF: Math.round(50 * usdToXpf),
+        handlingXPF: Math.round(15 * usdToXpf),
+      };
+
+      // Gang sheets avec prix dynamiques selon palier
+      const gangSheets = useMemo(() => [
+        { 
+          key: 'sheet',
+          name: "Sheet 22×22\"", 
+          lengthCm: 55.88, 
+          priceUSD: getPriceForQty('sheet', orderQtyTier),
+          get priceXPF() { return Math.round(this.priceUSD * usdToXpf) }
+        },
+        { 
+          key: 'yd1',
+          name: "1 Yard", 
+          lengthCm: 91.44, 
+          priceUSD: getPriceForQty('yd1', orderQtyTier),
+          get priceXPF() { return Math.round(this.priceUSD * usdToXpf) }
+        },
+        { 
+          key: 'yd2',
+          name: "2 Yards", 
+          lengthCm: 182.88, 
+          priceUSD: getPriceForQty('yd2', orderQtyTier),
+          get priceXPF() { return Math.round(this.priceUSD * usdToXpf) }
+        },
+        { 
+          key: 'yd3',
+          name: "3 Yards", 
+          lengthCm: 274.32, 
+          priceUSD: getPriceForQty('yd3', orderQtyTier),
+          get priceXPF() { return Math.round(this.priceUSD * usdToXpf) }
+        },
+        { 
+          key: 'yd5',
+          name: "5 Yards", 
+          lengthCm: 457.2, 
+          priceUSD: getPriceForQty('yd5', orderQtyTier),
+          get priceXPF() { return Math.round(this.priceUSD * usdToXpf) }
+        },
+      ], [usdToXpf, orderQtyTier, htv4uPricing]);
+
+      // Ajouter un design
+      const addDesign = () => {
+        const newId = Math.max(...clientDesigns.map(d => d.id), 0) + 1;
+        setClientDesigns([...clientDesigns, { id: newId, name: `Design ${newId}`, width: 15, height: 15, qty: 10 }]);
+      };
+
+      // Supprimer un design
+      const removeDesign = (id) => {
+        if (clientDesigns.length > 1) {
+          setClientDesigns(clientDesigns.filter(d => d.id !== id));
+        }
+      };
+
+      // Modifier un design
+      const updateDesign = (id, field, value) => {
+        setClientDesigns(clientDesigns.map(d => 
+          d.id === id ? { ...d, [field]: field === 'name' ? value : Math.max(0, Number(value)) } : d
+        ));
+      };
+
+      // Calcul de la surface totale nécessaire
+      const calculateTotalArea = useMemo(() => {
+        let totalArea = 0;
+        clientDesigns.forEach(design => {
+          const designArea = (design.width + designGap) * (design.height + designGap) * design.qty;
+          totalArea += designArea;
+        });
+        return totalArea;
+      }, [clientDesigns, designGap]);
+
+      // Calcul optimisé des rouleaux nécessaires
+      const calculateOptimalRolls = useMemo(() => {
+        let totalLengthNeeded = 0;
+        
+        clientDesigns.forEach(design => {
+          const designWidthWithGap = design.width + designGap;
+          const designHeightWithGap = design.height + designGap;
+          
+          const designsPerRow = Math.floor(SHEET_WIDTH_CM / designWidthWithGap);
+          
+          if (designsPerRow > 0) {
+            const rowsNeeded = Math.ceil(design.qty / designsPerRow);
+            totalLengthNeeded += rowsNeeded * designHeightWithGap;
+          } else {
+            if (design.height <= SHEET_WIDTH_CM) {
+              const designsPerRowRotated = Math.floor(SHEET_WIDTH_CM / designHeightWithGap);
+              const rowsNeeded = Math.ceil(design.qty / Math.max(1, designsPerRowRotated));
+              totalLengthNeeded += rowsNeeded * designWidthWithGap;
+            } else {
+              totalLengthNeeded += design.qty * Math.max(designWidthWithGap, designHeightWithGap);
+            }
+          }
+        });
+
+        totalLengthNeeded *= 1.05;
+
+        const findBestCombination = (targetLength) => {
+          let bestCombination = null;
+          let bestPrice = Infinity;
+          let bestWaste = Infinity;
+
+          // Prix selon le palier sélectionné
+          const prices = gangSheets.map(g => g.priceXPF);
+
+          for (let sheets = 0; sheets <= 20; sheets++) {
+            for (let yd1 = 0; yd1 <= 15; yd1++) {
+              for (let yd2 = 0; yd2 <= 10; yd2++) {
+                for (let yd3 = 0; yd3 <= 7; yd3++) {
+                  for (let yd5 = 0; yd5 <= 5; yd5++) {
+                    const totalLength = 
+                      sheets * 55.88 + 
+                      yd1 * 91.44 + 
+                      yd2 * 182.88 + 
+                      yd3 * 274.32 + 
+                      yd5 * 457.2;
+                    
+                    if (totalLength >= targetLength) {
+                      const totalPrice = 
+                        sheets * prices[0] + 
+                        yd1 * prices[1] + 
+                        yd2 * prices[2] + 
+                        yd3 * prices[3] + 
+                        yd5 * prices[4];
+                      
+                      const waste = totalLength - targetLength;
+                      const totalItems = sheets + yd1 + yd2 + yd3 + yd5;
+                      
+                      if (totalPrice < bestPrice || (totalPrice === bestPrice && waste < bestWaste)) {
+                        bestPrice = totalPrice;
+                        bestWaste = waste;
+                        bestCombination = {
+                          sheets, yd1, yd2, yd3, yd5,
+                          totalLength,
+                          totalPrice,
+                          waste,
+                          totalItems,
+                          efficiency: ((targetLength / totalLength) * 100).toFixed(1)
+                        };
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return bestCombination;
+        };
+
+        return {
+          lengthNeeded: totalLengthNeeded,
+          combination: findBestCombination(totalLengthNeeded)
+        };
+      }, [clientDesigns, designGap, gangSheets]);
+
+      // Calcul du coût total avec douane
+      const calculateTotalCost = useMemo(() => {
+        if (!calculateOptimalRolls.combination) return null;
+
+        const combo = calculateOptimalRolls.combination;
+        const productCostXPF = combo.totalPrice;
+        
+        let shippingXPF;
+        if (combo.totalItems <= 3) {
+          shippingXPF = shippingRatesXPF.flatRateEnvelope;
+        } else if (combo.totalItems <= 10) {
+          shippingXPF = shippingRatesXPF.mediumFlatRateBox;
+        } else {
+          shippingXPF = shippingRatesXPF.largeFlatRateBox;
+        }
+
+        const cifValueXPF = productCostXPF + shippingXPF;
+        const importDutyXPF = Math.round(cifValueXPF * customsRates.importDuty);
+        const vatBaseXPF = cifValueXPF + importDutyXPF;
+        const vatXPF = Math.round(vatBaseXPF * customsRates.vat);
+        const feesXPF = customsRates.brokerageXPF + customsRates.handlingXPF;
+
+        const totalXPF = productCostXPF + shippingXPF + importDutyXPF + vatXPF + feesXPF;
+        
+        const totalDesigns = clientDesigns.reduce((sum, d) => sum + d.qty, 0);
+        const pricePerDesign = Math.round(totalXPF / totalDesigns);
+
+        return {
+          productCostXPF,
+          shippingXPF,
+          cifValueXPF,
+          importDutyXPF,
+          vatXPF,
+          feesXPF,
+          totalXPF,
+          totalDesigns,
+          pricePerDesign
+        };
+      }, [calculateOptimalRolls, shippingRatesXPF, customsRates, clientDesigns]);
+
+      // Détails par design
+      const designDetails = useMemo(() => {
+        return clientDesigns.map(design => {
+          const designWidthWithGap = design.width + designGap;
+          const designHeightWithGap = design.height + designGap;
+          const designsPerRow = Math.floor(SHEET_WIDTH_CM / designWidthWithGap);
+          const rowsNeeded = designsPerRow > 0 ? Math.ceil(design.qty / designsPerRow) : design.qty;
+          const lengthUsed = rowsNeeded * designHeightWithGap;
+          const areaPerDesign = design.width * design.height;
+          
+          return {
+            ...design,
+            designsPerRow: Math.max(1, designsPerRow),
+            rowsNeeded,
+            lengthUsed,
+            areaPerDesign,
+            totalArea: areaPerDesign * design.qty
+          };
+        });
+      }, [clientDesigns, designGap]);
+
+      // Déterminer le palier actif
+      const getCurrentTier = (qty) => {
+        if (qty >= 20) return '20+';
+        if (qty >= 11) return '11-19';
+        if (qty >= 6) return '6-10';
+        return '1-5';
+      };
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-4">
+          <div className="max-w-6xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-teal-400 mb-2">
+                🎨 Calculateur Commande DTF Client
+              </h1>
+              <p className="text-gray-400">HCS Tahiti - Calcul automatique des rouleaux nécessaires</p>
+              <p className="text-xs text-gray-500 mt-1">Source: HTV4U • Gang Sheets 22" • Tous tarifs en XPF</p>
+            </div>
+
+            {/* Paramètres globaux */}
+            <div className="bg-gray-800/50 glass rounded-xl p-4 mb-6 border border-gray-700">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Taux USD/XPF</label>
+                  <input 
+                    type="number" 
+                    value={usdToXpf}
+                    onChange={(e) => setUsdToXpf(Number(e.target.value))}
+                    className="w-full bg-gray-700 rounded px-3 py-2 text-white text-sm border border-gray-600 focus:border-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Palier quantité HTV4U</label>
+                  <select 
+                    value={orderQtyTier}
+                    onChange={(e) => setOrderQtyTier(Number(e.target.value))}
+                    className="w-full bg-gray-700 rounded px-3 py-2 text-white text-sm border border-amber-600 focus:border-amber-500"
+                  >
+                    <option value={1}>1-5 (plein tarif)</option>
+                    <option value={6}>6-10 (-2.5%)</option>
+                    <option value={11}>11-19 (-5%)</option>
+                    <option value={20}>20+ (-7.5%)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Espace designs (cm)</label>
+                  <input 
+                    type="number" 
+                    value={designGap}
+                    onChange={(e) => setDesignGap(Math.max(0, Number(e.target.value)))}
+                    className="w-full bg-gray-700 rounded px-3 py-2 text-white text-sm border border-gray-600 focus:border-teal-500"
+                    step="0.1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Largeur gang sheet</label>
+                  <div className="bg-gray-700/50 rounded px-3 py-2 text-teal-400 text-sm font-bold border border-gray-600">
+                    {SHEET_WIDTH_CM.toFixed(1)} cm (22")
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Total designs</label>
+                  <div className="bg-gray-700/50 rounded px-3 py-2 text-amber-400 text-sm font-bold border border-gray-600">
+                    {clientDesigns.reduce((sum, d) => sum + d.qty, 0)} pièces
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Section Tarifs HTV4U Éditables */}
+            <div className="bg-gray-800/50 glass rounded-xl mb-6 border border-purple-700/50 overflow-hidden">
+              <button 
+                onClick={() => setShowPricing(!showPricing)}
+                className="w-full px-4 py-3 flex justify-between items-center bg-gradient-to-r from-purple-700 to-purple-600 hover:from-purple-600 hover:to-purple-500 transition-colors"
+              >
+                <h2 className="text-lg font-bold">💵 TARIFS HTV4U (cliquer pour {showPricing ? 'masquer' : 'modifier'})</h2>
+                <span className="text-2xl">{showPricing ? '▲' : '▼'}</span>
+              </button>
+              
+              {showPricing && (
+                <div className="p-4">
+                  <p className="text-xs text-gray-400 mb-4">
+                    Modifiez les prix si les tarifs HTV4U changent. Les prix sont en USD.
+                  </p>
+                  
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Sheet 22x22 */}
+                    <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
+                      <h3 className="font-bold text-teal-400 mb-2">📄 Sheet 22×22"</h3>
+                      <div className="space-y-2 text-sm">
+                        {htv4uPricing.sheet.map((tier, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <span className="text-gray-400 w-16">{tier.qtyMin}-{tier.qtyMax === 999 ? '+' : tier.qtyMax}</span>
+                            <span className="text-gray-500">$</span>
+                            <input 
+                              type="number"
+                              value={tier.price}
+                              onChange={(e) => updatePrice('sheet', idx, e.target.value)}
+                              className="w-20 bg-gray-700 rounded px-2 py-1 text-white text-sm border border-gray-600 focus:border-purple-500"
+                              step="0.01"
+                            />
+                            {tier.discount > 0 && (
+                              <span className="text-green-400 text-xs">-{tier.discount}%</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 1 Yard */}
+                    <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
+                      <h3 className="font-bold text-teal-400 mb-2">📏 1 Yard Roll</h3>
+                      <div className="space-y-2 text-sm">
+                        {htv4uPricing.yd1.map((tier, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <span className="text-gray-400 w-16">{tier.qtyMin}-{tier.qtyMax === 999 ? '+' : tier.qtyMax}</span>
+                            <span className="text-gray-500">$</span>
+                            <input 
+                              type="number"
+                              value={tier.price}
+                              onChange={(e) => updatePrice('yd1', idx, e.target.value)}
+                              className="w-20 bg-gray-700 rounded px-2 py-1 text-white text-sm border border-gray-600 focus:border-purple-500"
+                              step="0.01"
+                            />
+                            {tier.discount > 0 && (
+                              <span className="text-green-400 text-xs">-{tier.discount}%</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 2 Yards */}
+                    <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
+                      <h3 className="font-bold text-teal-400 mb-2">📏 2 Yards Roll</h3>
+                      <div className="space-y-2 text-sm">
+                        {htv4uPricing.yd2.map((tier, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <span className="text-gray-400 w-16">{tier.qtyMin}-{tier.qtyMax === 999 ? '+' : tier.qtyMax}</span>
+                            <span className="text-gray-500">$</span>
+                            <input 
+                              type="number"
+                              value={tier.price}
+                              onChange={(e) => updatePrice('yd2', idx, e.target.value)}
+                              className="w-20 bg-gray-700 rounded px-2 py-1 text-white text-sm border border-gray-600 focus:border-purple-500"
+                              step="0.01"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 3 Yards */}
+                    <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
+                      <h3 className="font-bold text-teal-400 mb-2">📏 3 Yards Roll</h3>
+                      <div className="space-y-2 text-sm">
+                        {htv4uPricing.yd3.map((tier, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <span className="text-gray-400 w-16">{tier.qtyMin}-{tier.qtyMax === 999 ? '+' : tier.qtyMax}</span>
+                            <span className="text-gray-500">$</span>
+                            <input 
+                              type="number"
+                              value={tier.price}
+                              onChange={(e) => updatePrice('yd3', idx, e.target.value)}
+                              className="w-20 bg-gray-700 rounded px-2 py-1 text-white text-sm border border-gray-600 focus:border-purple-500"
+                              step="0.01"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 5 Yards */}
+                    <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700">
+                      <h3 className="font-bold text-teal-400 mb-2">📏 5 Yards Roll</h3>
+                      <div className="space-y-2 text-sm">
+                        {htv4uPricing.yd5.map((tier, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <span className="text-gray-400 w-16">{tier.qtyMin}-{tier.qtyMax === 999 ? '+' : tier.qtyMax}</span>
+                            <span className="text-gray-500">$</span>
+                            <input 
+                              type="number"
+                              value={tier.price}
+                              onChange={(e) => updatePrice('yd5', idx, e.target.value)}
+                              className="w-20 bg-gray-700 rounded px-2 py-1 text-white text-sm border border-gray-600 focus:border-purple-500"
+                              step="0.01"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Résumé palier actif */}
+                    <div className="bg-amber-900/30 rounded-lg p-3 border border-amber-700">
+                      <h3 className="font-bold text-amber-400 mb-2">🏷️ Palier actif: {getCurrentTier(orderQtyTier)}</h3>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span>Sheet</span>
+                          <span className="font-bold">${getPriceForQty('sheet', orderQtyTier)} → {Math.round(getPriceForQty('sheet', orderQtyTier) * usdToXpf).toLocaleString()} F</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>1 Yard</span>
+                          <span className="font-bold">${getPriceForQty('yd1', orderQtyTier)} → {Math.round(getPriceForQty('yd1', orderQtyTier) * usdToXpf).toLocaleString()} F</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>2 Yards</span>
+                          <span className="font-bold">${getPriceForQty('yd2', orderQtyTier)} → {Math.round(getPriceForQty('yd2', orderQtyTier) * usdToXpf).toLocaleString()} F</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>3 Yards</span>
+                          <span className="font-bold">${getPriceForQty('yd3', orderQtyTier)} → {Math.round(getPriceForQty('yd3', orderQtyTier) * usdToXpf).toLocaleString()} F</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>5 Yards</span>
+                          <span className="font-bold">${getPriceForQty('yd5', orderQtyTier)} → {Math.round(getPriceForQty('yd5', orderQtyTier) * usdToXpf).toLocaleString()} F</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Section Commande Client */}
+            <div className="bg-gray-800/50 glass rounded-xl p-4 mb-6 border border-teal-700/50">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-bold text-teal-400">📋 COMMANDE CLIENT</h2>
+                <button 
+                  onClick={addDesign}
+                  className="bg-teal-600 hover:bg-teal-500 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg"
+                >
+                  + Ajouter un design
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {clientDesigns.map((design, idx) => (
+                  <div key={design.id} className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                    <div className="grid grid-cols-2 md:grid-cols-6 gap-3 items-end">
+                      <div className="md:col-span-2">
+                        <label className="block text-xs text-gray-400 mb-1">Nom du design</label>
+                        <input 
+                          type="text"
+                          value={design.name}
+                          onChange={(e) => updateDesign(design.id, 'name', e.target.value)}
+                          className="w-full bg-gray-700 rounded px-3 py-2 text-white text-sm border border-gray-600 focus:border-teal-500"
+                          placeholder="Ex: Logo poitrine"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Largeur (cm)</label>
+                        <input 
+                          type="number"
+                          value={design.width}
+                          onChange={(e) => updateDesign(design.id, 'width', e.target.value)}
+                          className="w-full bg-gray-700 rounded px-3 py-2 text-white text-sm border border-gray-600 focus:border-teal-500"
+                          min="1"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Hauteur (cm)</label>
+                        <input 
+                          type="number"
+                          value={design.height}
+                          onChange={(e) => updateDesign(design.id, 'height', e.target.value)}
+                          className="w-full bg-gray-700 rounded px-3 py-2 text-white text-sm border border-gray-600 focus:border-teal-500"
+                          min="1"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Quantité</label>
+                        <input 
+                          type="number"
+                          value={design.qty}
+                          onChange={(e) => updateDesign(design.id, 'qty', e.target.value)}
+                          className="w-full bg-gray-700 rounded px-3 py-2 text-white text-sm font-bold border border-amber-600 focus:border-amber-500"
+                          min="1"
+                        />
+                      </div>
+                      <div>
+                        <button 
+                          onClick={() => removeDesign(design.id)}
+                          className="w-full bg-red-600/50 hover:bg-red-600 px-3 py-2 rounded text-sm transition-colors disabled:opacity-30"
+                          disabled={clientDesigns.length <= 1}
+                        >
+                          🗑️ Suppr.
+                        </button>
+                      </div>
+                    </div>
+                    {/* Info du design */}
+                    <div className="mt-3 pt-3 border-t border-gray-700 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                      <div className="text-gray-400">
+                        Surface: <span className="text-white font-medium">{design.width * design.height} cm²</span>
+                      </div>
+                      <div className="text-gray-400">
+                        Total: <span className="text-white font-medium">{(design.width * design.height * design.qty / 10000).toFixed(3)} m²</span>
+                      </div>
+                      <div className="text-gray-400">
+                        Par ligne: <span className="text-teal-400 font-medium">{Math.floor(SHEET_WIDTH_CM / (design.width + designGap))} designs</span>
+                      </div>
+                      <div className="text-gray-400">
+                        Lignes: <span className="text-amber-400 font-medium">{Math.ceil(design.qty / Math.max(1, Math.floor(SHEET_WIDTH_CM / (design.width + designGap))))}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Résultat - Rouleaux nécessaires */}
+            <div className="bg-gray-800/50 glass rounded-xl p-4 mb-6 border border-amber-700/50">
+              <h2 className="text-lg font-bold text-amber-400 mb-4">📦 ROULEAUX À COMMANDER (Palier {getCurrentTier(orderQtyTier)})</h2>
+              
+              {calculateOptimalRolls.combination ? (
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Longueur nécessaire */}
+                  <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                    <h3 className="text-sm text-gray-400 mb-2">Longueur linéaire nécessaire</h3>
+                    <div className="text-4xl font-bold text-teal-400">
+                      {calculateOptimalRolls.lengthNeeded.toFixed(1)} cm
+                    </div>
+                    <div className="text-lg text-gray-400">
+                      = {(calculateOptimalRolls.lengthNeeded / 91.44).toFixed(2)} yards
+                    </div>
+                  </div>
+
+                  {/* Combinaison optimale */}
+                  <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+                    <h3 className="text-sm text-gray-400 mb-2">Combinaison optimale HTV4U</h3>
+                    <div className="space-y-1">
+                      {calculateOptimalRolls.combination.sheets > 0 && (
+                        <div className="flex justify-between">
+                          <span>Sheet 22×22" <span className="text-gray-500 text-xs">({gangSheets[0].priceXPF.toLocaleString()} F)</span></span>
+                          <span className="font-bold text-teal-400">×{calculateOptimalRolls.combination.sheets}</span>
+                        </div>
+                      )}
+                      {calculateOptimalRolls.combination.yd1 > 0 && (
+                        <div className="flex justify-between">
+                          <span>1 Yard Roll <span className="text-gray-500 text-xs">({gangSheets[1].priceXPF.toLocaleString()} F)</span></span>
+                          <span className="font-bold text-teal-400">×{calculateOptimalRolls.combination.yd1}</span>
+                        </div>
+                      )}
+                      {calculateOptimalRolls.combination.yd2 > 0 && (
+                        <div className="flex justify-between">
+                          <span>2 Yards Roll <span className="text-gray-500 text-xs">({gangSheets[2].priceXPF.toLocaleString()} F)</span></span>
+                          <span className="font-bold text-teal-400">×{calculateOptimalRolls.combination.yd2}</span>
+                        </div>
+                      )}
+                      {calculateOptimalRolls.combination.yd3 > 0 && (
+                        <div className="flex justify-between">
+                          <span>3 Yards Roll <span className="text-gray-500 text-xs">({gangSheets[3].priceXPF.toLocaleString()} F)</span></span>
+                          <span className="font-bold text-teal-400">×{calculateOptimalRolls.combination.yd3}</span>
+                        </div>
+                      )}
+                      {calculateOptimalRolls.combination.yd5 > 0 && (
+                        <div className="flex justify-between">
+                          <span>5 Yards Roll <span className="text-gray-500 text-xs">({gangSheets[4].priceXPF.toLocaleString()} F)</span></span>
+                          <span className="font-bold text-teal-400">×{calculateOptimalRolls.combination.yd5}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-gray-700 text-sm">
+                      <div className="flex justify-between text-gray-400">
+                        <span>Longueur totale:</span>
+                        <span>{calculateOptimalRolls.combination.totalLength.toFixed(1)} cm</span>
+                      </div>
+                      <div className="flex justify-between text-gray-400">
+                        <span>Efficacité:</span>
+                        <span className="text-green-400 font-bold">{calculateOptimalRolls.combination.efficiency}%</span>
+                      </div>
+                      <div className="flex justify-between text-gray-400">
+                        <span>Chute:</span>
+                        <span className="text-red-400">{calculateOptimalRolls.combination.waste.toFixed(1)} cm</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center text-gray-400 py-8">
+                  Ajoutez des designs pour calculer les rouleaux nécessaires
+                </div>
+              )}
+            </div>
+
+            {/* Coût Total */}
+            {calculateTotalCost && (
+              <div className="bg-gradient-to-r from-teal-800/50 to-amber-800/50 glass rounded-xl p-5 mb-6 border border-teal-600/50">
+                <h2 className="text-xl font-bold text-center mb-4">💰 COÛT TOTAL RENDU TAHITI (XPF)</h2>
+                
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Détail des coûts */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between py-2 border-b border-gray-700">
+                      <span className="text-gray-400">Produits HTV4U</span>
+                      <span className="font-bold">{calculateTotalCost.productCostXPF.toLocaleString()} F</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-gray-700">
+                      <span className="text-gray-400">Port USPS Priority</span>
+                      <span className="font-bold text-blue-400">{calculateTotalCost.shippingXPF.toLocaleString()} F</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-gray-700 text-sm">
+                      <span className="text-gray-500">Valeur CIF</span>
+                      <span className="text-gray-400">{calculateTotalCost.cifValueXPF.toLocaleString()} F</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-gray-700">
+                      <span className="text-gray-400">Droits douane (7%)</span>
+                      <span className="font-bold text-red-400">{calculateTotalCost.importDutyXPF.toLocaleString()} F</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-gray-700">
+                      <span className="text-gray-400">TVA (16%)</span>
+                      <span className="font-bold text-red-400">{calculateTotalCost.vatXPF.toLocaleString()} F</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-gray-700">
+                      <span className="text-gray-400">Frais (courtier + manut.)</span>
+                      <span className="font-bold text-gray-400">{calculateTotalCost.feesXPF.toLocaleString()} F</span>
+                    </div>
+                    <div className="flex justify-between py-3 text-xl">
+                      <span className="font-bold text-white">TOTAL</span>
+                      <span className="font-bold text-amber-400">{calculateTotalCost.totalXPF.toLocaleString()} F</span>
+                    </div>
+                  </div>
+
+                  {/* Résumé */}
+                  <div className="bg-black/30 rounded-xl p-5 flex flex-col justify-center border border-gray-700">
+                    <div className="text-center mb-4">
+                      <div className="text-gray-400 text-sm">Total designs</div>
+                      <div className="text-4xl font-bold text-teal-400">{calculateTotalCost.totalDesigns}</div>
+                    </div>
+                    <div className="text-center mb-4">
+                      <div className="text-gray-400 text-sm">Prix de revient par design</div>
+                      <div className="text-4xl font-bold text-amber-400">{calculateTotalCost.pricePerDesign.toLocaleString()} F</div>
+                    </div>
+                    <div className="text-center pt-4 border-t border-gray-700">
+                      <div className="text-gray-400 text-sm">Suggestion prix de vente (×2.5)</div>
+                      <div className="text-2xl font-bold text-green-400">{Math.round(calculateTotalCost.pricePerDesign * 2.5).toLocaleString()} F</div>
+                      <div className="text-xs text-gray-500">par design posé</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Détails par design */}
+            <div className="bg-gray-800/50 glass rounded-xl p-4 mb-6 border border-gray-700">
+              <h2 className="text-lg font-bold text-white mb-4">📊 DÉTAILS PAR DESIGN</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-900/50">
+                    <tr>
+                      <th className="p-3 text-left">Design</th>
+                      <th className="p-3 text-center">Dimensions</th>
+                      <th className="p-3 text-center">Qté</th>
+                      <th className="p-3 text-center">Par ligne</th>
+                      <th className="p-3 text-center">Nb lignes</th>
+                      <th className="p-3 text-center">Longueur</th>
+                      <th className="p-3 text-center">Surface</th>
+                      {calculateTotalCost && <th className="p-3 text-center">Coût estimé</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {designDetails.map((design, idx) => (
+                      <tr key={design.id} className={idx % 2 === 0 ? 'bg-gray-800/30' : 'bg-gray-800/10'}>
+                        <td className="p-3 font-medium text-teal-400">{design.name}</td>
+                        <td className="p-3 text-center">{design.width}×{design.height} cm</td>
+                        <td className="p-3 text-center font-bold">{design.qty}</td>
+                        <td className="p-3 text-center">{design.designsPerRow}</td>
+                        <td className="p-3 text-center">{design.rowsNeeded}</td>
+                        <td className="p-3 text-center">{design.lengthUsed.toFixed(1)} cm</td>
+                        <td className="p-3 text-center">{(design.totalArea / 100).toFixed(0)} cm²</td>
+                        {calculateTotalCost && (
+                          <td className="p-3 text-center font-bold text-amber-400">
+                            {Math.round(calculateTotalCost.pricePerDesign * design.qty).toLocaleString()} F
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                  {calculateTotalCost && (
+                    <tfoot className="bg-gray-900/50 font-bold">
+                      <tr>
+                        <td className="p-3">TOTAL</td>
+                        <td className="p-3 text-center">-</td>
+                        <td className="p-3 text-center text-teal-400">{calculateTotalCost.totalDesigns}</td>
+                        <td className="p-3 text-center">-</td>
+                        <td className="p-3 text-center">-</td>
+                        <td className="p-3 text-center">{calculateOptimalRolls.lengthNeeded.toFixed(1)} cm</td>
+                        <td className="p-3 text-center">{(calculateTotalArea / 100).toFixed(0)} cm²</td>
+                        <td className="p-3 text-center text-amber-400">{calculateTotalCost.totalXPF.toLocaleString()} F</td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="text-xs text-gray-500 space-y-1 bg-gray-800/30 rounded-lg p-4">
+              <p>* Calcul basé sur placement optimal en lignes sur largeur 55.88 cm (22")</p>
+              <p>* Marge de sécurité 5% incluse dans le calcul de longueur</p>
+              <p>* Tarifs HTV4U modifiables • Port USPS Priority Mail International</p>
+              <p>* Douane PF : méthode CIF • Droits ~7% + TVA 16% + frais courtier</p>
+              <p>* © {new Date().getFullYear()} HCS Tahiti - High Coffee Shirt</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Render
+    ReactDOM.render(<DTFOrderCalculator />, document.getElementById('root'));
+  </script>
+</body>
+</html>

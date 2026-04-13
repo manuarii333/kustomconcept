@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T-Shirt Mockup Studio — HCS</title>
+<style>
+:root {
+  --bg: #0f0f1a;
+  --bg2: #1a1a2e;
+  --bg3: #16213e;
+  --bg4: #1e1e3a;
+  --accent: #4facfe;
+  --accent2: #6c63ff;
+  --accent3: #43e97b;
+  --red: #ff6584;
+  --text: #e8e8f0;
+  --text2: #9090b0;
+  --border: #2a2a4a;
+  --r: 12px;
+  --r2: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* HEADER */
+.hdr { background: linear-gradient(135deg,#0f0f1a,#1a1a2e); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.hdr-icon { width: 36px; height: 36px; background: linear-gradient(135deg,#4facfe,#6c63ff); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.hdr-title { font-size: 1rem; font-weight: 800; letter-spacing: 2px; }
+.hdr-sub { font-size: 0.6rem; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; }
+.hdr-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.btn { padding: 7px 14px; border-radius: var(--r2); border: none; cursor: pointer; font-size: 0.78rem; font-weight: 600; transition: all 0.2s; }
+.btn-primary { background: var(--accent2); color: white; }
+.btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+.btn-dl { background: linear-gradient(135deg,var(--accent),#00f2fe); color: #0f0f1a; font-weight: 800; }
+.btn-dl:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.badge { padding: 3px 10px; border-radius: 12px; font-size: 0.62rem; font-weight: 700; background: rgba(79,172,254,0.15); color: var(--accent); border: 1px solid rgba(79,172,254,0.3); }
+
+/* LAYOUT */
+.layout { display: flex; flex: 1; overflow: hidden; }
+
+/* PANEL GAUCHE — CONTROLS */
+.ctrl { width: 260px; background: var(--bg2); border-right: 1px solid var(--border); overflow-y: auto; padding: 14px 12px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; }
+.section { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); padding: 12px; }
+.section-lbl { font-size: 0.62rem; font-weight: 800; letter-spacing: 1.5px; color: var(--accent); text-transform: uppercase; margin-bottom: 10px; }
+
+/* Produit tabs */
+.prod-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
+.prod-tab { flex: 1; padding: 5px 8px; border-radius: 10px; font-size: 0.66rem; font-weight: 700; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text2); transition: all 0.2s; text-align: center; }
+.prod-tab.active { background: var(--accent); color: #0f0f1a; border-color: var(--accent); }
+.prod-panel { display: none; }
+.prod-panel.active { display: block; }
+
+/* Photo t-shirt slot */
+.shirt-slot { width: 100%; aspect-ratio: 2/3; border-radius: var(--r2); border: 2px dashed var(--border); background: var(--bg4); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; transition: border-color 0.2s; }
+.shirt-slot:hover { border-color: var(--accent); }
+.shirt-slot.loaded { border-style: solid; border-color: var(--accent); }
+.shirt-slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+.slot-lbl { font-size: 1.6rem; position: relative; z-index: 1; }
+.slot-hint { font-size: 0.58rem; color: var(--text2); margin-top: 4px; position: relative; z-index: 1; }
+.slot-clear { position: absolute; top: 4px; right: 4px; z-index: 5; background: rgba(0,0,0,0.7); border: none; border-radius: 4px; color: var(--red); font-size: 0.7rem; cursor: pointer; padding: 2px 6px; display: none; }
+.shirt-slot.loaded .slot-clear { display: block; }
+
+/* Logos 3×3 */
+.logos9 { display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; }
+.logo-slot { background: var(--bg4); border: 2px dashed var(--border); border-radius: var(--r2); aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; transition: border-color 0.2s; }
+.logo-slot:hover { border-color: var(--accent); }
+.logo-slot.loaded { border-style: solid; border-color: rgba(79,172,254,0.5); }
+.logo-slot img { width: 100%; height: 100%; object-fit: contain; position: absolute; inset: 0; padding: 4px; }
+.logo-slot-lbl { font-size: 0.62rem; font-weight: 700; color: var(--accent); z-index: 1; }
+.logo-slot-hint { font-size: 0.5rem; color: var(--text2); z-index: 1; margin-top: 1px; }
+.logo-slot-clear { position: absolute; top: 2px; right: 2px; z-index: 5; background: rgba(0,0,0,0.7); border: none; border-radius: 3px; color: var(--red); font-size: 0.6rem; cursor: pointer; padding: 1px 4px; display: none; }
+.logo-slot.loaded .logo-slot-clear { display: block; }
+
+/* Logo mode tabs */
+.logo-mode-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+.logo-tab { flex: 1; padding: 4px 6px; border-radius: 8px; font-size: 0.62rem; font-weight: 700; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text2); transition: all 0.2s; text-align: center; }
+.logo-tab.active { background: var(--accent2); color: white; border-color: var(--accent2); }
+
+/* Mode 3 logos par rangée */
+.row-logo-slots { display: flex; flex-direction: column; gap: 6px; }
+.row-logo-item { display: flex; align-items: center; gap: 8px; }
+.row-logo-lbl { font-size: 0.62rem; font-weight: 700; color: var(--text2); width: 50px; flex-shrink: 0; }
+.row-logo-slot { flex: 1; aspect-ratio: 3/1; border-radius: var(--r2); border: 2px dashed var(--border); background: var(--bg4); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; transition: border-color 0.2s; min-height: 44px; }
+.row-logo-slot:hover { border-color: var(--accent2); }
+.row-logo-slot.loaded { border-style: solid; border-color: rgba(108,99,255,0.6); }
+.row-logo-slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 4px; }
+.row-logo-slot .slot-hint { font-size: 0.52rem; color: var(--text2); position: relative; z-index: 1; }
+.row-logo-slot .slot-clear { position: absolute; top: 2px; right: 2px; z-index: 5; background: rgba(0,0,0,0.7); border: none; border-radius: 3px; color: var(--red); font-size: 0.6rem; cursor: pointer; padding: 1px 4px; display: none; }
+.row-logo-slot.loaded .slot-clear { display: block; }
+.row-badge { font-size: 0.5rem; color: var(--accent2); background: rgba(108,99,255,0.12); border: 1px solid rgba(108,99,255,0.3); border-radius: 4px; padding: 1px 4px; white-space: nowrap; }
+
+/* ZONE CENTRALE — GRILLE MOCKUP */
+.center { flex: 1; overflow-y: auto; padding: 16px; background: var(--bg); }
+.grid-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.grid-title { font-size: 0.85rem; font-weight: 800; }
+.grid-sub { font-size: 0.65rem; color: var(--text2); }
+
+.mockup-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; max-width: 700px; margin: 0 auto; }
+.mock-cell { aspect-ratio: 2/3; border-radius: 12px; border: 2px solid var(--border); overflow: hidden; position: relative; cursor: pointer; background: #1a1a2e; transition: all 0.2s; }
+.mock-cell:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(79,172,254,0.15); }
+.mock-cell.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,172,254,0.3); }
+.mock-bg { position: absolute; inset: 0; background-size: cover; background-position: center top; background-repeat: no-repeat; }
+.mock-logo-wrap { position: absolute; left: 50%; top: 47%; transform: translate(-50%,-50%); width: 44%; z-index: 2; pointer-events: none; }
+.mock-logo-wrap img { width: 100%; height: auto; max-height: 55%; object-fit: contain; filter: drop-shadow(0 1px 5px rgba(0,0,0,0.7)); }
+.mock-lbl { position: absolute; bottom: 5px; left: 0; right: 0; text-align: center; font-size: 0.55rem; color: rgba(255,255,255,0.45); z-index: 3; pointer-events: none; }
+.mock-check { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; background: var(--accent); border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 0.65rem; color: #0f0f1a; font-weight: 900; z-index: 4; }
+.mock-cell.selected .mock-check { display: flex; }
+.mock-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; opacity: 0.3; }
+.mock-empty .e { font-size: 2rem; }
+.mock-empty .t { font-size: 0.55rem; color: var(--text2); }
+.mock-dl-btn { position: absolute; bottom: 5px; right: 5px; z-index: 4; background: rgba(79,172,254,0.9); border: none; border-radius: 6px; color: #0f0f1a; font-size: 0.58rem; font-weight: 800; cursor: pointer; padding: 3px 7px; display: none; }
+.mock-cell:hover .mock-dl-btn { display: block; }
+
+/* PANEL DROIT — EXPORT */
+.right { width: 200px; background: var(--bg2); border-left: 1px solid var(--border); padding: 14px 12px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+.sel-preview { width: 100%; aspect-ratio: 2/3; border-radius: var(--r2); overflow: hidden; position: relative; background: var(--bg4); border: 1px solid var(--border); margin-bottom: 8px; }
+.sel-preview-bg { position: absolute; inset: 0; background-size: cover; background-position: center top; }
+.sel-preview-logo { position: absolute; left: 50%; top: 47%; transform: translate(-50%,-50%); width: 44%; z-index: 2; transition: left 0.1s, top 0.1s, width 0.1s; }
+.sel-preview-logo img { width: 100%; height: auto; object-fit: contain; filter: drop-shadow(0 1px 5px rgba(0,0,0,0.7)); }
+.sel-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6px; opacity: 0.4; font-size: 0.65rem; color: var(--text2); text-align: center; padding: 8px; }
+.info-row { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--text2); margin-bottom: 4px; }
+.info-val { color: var(--text); font-weight: 600; }
+.export-size-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
+.exp-sz { padding: 5px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg4); font-size: 0.6rem; font-weight: 600; cursor: pointer; text-align: center; color: var(--text2); transition: all 0.2s; }
+.exp-sz.active { border-color: var(--accent); color: var(--accent); background: rgba(79,172,254,0.08); }
+
+canvas#export-canvas { display: none; }
+
+/* Overlay progression ZIP */
+.zip-overlay { position: fixed; inset: 0; background: rgba(15,15,26,0.88); z-index: 999; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+.zip-overlay.visible { display: flex; }
+.zip-title { font-size: 0.9rem; font-weight: 800; color: var(--accent); }
+.zip-bar-wrap { width: 260px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.zip-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent3)); border-radius: 3px; width: 0%; transition: width 0.15s; }
+.zip-status { font-size: 0.65rem; color: var(--text2); }
+
+/* Zone & Masque panel */
+.zone-panel { display: none; }
+.zone-panel.visible { display: block; }
+.zone-row { margin-bottom: 8px; }
+.zone-lbl-row { display: flex; justify-content: space-between; font-size: 0.6rem; color: var(--text2); margin-bottom: 3px; }
+.zone-lbl-row .zval { color: var(--accent); font-weight: 700; }
+.zone-slider { width: 100%; height: 3px; appearance: none; background: var(--border); border-radius: 2px; outline: none; cursor: pointer; }
+.zone-slider::-webkit-slider-thumb { appearance: none; width: 13px; height: 13px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+.zone-slider::-moz-range-thumb { width: 13px; height: 13px; border-radius: 50%; background: var(--accent); border: none; cursor: pointer; }
+.mask-toggle-row { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
+.mask-toggle-btn { padding: 3px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg4); color: var(--text2); font-size: 0.62rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.mask-toggle-btn.on { background: var(--accent3); color: #0f0f1a; border-color: var(--accent3); }
+.zone-apply-all { width: 100%; margin-top: 8px; padding: 5px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: 0.62rem; cursor: pointer; transition: all 0.2s; }
+.zone-apply-all:hover { border-color: var(--accent2); color: var(--accent2); }
+.zone-reset { width: 100%; margin-top: 4px; padding: 5px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: 0.62rem; cursor: pointer; }
+.zone-reset:hover { border-color: var(--red); color: var(--red); }
+
+/* Indicateur masque actif sur cellule */
+.mock-mask-ind { position: absolute; top: 4px; left: 4px; z-index: 5; background: rgba(67,233,123,0.85); border-radius: 4px; font-size: 0.48rem; color: #0f0f1a; font-weight: 800; padding: 1px 4px; display: none; pointer-events: none; }
+.mock-cell.mask-on .mock-mask-ind { display: block; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-icon">👕</div>
+  <div>
+    <div class="hdr-title">MOCKUP STUDIO</div>
+    <div class="hdr-sub">T-Shirt · HCS Tahiti</div>
+  </div>
+  <span class="badge">3 Produits · 9 Logos</span>
+  <div class="hdr-actions">
+    <button class="btn btn-outline" onclick="clearAll()">🗑 Tout effacer</button>
+    <button class="btn btn-dl" id="dl-btn" onclick="downloadSelected()">⬇ Télécharger la sélection</button>
+    <button class="btn btn-primary" onclick="exportAllMockups()">📦 Exporter tout (ZIP)</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- PANEL GAUCHE -->
+  <div class="ctrl">
+
+    <!-- Produits -->
+    <div class="section">
+      <div class="section-lbl">① Produits — Photos T-Shirt</div>
+      <div class="prod-tabs">
+        <button class="prod-tab active" onclick="switchProd(0,this)">P1</button>
+        <button class="prod-tab" onclick="switchProd(1,this)">P2</button>
+        <button class="prod-tab" onclick="switchProd(2,this)">P3</button>
+      </div>
+      <div class="prod-panel active" id="prod-panel-0">
+        <div class="shirt-slot" id="shirt-slot-0" onclick="document.getElementById('shirt-file-0').click()">
+          <input type="file" id="shirt-file-0" accept="image/*" style="display:none" onchange="loadShirt(event,0)">
+          <button class="slot-clear" onclick="event.stopPropagation();clearShirt(0)">✕</button>
+          <span class="slot-lbl">👕</span>
+          <span class="slot-hint">Cliquer pour charger</span>
+        </div>
+        <div style="font-size:0.58rem;color:var(--text2);margin-top:6px;text-align:center" id="shirt-info-0">Aucune photo</div>
+      </div>
+      <div class="prod-panel" id="prod-panel-1">
+        <div class="shirt-slot" id="shirt-slot-1" onclick="document.getElementById('shirt-file-1').click()">
+          <input type="file" id="shirt-file-1" accept="image/*" style="display:none" onchange="loadShirt(event,1)">
+          <button class="slot-clear" onclick="event.stopPropagation();clearShirt(1)">✕</button>
+          <span class="slot-lbl">👕</span>
+          <span class="slot-hint">Cliquer pour charger</span>
+        </div>
+        <div style="font-size:0.58rem;color:var(--text2);margin-top:6px;text-align:center" id="shirt-info-1">Aucune photo</div>
+      </div>
+      <div class="prod-panel" id="prod-panel-2">
+        <div class="shirt-slot" id="shirt-slot-2" onclick="document.getElementById('shirt-file-2').click()">
+          <input type="file" id="shirt-file-2" accept="image/*" style="display:none" onchange="loadShirt(event,2)">
+          <button class="slot-clear" onclick="event.stopPropagation();clearShirt(2)">✕</button>
+          <span class="slot-lbl">👕</span>
+          <span class="slot-hint">Cliquer pour charger</span>
+        </div>
+        <div style="font-size:0.58rem;color:var(--text2);margin-top:6px;text-align:center" id="shirt-info-2">Aucune photo</div>
+      </div>
+    </div>
+
+    <!-- Logos 9 -->
+    <div class="section">
+      <div class="section-lbl">② Logos — 9 designs (3×3)</div>
+      <div class="logo-mode-tabs">
+        <button class="logo-tab active" onclick="switchLogoMode('9',this)">9 logos</button>
+        <button class="logo-tab" onclick="switchLogoMode('3',this)">3 logos / rangée</button>
+      </div>
+
+      <!-- Mode 9 logos individuels -->
+      <div id="logos-mode-9">
+        <div class="logos9" id="logos-grid">
+          <div class="logo-slot" id="lslot-1-a" onclick="document.getElementById('lfile-1-a').click()">
+            <input type="file" id="lfile-1-a" accept="image/*" style="display:none" onchange="loadLogo(event,1,'a')">
+            <button class="logo-slot-clear" onclick="event.stopPropagation();clearLogo(1,'a')">✕</button>
+            <span class="logo-slot-lbl">A1</span><span class="logo-slot-hint">+ Logo</span>
+          </div>
+          <div class="logo-slot" id="lslot-1-b" onclick="document.getElementById('lfile-1-b').click()">
+            <input type="file" id="lfile-1-b" accept="image/*" style="display:none" onchange="loadLogo(event,1,'b')">
+            <button class="logo-slot-clear" onclick="event.stopPropagation();clearLogo(1,'b')">✕</button>
+            <span class="logo-slot-lbl">B1</span><span class="logo-slot-hint">+ Logo</span>
+          </div>
+          <div class="logo-slot" id="lslot-1-c" onclick="document.getElementById('lfile-1-c').click()">
+            <input type="file" id="lfile-1-c" accept="image/*" style="display:none" onchange="loadLogo(event,1,'c')">
+            <button class="logo-slot-clear" onclick="event.stopPropagation();clearLogo(1,'c')">✕</button>
+            <span class="logo-slot-lbl">C1</span><span class="logo-slot-hint">+ Logo</span>
+          </div>
+          <div class="logo-slot" id="lslot-2-a" onclick="document.getElementById('lfile-2-a').click()">
+            <input type="file" id="lfile-2-a" accept="image/*" style="display:none" onchange="loadLogo(event,2,'a')">
+            <button class="logo-slot-clear" onclick="event.stopPropagation();clearLogo(2,'a')">✕</button>
+            <span class="logo-slot-lbl">A2</span><span class="logo-slot-hint">+ Logo</span>
+          </div>
+          <div class="logo-slot" id="lslot-2-b" onclick="document.getElementById('lfile-2-b').click()">
+            <input type="file" id="lfile-2-b" accept="image/*" style="display:none" onchange="loadLogo(event,2,'b')">
+            <button class="logo-slot-clear" onclick="event.stopPropagation();clearLogo(2,'b')">✕</button>
+            <span class="logo-slot-lbl">B2</span><span class="logo-slot-hint">+ Logo</span>
+          </div>
+          <div class="logo-slot" id="lslot-2-c" onclick="document.getElementById('lfile-2-c').click()">
+            <input type="file" id="lfile-2-c" accept="image/*" style="display:none" onchange="loadLogo(event,2,'c')">
+            <button class="logo-slot-clear" onclick="event.stopPropagation();clearLogo(2,'c')">✕</button>
+            <span class="logo-slot-lbl">C2</span><span class="logo-slot-hint">+ Logo</span>
+          </div>
+          <div class="logo-slot" id="lslot-3-a" onclick="document.getElementById('lfile-3-a').click()">
+            <input type="file" id="lfile-3-a" accept="image/*" style="display:none" onchange="loadLogo(event,3,'a')">
+            <button class="logo-slot-clear" onclick="event.stopPropagation();clearLogo(3,'a')">✕</button>
+            <span class="logo-slot-lbl">A3</span><span class="logo-slot-hint">+ Logo</span>
+          </div>
+          <div class="logo-slot" id="lslot-3-b" onclick="document.getElementById('lfile-3-b').click()">
+            <input type="file" id="lfile-3-b" accept="image/*" style="display:none" onchange="loadLogo(event,3,'b')">
+            <button class="logo-slot-clear" onclick="event.stopPropagation();clearLogo(3,'b')">✕</button>
+            <span class="logo-slot-lbl">B3</span><span class="logo-slot-hint">+ Logo</span>
+          </div>
+          <div class="logo-slot" id="lslot-3-c" onclick="document.getElementById('lfile-3-c').click()">
+            <input type="file" id="lfile-3-c" accept="image/*" style="display:none" onchange="loadLogo(event,3,'c')">
+            <button class="logo-slot-clear" onclick="event.stopPropagation();clearLogo(3,'c')">✕</button>
+            <span class="logo-slot-lbl">C3</span><span class="logo-slot-hint">+ Logo</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mode 3 logos par rangée -->
+      <div id="logos-mode-3" style="display:none">
+        <div class="row-logo-slots">
+          <div class="row-logo-item">
+            <div class="row-logo-lbl">Rangée 1 <span class="row-badge">× 3 cols</span></div>
+            <div class="row-logo-slot" id="rowslot-1" onclick="document.getElementById('rowfile-1').click()">
+              <input type="file" id="rowfile-1" accept="image/*" style="display:none" onchange="loadRowLogo(event,1)">
+              <button class="slot-clear" onclick="event.stopPropagation();clearRowLogo(1)">✕</button>
+              <span class="slot-hint">+ Logo R1</span>
+            </div>
+          </div>
+          <div class="row-logo-item">
+            <div class="row-logo-lbl">Rangée 2 <span class="row-badge">× 3 cols</span></div>
+            <div class="row-logo-slot" id="rowslot-2" onclick="document.getElementById('rowfile-2').click()">
+              <input type="file" id="rowfile-2" accept="image/*" style="display:none" onchange="loadRowLogo(event,2)">
+              <button class="slot-clear" onclick="event.stopPropagation();clearRowLogo(2)">✕</button>
+              <span class="slot-hint">+ Logo R2</span>
+            </div>
+          </div>
+          <div class="row-logo-item">
+            <div class="row-logo-lbl">Rangée 3 <span class="row-badge">× 3 cols</span></div>
+            <div class="row-logo-slot" id="rowslot-3" onclick="document.getElementById('rowfile-3').click()">
+              <input type="file" id="rowfile-3" accept="image/*" style="display:none" onchange="loadRowLogo(event,3)">
+              <button class="slot-clear" onclick="event.stopPropagation();clearRowLogo(3)">✕</button>
+              <span class="slot-hint">+ Logo R3</span>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:0.55rem;color:var(--text2);margin-top:8px;text-align:center">Chaque logo s'applique aux 3 colonnes de sa rangée</div>
+      </div>
+    </div>
+
+    <!-- Aperçu produit actif -->
+    <div class="section">
+      <div class="section-lbl">Produit actif</div>
+      <div style="font-size:0.65rem;color:var(--text2)" id="active-prod-lbl">Produit 1</div>
+      <div style="font-size:0.58rem;color:var(--text2);margin-top:4px">Basculer entre P1/P2/P3 pour voir les mockups correspondants dans la grille</div>
+    </div>
+
+  </div>
+
+  <!-- CENTRE -->
+  <div class="center">
+    <div class="grid-header">
+      <div>
+        <div class="grid-title" id="grid-title">③ Grille Mockup — <span id="grid-prod-lbl">Produit 1</span></div>
+        <div class="grid-sub">Cliquer pour sélectionner · Survoler pour télécharger</div>
+      </div>
+    </div>
+
+    <div class="mockup-grid" id="mockup-grid">
+      <div class="mock-cell" id="mock-1-a" onclick="selectMockup(1,'a')">
+        <div class="mock-bg" id="mbg-1-a"></div>
+        <div class="mock-logo-wrap" id="mlogo-1-a"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">A1</span></div>
+        <div class="mock-empty" id="mempty-1-a"><span class="e">👕</span><span class="t">A1</span></div>
+        <div class="mock-lbl">A1</div><div class="mock-check">✓</div>
+        <div class="mock-mask-ind">MASK</div>
+        <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(1,'a')">⬇</button>
+      </div>
+      <div class="mock-cell" id="mock-1-b" onclick="selectMockup(1,'b')">
+        <div class="mock-bg" id="mbg-1-b"></div>
+        <div class="mock-logo-wrap" id="mlogo-1-b"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">B1</span></div>
+        <div class="mock-empty" id="mempty-1-b"><span class="e">👕</span><span class="t">B1</span></div>
+        <div class="mock-lbl">B1</div><div class="mock-check">✓</div>
+        <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(1,'b')">⬇</button>
+      </div>
+      <div class="mock-cell" id="mock-1-c" onclick="selectMockup(1,'c')">
+        <div class="mock-bg" id="mbg-1-c"></div>
+        <div class="mock-logo-wrap" id="mlogo-1-c"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">C1</span></div>
+        <div class="mock-empty" id="mempty-1-c"><span class="e">👕</span><span class="t">C1</span></div>
+        <div class="mock-lbl">C1</div><div class="mock-check">✓</div>
+        <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(1,'c')">⬇</button>
+      </div>
+      <div class="mock-cell" id="mock-2-a" onclick="selectMockup(2,'a')">
+        <div class="mock-bg" id="mbg-2-a"></div>
+        <div class="mock-logo-wrap" id="mlogo-2-a"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">A2</span></div>
+        <div class="mock-empty" id="mempty-2-a"><span class="e">👕</span><span class="t">A2</span></div>
+        <div class="mock-lbl">A2</div><div class="mock-check">✓</div>
+        <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(2,'a')">⬇</button>
+      </div>
+      <div class="mock-cell" id="mock-2-b" onclick="selectMockup(2,'b')">
+        <div class="mock-bg" id="mbg-2-b"></div>
+        <div class="mock-logo-wrap" id="mlogo-2-b"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">B2</span></div>
+        <div class="mock-empty" id="mempty-2-b"><span class="e">👕</span><span class="t">B2</span></div>
+        <div class="mock-lbl">B2</div><div class="mock-check">✓</div>
+        <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(2,'b')">⬇</button>
+      </div>
+      <div class="mock-cell" id="mock-2-c" onclick="selectMockup(2,'c')">
+        <div class="mock-bg" id="mbg-2-c"></div>
+        <div class="mock-logo-wrap" id="mlogo-2-c"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">C2</span></div>
+        <div class="mock-empty" id="mempty-2-c"><span class="e">👕</span><span class="t">C2</span></div>
+        <div class="mock-lbl">C2</div><div class="mock-check">✓</div>
+        <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(2,'c')">⬇</button>
+      </div>
+      <div class="mock-cell" id="mock-3-a" onclick="selectMockup(3,'a')">
+        <div class="mock-bg" id="mbg-3-a"></div>
+        <div class="mock-logo-wrap" id="mlogo-3-a"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">A3</span></div>
+        <div class="mock-empty" id="mempty-3-a"><span class="e">👕</span><span class="t">A3</span></div>
+        <div class="mock-lbl">A3</div><div class="mock-check">✓</div>
+        <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(3,'a')">⬇</button>
+      </div>
+      <div class="mock-cell" id="mock-3-b" onclick="selectMockup(3,'b')">
+        <div class="mock-bg" id="mbg-3-b"></div>
+        <div class="mock-logo-wrap" id="mlogo-3-b"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">B3</span></div>
+        <div class="mock-empty" id="mempty-3-b"><span class="e">👕</span><span class="t">B3</span></div>
+        <div class="mock-lbl">B3</div><div class="mock-check">✓</div>
+        <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(3,'b')">⬇</button>
+      </div>
+      <div class="mock-cell" id="mock-3-c" onclick="selectMockup(3,'c')">
+        <div class="mock-bg" id="mbg-3-c"></div>
+        <div class="mock-logo-wrap" id="mlogo-3-c"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">C3</span></div>
+        <div class="mock-empty" id="mempty-3-c"><span class="e">👕</span><span class="t">C3</span></div>
+        <div class="mock-lbl">C3</div><div class="mock-check">✓</div>
+        <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(3,'c')">⬇</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL DROIT -->
+  <div class="right">
+    <div class="section">
+      <div class="section-lbl">Sélection</div>
+      <div class="sel-preview" id="sel-preview">
+        <div class="sel-preview-bg" id="sel-bg"></div>
+        <div class="sel-preview-logo" id="sel-logo-wrap" style="display:none"><img id="sel-logo-img" src=""></div>
+        <div class="sel-empty" id="sel-empty">Cliquer sur un mockup</div>
+      </div>
+      <div class="info-row"><span>Produit</span><span class="info-val" id="info-prod">—</span></div>
+      <div class="info-row"><span>Logo</span><span class="info-val" id="info-logo">—</span></div>
+    </div>
+
+    <!-- Zone & Masque -->
+    <div class="section zone-panel" id="zone-panel">
+      <div class="section-lbl">Zone & Masque</div>
+      <div class="zone-row">
+        <div class="zone-lbl-row"><span>X — position</span><span class="zval" id="zval-x">50%</span></div>
+        <input type="range" class="zone-slider" id="zs-x" min="5" max="95" value="50" oninput="updateZone('x',+this.value)">
+      </div>
+      <div class="zone-row">
+        <div class="zone-lbl-row"><span>Y — position</span><span class="zval" id="zval-y">47%</span></div>
+        <input type="range" class="zone-slider" id="zs-y" min="5" max="95" value="47" oninput="updateZone('y',+this.value)">
+      </div>
+      <div class="zone-row">
+        <div class="zone-lbl-row"><span>Taille (W)</span><span class="zval" id="zval-w">44%</span></div>
+        <input type="range" class="zone-slider" id="zs-w" min="5" max="80" value="44" oninput="updateZone('w',+this.value)">
+      </div>
+      <div class="zone-row">
+        <div class="zone-lbl-row"><span>Rotation</span><span class="zval" id="zval-r">0°</span></div>
+        <input type="range" class="zone-slider" id="zs-r" min="-180" max="180" value="0" oninput="updateZone('rotate',+this.value)">
+      </div>
+      <div class="mask-toggle-row">
+        <span style="font-size:0.6rem;color:var(--text2)">Masque silhouette</span>
+        <button class="mask-toggle-btn" id="mask-toggle-btn" onclick="toggleMask()">OFF</button>
+      </div>
+      <button class="zone-apply-all" onclick="applyZoneToRow()">→ Appliquer à toute la rangée</button>
+      <button class="zone-apply-all" onclick="applyZoneToAll()">↔ Appliquer à toutes les cellules</button>
+      <button class="zone-reset" onclick="resetZone()">↺ Réinitialiser</button>
+    </div>
+
+    <div class="section">
+      <div class="section-lbl">Taille export PNG</div>
+      <div class="export-size-grid">
+        <div class="exp-sz" onclick="setExportSize(600,this)">600px</div>
+        <div class="exp-sz active" onclick="setExportSize(1200,this)">1200px</div>
+        <div class="exp-sz" onclick="setExportSize(2000,this)">2000px</div>
+        <div class="exp-sz" onclick="setExportSize(3000,this)">3000px</div>
+      </div>
+      <button class="btn btn-dl" style="width:100%;font-size:0.7rem" onclick="downloadSelected()">⬇ Télécharger</button>
+    </div>
+
+    <div class="section" style="font-size:0.6rem;color:var(--text2);line-height:1.6">
+      <div class="section-lbl">Guide</div>
+      <div>① Charger 1 à 3 photos de t-shirts</div>
+      <div style="margin-top:4px">② Uploader vos 9 logos</div>
+      <div style="margin-top:4px">③ La grille génère les 9 compositions</div>
+      <div style="margin-top:4px">④ Cliquer → aperçu · ⬇ → télécharger PNG</div>
+    </div>
+  </div>
+
+</div>
+
+<canvas id="export-canvas"></canvas>
+
+<div class="zip-overlay" id="zip-overlay">
+  <div class="zip-title">📦 Génération du ZIP…</div>
+  <div class="zip-bar-wrap"><div class="zip-bar" id="zip-bar"></div></div>
+  <div class="zip-status" id="zip-status">Préparation…</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+// ── État ──────────────────────────────────────────────────
+let activeProd = 0;
+let shirtImgs = {}; // shirtImgs[prodIdx] = dataURL
+let logos9    = {}; // logos9[row][col] = dataURL
+let selected  = null; // { row, col }
+let exportPx  = 1200;
+let logoMode  = '9'; // '9' ou '3'
+let cellConfig = {}; // cellConfig['row-col'] = { x, y, w, rotate, mask }
+
+const DEFAULT_ZONE = { x: 50, y: 47, w: 44, rotate: 0, mask: false };
+const STORAGE_KEY = 'hcs_mockup_v1';
+
+// ── Persistance localStorage ──────────────────────────────
+function saveState() {
+  try {
+    const rowLogos = {};
+    [1,2,3].forEach(r => {
+      const rslot = document.getElementById(`rowslot-${r}`);
+      if (rslot?.classList.contains('loaded')) rowLogos[r] = logos9[r]?.['a'] || null;
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ shirtImgs, logos9, cellConfig, rowLogos, activeProd }));
+  } catch(e) { console.warn('saveState quota exceeded', e); }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const state = JSON.parse(raw);
+
+    // Shirts
+    if (state.shirtImgs) {
+      Object.entries(state.shirtImgs).forEach(([pi, url]) => {
+        pi = +pi;
+        shirtImgs[pi] = url;
+        const slot = document.getElementById(`shirt-slot-${pi}`);
+        if (!slot) return;
+        slot.classList.add('loaded');
+        let img = slot.querySelector('img');
+        if (!img) { img = document.createElement('img'); slot.appendChild(img); }
+        img.src = url;
+        slot.querySelectorAll('.slot-lbl,.slot-hint').forEach(el => el.style.display='none');
+        document.getElementById(`shirt-info-${pi}`).textContent = 'Photo restaurée';
+      });
+    }
+
+    // Logos 9
+    if (state.logos9) {
+      Object.entries(state.logos9).forEach(([row, cols]) => {
+        row = +row;
+        if (!logos9[row]) logos9[row] = {};
+        Object.entries(cols).forEach(([col, url]) => {
+          logos9[row][col] = url;
+          const slot = document.getElementById(`lslot-${row}-${col}`);
+          if (!slot) return;
+          slot.classList.add('loaded');
+          let img = slot.querySelector('img');
+          if (!img) { img = document.createElement('img'); slot.appendChild(img); }
+          img.src = url;
+          slot.querySelectorAll('.logo-slot-lbl,.logo-slot-hint').forEach(el => el.style.display='none');
+        });
+      });
+    }
+
+    // Slots rangée (mode 3)
+    if (state.rowLogos) {
+      [1,2,3].forEach(row => {
+        const url = state.rowLogos[row];
+        if (!url) return;
+        const rslot = document.getElementById(`rowslot-${row}`);
+        if (!rslot) return;
+        rslot.classList.add('loaded');
+        let img = rslot.querySelector('img');
+        if (!img) { img = document.createElement('img'); rslot.appendChild(img); }
+        img.src = url;
+        const hint = rslot.querySelector('.slot-hint');
+        if (hint) hint.style.display = 'none';
+      });
+    }
+
+    // CellConfig (zone & masque) — structuré par produit
+    if (state.cellConfig) Object.assign(cellConfig, state.cellConfig);
+
+    // Produit actif
+    if (state.activeProd != null) {
+      activeProd = state.activeProd;
+      document.querySelectorAll('.prod-tab').forEach((b, i) => b.classList.toggle('active', i === activeProd));
+      [0,1,2].forEach(pi => document.getElementById(`prod-panel-${pi}`)?.classList.toggle('active', pi === activeProd));
+      document.getElementById('active-prod-lbl').textContent = `Produit ${activeProd+1}`;
+      document.getElementById('grid-prod-lbl').textContent = `Produit ${activeProd+1}`;
+    }
+
+    refreshGrid();
+  } catch(e) { console.warn('loadState failed', e); }
+}
+
+function getCellCfg(row, col, prodIdx) {
+  const pi = prodIdx ?? activeProd;
+  if (!cellConfig[pi]) cellConfig[pi] = {};
+  const k = `${row}-${col}`;
+  if (!cellConfig[pi][k]) cellConfig[pi][k] = { ...DEFAULT_ZONE };
+  return cellConfig[pi][k];
+}
+
+// ── Zone & Masque ─────────────────────────────────────────
+function updateZone(key, val) {
+  if (!selected) return;
+  const cfg = getCellCfg(selected.row, selected.col);
+  cfg[key] = val;
+  const lblMap = { x: 'zval-x', y: 'zval-y', w: 'zval-w', rotate: 'zval-r' };
+  const unitMap = { x: '%', y: '%', w: '%', rotate: '°' };
+  if (lblMap[key]) document.getElementById(lblMap[key]).textContent = val + (unitMap[key] || '');
+  applyZoneToCell(selected.row, selected.col);
+  syncSelPreviewZone();
+  saveState();
+}
+
+function toggleMask() {
+  if (!selected) return;
+  const cfg = getCellCfg(selected.row, selected.col);
+  cfg.mask = !cfg.mask;
+  const btn = document.getElementById('mask-toggle-btn');
+  btn.textContent = cfg.mask ? 'ON' : 'OFF';
+  btn.classList.toggle('on', cfg.mask);
+  applyZoneToCell(selected.row, selected.col);
+  syncSelPreviewZone();
+  saveState();
+}
+
+function resetZone() {
+  if (!selected) return;
+  if (!cellConfig[activeProd]) cellConfig[activeProd] = {};
+  const k = `${selected.row}-${selected.col}`;
+  cellConfig[activeProd][k] = { ...DEFAULT_ZONE };
+  syncZonePanel(DEFAULT_ZONE);
+  applyZoneToCell(selected.row, selected.col);
+  syncSelPreviewZone();
+  saveState();
+}
+
+function applyZoneToRow() {
+  if (!selected) return;
+  const src = { ...getCellCfg(selected.row, selected.col) };
+  if (!cellConfig[activeProd]) cellConfig[activeProd] = {};
+  ['a','b','c'].forEach(c => {
+    cellConfig[activeProd][`${selected.row}-${c}`] = { ...src };
+    applyZoneToCell(selected.row, c);
+  });
+  saveState();
+}
+
+function applyZoneToAll() {
+  if (!selected) return;
+  const src = { ...getCellCfg(selected.row, selected.col) };
+  if (!cellConfig[activeProd]) cellConfig[activeProd] = {};
+  [1,2,3].forEach(r => ['a','b','c'].forEach(c => {
+    cellConfig[activeProd][`${r}-${c}`] = { ...src };
+    applyZoneToCell(r, c);
+  }));
+  saveState();
+}
+
+function syncZonePanel(cfg) {
+  document.getElementById('zs-x').value = cfg.x;
+  document.getElementById('zs-y').value = cfg.y;
+  document.getElementById('zs-w').value = cfg.w;
+  document.getElementById('zs-r').value = cfg.rotate;
+  document.getElementById('zval-x').textContent = cfg.x + '%';
+  document.getElementById('zval-y').textContent = cfg.y + '%';
+  document.getElementById('zval-w').textContent = cfg.w + '%';
+  document.getElementById('zval-r').textContent = cfg.rotate + '°';
+  const btn = document.getElementById('mask-toggle-btn');
+  btn.textContent = cfg.mask ? 'ON' : 'OFF';
+  btn.classList.toggle('on', cfg.mask);
+}
+
+function applyZoneToCell(row, col) {
+  const cfg = getCellCfg(row, col);
+  const logoWrap = document.getElementById(`mlogo-${row}-${col}`);
+  if (!logoWrap) return;
+  // Position & taille
+  logoWrap.style.left = cfg.x + '%';
+  logoWrap.style.top = cfg.y + '%';
+  logoWrap.style.width = cfg.w + '%';
+  logoWrap.style.transform = `translate(-50%,-50%) rotate(${cfg.rotate}deg)`;
+  // Masque sur img
+  const logoImg = logoWrap.querySelector('img');
+  const shirtUrl = shirtImgs[activeProd];
+  if (logoImg) {
+    if (cfg.mask && shirtUrl) {
+      logoImg.style.webkitMaskImage = `url(${shirtUrl})`;
+      logoImg.style.maskImage = `url(${shirtUrl})`;
+      logoImg.style.webkitMaskSize = 'cover';
+      logoImg.style.maskSize = 'cover';
+      logoImg.style.webkitMaskPosition = 'center top';
+      logoImg.style.maskPosition = 'center top';
+      logoImg.style.webkitMaskRepeat = 'no-repeat';
+      logoImg.style.maskRepeat = 'no-repeat';
+    } else {
+      logoImg.style.webkitMaskImage = '';
+      logoImg.style.maskImage = '';
+    }
+  }
+  // Indicateur masque sur la cellule
+  const cell = document.getElementById(`mock-${row}-${col}`);
+  if (cell) cell.classList.toggle('mask-on', cfg.mask);
+}
+
+function syncSelPreviewZone() {
+  if (!selected) return;
+  const cfg = getCellCfg(selected.row, selected.col);
+  const selLogoWrap = document.getElementById('sel-logo-wrap');
+  const selLogoImg  = document.getElementById('sel-logo-img');
+  const shirtUrl = shirtImgs[activeProd];
+  selLogoWrap.style.left  = cfg.x + '%';
+  selLogoWrap.style.top   = cfg.y + '%';
+  selLogoWrap.style.width = cfg.w + '%';
+  selLogoWrap.style.transform = `translate(-50%,-50%) rotate(${cfg.rotate}deg)`;
+  if (selLogoImg) {
+    if (cfg.mask && shirtUrl) {
+      selLogoImg.style.webkitMaskImage = `url(${shirtUrl})`;
+      selLogoImg.style.maskImage = `url(${shirtUrl})`;
+      selLogoImg.style.webkitMaskSize = 'cover';
+      selLogoImg.style.maskSize = 'cover';
+      selLogoImg.style.webkitMaskPosition = 'center top';
+      selLogoImg.style.maskPosition = 'center top';
+      selLogoImg.style.webkitMaskRepeat = 'no-repeat';
+      selLogoImg.style.maskRepeat = 'no-repeat';
+    } else {
+      selLogoImg.style.webkitMaskImage = '';
+      selLogoImg.style.maskImage = '';
+    }
+  }
+}
+
+// ── Mode logos ───────────────────────────────────────────
+function switchLogoMode(mode, btn) {
+  logoMode = mode;
+  document.querySelectorAll('.logo-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('logos-mode-9').style.display = mode === '9' ? '' : 'none';
+  document.getElementById('logos-mode-3').style.display = mode === '3' ? '' : 'none';
+}
+
+// ── Chargement logo par rangée (mode 3) ───────────────────
+function loadRowLogo(e, row) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    if (!logos9[row]) logos9[row] = {};
+    // Appliquer le même logo aux 3 colonnes de la rangée
+    ['a','b','c'].forEach(col => {
+      logos9[row][col] = ev.target.result;
+      // Mettre à jour les slots visuels de la grille 9
+      const slot = document.getElementById(`lslot-${row}-${col}`);
+      if (slot) {
+        slot.classList.add('loaded');
+        let img = slot.querySelector('img');
+        if (!img) { img = document.createElement('img'); slot.appendChild(img); }
+        img.src = ev.target.result;
+        slot.querySelectorAll('.logo-slot-lbl,.logo-slot-hint').forEach(el => el.style.display='none');
+      }
+    });
+    // Mettre à jour le slot rangée
+    const rslot = document.getElementById(`rowslot-${row}`);
+    rslot.classList.add('loaded');
+    let img = rslot.querySelector('img');
+    if (!img) { img = document.createElement('img'); rslot.appendChild(img); }
+    img.src = ev.target.result;
+    rslot.querySelector('.slot-hint').style.display = 'none';
+    refreshGrid();
+    saveState();
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearRowLogo(row) {
+  if (logos9[row]) {
+    ['a','b','c'].forEach(col => {
+      delete logos9[row][col];
+      const slot = document.getElementById(`lslot-${row}-${col}`);
+      if (slot) {
+        slot.classList.remove('loaded');
+        const img = slot.querySelector('img');
+        if (img) img.remove();
+        slot.querySelectorAll('.logo-slot-lbl,.logo-slot-hint').forEach(el => el.style.display='');
+      }
+    });
+  }
+  const rslot = document.getElementById(`rowslot-${row}`);
+  rslot.classList.remove('loaded');
+  const img = rslot.querySelector('img');
+  if (img) img.remove();
+  rslot.querySelector('.slot-hint').style.display = '';
+  document.getElementById(`rowfile-${row}`).value = '';
+  refreshGrid();
+  saveState();
+}
+
+// ── Produit tabs ─────────────────────────────────────────
+function switchProd(idx, btn) {
+  activeProd = idx;
+  document.querySelectorAll('.prod-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  [0,1,2].forEach(pi => {
+    document.getElementById(`prod-panel-${pi}`)?.classList.toggle('active', pi === idx);
+  });
+  document.getElementById('active-prod-lbl').textContent = `Produit ${idx+1}`;
+  document.getElementById('grid-prod-lbl').textContent = `Produit ${idx+1}`;
+  refreshGrid();
+  saveState();
+}
+
+// ── Chargement photo t-shirt ─────────────────────────────
+function loadShirt(e, prodIdx) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    shirtImgs[prodIdx] = ev.target.result;
+    const slot = document.getElementById(`shirt-slot-${prodIdx}`);
+    slot.classList.add('loaded');
+    let img = slot.querySelector('img');
+    if (!img) { img = document.createElement('img'); slot.appendChild(img); }
+    img.src = ev.target.result;
+    slot.querySelectorAll('.slot-lbl,.slot-hint').forEach(el => el.style.display='none');
+    document.getElementById(`shirt-info-${prodIdx}`).textContent = file.name;
+    refreshGrid();
+    saveState();
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearShirt(prodIdx) {
+  delete shirtImgs[prodIdx];
+  const slot = document.getElementById(`shirt-slot-${prodIdx}`);
+  slot.classList.remove('loaded');
+  const img = slot.querySelector('img');
+  if (img) img.remove();
+  slot.querySelectorAll('.slot-lbl,.slot-hint').forEach(el => el.style.display='');
+  document.getElementById(`shirt-info-${prodIdx}`).textContent = 'Aucune photo';
+  document.getElementById(`shirt-file-${prodIdx}`).value = '';
+  refreshGrid();
+  saveState();
+}
+
+// ── Chargement logo ───────────────────────────────────────
+function loadLogo(e, row, col) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    if (!logos9[row]) logos9[row] = {};
+    logos9[row][col] = ev.target.result;
+    const slot = document.getElementById(`lslot-${row}-${col}`);
+    slot.classList.add('loaded');
+    let img = slot.querySelector('img');
+    if (!img) { img = document.createElement('img'); slot.appendChild(img); }
+    img.src = ev.target.result;
+    slot.querySelectorAll('.logo-slot-lbl,.logo-slot-hint').forEach(el => el.style.display='none');
+    refreshGrid();
+    saveState();
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearLogo(row, col) {
+  if (logos9[row]) delete logos9[row][col];
+  const slot = document.getElementById(`lslot-${row}-${col}`);
+  slot.classList.remove('loaded');
+  const img = slot.querySelector('img');
+  if (img) img.remove();
+  slot.querySelectorAll('.logo-slot-lbl,.logo-slot-hint').forEach(el => el.style.display='');
+  document.getElementById(`lfile-${row}-${col}`).value = '';
+  refreshGrid();
+  saveState();
+}
+
+// ── Rafraîchir la grille ──────────────────────────────────
+function refreshGrid() {
+  const shirtUrl = shirtImgs[activeProd];
+  [1,2,3].forEach(row => {
+    ['a','b','c'].forEach(col => {
+      const bgEl    = document.getElementById(`mbg-${row}-${col}`);
+      const logoWrap = document.getElementById(`mlogo-${row}-${col}`);
+      const emptyEl = document.getElementById(`mempty-${row}-${col}`);
+      if (!bgEl || !logoWrap) return;
+
+      const hasShirt = !!shirtUrl;
+      const hasLogo  = !!logos9[row]?.[col];
+
+      // Fond t-shirt
+      if (hasShirt) {
+        bgEl.style.backgroundImage = `url(${shirtUrl})`;
+        bgEl.style.backgroundSize = 'cover';
+        bgEl.style.backgroundPosition = 'center top';
+        if (emptyEl) emptyEl.style.display = 'none';
+      } else {
+        bgEl.style.backgroundImage = '';
+        if (emptyEl) emptyEl.style.display = '';
+      }
+
+      // Logo poitrine
+      const lbl = logoWrap.querySelector('span');
+      let logoImg = logoWrap.querySelector('img');
+      if (hasLogo) {
+        if (!logoImg) { logoImg = document.createElement('img'); logoWrap.appendChild(logoImg); }
+        logoImg.src = logos9[row][col];
+        if (lbl) lbl.style.display = 'none';
+      } else {
+        if (logoImg) logoImg.remove();
+        if (lbl) lbl.style.display = '';
+      }
+      // Appliquer config zone (position/masque)
+      applyZoneToCell(row, col);
+    });
+  });
+}
+
+// ── Sélection mockup ──────────────────────────────────────
+function selectMockup(row, col) {
+  document.querySelectorAll('.mock-cell').forEach(c => c.classList.remove('selected'));
+  document.getElementById(`mock-${row}-${col}`)?.classList.add('selected');
+  selected = { row, col, prodIdx: activeProd };
+
+  // Panel droit
+  const shirtUrl = shirtImgs[activeProd];
+  const logoUrl  = logos9[row]?.[col];
+  const selBg    = document.getElementById('sel-bg');
+  const selLogoWrap = document.getElementById('sel-logo-wrap');
+  const selLogoImg  = document.getElementById('sel-logo-img');
+  const selEmpty    = document.getElementById('sel-empty');
+
+  if (shirtUrl) {
+    selBg.style.backgroundImage = `url(${shirtUrl})`;
+    selBg.style.backgroundSize = 'cover';
+    selBg.style.backgroundPosition = 'center top';
+    selEmpty.style.display = 'none';
+  } else {
+    selBg.style.backgroundImage = '';
+    selEmpty.style.display = '';
+  }
+
+  if (logoUrl) {
+    selLogoImg.src = logoUrl;
+    selLogoWrap.style.display = '';
+  } else {
+    selLogoWrap.style.display = 'none';
+  }
+
+  document.getElementById('info-prod').textContent = `Produit ${activeProd+1}`;
+  document.getElementById('info-logo').textContent  = `${col.toUpperCase()}${row}`;
+
+  // Afficher panneau zone & sync sliders
+  document.getElementById('zone-panel').classList.add('visible');
+  syncZonePanel(getCellCfg(row, col));
+  syncSelPreviewZone();
+}
+
+// ── Téléchargement PNG via Canvas ─────────────────────────
+function setExportSize(px, btn) {
+  exportPx = px;
+  document.querySelectorAll('.exp-sz').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function renderToCanvas(row, col, prodIdx, size) {
+  const shirtUrl = shirtImgs[prodIdx];
+  const logoUrl  = logos9[row]?.[col];
+  const canvas = document.getElementById('export-canvas');
+  const w = size;
+  const h = Math.round(size * 3/2); // ratio 2/3
+  canvas.width  = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,w,h);
+
+  if (shirtUrl) {
+    await drawImg(ctx, shirtUrl, 0, 0, w, h, 'cover-top');
+  } else {
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0,0,w,h);
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = `${size*0.15}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('👕', w/2, h/2);
+  }
+
+  if (logoUrl) {
+    const cfg = getCellCfg(row, col, prodIdx);
+    // Charger l'image pour obtenir son vrai ratio
+    const logoImg = await loadImageAsync(logoUrl);
+    const logoW   = w * (cfg.w / 100);
+    const logoH   = logoW * (logoImg.height / logoImg.width); // vrai ratio
+    const centerX = w * (cfg.x / 100);
+    const centerY = h * (cfg.y / 100);
+    const logoX   = centerX - logoW / 2;
+    const logoY   = centerY - logoH / 2; // centré verticalement comme sur l'écran
+
+    const rot = (cfg.rotate || 0) * Math.PI / 180;
+    if (rot !== 0) {
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(rot);
+      ctx.translate(-centerX, -centerY);
+    }
+
+    if (cfg.mask && shirtUrl) {
+      const tmpCanvas = document.createElement('canvas');
+      tmpCanvas.width = w; tmpCanvas.height = h;
+      const tmpCtx = tmpCanvas.getContext('2d');
+      tmpCtx.drawImage(logoImg, logoX, logoY, logoW, logoH);
+      tmpCtx.globalCompositeOperation = 'destination-in';
+      await drawImg(tmpCtx, shirtUrl, 0, 0, w, h, 'cover-top');
+      tmpCtx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(tmpCanvas, 0, 0);
+    } else {
+      ctx.shadowColor = 'rgba(0,0,0,0.6)';
+      ctx.shadowBlur = Math.round(w * 0.01);
+      ctx.drawImage(logoImg, logoX, logoY, logoW, logoH);
+      ctx.shadowBlur = 0;
+    }
+
+    if (rot !== 0) ctx.restore();
+  }
+
+  return canvas;
+}
+
+function loadImageAsync(src) {
+  return new Promise(res => { const img = new Image(); img.onload = () => res(img); img.src = src; });
+}
+
+function drawImg(ctx, src, x, y, w, h, mode) {
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      if (mode === 'cover-top') {
+        const scale = Math.max(w/img.width, h/img.height);
+        const sw = img.width * scale;
+        const sh = img.height * scale;
+        const sx = (w - sw) / 2;
+        ctx.drawImage(img, sx, 0, sw, sh);
+      } else {
+        ctx.drawImage(img, x, y, w, h);
+      }
+      res();
+    };
+    img.src = src;
+  });
+}
+
+function drawImgContain(ctx, src, x, y, maxW, maxH) {
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(maxW/img.width, maxH/img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      const dx = x + (maxW - w) / 2;
+      const dy = y + (maxH - h) / 2;
+      ctx.shadowColor = 'rgba(0,0,0,0.6)';
+      ctx.shadowBlur = 12;
+      ctx.drawImage(img, dx, dy, w, h);
+      ctx.shadowBlur = 0;
+      res();
+    };
+    img.src = src;
+  });
+}
+
+async function downloadCell(row, col) {
+  const canvas = await renderToCanvas(row, col, activeProd, exportPx);
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = `mockup-P${activeProd+1}-${col.toUpperCase()}${row}-${exportPx}px.png`;
+  a.click();
+}
+
+async function downloadSelected() {
+  if (!selected) { alert('Sélectionnez d\'abord un mockup dans la grille.'); return; }
+  await downloadCell(selected.row, selected.col);
+}
+
+async function exportAllMockups() {
+  // Compter le total
+  const jobs = [];
+  for (const pi of [0,1,2]) {
+    if (!shirtImgs[pi]) continue;
+    for (const row of [1,2,3]) {
+      for (const col of ['a','b','c']) {
+        if (logos9[row]?.[col]) jobs.push({ pi, row, col });
+      }
+    }
+  }
+  if (!jobs.length) { alert('Aucun mockup complet (t-shirt + logo) à exporter.'); return; }
+
+  // Afficher overlay
+  const overlay = document.getElementById('zip-overlay');
+  const bar     = document.getElementById('zip-bar');
+  const status  = document.getElementById('zip-status');
+  overlay.classList.add('visible');
+
+  try {
+    const zip = new JSZip();
+    const root = zip.folder('Collection-HCS');
+
+    for (let i = 0; i < jobs.length; i++) {
+      const { pi, row, col } = jobs[i];
+      const pct = Math.round((i / jobs.length) * 90);
+      bar.style.width = pct + '%';
+      status.textContent = `Produit ${pi+1} — logo ${col.toUpperCase()}${row} (${i+1}/${jobs.length})`;
+
+      const prevActive = activeProd;
+      activeProd = pi;
+      const canvas = await renderToCanvas(row, col, pi, exportPx);
+      activeProd = prevActive;
+
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      const prodFolder = root.folder(`Produit-${pi+1}`);
+      prodFolder.file(`${col.toUpperCase()}${row}.png`, blob);
+    }
+
+    bar.style.width = '95%';
+    status.textContent = 'Compression ZIP…';
+    const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+
+    bar.style.width = '100%';
+    status.textContent = 'Téléchargement…';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(zipBlob);
+    a.download = 'Collection-HCS.zip';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  } finally {
+    setTimeout(() => overlay.classList.remove('visible'), 800);
+  }
+}
+
+function clearAll() {
+  if (!confirm('Effacer toutes les photos et logos ?')) return;
+  [0,1,2].forEach(pi => { if (shirtImgs[pi]) clearShirt(pi); });
+  [1,2,3].forEach(row => ['a','b','c'].forEach(col => { if (logos9[row]?.[col]) clearLogo(row,col); }));
+  selected = null;
+  cellConfig = {};
+  document.getElementById('sel-bg').style.backgroundImage = '';
+  document.getElementById('sel-logo-wrap').style.display = 'none';
+  document.getElementById('sel-empty').style.display = '';
+  document.getElementById('info-prod').textContent = '—';
+  document.getElementById('info-logo').textContent = '—';
+  localStorage.removeItem(STORAGE_KEY);
+}
+document.addEventListener('DOMContentLoaded', loadState);
+</script>
+</body>
+</html>

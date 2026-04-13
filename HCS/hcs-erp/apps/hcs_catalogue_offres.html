@@ -1,0 +1,413 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@700&family=Barlow:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#0d0d0d;--lava:#e8340a;--gold:#f0a500;--cream:#f5f0e8;
+  --fh:'Bebas Neue',sans-serif;--fc:'Barlow Condensed',sans-serif;--fb:'Barlow',sans-serif;
+}
+body{font-family:var(--fb);color:var(--ink);background:#fff;}
+
+.page-header{background:var(--ink);padding:28px 32px 24px;display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;}
+.ph-logo{font-family:var(--fh);font-size:36px;color:#fff;letter-spacing:.05em;line-height:1;}
+.ph-logo span{color:var(--lava);}
+.ph-title{font-family:var(--fc);font-size:13px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:3px;}
+.ph-sub{font-family:var(--fh);font-size:22px;color:rgba(255,255,255,.85);letter-spacing:.05em;}
+
+/* PROCESS IDEE */
+.process-section{background:var(--cream);padding:28px 32px 24px;}
+.sec-title{font-family:var(--fh);font-size:28px;color:var(--ink);letter-spacing:.04em;margin-bottom:4px;}
+.sec-title span{color:var(--lava);}
+.sec-sub{font-size:13px;color:#666;margin-bottom:20px;}
+.process-steps{display:flex;gap:0;overflow-x:auto;}
+.ps{flex:1;min-width:140px;padding:16px 14px;border-right:1px solid rgba(0,0,0,.08);position:relative;}
+.ps:last-child{border-right:none;}
+.ps-num{font-family:var(--fh);font-size:44px;color:rgba(232,52,10,.18);line-height:1;}
+.ps-title{font-family:var(--fc);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);margin-top:4px;}
+.ps-desc{font-size:12px;color:#666;margin-top:5px;line-height:1.5;}
+.ps-arrow{position:absolute;right:-10px;top:50%;transform:translateY(-50%);width:20px;height:20px;background:var(--lava);border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:2;font-size:10px;color:#fff;}
+.ps:last-child .ps-arrow{display:none;}
+
+/* FILTRES */
+.filter-bar{padding:16px 32px;background:#fff;border-bottom:1px solid #eee;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.filter-label{font-family:var(--fc);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#999;margin-right:4px;}
+.fb-btn{font-family:var(--fc);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:6px 14px;border-radius:2px;border:1.5px solid #ddd;background:#fff;cursor:pointer;color:#555;transition:all .12s;}
+.fb-btn.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+.fb-btn:hover:not(.active){border-color:var(--ink);}
+
+/* TABLEAU */
+.table-wrap{padding:0 32px 32px;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;margin-top:20px;min-width:900px;}
+thead tr{background:var(--ink);}
+th{font-family:var(--fc);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.7);padding:12px 14px;text-align:left;border-right:1px solid rgba(255,255,255,.08);}
+th:last-child{border-right:none;}
+th.col-check{width:32px;text-align:center;}
+
+/* Catégorie header row */
+.cat-row td{background:var(--lava);padding:8px 14px;font-family:var(--fh);font-size:17px;letter-spacing:.08em;color:#fff;}
+.cat-row td span{font-family:var(--fc);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-left:12px;}
+
+/* Produit row */
+tr.prod-row{border-bottom:1px solid #f0ede8;transition:background .1s;}
+tr.prod-row:hover{background:#faf8f5;}
+tr.prod-row.alt{background:#fdfcfa;}
+td{padding:11px 14px;font-size:13px;vertical-align:top;}
+td.col-check{text-align:center;font-size:16px;}
+.prod-name{font-family:var(--fc);font-size:14px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink);}
+.prod-sub{font-size:11px;color:#999;margin-top:2px;}
+.prod-unit{font-size:11px;font-family:var(--fc);font-weight:700;letter-spacing:.04em;}
+
+/* Badges -->*/
+.badge{display:inline-block;font-family:var(--fc);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:2px;margin-right:3px;margin-bottom:3px;}
+.b-local{background:#e8f5ed;color:#1a6e3a;}
+.b-ext{background:#fff3e0;color:#7a4000;}
+.b-hot{background:#fde8e8;color:#a00;}
+.b-new{background:#e8eeff;color:#1a2ea0;}
+.b-b2b{background:#f3e8ff;color:#5a1a9a;}
+.b-form{background:#e8f5f3;color:#0a5a4a;}
+
+/* Avantages bullets */
+.av-list{display:flex;flex-direction:column;gap:3px;}
+.av-item{display:flex;align-items:flex-start;gap:5px;font-size:12px;color:#444;}
+.av-dot{width:5px;height:5px;border-radius:50%;background:var(--lava);flex-shrink:0;margin-top:4px;}
+
+/* Prix range */
+.prix-range{font-family:var(--fh);font-size:17px;color:var(--ink);letter-spacing:.02em;}
+.prix-xpf{font-family:var(--fb);font-size:10px;color:#999;font-weight:600;}
+
+/* Cible icons */
+.cible{font-size:12px;color:#555;}
+
+/* STATS BAR */
+.stats-bar{background:var(--ink);display:flex;flex-wrap:wrap;gap:0;padding:0 32px;}
+.stat{flex:1;min-width:160px;padding:18px 16px;border-right:1px solid rgba(255,255,255,.07);}
+.stat:last-child{border-right:none;}
+.stat-num{font-family:var(--fh);font-size:40px;color:var(--lava);line-height:1;}
+.stat-label{font-family:var(--fc);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-top:2px;}
+
+/* Idées campagnes section */
+.ideas-section{padding:28px 32px;background:var(--cream);}
+.ideas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:16px;}
+.idea-card{background:#fff;border-radius:3px;padding:16px;border-left:3px solid var(--lava);}
+.idea-num{font-family:var(--fh);font-size:32px;color:rgba(232,52,10,.2);line-height:1;}
+.idea-title{font-family:var(--fc);font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);margin-top:4px;}
+.idea-desc{font-size:12px;color:#666;margin-top:6px;line-height:1.55;}
+.idea-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px;}
+
+/* Responsive */
+@media(max-width:600px){.process-steps{flex-direction:column;}.ph-logo{font-size:26px;}}
+</style>
+
+<div class="page-header">
+  <div>
+    <div class="ph-logo">HIGH <span>COFFEE</span> SHIRT</div>
+  </div>
+  <div>
+    <div class="ph-title">Catalogue complet des offres</div>
+    <div class="ph-sub">TABLEAU RÉCAPITULATIF · PRODUITS & AVANTAGES</div>
+  </div>
+</div>
+
+<!-- PROCESSUS IDÉE -->
+<div class="process-section">
+  <div class="sec-title">Processus de <span>génération d'idées</span> de vente</div>
+  <div class="sec-sub">6 étapes pour transformer chaque opportunité en campagne</div>
+  <div class="process-steps">
+    <div class="ps">
+      <div class="ps-num">01</div>
+      <div class="ps-title">Observer</div>
+      <div class="ps-desc">Tendances locales, événements PF, fêtes, saisons, actualités Tahiti</div>
+      <div class="ps-arrow">→</div>
+    </div>
+    <div class="ps">
+      <div class="ps-num">02</div>
+      <div class="ps-title">Cibler</div>
+      <div class="ps-desc">Particulier, artisan, club sportif, école, entreprise, touriste</div>
+      <div class="ps-arrow">→</div>
+    </div>
+    <div class="ps">
+      <div class="ps-num">03</div>
+      <div class="ps-title">Choisir produit</div>
+      <div class="ps-desc">Quel produit HCS répond le mieux au besoin identifié ?</div>
+      <div class="ps-arrow">→</div>
+    </div>
+    <div class="ps">
+      <div class="ps-num">04</div>
+      <div class="ps-title">Créer l'offre</div>
+      <div class="ps-desc">Prix, format (unité/série), visuel pub, texte accroche</div>
+      <div class="ps-arrow">→</div>
+    </div>
+    <div class="ps">
+      <div class="ps-num">05</div>
+      <div class="ps-title">Diffuser</div>
+      <div class="ps-desc">Facebook Ads, story Instagram, WhatsApp, bouche à oreille</div>
+      <div class="ps-arrow">→</div>
+    </div>
+    <div class="ps">
+      <div class="ps-num">06</div>
+      <div class="ps-title">Mesurer</div>
+      <div class="ps-desc">Commandes reçues, coût/vente, répéter ce qui fonctionne</div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat"><div class="stat-num">16</div><div class="stat-label">Produits & services</div></div>
+  <div class="stat"><div class="stat-num">6</div><div class="stat-label">Catégories</div></div>
+  <div class="stat"><div class="stat-num">5</div><div class="stat-label">Cibles marché</div></div>
+  <div class="stat"><div class="stat-num">8</div><div class="stat-label">Idées campagnes</div></div>
+</div>
+
+<!-- TABLEAU -->
+<div class="table-wrap">
+<table>
+<thead>
+  <tr>
+    <th class="col-check">★</th>
+    <th style="min-width:180px;">Produit / Service</th>
+    <th style="min-width:100px;">Format vente</th>
+    <th style="min-width:140px;">Avantages clés</th>
+    <th style="min-width:120px;">Cibles</th>
+    <th style="min-width:90px;">Prix indicatif</th>
+    <th style="min-width:120px;">Tags stratégiques</th>
+  </tr>
+</thead>
+<tbody>
+
+<!-- ── TEXTILE PERSONNALISÉ ── -->
+<tr class="cat-row"><td colspan="7">👕 TEXTILE PERSONNALISÉ <span>Impression locale DTF · Unité & série</span></td></tr>
+
+<tr class="prod-row">
+  <td class="col-check">⭐</td>
+  <td><div class="prod-name">T-shirt uni (blanc/couleur)</div><div class="prod-sub">Stock local · Prêt à imprimer</div></td>
+  <td><div class="prod-unit">Unité · Lot</div></td>
+  <td><div class="av-list"><div class="av-item"><div class="av-dot"></div>Base universelle, toutes impressions</div><div class="av-item"><div class="av-dot"></div>Disponible XS → 3XL</div><div class="av-item"><div class="av-dot"></div>Marge simple à calculer</div></div></td>
+  <td class="cible">Particuliers, écoles, clubs, entreprises</td>
+  <td><div class="prix-range">700–1 400</div><div class="prix-xpf">XPF / pièce</div></td>
+  <td><span class="badge b-local">Local</span><span class="badge b-hot">Bestseller</span></td>
+</tr>
+
+<tr class="prod-row alt">
+  <td class="col-check">⭐</td>
+  <td><div class="prod-name">T-shirt imprimé DTF</div><div class="prod-sub">Impression locale, 1 pièce min</div></td>
+  <td><div class="prod-unit">Unité · Série 5–50</div></td>
+  <td><div class="av-list"><div class="av-item"><div class="av-dot"></div>Aucun minimum — différenciateur clé PF</div><div class="av-item"><div class="av-dot"></div>Rendu couleurs vives, lavage résistant</div><div class="av-item"><div class="av-dot"></div>Délai court (24–72h)</div></div></td>
+  <td class="cible">Particuliers, touristes, artistes, PME</td>
+  <td><div class="prix-range">2 900–5 500</div><div class="prix-xpf">XPF / pièce</div></td>
+  <td><span class="badge b-local">Local</span><span class="badge b-hot">Produit phare</span><span class="badge b-new">FB Ads</span></td>
+</tr>
+
+<tr class="prod-row">
+  <td class="col-check"></td>
+  <td><div class="prod-name">T-shirt all-over imprimé</div><div class="prod-sub">Sous-traitance étranger · Délai 2–3 sem</div></td>
+  <td><div class="prod-unit">Série min. 10–20 pcs</div></td>
+  <td><div class="av-list"><div class="av-item"><div class="av-dot"></div>Impression 360°, effet premium</div><div class="av-item"><div class="av-dot"></div>Marché collector / artiste</div><div class="av-item"><div class="av-dot"></div>Forte valeur perçue</div></div></td>
+  <td class="cible">Artistes, influenceurs, marques locales</td>
+  <td><div class="prix-range">4 500–9 000</div><div class="prix-xpf">XPF / pièce</div></td>
+  <td><span class="badge b-ext">Sous-traité</span><span class="badge b-new">Premium</span></td>
+</tr>
+
+<tr class="prod-row alt">
+  <td class="col-check">⭐</td>
+  <td><div class="prod-name">Casquette unie</div><div class="prod-sub">Stock local · Base broderie ou transfert</div></td>
+  <td><div class="prod-unit">Unité · Lot</div></td>
+  <td><div class="av-list"><div class="av-item"><div class="av-dot"></div>Accessoire mode intemporel PF</div><div class="av-item"><div class="av-dot"></div>Forte marge à l'unité</div></div></td>
+  <td class="cible">Particuliers, clubs, événements</td>
+  <td><div class="prix-range">1 200–2 000</div><div class="prix-xpf">XPF / pièce</div></td>
+  <td><span class="badge b-local">Local</span></td>
+</tr>
+
+<tr class="prod-row">
+  <td class="col-check">⭐</td>
+  <td><div class="prod-name">Casquette imprimée</div><div class="prod-sub">Logo / design sur casquette locale</div></td>
+  <td><div class="prod-unit">Unité · Série</div></td>
+  <td><div class="av-list"><div class="av-item"><div class="av-dot"></div>Idéal cadeaux entreprise / équipe</div><div class="av-item"><div class="av-dot"></div>Différenciation par rapport aux fournisseurs</div></div></td>
+  <td class="cible">PME, clubs sportifs, événements</td>
+  <td><div class="prix-range">3 500–6 500</div><div class="prix-xpf">XPF / pièce</div></td>
+  <td><span class="badge b-local">Local</span><span class="badge b-b2b">B2B</span></td>
+</tr>
+
+<!-- ── TRANSFERTS ── -->
+<tr class="cat-row"><td colspan="7">🔥 TRANSFERTS <span>Thermofusible & thermocollant · Prêts à appliquer</span></td></tr>
+
+<tr class="prod-row alt">
+  <td class="col-check">⭐</td>
+  <td><div class="prod-name">Transfert thermofusible</div><div class="prod-sub">Découpe vinyle + chaleur — flocage</div></td>
+  <td><div class="prod-unit">Unité · Lot</div></td>
+  <td><div class="av-list"><div class="av-item"><div class="av-dot"></div>Résultat professionnel et durable</div><div class="av-item"><div class="av-dot"></div>Idéal logos simples, textes, numéros sport</div><div class="av-item"><div class="av-dot"></div>Applicable sur n'importe quel support textile</div></div></td>
+  <td class="cible">Clubs sportifs, écoles, équipes</td>
+  <td><div class="prix-range">800–2 500</div><div class="prix-xpf">XPF / pièce</div></td>
+  <td><span class="badge b-local">Local</span><span class="badge b-b2b">B2B Sport</span></td>
+</tr>
+
+<tr class="prod-row">
+  <td class="col-check"></td>
+  <td><div class="prod-name">Transfert thermocollant</div><div class="prod-sub">Film DTF prêt à coller</div></td>
+  <td><div class="prod-unit">Unité · Rouleau / lot</div></td>
+  <td><div class="av-list"><div class="av-item"><div class="av-dot"></div>Application rapide à domicile ou atelier</div><div class="av-item"><div class="av-dot"></div>Revente à d'autres ateliers / particuliers</div><div class="av-item"><div class="av-dot"></div>Commandes récurrentes</div></div></td>
+  <td class="cible">Artisans, couturières, revendeurs</td>
+  <td><div class="prix-range">400–1 800</div><div class="prix-xpf">XPF / motif</div></td>
+  <td><span class="badge b-local">Local</span><span class="badge b-b2b">Revendeur</span></td>
+</tr>
+
+<!-- ── STICKERS VINYLE ── -->
+<tr class="cat-row"><td colspan="7">🚗 STICKERS VINYLE À LA DÉCOUPE <span>Voitures · Bateaux · Motos · Scooters</span></td></tr>
+
+<tr class="prod-row alt">
+  <td class="col-check">⭐</td>
+  <td><div class="prod-name">Sticker vinyle auto/moto/bateau</div><div class="prod-sub">Découpe plotter · Vinyle extérieur résistant UV</div></td>
+  <td><div class="prod-unit">Unité · Série · Sur-mesure</div></td>
+  <td><div class="av-list"><div class="av-item"><div class="av-dot"></div>Résistant eau, UV, sel marin — parfait PF</div><div class="av-item"><div class="av-dot"></div>Personnalisation nom bateau, plaque, déco</div><div class="av-item"><div class="av-dot"></div>Marché très actif localement</div><div class="av-item"><div class="av-dot"></div>Livrable en 24h</div></div></td>
+  <td class="cible">Particuliers, garages, clubs nautiques, livraisons</td>
+  <td><div class="prix-range">500–15 000</div><div class="prix-xpf">XPF (selon taille)</div></td>
+  <td><span class="badge b-local">Local</span><span class="badge b-hot">Marché actif</span><span class="badge b-new">FB Ads</span></td>
+</tr>
+
+<!-- ── FORMATION ── -->
+<tr class="cat-row"><td colspan="7">🎓 FORMATIONS <span>Impression · Flocage · Plotter</span></td></tr>
+
+<tr class="prod-row">
+  <td class="col-check">⭐</td>
+  <td><div class="prod-name">Formation impression / flocage</div><div class="prod-sub">En atelier à Papeete · Présentiel</div></td>
+  <td><div class="prod-unit">1 journée / demi-journée</div></td>
+  <td><div class="av-list"><div class="av-item"><div class="av-dot"></div>Revenus non liés à la production</div><div class="av-item"><div class="av-dot"></div>Crée des clients fidèles (consommables)</div><div class="av-item"><div class="av-dot"></div>Positionnement expert HCS</div><div class="av-item"><div class="av-dot"></div>Éligible aide à la formation pro</div></div></td>
+  <td class="cible">Couturières, artisans, clubs, TPE</td>
+  <td><div class="prix-range">8 000–25 000</div><div class="prix-xpf">XPF / pers.</div></td>
+  <td><span class="badge b-form">Formation</span><span class="badge b-b2b">B2B Pro</span><span class="badge b-hot">Haute marge</span></td>
+</tr>
+
+<!-- ── CONSOMMABLES ── -->
+<tr class="cat-row"><td colspan="7">🧰 CONSOMMABLES <span>Vinyles · Accessoires · Rouleaux</span></td></tr>
+
+<tr class="prod-row alt">
+  <td class="col-check">⭐</td>
+  <td><div class="prod-name">Rouleau vinyle thermocollant</div><div class="prod-sub">Vinyle flocage · Plusieurs coloris</div></td>
+  <td><div class="prod-unit">Mètre / Rouleau complet</div></td>
+  <td><div class="av-list"><div class="av-item"><div class="av-dot"></div>Achat récurrent, revenus stables</div><div class="av-item"><div class="av-dot"></div>Fidélise les clients formés</div></div></td>
+  <td class="cible">Artisans, ateliers, revendeurs</td>
+  <td><div class="prix-range">1 500–18 000</div><div class="prix-xpf">XPF / rouleau</div></td>
+  <td><span class="badge b-b2b">Récurrent</span><span class="badge b-local">Stock local</span></td>
+</tr>
+
+<tr class="prod-row">
+  <td class="col-check">⭐</td>
+  <td><div class="prod-name">Rouleau vinyle sticker</div><div class="prod-sub">Vinyle adhésif extérieur · Couleurs / blanc / transparent</div></td>
+  <td><div class="prod-unit">Mètre / Rouleau</div></td>
+  <td><div class="av-list"><div class="av-item"><div class="av-dot"></div>Consommable essentiel pour tout stickeur</div><div class="av-item"><div class="av-dot"></div>Vente complémentaire au plotter</div></div></td>
+  <td class="cible">Artisans, ateliers, signalétique</td>
+  <td><div class="prix-range">2 000–22 000</div><div class="prix-xpf">XPF / rouleau</div></td>
+  <td><span class="badge b-b2b">Récurrent</span></td>
+</tr>
+
+<!-- ── MATÉRIEL ── -->
+<tr class="cat-row"><td colspan="7">⚙️ MATÉRIEL PROFESSIONNEL <span>Presses · Plotters · Accessoires</span></td></tr>
+
+<tr class="prod-row alt">
+  <td class="col-check">⭐</td>
+  <td><div class="prod-name">Presse T-shirt</div><div class="prod-sub">Presse à chaleur 38×38 / 40×50</div></td>
+  <td><div class="prod-unit">Unité</div></td>
+  <td><div class="av-list"><div class="av-item"><div class="av-dot"></div>Panier moyen élevé (ticket important)</div><div class="av-item"><div class="av-dot"></div>Crée un écosystème client HCS complet</div><div class="av-item"><div class="av-dot"></div>SAV local — avantage concurrentiel fort</div></div></td>
+  <td class="cible">Artisans débutants, ateliers, associations</td>
+  <td><div class="prix-range">35 000–90 000</div><div class="prix-xpf">XPF / unité</div></td>
+  <td><span class="badge b-b2b">Gros ticket</span><span class="badge b-hot">Panier ×10</span></td>
+</tr>
+
+<tr class="prod-row">
+  <td class="col-check">⭐</td>
+  <td><div class="prod-name">Presse casquette</div><div class="prod-sub">Presse spécifique forme casquette</div></td>
+  <td><div class="prod-unit">Unité</div></td>
+  <td><div class="av-list"><div class="av-item"><div class="av-dot"></div>Complément naturel de la presse tshirt</div><div class="av-item"><div class="av-dot"></div>Peu de concurrence locale</div></div></td>
+  <td class="cible">Ateliers existants</td>
+  <td><div class="prix-range">28 000–55 000</div><div class="prix-xpf">XPF / unité</div></td>
+  <td><span class="badge b-b2b">Gros ticket</span></td>
+</tr>
+
+<tr class="prod-row alt">
+  <td class="col-check">⭐</td>
+  <td><div class="prod-name">Plotter de découpe</div><div class="prod-sub">Vinyl cutter · Marques pro</div></td>
+  <td><div class="prod-unit">Unité</div></td>
+  <td><div class="av-list"><div class="av-item"><div class="av-dot"></div>Machine indispensable pour tout atelier</div><div class="av-item"><div class="av-dot"></div>Génère ventes consommables longue durée</div><div class="av-item"><div class="av-dot"></div>Formation intégrée possible</div></div></td>
+  <td class="cible">Créateurs, ateliers, auto-entrepreneurs</td>
+  <td><div class="prix-range">45 000–180 000</div><div class="prix-xpf">XPF / unité</div></td>
+  <td><span class="badge b-b2b">Gros ticket</span><span class="badge b-form">+ Formation</span></td>
+</tr>
+
+<tr class="prod-row">
+  <td class="col-check"></td>
+  <td><div class="prod-name">Accessoires échenillage</div><div class="prod-sub">Pinces, crochets, squeegees, spatules</div></td>
+  <td><div class="prod-unit">Unité / Kit</div></td>
+  <td><div class="av-list"><div class="av-item"><div class="av-dot"></div>Produits d'appel, vente facile</div><div class="av-item"><div class="av-dot"></div>Complément achat machine ou consommables</div></div></td>
+  <td class="cible">Tout atelier</td>
+  <td><div class="prix-range">300–3 500</div><div class="prix-xpf">XPF / kit</div></td>
+  <td><span class="badge b-local">Accessoires</span></td>
+</tr>
+
+</tbody>
+</table>
+</div>
+
+<!-- IDÉES CAMPAGNES -->
+<div class="ideas-section">
+  <div class="sec-title">Idées de <span>campagnes</span> générées</div>
+  <div class="sec-sub">Exemples d'opportunités à exploiter maintenant en Polynésie française</div>
+  <div class="ideas-grid">
+
+    <div class="idea-card">
+      <div class="idea-num">01</div>
+      <div class="idea-title">Heiva & Fêtes juillet</div>
+      <div class="idea-desc">T-shirts & casquettes imprimés motifs polynésiens pour les groupes de danse et associations culturelles.</div>
+      <div class="idea-tags"><span class="badge b-hot">Saisonnier</span><span class="badge b-b2b">Groupes</span></div>
+    </div>
+
+    <div class="idea-card">
+      <div class="idea-num">02</div>
+      <div class="idea-title">Clubs sportifs</div>
+      <div class="idea-desc">Maillots, tshirts d'équipe avec numéros et logos. Transferts thermofusibles pour budgets serrés. Fidélisation annuelle.</div>
+      <div class="idea-tags"><span class="badge b-b2b">Récurrent</span><span class="badge b-local">Local</span></div>
+    </div>
+
+    <div class="idea-card">
+      <div class="idea-num">03</div>
+      <div class="idea-title">Marquage flotte véhicules</div>
+      <div class="idea-desc">Stickers vinyle pour logos d'entreprise sur voitures, camionnettes, bateaux de pêche, scooters livraison.</div>
+      <div class="idea-tags"><span class="badge b-hot">Gros ticket</span><span class="badge b-b2b">PME</span></div>
+    </div>
+
+    <div class="idea-card">
+      <div class="idea-num">04</div>
+      <div class="idea-title">Pack "Lance ton atelier"</div>
+      <div class="idea-desc">Bundle presse + plotter + formation + consommables 1 an. Crédit ou paiement en plusieurs fois. Cible nouveaux créateurs.</div>
+      <div class="idea-tags"><span class="badge b-hot">Panier max</span><span class="badge b-form">Formation</span></div>
+    </div>
+
+    <div class="idea-card">
+      <div class="idea-num">05</div>
+      <div class="idea-title">Cadeaux personnalisés entreprise</div>
+      <div class="idea-desc">Tshirts & casquettes brodés/imprimés pour séminaires, fêtes de fin d'année, cadeaux clients B2B.</div>
+      <div class="idea-tags"><span class="badge b-b2b">B2B</span><span class="badge b-new">Noël/Fêtes</span></div>
+    </div>
+
+    <div class="idea-card">
+      <div class="idea-num">06</div>
+      <div class="idea-title">Artistes & créateurs locaux</div>
+      <div class="idea-desc">Merch personnalisé pour musiciens, tatoueurs, graphistes. All-over ou DTF local. Collection limitée = buzz.</div>
+      <div class="idea-tags"><span class="badge b-new">Collector</span><span class="badge b-hot">Viral</span></div>
+    </div>
+
+    <div class="idea-card">
+      <div class="idea-num">07</div>
+      <div class="idea-title">Touristes & souvenirs</div>
+      <div class="idea-desc">Tshirt imprimé "Tahiti" customisable sur place en 1h. Partenariat hôtels, croisières, boutiques aéroport.</div>
+      <div class="idea-tags"><span class="badge b-new">Tourisme</span><span class="badge b-b2b">Partenaires</span></div>
+    </div>
+
+    <div class="idea-card">
+      <div class="idea-num">08</div>
+      <div class="idea-title">Revendeurs & sous-traitants</div>
+      <div class="idea-desc">Programme revendeur pour couturières, boutiques, auto-entrepreneurs. Transferts thermocollants en gros.</div>
+      <div class="idea-tags"><span class="badge b-b2b">Réseau</span><span class="badge b-form">Récurrent</span></div>
+    </div>
+
+  </div>
+</div>

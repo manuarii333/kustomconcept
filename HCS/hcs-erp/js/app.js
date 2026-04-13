@@ -488,9 +488,9 @@ function renderView() {
       /* La vue apps-hcs est rendue en interne (grille de liens) */
       if (view === 'apps-hcs') {
         renderAppsHCS(container);
-      /* picwish-pipeline : fichier dans le dossier parent, pas dans modules/ */
+      /* picwish-pipeline : servi depuis apps/ */
       } else if (view === 'picwish-pipeline') {
-        renderIframe('../picwish-pipeline.html', container);
+        renderIframe('apps/picwish-pipeline.html', container);
       } else {
         renderIframe(`modules/${view}.html`, container);
       }
@@ -622,13 +622,13 @@ function renderAppsHCS(container) {
       label : '🏭 Production & Design',
       color : '#e09a4f',
       apps  : [
-        { icon:'🖨️', nom:'DTF Plaques',       url:'../dtf-plaques-transfert.html',              desc:'Calcul & impression plaques DTF transfert' },
-        { icon:'🧮', nom:'Calculateur DTF',    url:'../dtf-calculator-hcs-v2.html',              desc:'Coûts DTF landed en XPF (douane + TVA)'    },
-        { icon:'🎨', nom:'Calculateur Vinyle', url:'../calculateur-vinyl-hcs.html',              desc:'Prix de revient vinyle au cm²'              },
-        { icon:'🖼️', nom:'MockupForge v12',    url:'../mockup-forge-v12.html',                   desc:'Générateur de mockups produits HCS'         },
-        { icon:'🖨️', nom:'DTF Studio',         url:'../dtf-studio/dtf%20studio.html',            desc:'Studio de composition fichiers DTF'         },
-        { icon:'🖼️', nom:'PicWish Pipeline',   url:'../picwish-pipeline/picwish-pipeline.html',  desc:'Pipeline retouche & suppression de fond IA' },
-        { icon:'👕', nom:'T-Shirt Mockup',     url:'../campaign/tshirt-mockup-studio.html',      desc:'Studio mockup t-shirts & textile'           },
+        { icon:'🖨️', nom:'DTF Plaques',       url:'apps/dtf-plaques-transfert.html',    desc:'Calcul & impression plaques DTF transfert' },
+        { icon:'🧮', nom:'Calculateur DTF',    url:'apps/dtf-calculator-hcs-v2.html',    desc:'Coûts DTF landed en XPF (douane + TVA)'    },
+        { icon:'🎨', nom:'Calculateur Vinyle', url:'apps/calculateur-vinyl-hcs.html',    desc:'Prix de revient vinyle au cm²'              },
+        { icon:'🖼️', nom:'MockupForge v12',    url:'apps/mockup-forge-v12.html',         desc:'Générateur de mockups produits HCS'         },
+        { icon:'🖨️', nom:'DTF Studio',         url:'apps/dtf-studio.html',               desc:'Studio de composition fichiers DTF'         },
+        { icon:'🖼️', nom:'PicWish Pipeline',   url:'apps/picwish-pipeline.html',         desc:'Pipeline retouche & suppression de fond IA' },
+        { icon:'👕', nom:'T-Shirt Mockup',     url:'apps/tshirt-mockup-studio.html',     desc:'Studio mockup t-shirts & textile'           },
       ]
     },
     {
@@ -636,12 +636,12 @@ function renderAppsHCS(container) {
       label : '📡 Marketing & Ventes',
       color : '#4a9fff',
       apps  : [
-        { icon:'📡', nom:'Andromeda Builder',     url:'../campaign/andromeda-campaign.html',              desc:'Éditeur de campagnes marketing omnicanal'  },
-        { icon:'🏗️', nom:'HCS Builder v2',        url:'../hcs-builder-v2-fixed.html',                   desc:'Constructeur de pages & landing pages HCS' },
-        { icon:'🚀', nom:'HCS Cockpit',           url:'../hcs-hub-ecosystem/hcs-cockpit.html',           desc:'Supervision globale — KPI & ops en direct'  },
-        { icon:'🎨', nom:'Kustom Koncept',        url:'../campaign/kustomkoncept.html',                  desc:'Configurateur deco moto 3D KustomKoncept'  },
-        { icon:'📊', nom:'Scenario A — Demo',     url:'../hcs-hub-ecosystem/scenario-a-demo.html',       desc:'Démo parcours client — Scenario A'         },
-        { icon:'📊', nom:'Scenario B — Demo',     url:'../hcs-hub-ecosystem/scenario-b-demo.html',       desc:'Démo parcours client — Scenario B'         },
+        { icon:'📡', nom:'Andromeda Builder',     url:'apps/andromeda-campaign.html',       desc:'Éditeur de campagnes marketing omnicanal'  },
+        { icon:'🏗️', nom:'HCS Builder v2',        url:'apps/hcs-builder-v2-fixed.html',     desc:'Constructeur de pages & landing pages HCS' },
+        { icon:'🚀', nom:'HCS Cockpit',           url:'apps/hcs-cockpit.html',               desc:'Supervision globale — KPI & ops en direct'  },
+        { icon:'🎨', nom:'Kustom Koncept',        url:'apps/kustomkoncept.html',             desc:'Configurateur deco moto 3D KustomKoncept'  },
+        { icon:'📊', nom:'Scenario A — Demo',     url:'apps/scenario-a-demo.html',           desc:'Démo parcours client — Scenario A'         },
+        { icon:'📊', nom:'Scenario B — Demo',     url:'apps/scenario-b-demo.html',           desc:'Démo parcours client — Scenario B'         },
       ]
     },
     {
@@ -649,13 +649,13 @@ function renderAppsHCS(container) {
       label : '🗄️ Outils & Gestion',
       color : '#00d4aa',
       apps  : [
-        { icon:'🗄️', nom:'HCS Hub',              url:'../hcs-hub.html',                                 desc:'Tableau de bord centralisé toutes apps'    },
-        { icon:'📊', nom:'HCS Dashboard',         url:'../hcs-dashboard.html',                          desc:'Indicateurs clés & suivi activité HCS'     },
-        { icon:'📋', nom:'Catalogue Complet',     url:'../hcs_catalogue_complet_v2.html',               desc:'Catalogue produits HCS — version complète' },
-        { icon:'📋', nom:'Catalogue Offres',      url:'../hcs_catalogue_offres.html',                   desc:'Catalogue offres & tarifs clients'         },
-        { icon:'🎫', nom:'HCS Pass Test',         url:'../hcs-hub-ecosystem/hcs-pass-test.html',        desc:'Pass fidélité textile — test & validation'  },
-        { icon:'🔍', nom:'HCS Diagnostic',        url:'../hcs-hub-ecosystem/hcs-hub-diagnostic.html',   desc:'Diagnostic & état de santé du Hub HCS'     },
-        { icon:'📐', nom:'Andromeda Verticals',   url:'../hcs-hub-ecosystem/andromeda-verticals-spec.html', desc:'Spécifications verticales Andromeda v2' },
+        { icon:'🗄️', nom:'HCS Hub',              url:'apps/hcs-hub.html',                   desc:'Tableau de bord centralisé toutes apps'    },
+        { icon:'📊', nom:'HCS Dashboard',         url:'apps/hcs-dashboard.html',             desc:'Indicateurs clés & suivi activité HCS'     },
+        { icon:'📋', nom:'Catalogue Complet',     url:'apps/hcs_catalogue_complet_v2.html',  desc:'Catalogue produits HCS — version complète' },
+        { icon:'📋', nom:'Catalogue Offres',      url:'apps/hcs_catalogue_offres.html',      desc:'Catalogue offres & tarifs clients'         },
+        { icon:'🎫', nom:'HCS Pass Test',         url:'apps/hcs-pass-test.html',             desc:'Pass fidélité textile — test & validation'  },
+        { icon:'🔍', nom:'HCS Diagnostic',        url:'apps/hcs-hub-diagnostic.html',        desc:'Diagnostic & état de santé du Hub HCS'     },
+        { icon:'📐', nom:'Andromeda Verticals',   url:'apps/andromeda-verticals-spec.html',  desc:'Spécifications verticales Andromeda v2'    },
       ]
     }
   ];

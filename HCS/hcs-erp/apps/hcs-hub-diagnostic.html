@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HCS Hub — Diagnostic & Test</title>
+<style>
+:root{--bg:#0a0a14;--sf:#12121e;--card:#1a1a2e;--bd:#2a2a44;--ac:#a18cd1;--ok:#43e97b;--warn:#f6d365;--err:#ff6b6b;--tx:#e8e8f0;--mt:#888}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',system-ui,sans-serif;padding:24px;max-width:900px;margin:0 auto}
+h1{font-size:1.4rem;font-weight:800;letter-spacing:2px;margin-bottom:4px}
+.sub{font-size:.7rem;color:var(--mt);letter-spacing:1px;margin-bottom:24px}
+.section{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:18px;margin-bottom:16px}
+.section h2{font-size:.85rem;font-weight:700;letter-spacing:1px;margin-bottom:12px;color:var(--ac)}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--card);border-radius:8px;padding:12px;text-align:center}
+.stat-n{font-size:1.4rem;font-weight:800}
+.stat-l{font-size:.6rem;color:var(--mt);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.log{background:#0a0a0f;border:1px solid var(--bd);border-radius:8px;padding:12px;font-family:'Courier New',monospace;font-size:.72rem;max-height:300px;overflow-y:auto;line-height:1.8}
+.log-ok{color:var(--ok)}.log-err{color:var(--err)}.log-info{color:var(--mt)}.log-warn{color:var(--warn)}
+.btn-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.btn{padding:8px 16px;border-radius:6px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:.72rem;font-weight:600;cursor:pointer;transition:all .15s;letter-spacing:.5px}
+.btn:hover{border-color:var(--ac);color:var(--ac)}
+.btn-p{background:var(--ac);color:#0a0a14;border-color:var(--ac)}
+.btn-p:hover{filter:brightness(1.1)}
+.btn-d{border-color:var(--err);color:var(--err)}
+.btn-d:hover{background:rgba(255,107,107,.1)}
+.entries{margin-top:12px}
+.entry{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;margin-bottom:6px;font-size:.72rem;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.entry-name{font-weight:600}.entry-meta{color:var(--mt);font-size:.62rem}
+.entry-del{background:none;border:1px solid var(--err);color:var(--err);border-radius:4px;padding:3px 8px;font-size:.6rem;cursor:pointer}
+.entry-img{width:40px;height:40px;border-radius:6px;object-fit:contain;background:repeating-conic-gradient(#1a1a2e 0 25%,#0f0f1a 0 50%) 0/12px 12px}
+.tabs{display:flex;gap:4px;margin-bottom:12px}
+.tab{padding:6px 14px;border-radius:6px;border:1px solid var(--bd);background:transparent;color:var(--mt);font-size:.68rem;font-weight:600;cursor:pointer;transition:all .15s}
+.tab.on{background:var(--ac);color:#0a0a14;border-color:var(--ac)}
+select,input[type=text]{background:var(--card);border:1px solid var(--bd);color:var(--tx);padding:7px 10px;border-radius:6px;font-size:.72rem;font-family:inherit}
+.form-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.form-row label{font-size:.65rem;color:var(--mt);min-width:60px}
+</style>
+</head>
+<body>
+
+<h1>HCS HUB — DIAGNOSTIC</h1>
+<div class="sub">Test & visualisation du bus de données unifié</div>
+
+<!-- Stats -->
+<div class="section">
+<h2>État du Hub</h2>
+<div class="stats-grid" id="stats">
+  <div class="stat"><div class="stat-n" id="s-logos">—</div><div class="stat-l">Logos</div></div>
+  <div class="stat"><div class="stat-n" id="s-mockups">—</div><div class="stat-l">Mockups</div></div>
+  <div class="stat"><div class="stat-n" id="s-configs">—</div><div class="stat-l">Configs</div></div>
+  <div class="stat"><div class="stat-n" id="s-campagnes">—</div><div class="stat-l">Campagnes</div></div>
+</div>
+<div class="btn-row">
+  <button class="btn btn-p" onclick="refreshStats()">Actualiser</button>
+  <button class="btn" onclick="runMigration()">Migrer PicWish → Hub</button>
+  <button class="btn" onclick="exportAll()">Exporter JSON</button>
+  <button class="btn btn-d" onclick="clearStore()">Vider le store actif</button>
+</div>
+</div>
+
+<!-- Explorateur -->
+<div class="section">
+<h2>Explorateur</h2>
+<div class="tabs" id="tabs"></div>
+<div class="entries" id="entries"></div>
+</div>
+
+<!-- Test d'écriture -->
+<div class="section">
+<h2>Test d'écriture</h2>
+<div class="form-row">
+  <label>Store</label>
+  <select id="w-store"><option>logos</option><option>mockups</option><option>configs</option><option>campagnes</option></select>
+</div>
+<div class="form-row">
+  <label>Name</label>
+  <input type="text" id="w-name" placeholder="Mon logo test" style="flex:1">
+</div>
+<div class="form-row">
+  <label>Source</label>
+  <input type="text" id="w-source" placeholder="picwish / dtf-studio / forge / builder / andromeda" style="flex:1">
+</div>
+<div class="form-row">
+  <label>Type</label>
+  <input type="text" id="w-type" placeholder="client / original / mockup / config / campagne" style="flex:1">
+</div>
+<div class="form-row">
+  <label>Client</label>
+  <input type="text" id="w-client" placeholder="Nom du client (optionnel)" style="flex:1">
+</div>
+<div class="form-row">
+  <label>Tags</label>
+  <input type="text" id="w-tags" placeholder="surf, heiva, mars (séparés par virgule)" style="flex:1">
+</div>
+<div class="btn-row">
+  <button class="btn btn-p" onclick="writeTest()">Écrire dans le Hub</button>
+  <button class="btn" onclick="writeTestWithImage()">Écrire avec image test</button>
+</div>
+</div>
+
+<!-- Journal -->
+<div class="section">
+<h2>Journal</h2>
+<div class="log" id="log"></div>
+</div>
+
+<script src="hcs-hub.js"></script>
+<script>
+let activeStore = 'logos';
+
+function log(msg, type='info') {
+  const el = document.getElementById('log');
+  const ts = new Date().toTimeString().slice(0,8);
+  el.innerHTML += `<div class="log-${type}">[${ts}] ${msg}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+async function refreshStats() {
+  try {
+    const s = await HCSHub.stats();
+    document.getElementById('s-logos').textContent = s.stores.logos;
+    document.getElementById('s-mockups').textContent = s.stores.mockups;
+    document.getElementById('s-configs').textContent = s.stores.configs;
+    document.getElementById('s-campagnes').textContent = s.stores.campagnes;
+    log(`Stats: logos=${s.stores.logos}, mockups=${s.stores.mockups}, configs=${s.stores.configs}, campagnes=${s.stores.campagnes} | PicWish migré: ${s.picwishMigrated}`, 'ok');
+  } catch(e) { log('Erreur stats: ' + e.message, 'err'); }
+}
+
+function buildTabs() {
+  document.getElementById('tabs').innerHTML = HCSHub.STORES.map(s =>
+    `<button class="tab${s===activeStore?' on':''}" onclick="switchStore('${s}')">${s}</button>`
+  ).join('');
+}
+
+async function switchStore(name) {
+  activeStore = name;
+  buildTabs();
+  await renderEntries();
+}
+
+async function renderEntries() {
+  const el = document.getElementById('entries');
+  try {
+    const entries = await HCSHub.getAll(activeStore);
+    if (!entries.length) {
+      el.innerHTML = '<div style="color:var(--mt);font-size:.72rem;text-align:center;padding:20px">Aucune entrée dans "' + activeStore + '"</div>';
+      return;
+    }
+    el.innerHTML = entries.sort((a,b) => b.updatedAt.localeCompare(a.updatedAt)).map(e => {
+      const hasImg = e.data && e.data.startsWith('data:image');
+      const imgHtml = hasImg ? `<img class="entry-img" src="${e.data}">` : '';
+      const tags = (e.tags||[]).map(t => `<span style="background:rgba(161,140,209,.15);color:var(--ac);padding:1px 6px;border-radius:4px;font-size:.55rem">${t}</span>`).join(' ');
+      return `<div class="entry">
+        <div style="display:flex;align-items:center;gap:10px">
+          ${imgHtml}
+          <div>
+            <div class="entry-name">${esc(e.name || e.id)}</div>
+            <div class="entry-meta">
+              id:${e.id} · source:${e.source} · type:${e.type} · client:${esc(e.client||'—')} · ${e.updatedAt?.slice(0,16)||''}
+            </div>
+            <div style="margin-top:3px">${tags}</div>
+          </div>
+        </div>
+        <button class="entry-del" onclick="delEntry('${e.id}')">suppr.</button>
+      </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = '<div style="color:var(--err)">Erreur: ' + e.message + '</div>'; }
+}
+
+function esc(s) { const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+
+async function delEntry(id) {
+  try {
+    await HCSHub.del(activeStore, id);
+    log(`Supprimé ${id} de ${activeStore}`, 'warn');
+    await renderEntries();
+    await refreshStats();
+  } catch(e) { log('Erreur suppression: ' + e.message, 'err'); }
+}
+
+async function writeTest() {
+  const store  = document.getElementById('w-store').value;
+  const name   = document.getElementById('w-name').value || 'Test entry';
+  const source = document.getElementById('w-source').value || 'test';
+  const type   = document.getElementById('w-type').value || 'generic';
+  const client = document.getElementById('w-client').value || '';
+  const tags   = document.getElementById('w-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  try {
+    const record = await HCSHub.put(store, { name, source, type, client, tags });
+    log(`Écrit dans ${store}: "${name}" → id=${record.id}`, 'ok');
+    if (store === activeStore) await renderEntries();
+    await refreshStats();
+  } catch(e) { log('Erreur écriture: ' + e.message, 'err'); }
+}
+
+async function writeTestWithImage() {
+  // Génère un petit PNG 100x100 de test
+  const cv = document.createElement('canvas'); cv.width=100; cv.height=100;
+  const ctx = cv.getContext('2d');
+  const hue = Math.random()*360;
+  ctx.fillStyle = `hsl(${hue},70%,50%)`;
+  ctx.fillRect(0,0,100,100);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('TEST', 50, 40);
+  ctx.font = '10px sans-serif';
+  ctx.fillText('HCS Hub', 50, 58);
+  ctx.fillText(new Date().toLocaleTimeString('fr-FR'), 50, 74);
+  const data = cv.toDataURL('image/png');
+  const store = document.getElementById('w-store').value;
+  try {
+    const record = await HCSHub.put(store, {
+      name: 'Image test ' + new Date().toLocaleTimeString('fr-FR'),
+      source: 'test-diag',
+      type: 'test',
+      data: data,
+      tags: ['test', 'auto-generated']
+    });
+    log(`Image test écrite dans ${store}: id=${record.id} (${Math.round(data.length/1024)} Ko)`, 'ok');
+    if (store === activeStore) await renderEntries();
+    await refreshStats();
+  } catch(e) { log('Erreur image test: ' + e.message, 'err'); }
+}
+
+async function runMigration() {
+  log('Migration PicWish → Hub en cours...', 'info');
+  try {
+    // Reset le flag pour forcer la migration
+    localStorage.removeItem('hcs_hub_picwish_migrated');
+    const n = await HCSHub.migrateFromPicWish();
+    if (n > 0) {
+      log(`✓ ${n} entrée(s) migrée(s) depuis hcs_picwish_db → hub.logos`, 'ok');
+    } else {
+      log('Aucune nouvelle entrée à migrer (déjà fait ou DB vide)', 'warn');
+    }
+    await refreshStats();
+    if (activeStore === 'logos') await renderEntries();
+  } catch(e) { log('Erreur migration: ' + e.message, 'err'); }
+}
+
+async function exportAll() {
+  try {
+    const json = await HCSHub.exportJSON();
+    const blob = new Blob([json], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `hcs-hub-export-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    log('Export JSON téléchargé', 'ok');
+  } catch(e) { log('Erreur export: ' + e.message, 'err'); }
+}
+
+async function clearStore() {
+  if (!confirm(`Vider le store "${activeStore}" ? Cette action est irréversible.`)) return;
+  try {
+    await HCSHub.clear(activeStore);
+    log(`Store "${activeStore}" vidé`, 'warn');
+    await renderEntries();
+    await refreshStats();
+  } catch(e) { log('Erreur clear: ' + e.message, 'err'); }
+}
+
+// Init
+buildTabs();
+refreshStats();
+renderEntries();
+log('HCS Hub Diagnostic initialisé', 'info');
+log(`DB: ${HCSHub.DB_NAME} v${HCSHub.DB_VERSION} | Stores: ${HCSHub.STORES.join(', ')}`, 'info');
+</script>
+
+</body>
+</html>
