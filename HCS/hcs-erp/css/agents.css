@@ -1,0 +1,433 @@
+/* ================================================================
+   HCS ERP — agents.css
+   Styles du module Agents IA : dashboard, chat, sessions
+   ================================================================ */
+
+/* ----------------------------------------------------------------
+   EN-TÊTE COMMUN
+   ---------------------------------------------------------------- */
+.agents-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.agents-title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semi);
+  color: var(--text-base);
+  margin: 0;
+}
+
+.agents-subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin: var(--space-1) 0 0;
+}
+
+/* ================================================================
+   DASHBOARD : grille de cartes agents
+   ================================================================ */
+.agents-dashboard {
+  padding: var(--space-6);
+  max-width: 1200px;
+}
+
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+/* Carte agent */
+.agent-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  transition: box-shadow 0.15s, transform 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+
+.agent-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--agent-color, #4a5fff);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.agent-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  transform: translateY(-2px);
+}
+
+.agent-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.agent-icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+  width: 40px;
+  text-align: center;
+}
+
+.agent-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.agent-nom {
+  font-weight: var(--font-semi);
+  font-size: var(--text-base);
+  color: var(--text-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agent-role {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.agent-description {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.agent-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.agent-modele {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono, monospace);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+/* Badges statut */
+.agent-statut {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.statut-actif {
+  background: rgba(0, 212, 170, 0.12);
+  color: #00d4aa;
+}
+
+.statut-inactif {
+  background: rgba(107, 114, 128, 0.12);
+  color: var(--text-muted);
+}
+
+/* ================================================================
+   CHAT : layout deux colonnes
+   ================================================================ */
+.agents-chat-layout {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+/* ---- Sidebar gauche ---- */
+.chat-sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  overflow-y: auto;
+}
+
+.chat-sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Champ clé API */
+.api-key-wrap {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.api-key-wrap .form-input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+}
+
+.form-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Liste de sélection des agents */
+.agent-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.agent-select-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-base);
+  font-size: var(--text-sm);
+  transition: background 0.1s;
+  width: 100%;
+}
+
+.agent-select-item:hover {
+  background: var(--bg-hover, rgba(74, 95, 255, 0.08));
+}
+
+.agent-select-item.active {
+  background: rgba(74, 95, 255, 0.12);
+  color: var(--primary, #4a5fff);
+  font-weight: var(--font-semi);
+  border-left: 3px solid var(--agent-color, #4a5fff);
+}
+
+.agent-select-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.agent-select-nom {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-clear-chat {
+  margin-top: auto;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+/* ---- Zone principale ---- */
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Bandeau agent actif */
+.chat-agent-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.chat-agent-icon {
+  font-size: 1.5rem;
+}
+
+.chat-agent-role {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-left: var(--space-2);
+}
+
+/* Zone de messages */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Message vide / bienvenue */
+.chat-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  flex: 1;
+  min-height: 200px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+/* Bulles de message */
+.chat-message {
+  display: flex;
+  max-width: 75%;
+}
+
+.msg-user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.msg-agent {
+  align-self: flex-start;
+}
+
+.msg-bubble {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.msg-user .msg-bubble {
+  background: var(--primary, #4a5fff);
+  border-color: transparent;
+  color: #fff;
+}
+
+.msg-content {
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.msg-content code {
+  background: rgba(0,0,0,0.08);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9em;
+}
+
+.msg-content pre.msg-code {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  overflow-x: auto;
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-xs);
+  margin: var(--space-2) 0;
+}
+
+.msg-meta {
+  font-size: 10px;
+  color: rgba(255,255,255,0.55);
+  text-align: right;
+}
+
+.msg-agent .msg-meta {
+  color: var(--text-muted);
+}
+
+/* Zone de saisie */
+.chat-input-zone {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface);
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.chat-textarea {
+  flex: 1;
+  resize: none;
+  min-height: 44px;
+  max-height: 120px;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-base);
+  color: var(--text-base);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.chat-textarea:focus {
+  border-color: var(--primary, #4a5fff);
+}
+
+/* Message d'erreur */
+.chat-error {
+  color: #ef4444;
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-5);
+  background: rgba(239, 68, 68, 0.08);
+  margin: 0;
+}
+
+/* ================================================================
+   SESSIONS
+   ================================================================ */
+.agents-sessions {
+  padding: var(--space-6);
+}
+
+.sessions-list {
+  overflow-x: auto;
+}
+
+.session-preview {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  max-width: 240px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

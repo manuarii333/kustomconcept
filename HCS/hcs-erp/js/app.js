@@ -155,6 +155,18 @@ const APPS = [
     ]
   },
   {
+    id: 'agents',
+    label: 'Agents IA',
+    icon: '⬡',
+    color: '#4a5fff',
+    pinned: false,
+    views: [
+      { id: 'dashboard', label: 'Dashboard',  icon: '⬡',  section: 'Agents' },
+      { id: 'chat',      label: 'Chat',        icon: '💬', section: 'Agents' },
+      { id: 'sessions',  label: 'Sessions',    icon: '📋', section: 'Agents' }
+    ]
+  },
+  {
     id: 'outils',
     label: 'Outils HCS',
     icon: '🔧',
@@ -453,6 +465,11 @@ function renderView() {
         RH.init(document.getElementById('toolbar-actions'), container, view);
       }
       break;
+    case 'agents':
+      if (typeof Agents !== 'undefined') {
+        Agents.init(document.getElementById('toolbar-actions'), container, view);
+      }
+      break;
     case 'parametres':
       if (typeof Users !== 'undefined') {
         Users.init(document.getElementById('toolbar-actions'), container, view);
@@ -487,7 +504,7 @@ function renderToolbarActions() {
   if (app === 'crm' || app === 'ventes' || app === 'stock' ||
       app === 'production' || app === 'comptabilite' || app === 'messagerie' ||
       app === 'caisse' || app === 'outils' || app === 'parametres' ||
-      app === 'rh') return;
+      app === 'rh' || app === 'agents') return;
 
   // Mapping app+vue → boutons (modules sans fichier dédié)
   const actionMap = {
