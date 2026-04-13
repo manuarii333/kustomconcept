@@ -488,6 +488,9 @@ function renderView() {
       /* La vue apps-hcs est rendue en interne (grille de liens) */
       if (view === 'apps-hcs') {
         renderAppsHCS(container);
+      /* picwish-pipeline : fichier dans le dossier parent, pas dans modules/ */
+      } else if (view === 'picwish-pipeline') {
+        renderIframe('../picwish-pipeline.html', container);
       } else {
         renderIframe(`modules/${view}.html`, container);
       }
@@ -603,7 +606,8 @@ function renderAppsHCS(container) {
     { icon: '🏗️', nom: 'HCS Builder v2',     url: '../hcs-builder-v2-fixed.html',  desc: 'Constructeur de pages HCS' },
     { icon: '🎫', nom: 'Pass HCS',           url: '../hcs-pass-test.html',          desc: 'Pass fidélité textile HCS' },
     { icon: '🗄️', nom: 'HCS Hub',            url: '../hcs-hub.html',               desc: 'Tableau de bord centralisé' },
-    { icon: '🚀', nom: 'HCS Cockpit',        url: '../hcs-cockpit.html',            desc: 'Supervision globale des outils' }
+    { icon: '🚀', nom: 'HCS Cockpit',        url: '../hcs-cockpit.html',            desc: 'Supervision globale des outils' },
+    { icon: '🖼',  nom: 'PicWish Pipeline',  url: '../picwish-pipeline.html',       desc: 'Pipeline de retouche photos IA' }
   ];
 
   container.innerHTML = `
