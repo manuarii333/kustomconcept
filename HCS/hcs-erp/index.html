@@ -73,6 +73,10 @@
 
         <!-- TOOLBAR : actions + recherche + switch vue -->
         <div id="toolbar" class="toolbar">
+          <!-- Bouton retour accueil — visible sur toutes les sous-pages sauf dashboard -->
+          <button id="btn-home-erp" class="btn-home-erp" onclick="openApp('dashboard')" title="Retour à l'accueil ERP" style="display:none;">
+            ⌂
+          </button>
           <div class="toolbar-left" id="toolbar-actions"></div>
           <div class="toolbar-center">
             <input type="text" id="search-input" class="search-input" placeholder="Rechercher…" />

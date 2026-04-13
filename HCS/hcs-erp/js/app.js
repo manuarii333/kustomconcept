@@ -347,6 +347,12 @@ function openApp(appId) {
     btn.classList.toggle('active', btn.dataset.app === appId);
   });
 
+  // Bouton retour accueil : visible partout sauf sur le dashboard lui-même
+  const btnHome = document.getElementById('btn-home-erp');
+  if (btnHome) {
+    btnHome.style.display = (appId === 'dashboard') ? 'none' : 'inline-flex';
+  }
+
   // Rendre la sidebar
   renderSidebar(app);
 
