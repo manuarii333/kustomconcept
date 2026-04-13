@@ -250,7 +250,7 @@ const Audit = (() => {
     _renderFinal();
 
     /* Réactiver le bouton */
-    if (btn) { btn.disabled = false; btn.textContent = '↺ Relancer l'audit'; }
+    if (btn) { btn.disabled = false; btn.textContent = "↺ Relancer l'audit"; }
     const exportBtn = document.getElementById('btn-export-audit');
     if (exportBtn) exportBtn.style.display = '';
 
@@ -507,7 +507,7 @@ const Audit = (() => {
         label:    agent.nom,
         status:   valid ? 'ok' : 'error',
         detail:   valid ? `ID : ${agent.id}` : `ID invalide : ${agent.id}`,
-        fix:      valid ? null : 'Corriger l'ID dans agents.js'
+        fix:      valid ? null : "Corriger l'ID dans agents.js"
       });
       await _delay(30);
     }
