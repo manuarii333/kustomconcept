@@ -159,7 +159,7 @@ const APPS = [
     label: 'Agents IA',
     icon: '⬡',
     color: '#4a5fff',
-    pinned: false,
+    pinned: true,
     views: [
       { id: 'dashboard', label: 'Dashboard',  icon: '⬡',  section: 'Agents' },
       { id: 'chat',      label: 'Chat',        icon: '💬', section: 'Agents' },
@@ -190,7 +190,8 @@ const APPS = [
       { id: 'ocr-scanner',             label: 'Scanner OCR',           icon: '🔍', section: 'Gestion'          },
       { id: 'supervision-dashboard',   label: 'Supervision',           icon: '👁',  section: 'Supervision'      },
       { id: 'routine-dashboard',       label: 'Routines',              icon: '🔄', section: 'Supervision'      },
-      { id: 'vocal-dashboard',         label: 'Agent Vocal',           icon: '🎙', section: 'Supervision'      }
+      { id: 'vocal-dashboard',         label: 'Agent Vocal',           icon: '🎙', section: 'Supervision'      },
+      { id: 'apps-hcs',                label: 'Applications HCS',      icon: '🚀', section: 'Applications'     }
     ]
   }
 ];
@@ -484,7 +485,12 @@ function renderView() {
       renderIframe(`modules/${view}.html`, container);
       break;
     case 'outils':
-      renderIframe(`modules/${view}.html`, container);
+      /* La vue apps-hcs est rendue en interne (grille de liens) */
+      if (view === 'apps-hcs') {
+        renderAppsHCS(container);
+      } else {
+        renderIframe(`modules/${view}.html`, container);
+      }
       break;
     default:             container.innerHTML = `<div class="table-empty"><p>Module "${app}" à venir.</p></div>`;
   }
@@ -585,6 +591,65 @@ function closeModal() {
 /* ================================================================
    RENDERERS PAR MODULE
    ================================================================ */
+
+/* ---- APPLICATIONS HCS — liens vers les outils HTML externes ---- */
+function renderAppsHCS(container) {
+  /* Définition des 8 applications HCS accessibles depuis le dossier parent */
+  const HCS_APPS = [
+    { icon: '📡', nom: 'Andromeda Builder',  url: '../andromeda-campaign.html',    desc: 'Éditeur de campagnes marketing' },
+    { icon: '🖼️', nom: 'MockupForge v12',    url: '../mockup-forge-v12.html',       desc: 'Générateur de mockups produits' },
+    { icon: '🎨', nom: 'DTF Composer v4',    url: '../dtf-composer-v4.html',        desc: 'Composition fichiers DTF' },
+    { icon: '🧮', nom: 'Calculateur DTF',    url: '../dtf-calculator-hcs-v2.html', desc: 'Calcul coûts DTF en XPF' },
+    { icon: '🏗️', nom: 'HCS Builder v2',     url: '../hcs-builder-v2-fixed.html',  desc: 'Constructeur de pages HCS' },
+    { icon: '🎫', nom: 'Pass HCS',           url: '../hcs-pass-test.html',          desc: 'Pass fidélité textile HCS' },
+    { icon: '🗄️', nom: 'HCS Hub',            url: '../hcs-hub.html',               desc: 'Tableau de bord centralisé' },
+    { icon: '🚀', nom: 'HCS Cockpit',        url: '../hcs-cockpit.html',            desc: 'Supervision globale des outils' }
+  ];
+
+  container.innerHTML = `
+    <div style="padding:var(--space-6);max-width:1100px;">
+      <div style="margin-bottom:var(--space-6);">
+        <h2 style="font-size:var(--text-xl);font-weight:var(--font-semi);color:var(--text-base);margin:0 0 4px;">
+          🚀 Applications HCS
+        </h2>
+        <p style="font-size:var(--text-sm);color:var(--text-muted);margin:0;">
+          Accès rapide aux outils externes HCS — chaque application s'ouvre dans un nouvel onglet.
+        </p>
+      </div>
+      <div style="
+        display:grid;
+        grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+        gap:var(--space-4);">
+        ${HCS_APPS.map(app => `
+          <div style="
+            background:var(--bg-surface);
+            border:1px solid var(--border);
+            border-radius:var(--radius-lg);
+            padding:var(--space-4);
+            display:flex;
+            flex-direction:column;
+            gap:var(--space-3);
+            transition:box-shadow .15s,transform .15s;">
+            <div style="display:flex;align-items:center;gap:var(--space-3);">
+              <span style="font-size:1.75rem;flex-shrink:0;">${app.icon}</span>
+              <span style="font-weight:var(--font-semi);font-size:var(--text-base);color:var(--text-base);">${escapeHtml(app.nom)}</span>
+            </div>
+            <p style="font-size:var(--text-sm);color:var(--text-muted);margin:0;flex:1;line-height:1.5;">
+              ${escapeHtml(app.desc)}
+            </p>
+            <a href="${escapeHtml(app.url)}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="btn btn-primary btn-sm"
+               style="text-align:center;text-decoration:none;display:block;">
+              ↗ Ouvrir
+            </a>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
 
 /* ---- DASHBOARD ---- */
 function renderDashboard(view, container) {
