@@ -193,6 +193,7 @@ const APPS = [
       { id: 'routine-dashboard',       label: 'Routines',              icon: '🔄', section: 'Supervision'      },
       { id: 'vocal-dashboard',         label: 'Agent Vocal',           icon: '🎙', section: 'Supervision'      },
       { id: 'audit-dashboard',         label: '🔍 Audit ERP',          icon: '🔍', section: 'Supervision'      },
+      { id: 'migration-db',            label: '🗄️ Migration DB',        icon: '🗄️', section: 'Gestion'          },
       { id: 'apps-hcs',                label: 'Applications HCS',      icon: '🚀', section: 'Applications'     }
     ]
   }
@@ -493,6 +494,10 @@ function renderView() {
       } else if (view === 'audit-dashboard') {
         if (typeof Audit !== 'undefined') {
           Audit.init(document.getElementById('toolbar-actions'), container, view);
+        }
+      } else if (view === 'migration-db') {
+        if (typeof Migrate !== 'undefined') {
+          Migrate.init(document.getElementById('toolbar-actions'), container, view);
         }
       /* picwish-pipeline : servi depuis apps/ */
       } else if (view === 'picwish-pipeline') {
