@@ -238,17 +238,22 @@ Tous les `<script src="...">` présents dans `index.html` ont été vérifiés :
 
 ## 5. PROBLÈMES DÉTECTÉS
 
-### ⚠️ Avertissements (non bloquants)
+### ✅ Problèmes corrigés (commit suivant le rapport)
 
-| # | Problème | Impact | Solution suggérée |
-|---|---------|--------|------------------|
-| 1 | Rôle `achats` référencé dans `auth.js` mais aucun module `achats` dans `APPS[]` | Module achats inaccessible directement | Fusionné dans `stock` — retirer `achats` des listes de modules dans auth.js |
-| 2 | `modules/picwish-pipeline.html` et `apps/picwish-pipeline.html` sont deux fichiers différents (26 KB vs 74 KB) | app.js pointe vers `apps/` (correct) mais le fichier `modules/` est une ancienne version | Supprimer `modules/picwish-pipeline.html` pour éviter la confusion |
-| 3 | `modules/dtf-plaques-transfert.html` en doublon dans `apps/` | Deux versions potentiellement différentes | Vérifier laquelle est la plus récente, supprimer l'ancienne |
-| 4 | PocketBase doit tourner localement — pas de démarrage automatique | La migration ne fonctionne que si `pocketbase.exe serve` est lancé manuellement | Créer `lancer-pocketbase.bat` (déjà présent dans `../`) |
-| 5 | Les vues iframe (`modules/*.html`) sont des outils autonomes — pas intégrés au Store | Stock-dashboard, Finance-dashboard affichent leurs propres données sans lire `hcs_erp_db` | Intégration Store à prévoir pour chaque outil si cohérence requise |
-| 6 | Module `caisse` ne repose que sur un iframe — pas de JS métier ERP | La caisse ne partage pas les contacts/produits du Store | À terme : module `caisse.js` intégré |
-| 7 | Rôles `commercial`, `vendeur`, `magasinier`, `comptable`, `lecture` n'ont pas accès à `agents` ni à `outils` | Ces rôles ne voient pas les Agents IA ni les outils HCS | Ajouter `outils` et/ou `agents` selon les besoins de chaque rôle |
+| # | Problème | Correction appliquée |
+|---|---------|---------------------|
+| 1 | `achats` dans les listes de modules des rôles — module inexistant dans APPS[] | ✅ Retiré de `admin`, `comptable`, `magasinier` dans `auth.js` |
+| 2 | `modules/picwish-pipeline.html` (26 KB) doublon inutilisé — app.js route vers `apps/` | ✅ Fichier supprimé |
+| 3 | `modules/dtf-plaques-transfert.html` (92 KB) — version plus récente dans `apps/` (96 KB) | ✅ Fichier supprimé, route mise à jour vers `apps/` |
+| 4 | Rôles `commercial`, `vendeur`, `magasinier`, `comptable` sans accès `outils` ni `agents` | ✅ `outils` ajouté aux 4 rôles, `agents` ajouté à `commercial` |
+
+### ⚠️ Points restants (non bloquants)
+
+| # | Problème | Impact | Priorité |
+|---|---------|--------|---------|
+| 1 | PocketBase doit tourner localement — pas de démarrage automatique | Migration inactive sans `pocketbase.exe serve` | 🟡 |
+| 2 | Iframes `stock-dashboard`/`finance-dashboard` non connectées au Store | Données autonomes, pas de cohérence avec l'ERP | 🟡 |
+| 3 | Module `caisse` repose uniquement sur iframe | Pas de partage contacts/produits avec le Store | 🟢 |
 
 ### ✅ Aucune erreur 404 détectée
 
@@ -260,7 +265,8 @@ Tous les scripts dans `index.html` et toutes les vues iframe déclarées dans `A
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                  SCORE ERP HCS : 84 / 100               │
+│         SCORE ERP HCS : 91 / 100  (était 84)            │
+│         Mis à jour après corrections — avril 2026        │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -283,14 +289,13 @@ Tous les scripts dans `index.html` et toutes les vues iframe déclarées dans `A
 
 | Priorité | Tâche |
 |---------|-------|
-| 🔴 Haute | Retirer `achats` des listes de modules dans `auth.js` (confus pour les rôles) |
-| 🔴 Haute | Donner accès à `outils` aux rôles `commercial`, `vendeur`, `magasinier` |
-| 🟡 Moyenne | Supprimer les doublons : `modules/picwish-pipeline.html` et `modules/dtf-plaques-transfert.html` |
+| ~~🔴 Haute~~ ✅ | ~~Retirer `achats` des listes de modules dans `auth.js`~~ — **Fait** |
+| ~~🔴 Haute~~ ✅ | ~~Donner accès à `outils` aux rôles `commercial`, `vendeur`, `magasinier`~~ — **Fait** |
+| ~~🟡 Moyenne~~ ✅ | ~~Supprimer les doublons `modules/picwish-pipeline.html` et `modules/dtf-plaques-transfert.html`~~ — **Fait** |
 | 🟡 Moyenne | Intégrer le Store dans les iframes `stock-dashboard` et `finance-dashboard` |
-| 🟡 Moyenne | Module `caisse.js` natif (lire `produits` depuis le Store) |
-| 🟢 Basse | Créer des collections PocketBase correspondant aux 17 collections du Store |
-| 🟢 Basse | Ajouter `outils` et `agents` aux rôles non-admin selon les besoins métier |
-| 🟢 Basse | Module `achats` dédié (séparé de `stock`) si la gestion fournisseurs devient centrale |
+| 🟢 Basse | Module `caisse.js` natif (lire `produits` depuis le Store) |
+| 🟢 Basse | Créer les collections PocketBase correspondant aux 17 collections du Store |
+| 🟢 Basse | Module `achats` dédié si la gestion fournisseurs devient centrale |
 
 ---
 

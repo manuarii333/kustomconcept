@@ -506,9 +506,11 @@ function renderView() {
         if (typeof Migrate !== 'undefined') {
           Migrate.init(document.getElementById('toolbar-actions'), container, view);
         }
-      /* picwish-pipeline : servi depuis apps/ */
+      /* Ces vues utilisent la version apps/ (plus récente) */
       } else if (view === 'picwish-pipeline') {
         renderIframe('apps/picwish-pipeline.html', container);
+      } else if (view === 'dtf-plaques-transfert') {
+        renderIframe('apps/dtf-plaques-transfert.html', container);
       } else {
         renderIframe(`modules/${view}.html`, container);
       }

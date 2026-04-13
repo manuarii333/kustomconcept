@@ -26,44 +26,44 @@ const ROLES = {
     description: 'Accès à tous les modules métier de l\'ERP',
     color:       '#6366F1',
     icon:        '🛡️',
-    modules:     ['dashboard','crm','ventes','achats','stock','production',
+    modules:     ['dashboard','crm','ventes','stock','production',
                   'comptabilite','rh','messagerie','caisse','outils','agents','parametres'],
     peutGererUtilisateurs: true,
     peutCreerSuperAdmin:   false
   },
   comptable: {
     label:       'Comptable',
-    description: 'Comptabilité, ventes en lecture et rapports financiers',
+    description: 'Comptabilité, ventes en lecture, rapports financiers et outils',
     color:       '#0891B2',
     icon:        '💼',
-    modules:     ['dashboard','comptabilite','ventes','achats','messagerie'],
+    modules:     ['dashboard','comptabilite','ventes','messagerie','outils'],
     peutGererUtilisateurs: false,
     peutCreerSuperAdmin:   false
   },
   commercial: {
     label:       'Commercial',
-    description: 'CRM, devis, commandes, factures et caisse',
+    description: 'CRM, devis, commandes, factures, caisse et outils commerciaux',
     color:       '#16A34A',
     icon:        '🤝',
-    modules:     ['dashboard','crm','ventes','caisse','messagerie'],
+    modules:     ['dashboard','crm','ventes','caisse','messagerie','outils','agents'],
     peutGererUtilisateurs: false,
     peutCreerSuperAdmin:   false
   },
   magasinier: {
     label:       'Magasinier',
-    description: 'Stocks, achats fournisseurs et production',
+    description: 'Stocks, production, outils atelier et DTF',
     color:       '#D97706',
     icon:        '📦',
-    modules:     ['dashboard','stock','achats','production','messagerie'],
+    modules:     ['dashboard','stock','production','messagerie','outils'],
     peutGererUtilisateurs: false,
     peutCreerSuperAdmin:   false
   },
   vendeur: {
     label:       'Vendeur',
-    description: 'Saisie de devis, commandes et point de caisse',
+    description: 'Saisie de devis, commandes, caisse et outils boutique',
     color:       '#7C3AED',
     icon:        '🛒',
-    modules:     ['dashboard','crm','ventes','caisse','messagerie'],
+    modules:     ['dashboard','crm','ventes','caisse','messagerie','outils'],
     peutGererUtilisateurs: false,
     peutCreerSuperAdmin:   false
   },
