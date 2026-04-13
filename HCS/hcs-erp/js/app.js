@@ -597,60 +597,213 @@ function closeModal() {
 
 /* ---- APPLICATIONS HCS — liens vers les outils HTML externes ---- */
 function renderAppsHCS(container) {
-  /* Définition des 8 applications HCS accessibles depuis le dossier parent */
-  const HCS_APPS = [
-    { icon: '📡', nom: 'Andromeda Builder',  url: '../andromeda-campaign.html',    desc: 'Éditeur de campagnes marketing' },
-    { icon: '🖼️', nom: 'MockupForge v12',    url: '../mockup-forge-v12.html',       desc: 'Générateur de mockups produits' },
-    { icon: '🎨', nom: 'DTF Composer v4',    url: '../dtf-composer-v4.html',        desc: 'Composition fichiers DTF' },
-    { icon: '🧮', nom: 'Calculateur DTF',    url: '../dtf-calculator-hcs-v2.html', desc: 'Calcul coûts DTF en XPF' },
-    { icon: '🏗️', nom: 'HCS Builder v2',     url: '../hcs-builder-v2-fixed.html',  desc: 'Constructeur de pages HCS' },
-    { icon: '🎫', nom: 'Pass HCS',           url: '../hcs-pass-test.html',          desc: 'Pass fidélité textile HCS' },
-    { icon: '🗄️', nom: 'HCS Hub',            url: '../hcs-hub.html',               desc: 'Tableau de bord centralisé' },
-    { icon: '🚀', nom: 'HCS Cockpit',        url: '../hcs-cockpit.html',            desc: 'Supervision globale des outils' },
-    { icon: '🖼',  nom: 'PicWish Pipeline',  url: '../picwish-pipeline.html',       desc: 'Pipeline de retouche photos IA' }
+
+  /* ----------------------------------------------------------------
+     Palette espresso / caramel / cream (cohérente avec Advisor)
+     ---------------------------------------------------------------- */
+  const C = {
+    espresso : '#1a0e07',
+    dark     : '#2a1508',
+    caramel  : '#c4813a',
+    caramelHo: '#e09a4f',
+    cream    : '#f5ede0',
+    muted    : '#c8b89a',
+    border   : 'rgba(196,129,58,0.22)',
+    cardBg   : 'rgba(196,129,58,0.04)',
+    cardHover: 'rgba(196,129,58,0.10)',
+  };
+
+  /* ----------------------------------------------------------------
+     3 SECTIONS — données : icone, nom, description, chemin réel
+     ---------------------------------------------------------------- */
+  const SECTIONS = [
+    {
+      id    : 'production',
+      label : '🏭 Production & Design',
+      color : '#e09a4f',
+      apps  : [
+        { icon:'🖨️', nom:'DTF Plaques',       url:'../dtf-plaques-transfert.html',              desc:'Calcul & impression plaques DTF transfert' },
+        { icon:'🧮', nom:'Calculateur DTF',    url:'../dtf-calculator-hcs-v2.html',              desc:'Coûts DTF landed en XPF (douane + TVA)'    },
+        { icon:'🎨', nom:'Calculateur Vinyle', url:'../calculateur-vinyl-hcs.html',              desc:'Prix de revient vinyle au cm²'              },
+        { icon:'🖼️', nom:'MockupForge v12',    url:'../mockup-forge-v12.html',                   desc:'Générateur de mockups produits HCS'         },
+        { icon:'🖨️', nom:'DTF Studio',         url:'../dtf-studio/dtf%20studio.html',            desc:'Studio de composition fichiers DTF'         },
+        { icon:'🖼️', nom:'PicWish Pipeline',   url:'../picwish-pipeline/picwish-pipeline.html',  desc:'Pipeline retouche & suppression de fond IA' },
+        { icon:'👕', nom:'T-Shirt Mockup',     url:'../campaign/tshirt-mockup-studio.html',      desc:'Studio mockup t-shirts & textile'           },
+      ]
+    },
+    {
+      id    : 'marketing',
+      label : '📡 Marketing & Ventes',
+      color : '#4a9fff',
+      apps  : [
+        { icon:'📡', nom:'Andromeda Builder',     url:'../campaign/andromeda-campaign.html',              desc:'Éditeur de campagnes marketing omnicanal'  },
+        { icon:'🏗️', nom:'HCS Builder v2',        url:'../hcs-builder-v2-fixed.html',                   desc:'Constructeur de pages & landing pages HCS' },
+        { icon:'🚀', nom:'HCS Cockpit',           url:'../hcs-hub-ecosystem/hcs-cockpit.html',           desc:'Supervision globale — KPI & ops en direct'  },
+        { icon:'🎨', nom:'Kustom Koncept',        url:'../campaign/kustomkoncept.html',                  desc:'Configurateur deco moto 3D KustomKoncept'  },
+        { icon:'📊', nom:'Scenario A — Demo',     url:'../hcs-hub-ecosystem/scenario-a-demo.html',       desc:'Démo parcours client — Scenario A'         },
+        { icon:'📊', nom:'Scenario B — Demo',     url:'../hcs-hub-ecosystem/scenario-b-demo.html',       desc:'Démo parcours client — Scenario B'         },
+      ]
+    },
+    {
+      id    : 'gestion',
+      label : '🗄️ Outils & Gestion',
+      color : '#00d4aa',
+      apps  : [
+        { icon:'🗄️', nom:'HCS Hub',              url:'../hcs-hub.html',                                 desc:'Tableau de bord centralisé toutes apps'    },
+        { icon:'📊', nom:'HCS Dashboard',         url:'../hcs-dashboard.html',                          desc:'Indicateurs clés & suivi activité HCS'     },
+        { icon:'📋', nom:'Catalogue Complet',     url:'../hcs_catalogue_complet_v2.html',               desc:'Catalogue produits HCS — version complète' },
+        { icon:'📋', nom:'Catalogue Offres',      url:'../hcs_catalogue_offres.html',                   desc:'Catalogue offres & tarifs clients'         },
+        { icon:'🎫', nom:'HCS Pass Test',         url:'../hcs-hub-ecosystem/hcs-pass-test.html',        desc:'Pass fidélité textile — test & validation'  },
+        { icon:'🔍', nom:'HCS Diagnostic',        url:'../hcs-hub-ecosystem/hcs-hub-diagnostic.html',   desc:'Diagnostic & état de santé du Hub HCS'     },
+        { icon:'📐', nom:'Andromeda Verticals',   url:'../hcs-hub-ecosystem/andromeda-verticals-spec.html', desc:'Spécifications verticales Andromeda v2' },
+      ]
+    }
   ];
 
-  container.innerHTML = `
-    <div style="padding:var(--space-6);max-width:1100px;">
-      <div style="margin-bottom:var(--space-6);">
-        <h2 style="font-size:var(--text-xl);font-weight:var(--font-semi);color:var(--text-base);margin:0 0 4px;">
-          🚀 Applications HCS
-        </h2>
-        <p style="font-size:var(--text-sm);color:var(--text-muted);margin:0;">
-          Accès rapide aux outils externes HCS — chaque application s'ouvre dans un nouvel onglet.
+  /* ----------------------------------------------------------------
+     TEMPLATE D'UNE CARTE
+     ---------------------------------------------------------------- */
+  function cardHtml(app, accentColor) {
+    return `
+      <div
+        onmouseenter="this.style.background='${C.cardHover}';this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(196,129,58,0.18)'"
+        onmouseleave="this.style.background='${C.cardBg}';this.style.transform='none';this.style.boxShadow='none'"
+        style="
+          background:${C.cardBg};
+          border:1px solid ${C.border};
+          border-top:3px solid ${accentColor};
+          border-radius:8px;
+          padding:16px;
+          display:flex;
+          flex-direction:column;
+          gap:10px;
+          transition:background .15s,transform .15s,box-shadow .15s;
+          cursor:default;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.6rem;flex-shrink:0;line-height:1;">${app.icon}</span>
+          <span style="
+            font-weight:700;
+            font-size:13px;
+            color:${C.cream};
+            line-height:1.3;">
+            ${escapeHtml(app.nom)}
+          </span>
+        </div>
+        <p style="
+          font-size:11.5px;
+          color:${C.muted};
+          margin:0;
+          flex:1;
+          line-height:1.55;">
+          ${escapeHtml(app.desc)}
         </p>
-      </div>
+        <button
+          onclick="window.open('${app.url.replace(/'/g,"\\'")}','_blank','noopener,noreferrer')"
+          style="
+            padding:7px 0;
+            background:${accentColor};
+            border:none;
+            border-radius:5px;
+            color:${C.espresso};
+            font-size:12px;
+            font-weight:700;
+            cursor:pointer;
+            transition:background .15s;
+            width:100%;"
+          onmouseenter="this.style.background='${C.caramelHo}'"
+          onmouseleave="this.style.background='${accentColor}'">
+          ↗ Ouvrir
+        </button>
+      </div>`;
+  }
+
+  /* ----------------------------------------------------------------
+     TEMPLATE D'UNE SECTION
+     ---------------------------------------------------------------- */
+  function sectionHtml(section) {
+    return `
+      <div style="margin-bottom:32px;">
+        <div style="
+          display:flex;
+          align-items:center;
+          gap:10px;
+          margin-bottom:14px;
+          padding-bottom:10px;
+          border-bottom:1px solid ${C.border};">
+          <span style="
+            font-size:15px;
+            font-weight:700;
+            color:${section.color};
+            letter-spacing:.01em;">
+            ${section.label}
+          </span>
+          <span style="
+            font-size:11px;
+            color:${C.muted};
+            background:rgba(196,129,58,0.08);
+            border:1px solid ${C.border};
+            border-radius:10px;
+            padding:1px 8px;">
+            ${section.apps.length} outils
+          </span>
+        </div>
+        <div style="
+          display:grid;
+          grid-template-columns:repeat(4,1fr);
+          gap:14px;">
+          ${section.apps.map(app => cardHtml(app, section.color)).join('')}
+        </div>
+      </div>`;
+  }
+
+  /* ----------------------------------------------------------------
+     RENDU FINAL
+     ---------------------------------------------------------------- */
+  container.innerHTML = `
+    <div style="
+      padding:28px 32px;
+      background:${C.espresso};
+      min-height:100%;
+      box-sizing:border-box;">
+
+      <!-- En-tête -->
       <div style="
-        display:grid;
-        grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
-        gap:var(--space-4);">
-        ${HCS_APPS.map(app => `
-          <div style="
-            background:var(--bg-surface);
-            border:1px solid var(--border);
-            border-radius:var(--radius-lg);
-            padding:var(--space-4);
-            display:flex;
-            flex-direction:column;
-            gap:var(--space-3);
-            transition:box-shadow .15s,transform .15s;">
-            <div style="display:flex;align-items:center;gap:var(--space-3);">
-              <span style="font-size:1.75rem;flex-shrink:0;">${app.icon}</span>
-              <span style="font-weight:var(--font-semi);font-size:var(--text-base);color:var(--text-base);">${escapeHtml(app.nom)}</span>
-            </div>
-            <p style="font-size:var(--text-sm);color:var(--text-muted);margin:0;flex:1;line-height:1.5;">
-              ${escapeHtml(app.desc)}
-            </p>
-            <a href="${escapeHtml(app.url)}"
-               target="_blank"
-               rel="noopener noreferrer"
-               class="btn btn-primary btn-sm"
-               style="text-align:center;text-decoration:none;display:block;">
-              ↗ Ouvrir
-            </a>
-          </div>
-        `).join('')}
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        margin-bottom:28px;
+        flex-wrap:wrap;
+        gap:12px;">
+        <div>
+          <h2 style="
+            font-size:20px;
+            font-weight:800;
+            color:${C.cream};
+            margin:0 0 4px;
+            letter-spacing:.01em;">
+            ⬡ Applications HCS
+          </h2>
+          <p style="
+            font-size:12px;
+            color:${C.muted};
+            margin:0;">
+            ${SECTIONS.reduce((t,s) => t + s.apps.length, 0)} outils disponibles — chaque application s'ouvre dans un nouvel onglet
+          </p>
+        </div>
+        <span style="
+          font-size:11px;
+          color:${C.caramel};
+          background:rgba(196,129,58,0.10);
+          border:1px solid ${C.border};
+          border-radius:12px;
+          padding:4px 14px;
+          font-weight:600;">
+          ● Serveur local actif
+        </span>
       </div>
+
+      <!-- Sections -->
+      ${SECTIONS.map(sectionHtml).join('')}
     </div>
   `;
 }
