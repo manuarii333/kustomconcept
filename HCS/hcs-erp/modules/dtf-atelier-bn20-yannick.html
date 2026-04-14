@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DTF Polynésie Arts — Plaques de Transfert Premium</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="hcs-api-shared.js"></script>
 <style>
 /* ═══════════════ VARIABLES & RESET ═══════════════ */
 :root {
@@ -13,8 +12,8 @@
   --white:     #f5f0e8;
   --gold:      #d4a843;
   --gold-lt:   #f0c96a;
-  --teal:      #1a9e8f;
-  --teal-dk:   #0d6b5f;
+  --teal:      #22a85a;
+  --teal-dk:   #155c35;
   --red:       #e03c3c;
   --grey:      #2a2a2a;
   --grey-md:   #444;
@@ -57,7 +56,7 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
 .btn-p{background:linear-gradient(135deg,var(--teal),var(--teal-dk));color:var(--white);border:none;
   padding:12px 24px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:1.5px;
   text-transform:uppercase;border-radius:4px;cursor:pointer;transition:all .22s}
-.btn-p:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(26,158,143,.35)}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(34,168,90,.35)}
 .btn-o{background:transparent;color:var(--gold);border:1px solid var(--gold);padding:12px 24px;
   font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:1.5px;
   text-transform:uppercase;border-radius:4px;cursor:pointer;transition:all .22s}
@@ -93,7 +92,7 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
   border-radius:4px;position:relative;display:flex;flex-wrap:wrap;gap:5px;padding:12px;
   align-content:flex-start;overflow:hidden;
   box-shadow:0 28px 72px rgba(0,0,0,.6),0 0 0 1px rgba(212,168,67,.28)}
-.sheet-demo::after{content:'DTF 56×91 cm';position:absolute;bottom:8px;right:8px;
+.sheet-demo::after{content:'45×100';position:absolute;bottom:8px;right:8px;
   font-size:8px;font-family:'JetBrains Mono',monospace;color:rgba(0,0,0,.25);letter-spacing:1px}
 .demo-dot{width:32px;height:32px;border-radius:50%;animation:pulse 2.5s ease-in-out infinite alternate}
 .demo-dot:nth-child(3n+1){background:linear-gradient(135deg,var(--teal),var(--teal-dk))}
@@ -120,7 +119,7 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
 .av-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
 .av{background:linear-gradient(135deg,#141414,#1a1a1a);border:1px solid var(--border);border-radius:6px;
   padding:24px 20px;transition:all .22s;cursor:default}
-.av:hover{border-color:var(--teal);transform:translateY(-3px);box-shadow:0 14px 36px rgba(26,158,143,.14)}
+.av:hover{border-color:var(--teal);transform:translateY(-3px);box-shadow:0 14px 36px rgba(34,168,90,.14)}
 .av-ico{font-size:28px;margin-bottom:12px}
 .av-t{font-weight:700;font-size:13px;margin-bottom:7px;color:var(--gold-lt)}
 .av-d{font-size:11px;color:#888;line-height:1.7;font-weight:300}
@@ -293,28 +292,7 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
 .submit-btn{width:100%;background:linear-gradient(135deg,var(--teal),var(--teal-dk));color:var(--white);
   border:none;padding:14px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:4px;
   border-radius:4px;cursor:pointer;margin-top:6px;transition:all .22s}
-.submit-btn:hover{transform:translateY(-2px);box-shadow:0 9px 28px rgba(26,158,143,.4)}
-
-/* ═══════════════ FICHES EN COURS ═══════════════ */
-.fiches-panel{background:#111;border:1px solid var(--border);border-radius:8px;margin-top:28px;overflow:hidden}
-.fiches-header{width:100%;background:linear-gradient(135deg,rgba(26,158,143,.18),rgba(212,168,67,.12));
-  border:none;color:var(--white);padding:13px 20px;font-family:'DM Sans',sans-serif;font-size:13px;
-  font-weight:600;letter-spacing:1px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;
-  transition:background .2s}
-.fiches-header:hover{background:linear-gradient(135deg,rgba(26,158,143,.28),rgba(212,168,67,.2))}
-.fiches-body{display:none}
-.fiches-body.open{display:block}
-.fiche-row{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;
-  border-top:1px solid rgba(255,255,255,.04);font-size:12px;color:#ccc}
-.fiche-row:hover{background:rgba(255,255,255,.02)}
-.fiche-desc{font-size:13px;color:var(--white);font-weight:500}
-.fiche-date{font-size:10px;color:var(--grey-lt);font-family:'JetBrains Mono',monospace;margin-top:2px}
-.fiche-statut{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
-  font-family:'JetBrains Mono',monospace;padding:2px 8px;border-radius:2px}
-.fiche-statut.en-attente{background:rgba(255,170,0,.15);color:#ffaa00;border:1px solid rgba(255,170,0,.3)}
-.fiche-statut.en-cours{background:rgba(26,158,143,.15);color:var(--teal);border:1px solid rgba(26,158,143,.3)}
-.fiche-statut.termine{background:rgba(0,200,80,.1);color:#00c850;border:1px solid rgba(0,200,80,.25)}
-.fiches-empty{padding:16px 20px;font-size:12px;color:var(--grey-lt);font-family:'JetBrains Mono',monospace}
+.submit-btn:hover{transform:translateY(-2px);box-shadow:0 9px 28px rgba(34,168,90,.4)}
 
 /* ═══════════════ RESPONSIVE ═══════════════ */
 @media(max-width:960px){
@@ -333,7 +311,7 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
   <div class="brand">
     <div class="brand-icon">DTF</div>
     <div>
-      <div class="brand-name">DTF Polynésie Arts</div>
+      <div class="brand-name">BN20 Yannick</div>
       <div class="brand-sub">Transferts Premium — Papeete</div>
     </div>
   </div>
@@ -353,9 +331,9 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
 <div id="tab-home" class="tab on">
   <div class="hero">
     <div>
-      <div class="hero-badge">🌺 Qualité Supérieure · DTF Direct To Film</div>
+      <div class="hero-badge">🌺 Atelier BN20 Yannick · 45 × 100 cm</div>
       <h1>Plaques de<br>Transfert<br><span>Thermofusibles</span></h1>
-      <p>Feuilles DTF premium 56×91 cm (22"×1yd) pour transferts haute définition sur tous types de tissus. Couleurs éclatantes, durabilité maximale — livrées ici en Polynésie.</p>
+      <p>Feuilles DTF premium 50×100 cm pour transferts haute définition sur tous types de tissus. Couleurs éclatantes, durabilité maximale — livrées ici en Polynésie.</p>
       <div class="hero-btns">
         <button class="btn-p" onclick="goTab('abonnement')">Voir les Formules</button>
         <button class="btn-o" onclick="goTab('visuel')">Placer mes Logos →</button>
@@ -363,13 +341,13 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
     </div>
     <div style="display:flex;justify-content:center">
       <div style="position:relative;padding-top:18px">
-        <div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--black);font-size:8px;font-weight:800;letter-spacing:2px;padding:3px 12px;border-radius:2px;white-space:nowrap;font-family:'JetBrains Mono',monospace">FEUILLE DTF 56×91 CM</div>
+        <div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--black);font-size:8px;font-weight:800;letter-spacing:2px;padding:3px 12px;border-radius:2px;white-space:nowrap;font-family:'JetBrains Mono',monospace">FEUILLE DTF 50×100 CM</div>
         <div class="sheet-demo" id="heroSheet"></div>
       </div>
     </div>
   </div>
   <div class="stats-row">
-    <div class="stat-b"><div class="stat-n">56×91</div><div class="stat-l">Format cm</div></div>
+    <div class="stat-b"><div class="stat-n">45×100</div><div class="stat-l">Format cm</div></div>
     <div class="stat-b"><div class="stat-n">8 000</div><div class="stat-l">XPF coût revient</div></div>
     <div class="stat-b"><div class="stat-n">20 000</div><div class="stat-l">XPF prix de vente</div></div>
     <div class="stat-b"><div class="stat-n">60%</div><div class="stat-l">Marge commerciale</div></div>
@@ -381,9 +359,9 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
 ═════════════════════════════════════════════ -->
 <div id="tab-fiche" class="tab">
   <div class="wrap">
-    <div class="sec-hd"><span class="sec-n">01</span><h2 class="sec-t">Fiche Technique — DTF 56×91 cm (22"×1yd)</h2><div class="sec-ln"></div></div>
+    <div class="sec-hd"><span class="sec-n">01</span><h2 class="sec-t">Fiche Technique — DTF 50×100 cm</h2><div class="sec-ln"></div></div>
     <div class="tech-grid">
-      <div class="tc"><div class="tc-ico">📐</div><div class="tc-lbl">Dimensions</div><div class="tc-val">56 × 91 cm</div><div class="tc-dsc">22" × 1 yard — Format standard professionnel, optimisé pour la production en série</div></div>
+      <div class="tc"><div class="tc-ico">📐</div><div class="tc-lbl">Dimensions</div><div class="tc-val">50 × 100 cm</div><div class="tc-dsc">Format standard professionnel, optimisé pour la production en série</div></div>
       <div class="tc g"><div class="tc-ico">🖨️</div><div class="tc-lbl">Technologie</div><div class="tc-val">DTF — Direct To Film</div><div class="tc-dsc">Impression directe sur film PET, transfert thermofusible haute précision</div></div>
       <div class="tc"><div class="tc-ico">🌡️</div><div class="tc-lbl">Application</div><div class="tc-val">160–175°C · 10–15 sec</div><div class="tc-dsc">Presse à chaud, chaleur sèche. Pression modérée recommandée</div></div>
       <div class="tc r"><div class="tc-ico">🎨</div><div class="tc-lbl">Rendu couleurs</div><div class="tc-val">CMJN + blanc opaque</div><div class="tc-dsc">Sous-couche blanche intégrée — rendu parfait sur tissus sombres</div></div>
@@ -422,18 +400,16 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
         <div class="f-grp">
           <label class="f-lbl">Dimensions logo (cm)</label>
           <div class="f-row">
-            <div><label class="f-lbl">Largeur</label><input type="number" id="cW" class="f-inp" value="8" step="0.5" min="1" max="56"></div>
-            <div><label class="f-lbl">Hauteur</label><input type="number" id="cH" class="f-inp" value="8" step="0.5" min="1" max="91"></div>
+            <div><label class="f-lbl">Largeur</label><input type="number" id="cW" class="f-inp" value="8" step="0.5" min="1" max="50"></div>
+            <div><label class="f-lbl">Hauteur</label><input type="number" id="cH" class="f-inp" value="8" step="0.5" min="1" max="100"></div>
           </div>
         </div>
         <div class="f-grp"><label class="f-lbl">Espacement (cm)</label><input type="number" id="cEsp" class="f-inp" value="0.5" step="0.1" min="0"></div>
         <button class="calc-btn" onclick="doCalc()">⚡ CALCULER</button>
-        <!-- Badge de confirmation sauvegarde -->
-        <div id="dtf-transfert-badge" style="margin-top:10px;min-height:26px;"></div>
       </div>
       <div>
         <div class="res-panel">
-          <div class="res-c"><div><div class="res-lbl">PRIX DE REVIENT / FEUILLE</div><div class="res-val" id="r-cout">8 000</div><div class="res-un">XPF / feuille 56×91 cm</div></div></div>
+          <div class="res-c"><div><div class="res-lbl">PRIX DE REVIENT / FEUILLE</div><div class="res-val" id="r-cout">8 000</div><div class="res-un">XPF / feuille 50×100 cm</div></div></div>
           <div class="res-c hl"><div><div class="res-lbl">PRIX DE VENTE / FEUILLE</div><div class="res-val" id="r-vente">20 000</div><div class="res-un">XPF / feuille (marge 60%)</div></div><div class="res-badge">MARGE 60%</div></div>
           <div class="res-c tl"><div><div class="res-lbl">NOMBRE DE LOGOS / FEUILLE</div><div class="res-val" id="r-nb">55</div><div class="res-un" id="r-nb-un">logos de 8×8 cm</div></div></div>
           <div class="res-c"><div><div class="res-lbl">COÛT REVIENT / LOGO</div><div class="res-val" id="r-cl">145</div><div class="res-un">XPF par logo</div></div></div>
@@ -448,17 +424,6 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
     <table class="cfg-tbl"><thead><tr>
       <th>Format Logo</th><th>Type</th><th>Col×Lig</th><th>Nb logos</th><th>Coût/logo</th><th>Prix vente/logo</th><th>Bénéfice/feuille</th>
     </tr></thead><tbody id="cfgBody"></tbody></table>
-
-    <!-- Panneau Fiches en cours -->
-    <div class="fiches-panel">
-      <button class="fiches-header" onclick="toggleFichesPanel()">
-        <span>📋 Fiches en cours &amp; historique atelier</span>
-        <span id="fiches-arrow">▼</span>
-      </button>
-      <div class="fiches-body" id="fiches-body">
-        <div class="fiches-empty" id="fiches-empty">Chargement des fiches...</div>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -467,7 +432,7 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
 ═════════════════════════════════════════════ -->
 <div id="tab-visuel" class="tab">
   <div class="wrap">
-    <div class="sec-hd"><span class="sec-n">05</span><h2 class="sec-t">Placement Visuel &mdash; Feuille DTF 56&times;91 cm</h2><div class="sec-ln"></div></div>
+    <div class="sec-hd"><span class="sec-n">05</span><h2 class="sec-t">Placement Visuel &mdash; Feuille DTF 50&times;100 cm</h2><div class="sec-ln"></div></div>
 
     <!-- BARRE ETAPES -->
     <div style="display:flex;align-items:stretch;gap:0;margin-bottom:22px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
@@ -513,14 +478,14 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           <div>
             <label class="lbl">Largeur (cm)</label>
-            <input type="number" id="fW" class="inp" value="8" min="1" max="56" step="0.5" oninput="syncDims('W');autoName();checkImgRes()">
+            <input type="number" id="fW" class="inp" value="8" min="1" max="50" step="0.5" oninput="syncDims('W');autoName();checkImgRes()">
           </div>
           <div>
             <label class="lbl" id="fHLabel">Hauteur (cm)</label>
-            <input type="number" id="fH" class="inp" value="8" min="1" max="91" step="0.5" oninput="syncDims('H');autoName();checkImgRes()">
+            <input type="number" id="fH" class="inp" value="8" min="1" max="100" step="0.5" oninput="syncDims('H');autoName();checkImgRes()">
           </div>
         </div>
-        <div id="ratioInfo" style="display:none;font-size:9px;font-family:'JetBrains Mono',monospace;padding:5px 8px;background:rgba(26,158,143,.08);border-radius:4px;margin-bottom:8px;border-left:2px solid currentColor"></div>
+        <div id="ratioInfo" style="display:none;font-size:9px;font-family:'JetBrains Mono',monospace;padding:5px 8px;background:rgba(34,168,90,.08);border-radius:4px;margin-bottom:8px;border-left:2px solid currentColor"></div>
 
         <label class="lbl">Nom <span style="color:var(--teal);font-size:9px">auto si vide</span></label>
         <input type="text" id="fName" class="inp" placeholder="8cm Circulaire">
@@ -529,7 +494,7 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
         <input type="number" id="fEsp" class="inp" value="0.5" min="0" max="5" step="0.1">
 
         <!-- Couleur auto depuis l'image ou palette teal par defaut - hidden -->
-        <input type="hidden" id="fColor" value="#1a9e8f">
+        <input type="hidden" id="fColor" value="#22a85a">
 
         <button style="width:100%;background:linear-gradient(135deg,var(--gold),#a07820);color:var(--black);border:none;padding:12px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;border-radius:4px;cursor:pointer;transition:all .2s;margin-top:4px" onclick="addFmt();hlStep(2)">+ AJOUTER AU CATALOGUE</button>
       </div>
@@ -551,13 +516,13 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
             <button class="zbtn" style="font-size:10px;width:auto;padding:0 7px" onclick="fitZoom()">Fit</button>
           </div>
           <div style="display:flex;gap:4px;margin-left:auto">
-            <button class="tb" style="background:var(--teal-dk);border-color:var(--teal);font-weight:700" onclick="exportPngTransparent();hlStep(5)" title="PNG transparent 300 DPI — logos sans fond">&#128190; Export PNG Transparent 300 DPI</button>
+            <button class="tb" style="background:var(--teal-dk);border-color:var(--teal);font-weight:700" onclick="exportPng('hi');hlStep(5)" title="300 DPI 5906x11811px">&#128190; Export 300 DPI</button>
             <button class="tb" style="font-size:10px;padding:5px 8px;opacity:.7" onclick="exportPng('lo')" title="Apercu ecran">Apercu</button>
           </div>
         </div>
 
         <div class="cv-scroll" id="cvScroll">
-          <canvas id="mainCv" width="560" height="910"
+          <canvas id="mainCv" width="500" height="1000"
             onmousedown="cvDown(event)" onmousemove="cvMove(event)"
             onmouseup="cvUp(event)" onmouseleave="cvLeave(event)"
             onclick="cvClick(event)">
@@ -565,7 +530,7 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
         </div>
 
         <div class="cv-info" id="cvInfo" style="margin-top:8px">
-          Feuille 56&times;91 cm &middot; S&eacute;lectionnez un format (Etape 2) puis cliquez pour placer
+          Feuille 50&times;100 cm &middot; S&eacute;lectionnez un format (Etape 2) puis cliquez pour placer
         </div>
 
         <div class="sel-box" id="selBox" style="margin-top:8px">
@@ -573,12 +538,6 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
           <div class="sel-row">
             <button class="sb g" onclick="dupSel()">&#10695; Dupliquer</button>
             <button class="sb g" onclick="dupGrid()">&#8862; Grille x4</button>
-          </div>
-          <div class="sel-row">
-            <button class="sb" onclick="rotateSel(-90)" title="Rotation -90°" style="font-size:14px">&#8634;</button>
-            <button class="sb" onclick="rotateSel(90)"  title="Rotation +90°" style="font-size:14px">&#8635;</button>
-            <button class="sb" onclick="rotateSel(180)" title="Rotation 180°">180°</button>
-            <button class="sb" onclick="resetRotSel()" title="Remettre à 0°">0°</button>
           </div>
           <div class="sel-row">
             <button class="sb" onclick="mvSel(-1,0)">&larr; 1cm</button>
@@ -657,7 +616,7 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
         <div class="plan-sheets">📄 2 feuilles / mois</div>
         <div class="plan-price"><div class="plan-amt">35 000</div><div class="plan-unit">XPF / mois — Éco. 5 000 XPF vs unitaire</div></div>
         <ul class="plan-feats">
-          <li>2 feuilles DTF 56×91 cm premium</li>
+          <li>2 feuilles DTF 50×100 cm premium</li>
           <li>Jusqu'à 110 logos/mois (8 cm ø)</li>
           <li>Livraison incluse Papeete</li>
           <li>Support WhatsApp</li>
@@ -671,7 +630,7 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
         <div class="plan-sheets">📄 5 feuilles / mois</div>
         <div class="plan-price"><div class="plan-amt">80 000</div><div class="plan-unit">XPF / mois — Éco. 20 000 XPF vs unitaire</div></div>
         <ul class="plan-feats">
-          <li>5 feuilles DTF 56×91 cm premium</li>
+          <li>5 feuilles DTF 50×100 cm premium</li>
           <li>Jusqu'à 275 logos/mois</li>
           <li>Livraison prioritaire incluse</li>
           <li>Support dédié + WhatsApp</li>
@@ -686,7 +645,7 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
         <div class="plan-sheets">📄 10 feuilles / mois</div>
         <div class="plan-price"><div class="plan-amt">140 000</div><div class="plan-unit">XPF / mois — Éco. 60 000 XPF vs unitaire</div></div>
         <ul class="plan-feats">
-          <li>10 feuilles DTF 56×91 cm premium</li>
+          <li>10 feuilles DTF 50×100 cm premium</li>
           <li>Jusqu'à 550 logos/mois</li>
           <li>Livraison express J+1 Papeete</li>
           <li>Account manager dédié</li>
@@ -807,12 +766,10 @@ var fmt=function(n){return Math.round(n).toLocaleString('fr-FR');};
 
 function cfgCalc(cout,marge,lw,lh,esp){
   var pv=cout/(1-marge/100);
-  var cols=Math.floor(56/(lw+esp)); var rows=Math.floor(91/(lh+esp));
+  var cols=Math.floor(SHEET_W/(lw+esp)); var rows=Math.floor(SHEET_H/(lh+esp));
   var nb=cols*rows; var cL=nb>0?cout/nb:0; var vL=nb>0?pv/nb:0;
   return{pv:pv,nb:nb,cL:cL,vL:vL,ben:pv-cout,cols:cols,rows:rows};
 }
-
-var _transfertLastKey = null;
 
 function doCalc(){
   var cout=+document.getElementById('cCout').value||8000;
@@ -829,81 +786,8 @@ function doCalc(){
   document.getElementById('r-vl').textContent=fmt(r.vL);
   document.getElementById('r-ben').textContent=fmt(r.ben);
   document.getElementById('r-grid').textContent=r.cols+' x '+r.rows;
-
-  // Sauvegarde dans commandes_atelier via HCSApi
-  if (typeof HCSApi !== 'undefined') {
-    var description = r.nb + ' logos ' + lw + 'x' + lh + ' cm — grille ' + r.cols + 'x' + r.rows;
-    var dedupKey = cout + '_' + marge + '_' + lw + 'x' + lh;
-    if (_transfertLastKey !== dedupKey) {
-      _transfertLastKey = dedupKey;
-      var donnees = {
-        type: 'dtf-transfert',
-        description: description,
-        client_nom: '',
-        quantite: r.nb,
-        statut: 'en-attente',
-        date: new Date().toISOString().slice(0, 10)
-      };
-      HCSApi.save('commandes_atelier', donnees).then(function(offline) {
-        HCSApi.showSavedBadge('dtf-transfert-badge', offline);
-      }).catch(function() {
-        HCSApi.showSavedBadge('dtf-transfert-badge', true);
-      });
-    }
-  }
 }
 doCalc();
-
-/* ═══════ FICHES EN COURS ═══════ */
-var _fichesOpen = false;
-
-function toggleFichesPanel() {
-  _fichesOpen = !_fichesOpen;
-  var body = document.getElementById('fiches-body');
-  var arrow = document.getElementById('fiches-arrow');
-  if (_fichesOpen) {
-    body.classList.add('open');
-    arrow.textContent = '▲';
-    chargerFiches();
-  } else {
-    body.classList.remove('open');
-    arrow.textContent = '▼';
-  }
-}
-
-function chargerFiches() {
-  if (typeof HCSApi === 'undefined') return;
-  HCSApi.getRecent('commandes_atelier', 10).then(function(items) {
-    var body = document.getElementById('fiches-body');
-    var empty = document.getElementById('fiches-empty');
-    var filtered = (items || []).filter(function(it) { return it.type === 'dtf-transfert' || it.statut; });
-    if (!filtered.length) {
-      if (empty) empty.textContent = 'Aucune fiche enregistrée pour l\'instant.';
-      return;
-    }
-    if (empty) empty.style.display = 'none';
-    // Supprimer anciennes lignes
-    body.querySelectorAll('.fiche-row').forEach(function(r) { r.remove(); });
-    filtered.forEach(function(item) {
-      var statut = item.statut || 'en-attente';
-      var row = document.createElement('div');
-      row.className = 'fiche-row';
-      row.innerHTML =
-        '<div>' +
-          '<div class="fiche-desc">' + (item.description || 'Fiche DTF') + '</div>' +
-          '<div class="fiche-date">' + (item.date || '') + (item.client_nom ? ' — ' + item.client_nom : '') + '</div>' +
-        '</div>' +
-        '<div style="display:flex;align-items:center;gap:12px">' +
-          '<div style="color:var(--grey-lt);font-family:JetBrains Mono,monospace;font-size:11px">' + (item.quantite || 0) + ' logos</div>' +
-          '<div class="fiche-statut ' + statut + '">' + statut.replace('-', ' ') + '</div>' +
-        '</div>';
-      body.appendChild(row);
-    });
-  }).catch(function() {
-    var empty = document.getElementById('fiches-empty');
-    if (empty) empty.textContent = 'Erreur de chargement.';
-  });
-}
 
 var CFGS=[
   {label:'8cm circ.',w:8,h:8,type:'Circulaire'},{label:'8x5 badge',w:8,h:5,type:'Rectangle'},
@@ -928,7 +812,8 @@ var cv,ctx;
 var fmtLibrary=[], placed=[], pendingImg=null;
 var activeFmtId=null, selId=null, tool='place', zoom=1.0;
 var dragging=false, dragStart=null, dragOrigPos=null, hov=null, uid=1;
-var S=10, SW=560, SH=910;
+var SHEET_W=45, SHEET_H=100;
+var S=10, SW=450, SH=1000;
 
 /* ═══════ INIT ═══════ */
 function initCanvas(){
@@ -978,11 +863,11 @@ function syncDims(changed){
     var r=pendingImg._ratio; // W/H
     if(changed==='W'){
       // L modifie -> H suit
-      var newH=Math.max(0.5,Math.min(91, Math.round((v/r)*10)/10));
+      var newH=Math.max(0.5,Math.min(100, Math.round((v/r)*10)/10));
       fH.value=newH;
     } else {
       // H modifie -> L suit
-      var newW=Math.max(0.5,Math.min(56, Math.round((v*r)*10)/10));
+      var newW=Math.max(0.5,Math.min(50, Math.round((v*r)*10)/10));
       fW.value=newW;
     }
     // Indicateur ratio
@@ -1023,7 +908,7 @@ function autoName(){
 
 /* ═══════ RANDOM COLOR ═══════ */
 function randomColor(){
-  var colors=['#1a9e8f','#d4a843','#e03c3c','#3a6de0','#8b3ae0','#e07a3a','#3ae04a','#e03a9e'];
+  var colors=['#22a85a','#d4a843','#e03c3c','#3a6de0','#8b3ae0','#e07a3a','#3ae04a','#e03a9e'];
   var c=colors[Math.floor(Math.random()*colors.length)];
   var fc=document.getElementById('fColor'), cp=document.getElementById('cprev');
   if(fc) fc.value=c; if(cp) cp.style.background=c;
@@ -1043,8 +928,8 @@ function autoDetectFormat(img,fileName){
   var wCm=parseFloat((W/(srcDpi/CM_IN)).toFixed(2));
   var hCm=parseFloat((H/(srcDpi/CM_IN)).toFixed(2));
   // Clamp a la feuille tout en preservant le ratio exact
-  if(wCm>56){ var s=56/wCm; wCm=56; hCm=parseFloat((hCm*s).toFixed(2)); }
-  if(hCm>91){ var s2=91/hCm; hCm=91; wCm=parseFloat((wCm*s2).toFixed(2)); }
+  if(wCm>50){ var s=50/wCm; wCm=50; hCm=parseFloat((hCm*s).toFixed(2)); }
+  if(hCm>100){ var s2=100/hCm; hCm=100; wCm=parseFloat((wCm*s2).toFixed(2)); }
   // Arrondi propre 1 decimale
   wCm=Math.max(0.5,Math.round(wCm*10)/10);
   hCm=Math.max(0.5,Math.round(hCm*10)/10);
@@ -1082,7 +967,7 @@ function onImgLoad(e){
       var l1=document.getElementById('resoLine1'),l2=document.getElementById('resoLine2'),l3=document.getElementById('resoLine3');
       if(badge){
         badge.style.display='block';
-        badge.style.background='rgba(26,158,143,.1)'; badge.style.border='1px solid rgba(26,158,143,.35)';
+        badge.style.background='rgba(34,168,90,.1)'; badge.style.border='1px solid rgba(34,168,90,.35)';
         l1.style.color='#4dd9c8'; l1.textContent='Detecte depuis l image';
         l2.style.color='#ccc';   l2.textContent=det.px+'px - '+det.srcDpi+' DPI source - Forme: '+det.forme;
         l3.style.color='#888';   l3.textContent='Dimensions: '+det.wCm+' x '+det.hCm+' cm - Verifiez et ajustez';
@@ -1112,7 +997,7 @@ function checkImgRes(){
   var minW=Math.round(lw/CM_IN*MIN), minH=Math.round(lh/CM_IN*MIN);
   badge.style.display='block';
   if(dpiMin>=TARGET){
-    badge.style.background='rgba(26,158,143,.15)'; badge.style.border='1px solid rgba(26,158,143,.4)';
+    badge.style.background='rgba(34,168,90,.15)'; badge.style.border='1px solid rgba(34,168,90,.4)';
     l1.style.color='#4dd9c8'; l1.textContent='OK '+dpiMin+' DPI - Qualite optimale';
     l2.style.color='#aaa';   l2.textContent=W+'x'+H+'px - Format '+lw+'x'+lh+' cm';
     l3.style.color='#888';   l3.textContent='Requis 300 DPI = '+reqW+'x'+reqH+'px - OK';
@@ -1136,15 +1021,15 @@ function addFmt(){
   var lh=parseFloat(document.getElementById('fH').value)||8;
   if(forme==='square') lh=lw;
   var esp=parseFloat(document.getElementById('fEsp').value)||0.5;
-  var color='#1a9e8f';
+  var color='#22a85a';
   var fColorEl=document.getElementById('fColor');
-  if(fColorEl) color=fColorEl.value||'#1a9e8f';
+  if(fColorEl) color=fColorEl.value||'#22a85a';
   // Auto-color from image if available
   if(pendingImg) color=imgDominantColor(pendingImg);
   var nameEl=document.getElementById('fName');
   var name=nameEl?nameEl.value.trim():'';
   if(!name) name=autoNameFor(forme,lw,lh);
-  if(lw>56||lh>91){alert('Dimensions trop grandes (feuille 56x91 cm).');return;}
+  if(lw>SHEET_W||lh>SHEET_H){alert('Dimensions trop grandes pour cette feuille.');return;}
   var f={id:uid++,name:name,lw:lw,lh:lh,forme:forme,img:pendingImg,color:color,esp:esp};
   fmtLibrary.push(f); activeFmtId=f.id; pendingImg=null;
   document.getElementById('imgFileName').textContent='Aucun fichier';
@@ -1165,7 +1050,7 @@ function delFmt(fid){
 function selFmt(fid){ activeFmtId=fid; renderLib(); }
 
 function countFit(f){
-  return Math.floor(56/(f.lw+f.esp))*Math.floor(91/(f.lh+f.esp));
+  return Math.floor(SHEET_W/(f.lw+f.esp))*Math.floor(SHEET_H/(f.lh+f.esp));
 }
 
 function fmtIcon(forme){
@@ -1207,7 +1092,7 @@ function applyZoom(){
 function dz(d){ zoom=Math.max(0.2,Math.min(3.5,zoom+d)); applyZoom(); }
 function fitZoom(){
   var sc=document.getElementById('cvScroll');
-  var avail=sc?sc.clientWidth-32:560;
+  var avail=sc?sc.clientWidth-32:500;
   zoom=Math.min(1.0,avail/SW); applyZoom();
 }
 
@@ -1227,13 +1112,9 @@ function coords(e){
   return{x:(e.clientX-r.left)*(SW/r.width),y:(e.clientY-r.top)*(SH/r.height)};
 }
 function hit(cx,cy,lg){
-  var rot=(lg.rot||0)*Math.PI/180;
-  var dx=cx-lg.x, dy=cy-lg.y;
-  var rx=rot?dx*Math.cos(-rot)-dy*Math.sin(-rot):dx;
-  var ry=rot?dx*Math.sin(-rot)+dy*Math.cos(-rot):dy;
   var hw=lg.lw*S/2, hh=lg.lh*S/2;
-  if(lg.forme==='square'){var side=Math.min(hw,hh); return Math.abs(rx)<=side&&Math.abs(ry)<=side;}
-  return Math.abs(rx)<=hw&&Math.abs(ry)<=hh;
+  if(lg.forme==='square'){var side=Math.min(hw,hh); return Math.abs(cx-lg.x)<=side&&Math.abs(cy-lg.y)<=side;}
+  return Math.abs(cx-lg.x)<=hw&&Math.abs(cy-lg.y)<=hh;
 }
 
 /* ═══════ RESIZE STATE ═══════ */
@@ -1243,14 +1124,11 @@ var HANDLE_R=7; // rayon zone poignee en px canvas
 function getHandles(lg){
   var hw=lg.lw*S/2, hh=lg.lh*S/2;
   if(lg.forme==='square'){hw=Math.min(hw,hh);hh=hw;}
-  var rot=(lg.rot||0)*Math.PI/180;
-  var cos=rot?Math.cos(rot):1, sin=rot?Math.sin(rot):0;
-  function rpt(dx,dy){return{x:lg.x+dx*cos-dy*sin, y:lg.y+dx*sin+dy*cos};}
   return [
-    Object.assign({dx:-1,dy:-1,cur:'nw-resize'}, rpt(-hw,-hh)),
-    Object.assign({dx: 1,dy:-1,cur:'ne-resize'}, rpt( hw,-hh)),
-    Object.assign({dx:-1,dy: 1,cur:'sw-resize'}, rpt(-hw, hh)),
-    Object.assign({dx: 1,dy: 1,cur:'se-resize'}, rpt( hw, hh))
+    {dx:-1,dy:-1,x:lg.x-hw,y:lg.y-hh,cur:'nw-resize'},
+    {dx: 1,dy:-1,x:lg.x+hw,y:lg.y-hh,cur:'ne-resize'},
+    {dx:-1,dy: 1,x:lg.x-hw,y:lg.y+hh,cur:'sw-resize'},
+    {dx: 1,dy: 1,x:lg.x+hw,y:lg.y+hh,cur:'se-resize'}
   ];
 }
 
@@ -1294,12 +1172,9 @@ function cvMove(e){
     if(lg){
       var orig=resizeOrigLg;
       var dx=p.x-dragStart.x, dy=p.y-dragStart.y;
-      // Rotate drag delta into logo space before applying
-      var rr=(lg.rot||0)*Math.PI/180;
-      var rdx=rr?dx*Math.cos(-rr)-dy*Math.sin(-rr):dx;
-      var rdy=rr?dx*Math.sin(-rr)+dy*Math.cos(-rr):dy;
-      var dw=resizeCorner.dx*rdx; // positive = grow
-      var dh=resizeCorner.dy*rdy;
+      // Corner direction: dx/dy applied to the moving corner
+      var dw=resizeCorner.dx*dx; // positive = grow
+      var dh=resizeCorner.dy*dy;
       // New half-sizes
       var MIN_CM=0.5;
       var newLw=Math.max(MIN_CM, orig.lw + dw/S*2);
@@ -1313,7 +1188,7 @@ function cvMove(e){
         newLh=newLw;
       }
       // Clamp to sheet
-      newLw=Math.min(newLw,56); newLh=Math.min(newLh,91);
+      newLw=Math.min(newLw,50); newLh=Math.min(newLh,100);
       lg.lw=parseFloat(newLw.toFixed(1));
       lg.lh=parseFloat(newLh.toFixed(1));
       // Reposition center so the fixed corner stays fixed
@@ -1392,8 +1267,8 @@ function renderCv(){
     if(f) drawItem({x:hov.x,y:hov.y,lw:f.lw,lh:f.lh,forme:f.forme,img:f.img,color:f.color},'?',false,true);
   }
   ctx.fillStyle='rgba(0,0,0,.28)';ctx.font='bold 10px monospace';
-  ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('56 cm',SW/2,4);
-  ctx.save();ctx.translate(13,SH/2);ctx.rotate(-Math.PI/2);ctx.fillText('91 cm',0,0);ctx.restore();
+  ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('45 cm',SW/2,4);
+  ctx.save();ctx.translate(13,SH/2);ctx.rotate(-Math.PI/2);ctx.fillText('100 cm',0,0);ctx.restore();
   var su=surfacePct();
   ctx.fillStyle='rgba(0,0,0,.2)';ctx.font='8px monospace';
   ctx.textAlign='right';ctx.textBaseline='bottom';
@@ -1407,9 +1282,7 @@ function h2r(hex,a){
 
 function drawItem(lg,lbl,isSel,isPrev){
   var cx=lg.x,cy=lg.y,pw=lg.lw*S,ph=lg.lh*S,hw=pw/2,hh=ph/2;
-  var rot=(lg.rot||0)*Math.PI/180;
   ctx.save();
-  if(rot){ctx.translate(cx,cy);ctx.rotate(rot);ctx.translate(-cx,-cy);}
   if(isSel){ctx.shadowColor='#d4a843';ctx.shadowBlur=16;}
   else if(!isPrev){ctx.shadowColor='rgba(0,0,0,.22)';ctx.shadowBlur=5;}
   function shapePath(){
@@ -1427,7 +1300,7 @@ function drawItem(lg,lbl,isSel,isPrev){
     ctx.strokeStyle=isSel?'#d4a843':'rgba(255,255,255,.5)';
     ctx.lineWidth=isSel?2.5:1.5;ctx.stroke();
   } else {
-    var a=isPrev?0.28:0.72; var col=lg.color||'#1a9e8f';
+    var a=isPrev?0.28:0.72; var col=lg.color||'#22a85a';
     ctx.fillStyle=h2r(col,a);ctx.fill();
     ctx.strokeStyle=isSel?'#d4a843':(isPrev?h2r(col,.6):col);
     ctx.lineWidth=isSel?3:(isPrev?1:1.5);
@@ -1505,7 +1378,7 @@ function updSelBox(){
   var lg=placed.find(function(l){return l.id===selId;});
   if(!lg){if(box)box.classList.remove('vis');return;}
   if(box) box.classList.add('vis');
-  if(ttl) ttl.textContent=lg.name+' - '+lg.lw+'x'+lg.lh+' cm - '+lg.forme+(lg.rot?' - '+(lg.rot||0)+'°':'')+(resizing?' [REDIM...]':'');
+  if(ttl) ttl.textContent=lg.name+' - '+lg.lw+'x'+lg.lh+' cm - '+lg.forme+(resizing?' [REDIM...]':'');
 }
 
 function dupSel(){
@@ -1541,17 +1414,6 @@ function delSel(){
   selId=null;updSelBox();updatePricing();renderCv();
 }
 
-function rotateSel(deg){
-  var lg=placed.find(function(l){return l.id===selId;}); if(!lg) return;
-  lg.rot=((lg.rot||0)+deg+360)%360;
-  updSelBox(); renderCv();
-}
-
-function resetRotSel(){
-  var lg=placed.find(function(l){return l.id===selId;}); if(!lg) return;
-  lg.rot=0; updSelBox(); renderCv();
-}
-
 /* ═══════ PRICING ═══════ */
 function updatePricing(){
   var cout=parseFloat(document.getElementById('vCout')?document.getElementById('vCout').value:8000)||8000;
@@ -1563,7 +1425,7 @@ function updatePricing(){
   var sNb=document.getElementById('sNb'),sSurf=document.getElementById('sSurf');
   if(sNb) sNb.textContent=nb; if(sSurf) sSurf.textContent=surfP+'%';
   var inf=document.getElementById('cvInfo');
-  if(inf) inf.textContent=nb>0?nb+' logo(s) - Surface: '+surfP+'% - Moy: '+fmt(pL)+' XPF/logo':'Feuille 56x91 cm - Selectionnez un format puis cliquez pour placer';
+  if(inf) inf.textContent=nb>0?nb+' logo(s) - Surface: '+surfP+'% - Moy: '+fmt(pL)+' XPF/logo':'Feuille 50x100 cm - Selectionnez un format puis cliquez pour placer';
   updSelBox();
 }
 
@@ -1573,7 +1435,7 @@ function exportPng(forceRes){
   var DPI_PRINT=300, CM_PER_IN=2.54;
   var PX_PER_CM=DPI_PRINT/CM_PER_IN;
   var MULT=PX_PER_CM/S;
-  var HI_W=Math.round(56*PX_PER_CM), HI_H=Math.round(91*PX_PER_CM);
+  var HI_W=Math.round(SHEET_W*PX_PER_CM), HI_H=Math.round(SHEET_H*PX_PER_CM);
   var res=forceRes||'hi';
   var expW=res==='hi'?HI_W:SW, expH=res==='hi'?HI_H:SH;
   var expM=res==='hi'?MULT:1;
@@ -1593,11 +1455,11 @@ function exportPng(forceRes){
   placed.forEach(function(lg,i){drawItem(lg,i+1,false,false);});
   ctx=origCtx;
   ox.fillStyle='rgba(0,0,0,.3)';ox.font='bold '+(S*0.85)+'px monospace';
-  ox.textAlign='center';ox.textBaseline='top';ox.fillText('56 cm',SW/2,S*0.15);
-  ox.save();ox.translate(S*1.1,SH/2);ox.rotate(-Math.PI/2);ox.fillText('91 cm',0,0);ox.restore();
+  ox.textAlign='center';ox.textBaseline='top';ox.fillText('45 cm',SW/2,S*0.15);
+  ox.save();ox.translate(S*1.1,SH/2);ox.rotate(-Math.PI/2);ox.fillText('100 cm',0,0);ox.restore();
   ox.fillStyle='rgba(0,0,0,.15)';ox.font=(S*0.65)+'px monospace';
   ox.textAlign='right';ox.textBaseline='bottom';
-  ox.fillText('DTF 56x91cm '+DPI_PRINT+'DPI '+expW+'x'+expH+'px',SW-S*0.3,SH-S*0.2);
+  ox.fillText('DTF 45x100cm '+DPI_PRINT+'DPI '+expW+'x'+expH+'px',SW-S*0.3,SH-S*0.2);
   function u32(n){return [(n>>24)&0xff,(n>>16)&0xff,(n>>8)&0xff,n&0xff];}
   function injectPHYs(dataUrl,ppm){
     var b64=dataUrl.split(',')[1],bin=atob(b64),arr=new Uint8Array(bin.length);
@@ -1617,72 +1479,7 @@ function exportPng(forceRes){
   var rawUrl=oc.toDataURL('image/png',1.0);
   var finalUrl=res==='hi'?injectPHYs(rawUrl,pxPerMeter):rawUrl;
   var lnk=document.createElement('a');
-  lnk.download='DTF-56x91cm-'+dpiLabel+'-'+Date.now()+'.png';
-  lnk.href=finalUrl; lnk.click();
-}
-
-/* ═══════ DRAW ITEM EXPORT (sans fond, sans numéro, sans ombre) ═══════ */
-function drawItemExport(lg){
-  var cx=lg.x, cy=lg.y, pw=lg.lw*S, ph=lg.lh*S, hw=pw/2, hh=ph/2;
-  var rot=(lg.rot||0)*Math.PI/180;
-  ctx.save();
-  if(rot){ctx.translate(cx,cy);ctx.rotate(rot);ctx.translate(-cx,-cy);}
-  function shapePath(){
-    ctx.beginPath();
-    if(lg.forme==='circle') ctx.ellipse(cx,cy,hw,hh,0,0,Math.PI*2);
-    else if(lg.forme==='square'){var side=Math.min(hw,hh);ctx.rect(cx-side,cy-side,side*2,side*2);}
-    else ctx.rect(cx-hw,cy-hh,pw,ph);
-  }
-  shapePath();
-  if(lg.img){
-    ctx.save(); ctx.clip();
-    if(lg.forme==='square'){var side=Math.min(hw,hh);ctx.drawImage(lg.img,cx-side,cy-side,side*2,side*2);}
-    else ctx.drawImage(lg.img,cx-hw,cy-hh,pw,ph);
-    ctx.restore();
-  } else {
-    ctx.fillStyle=lg.color||'#1a9e8f';
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
-/* ═══════ EXPORT PNG TRANSPARENT 300 DPI ═══════ */
-function exportPngTransparent(){
-  if(!cv) return;
-  if(!placed.length){alert('Aucun logo sur la feuille.');return;}
-  var DPI=300, CM_PER_IN=2.54;
-  var PX_PER_CM=DPI/CM_PER_IN;
-  var MULT=PX_PER_CM/S;
-  var HI_W=Math.round(56*PX_PER_CM), HI_H=Math.round(91*PX_PER_CM);
-  var oc=document.createElement('canvas');
-  oc.width=HI_W; oc.height=HI_H;
-  var ox=oc.getContext('2d');
-  ox.scale(MULT,MULT);
-  // Pas de fillRect → fond transparent
-  var origCtx=ctx; ctx=ox;
-  placed.forEach(function(lg){drawItemExport(lg);});
-  ctx=origCtx;
-  // Inject pHYs chunk 300 DPI
-  function u32(n){return[(n>>24)&0xff,(n>>16)&0xff,(n>>8)&0xff,n&0xff];}
-  function injectPHYs(dataUrl,ppm){
-    var b64=dataUrl.split(',')[1],bin=atob(b64),arr=new Uint8Array(bin.length);
-    for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
-    var crcT=(function(){var t=new Uint32Array(256);for(var i=0;i<256;i++){var c=i;for(var j=0;j<8;j++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[i]=c;}return t;})();
-    function crc32(buf){var c=0xFFFFFFFF;for(var i=0;i<buf.length;i++)c=crcT[(c^buf[i])&0xff]^(c>>>8);return(c^0xFFFFFFFF)>>>0;}
-    var cn=[0x70,0x48,0x59,0x73],pd=new Uint8Array([].concat(u32(ppm),u32(ppm),[1]));
-    var ci=new Uint8Array([].concat(cn,Array.from(pd)));
-    var pc=new Uint8Array([].concat(u32(9),cn,Array.from(pd),u32(crc32(ci))));
-    var IHDR=33,res2=new Uint8Array(arr.length+pc.length);
-    res2.set(arr.slice(0,IHDR));res2.set(pc,IHDR);res2.set(arr.slice(IHDR),IHDR+pc.length);
-    var out='',chunk=8192;
-    for(var ri=0;ri<res2.length;ri+=chunk) out+=String.fromCharCode.apply(null,res2.slice(ri,ri+chunk));
-    return 'data:image/png;base64,'+btoa(out);
-  }
-  var ppm=Math.round(DPI/CM_PER_IN*100);
-  var rawUrl=oc.toDataURL('image/png',1.0);
-  var finalUrl=injectPHYs(rawUrl,ppm);
-  var lnk=document.createElement('a');
-  lnk.download='DTF-56x91cm-transparent-300dpi-'+Date.now()+'.png';
+  lnk.download='DTF-45x100cm-'+dpiLabel+'-'+Date.now()+'.png';
   lnk.href=finalUrl; lnk.click();
 }
 
@@ -1725,7 +1522,7 @@ function imgDominantColor(img){
   ox.drawImage(img,Math.floor(img.width/2),Math.floor(img.height/2),1,1,0,0,1,1);
   var d=ox.getImageData(0,0,1,1).data;
   // If pixel is too light (near white), use teal default
-  if(d[0]>220&&d[1]>220&&d[2]>220) return '#1a9e8f';
+  if(d[0]>220&&d[1]>220&&d[2]>220) return '#22a85a';
   return 'rgba('+d[0]+','+d[1]+','+d[2]+',0.85)';
 }
 
@@ -1778,6 +1575,12 @@ function clearLogoGallery(){
   renderLogoGallery();
 }
 
+
+/* AUTO-OPEN TAB FROM URL */
+(function(){
+  var p = new URLSearchParams(window.location.search).get('tab');
+  if(p) window.addEventListener('load', function(){ goTab(p); });
+})();
 window.goTab=goTab; window.doCalc=doCalc; window.buildCfgTable=buildCfgTable;
 window.initCanvas=initCanvas; window.addFmt=addFmt; window.delFmt=delFmt; window.selFmt=selFmt;
 window.onImgLoad=onImgLoad; window.checkImgRes=checkImgRes;
@@ -1790,10 +1593,8 @@ window.setTool=setTool; window.cvDown=cvDown; window.cvMove=cvMove;
 window.cvUp=cvUp; window.cvLeave=cvLeave; window.cvClick=cvClick;
 window.autoFill=autoFill; window.clearAll=clearAll;
 window.dupSel=dupSel; window.dupGrid=dupGrid; window.mvSel=mvSel; window.delSel=delSel;
-window.updatePricing=updatePricing; window.exportPng=exportPng; window.exportPngTransparent=exportPngTransparent; window.drawItemExport=drawItemExport;
-window.rotateSel=rotateSel; window.resetRotSel=resetRotSel;
+window.updatePricing=updatePricing; window.exportPng=exportPng;
 window.hlStep=hlStep; window.submitOrder=submitOrder;
-window.toggleFichesPanel=toggleFichesPanel; window.chargerFiches=chargerFiches;
 window.getHandles=getHandles;
 window.hitHandle=hitHandle;
 window.addToLogoGallery=addToLogoGallery;

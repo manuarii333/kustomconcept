@@ -15,20 +15,64 @@
     input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
     .glass { backdrop-filter: blur(10px); }
     input:focus { outline: none; }
+    /* Styles panneau historique DTF */
+    .hcs-history-panel {
+      background: rgba(17,24,39,0.8);
+      border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 12px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .hcs-history-toggle {
+      width: 100%;
+      background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(20,184,166,0.15));
+      border: none;
+      color: #f0f0f0;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      letter-spacing: .03em;
+    }
+    .hcs-history-toggle:hover { background: linear-gradient(135deg, rgba(245,158,11,0.25), rgba(20,184,166,0.25)); }
+    .hcs-history-body { padding: 16px; display: none; }
+    .hcs-history-body.open { display: block; }
+    .hcs-hist-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 12px;
+      color: #ccc;
+    }
+    .hcs-hist-item:last-child { border-bottom: none; }
+    .hcs-hist-item .hist-total { color: #fbbf24; font-weight: 700; font-size: 13px; }
+    .hcs-hist-item .hist-date { color: #6b7280; font-size: 11px; }
+    .hcs-hist-empty { text-align: center; color: #6b7280; font-size: 12px; padding: 16px; }
   </style>
+  <script src="hcs-api-shared.js"></script>
 </head>
 <body class="bg-gray-900">
   <div id="root"></div>
   
   <script type="text/babel">
-    const { useState, useMemo } = React;
+    const { useState, useMemo, useEffect, useRef } = React;
 
     function DTFOrderCalculator() {
       // Taux de change
       const [usdToXpf, setUsdToXpf] = useState(109.5);
-      
+
       // Afficher/masquer les tarifs
       const [showPricing, setShowPricing] = useState(false);
+
+      // Etat historique et badge sauvegarde
+      const [historyItems, setHistoryItems] = useState([]);
+      const [showHistory, setShowHistory] = useState(false);
+      const lastSavedRef = useRef(null); // Empêche les sauvegardes en double
 
       // Tarifs HTV4U éditables selon les paliers (basés sur l'image)
       const [htv4uPricing, setHtv4uPricing] = useState({
@@ -333,6 +377,54 @@
         if (qty >= 6) return '6-10';
         return '1-5';
       };
+
+      // Chargement de l'historique au montage du composant
+      useEffect(() => {
+        if (typeof HCSApi !== 'undefined') {
+          HCSApi.getRecent('calculs', 8).then(items => {
+            if (items && items.length) {
+              // Filtrer uniquement les calculs DTF
+              setHistoryItems(items.filter(it => it.type === 'dtf' || !it.type));
+            }
+          }).catch(() => {});
+        }
+      }, []);
+
+      // Sauvegarde automatique quand le coût total est calculé
+      useEffect(() => {
+        if (!calculateTotalCost) return;
+        const totalDesigns = calculateTotalCost.totalDesigns;
+        const totalXPF = calculateTotalCost.totalXPF;
+        // Clé de dédup pour éviter les sauvegardes répétées au même résultat
+        const dedupKey = totalDesigns + '_' + totalXPF;
+        if (lastSavedRef.current === dedupKey) return;
+        lastSavedRef.current = dedupKey;
+
+        const formatUsed = clientDesigns.map(d => d.name).join(', ');
+        const donnees = {
+          type: 'dtf',
+          quantite: totalDesigns,
+          prix_unitaire: calculateTotalCost.pricePerDesign,
+          prix_total: totalXPF,
+          client_nom: '',
+          format: formatUsed,
+          date: new Date().toISOString().slice(0, 10)
+        };
+
+        if (typeof HCSApi !== 'undefined') {
+          HCSApi.save('calculs', donnees).then(offline => {
+            HCSApi.showSavedBadge('dtf-calc-badge', offline);
+            // Rafraîchir l'historique
+            HCSApi.getRecent('calculs', 8).then(items => {
+              if (items && items.length) {
+                setHistoryItems(items.filter(it => it.type === 'dtf' || !it.type));
+              }
+            }).catch(() => {});
+          }).catch(() => {
+            HCSApi.showSavedBadge('dtf-calc-badge', true);
+          });
+        }
+      }, [calculateTotalCost]);
 
       return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-4">
@@ -819,6 +911,40 @@
                     </tfoot>
                   )}
                 </table>
+              </div>
+            </div>
+
+            {/* Badge de sauvegarde + Historique */}
+            <div className="mb-4">
+              <div id="dtf-calc-badge" className="mb-3"></div>
+
+              {/* Panneau Historique collapsible */}
+              <div className="hcs-history-panel">
+                <button
+                  className="hcs-history-toggle"
+                  onClick={() => setShowHistory(!showHistory)}
+                >
+                  <span>📋 Historique des calculs DTF</span>
+                  <span>{showHistory ? '▲' : '▼'}</span>
+                </button>
+                <div className={`hcs-history-body ${showHistory ? 'open' : ''}`}>
+                  {historyItems.length === 0 ? (
+                    <div className="hcs-hist-empty">Aucun calcul enregistré pour l'instant.</div>
+                  ) : (
+                    historyItems.map((item, idx) => (
+                      <div key={idx} className="hcs-hist-item">
+                        <div>
+                          <div>{item.format || 'Calcul DTF'}</div>
+                          <div className="hist-date">{item.date || ''}</div>
+                        </div>
+                        <div style={{textAlign:'right'}}>
+                          <div className="hist-total">{(item.prix_total || 0).toLocaleString()} F</div>
+                          <div className="hist-date">{item.quantite || 0} designs</div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
 

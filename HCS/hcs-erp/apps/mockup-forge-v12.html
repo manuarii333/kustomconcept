@@ -1785,6 +1785,16 @@ body.admin-mode .admin-chip { display:inline-flex; align-items:center; gap:5px; 
           <div class="sum-row"><span style="font-size:10px">👕</span><span class="sum-lbl" id="ts-tmpl-cnt">0 templates</span></div>
           <div class="sum-row"><span style="font-size:10px">🧢</span><span class="sum-lbl" id="cap-tmpl-cnt">0 templates</span></div>
         </div>
+        <!-- PANNEAU HISTORIQUE ERP -->
+        <div style="border-top:1px solid var(--border);padding-top:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="font-size:8px;color:var(--dim);letter-spacing:1.5px;">HISTORIQUE EXPORTS</div>
+            <button onclick="chargerHistoriqueMockups()" style="font-size:8px;padding:2px 6px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;cursor:pointer;" title="Rafraîchir">↻</button>
+          </div>
+          <div id="mfw-hist-list">
+            <div style="font-size:9px;color:var(--muted);text-align:center;padding:12px;">Chargement...</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -4686,6 +4696,7 @@ function downloadPreview(){
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(()=>URL.revokeObjectURL(url),3000);
     toast("✓ Téléchargement lancé");
+    sauvegarderMockupERP().catch(()=>{}); /* Sauvegarde asynchrone dans l'ERP */
   },"image/png",1.0);
 }
 /* ── IndexedDB : stockage du handle dossier HCS 2026 ── */
@@ -4796,6 +4807,7 @@ async function archivePreview(){
     },'image/png',1.0));
     const msg=found&&usedName!==client?`✓ Archivé dans "${usedName}" → ${finalName}`:`✓ Archivé → ${mois}/${usedName}/${finalName}`;
     toast(msg);
+    sauvegarderMockupERP().catch(()=>{}); /* Sauvegarde asynchrone dans l'ERP */
   } catch(e){
     if(e.name==='NotFoundError') toast('⚠ Dossier introuvable — réinitialise le dossier racine');
     else if(e.name!=='AbortError') toast('⚠ '+e.message);
@@ -5002,9 +5014,71 @@ document.getElementById("mockup-container").addEventListener("click",e=>{
 function setVH(){ document.documentElement.style.setProperty("--vh",window.innerHeight*0.01+"px"); }
 window.addEventListener("resize",setVH); setVH();
 
+/* ============================================================
+   ERP — SAUVEGARDE MOCKUP DANS LA TABLE "assets"
+   POST https://highcoffeeshirts.com/erp/api/assets
+   ============================================================ */
+const _ERP_API  = 'https://highcoffeeshirts.com/erp/api';
+const _ERP_KEY  = 'hcs-erp-2026';
+
+/* Enregistre l'export dans la table assets de l'ERP */
+async function sauvegarderMockupERP() {
+  const client = (state.clientName || '').trim();
+  const ts     = new Date();
+  const nom    = `${client ? client.replace(/\s+/g,'_') : 'mockup'}_${ts.getFullYear()}${String(ts.getMonth()+1).padStart(2,'0')}${String(ts.getDate()).padStart(2,'0')}_${String(ts.getHours()).padStart(2,'0')}${String(ts.getMinutes()).padStart(2,'0')}`;
+  const payload = {
+    nom:       nom,
+    type:      'mockup',
+    client_id: client || null,
+    tags:      'mockupforge,png',
+    notes:     `Export MockupForge — ${ts.toLocaleDateString('fr-FR')} ${ts.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`
+  };
+  try {
+    const rep = await fetch(`${_ERP_API}/assets`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': _ERP_KEY },
+      body:    JSON.stringify(payload)
+    });
+    if (!rep.ok) throw new Error(`HTTP ${rep.status}`);
+    chargerHistoriqueMockups(); /* Rafraîchir le panneau */
+  } catch(e) {
+    console.warn('MockupForge ERP save error:', e.message);
+  }
+}
+
+/* Charge l'historique des 8 derniers mockups exportés */
+async function chargerHistoriqueMockups() {
+  const el = document.getElementById('mfw-hist-list');
+  if (!el) return;
+  try {
+    const rep = await fetch(`${_ERP_API}/assets?sort=id&order=DESC&limit=20`, {
+      headers: { 'x-api-key': _ERP_KEY }
+    });
+    if (!rep.ok) throw new Error(`HTTP ${rep.status}`);
+    const data  = await rep.json();
+    const items = (data.items || []).filter(a => a.type === 'mockup').slice(0, 8);
+    if (items.length === 0) {
+      el.innerHTML = '<div style="font-size:9px;color:var(--muted);text-align:center;padding:12px;">Aucun export enregistré.</div>';
+      return;
+    }
+    el.innerHTML = items.map(a => `
+      <div style="display:flex;align-items:flex-start;gap:6px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+        <span style="font-size:13px;flex-shrink:0;">🖼</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:9px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(a.client_id||'—')}</div>
+          <div style="font-size:8px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml((a.nom||'').slice(0,28))}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = `<div style="font-size:8px;color:var(--red);padding:6px;">Err: ${escHtml(e.message)}</div>`;
+  }
+}
+
 /* Init */
 render();
 showClientMode();
+chargerHistoriqueMockups(); /* Historique initial */
 </script>
 
 <!-- CONFIG PANEL — ref / color / size / view (step 2 overlay) -->

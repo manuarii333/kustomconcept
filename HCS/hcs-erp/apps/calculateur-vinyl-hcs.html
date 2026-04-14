@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HCS — Calculateur Vinyle</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="hcs-api-shared.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -218,6 +219,45 @@
 
   .section { margin-bottom: 2rem; }
 
+  /* Historique vinyle */
+  .hcs-history-block {
+    background: var(--surface);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--r);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .hcs-history-header {
+    width: 100%;
+    background: var(--surface2);
+    border: none;
+    color: var(--text);
+    padding: .875rem 1.25rem;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: .08em;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background .2s;
+  }
+  .hcs-history-header:hover { background: rgba(200,255,0,0.06); }
+  .hcs-history-list { display: none; }
+  .hcs-history-list.open { display: block; }
+  .hcs-hist-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .7rem 1.25rem;
+    border-top: 0.5px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .hcs-hist-row .hv { color: var(--accent); font-weight: 500; font-size: 13px; }
+  .hcs-hist-row .hd { font-size: 10px; color: #555; }
+  .hcs-hist-empty { padding: .875rem 1.25rem; font-size: 12px; color: #555; }
+
   @media (max-width: 500px) {
     .grid2, .grid3 { grid-template-columns: 1fr; }
     header { flex-direction: column; align-items: flex-start; gap: 12px; }
@@ -341,6 +381,20 @@
       <div class="hl-label">CA total estimé</div>
       <div class="hl-value" id="r-ca">— XPF</div>
     </div>
+
+    <!-- Badge de sauvegarde API -->
+    <div id="vinyl-calc-badge" style="margin-bottom:1rem;min-height:28px;"></div>
+
+    <!-- Panneau Historique collapsible -->
+    <div class="hcs-history-block">
+      <button class="hcs-history-header" onclick="toggleVinylHistory()">
+        <span>📋 Historique des calculs vinyle</span>
+        <span id="vinyl-hist-arrow">▼</span>
+      </button>
+      <div class="hcs-history-list" id="vinyl-hist-list">
+        <div class="hcs-hist-empty" id="vinyl-hist-empty">Chargement...</div>
+      </div>
+    </div>
   </div>
 
   <p class="tag-line">High Coffee Shirt · Papeete, Tahiti · calcul matière vinyle</p>
@@ -351,6 +405,10 @@
   function fmt(n, d=2) {
     return n.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
   }
+
+  // Délai anti-rebond pour éviter les sauvegardes à chaque frappe
+  var _vinylSaveTimer = null;
+  var _vinylLastSavedKey = null;
 
   function calc() {
     const prixYard = parseFloat(document.getElementById('prix-yard').value) || 0;
@@ -378,12 +436,90 @@
     document.getElementById('r-nb').textContent = fmt(nbYard, 0) + ' pcs';
     document.getElementById('r-pvente').textContent = fmt(pvente, 0) + ' XPF';
     document.getElementById('r-ca').textContent = fmt(ca, 0) + ' XPF';
+
+    // Sauvegarde API avec délai anti-rebond (1.5s après la dernière frappe)
+    if (matTot > 0 && typeof HCSApi !== 'undefined') {
+      clearTimeout(_vinylSaveTimer);
+      _vinylSaveTimer = setTimeout(function() {
+        var dedupKey = qty + '_' + Math.round(matTot) + '_' + w + 'x' + h;
+        if (_vinylLastSavedKey === dedupKey) return;
+        _vinylLastSavedKey = dedupKey;
+
+        var format = w + 'x' + h + ' cm';
+        var donnees = {
+          type: 'vinyl',
+          quantite: qty,
+          prix_unitaire: Math.round(pvente),
+          prix_total: Math.round(matTot),
+          client_nom: '',
+          format: format,
+          date: new Date().toISOString().slice(0, 10)
+        };
+
+        HCSApi.save('calculs', donnees).then(function(offline) {
+          HCSApi.showSavedBadge('vinyl-calc-badge', offline);
+          // Rafraîchir l'historique après sauvegarde
+          chargerHistoriqueVinyl();
+        }).catch(function() {
+          HCSApi.showSavedBadge('vinyl-calc-badge', true);
+        });
+      }, 1500);
+    }
   }
 
   function setSize(w, h) {
     document.getElementById('w').value = w;
     document.getElementById('h').value = h;
     calc();
+  }
+
+  // Affichage/masquage de l'historique
+  var _vinylHistOpen = false;
+  function toggleVinylHistory() {
+    _vinylHistOpen = !_vinylHistOpen;
+    var list = document.getElementById('vinyl-hist-list');
+    var arrow = document.getElementById('vinyl-hist-arrow');
+    if (_vinylHistOpen) {
+      list.classList.add('open');
+      arrow.textContent = '▲';
+      chargerHistoriqueVinyl();
+    } else {
+      list.classList.remove('open');
+      arrow.textContent = '▼';
+    }
+  }
+
+  // Chargement et rendu de l'historique vinyle
+  function chargerHistoriqueVinyl() {
+    if (typeof HCSApi === 'undefined') return;
+    HCSApi.getRecent('calculs', 8).then(function(items) {
+      var el = document.getElementById('vinyl-hist-list');
+      var empty = document.getElementById('vinyl-hist-empty');
+      // Filtrer type vinyl
+      var filtered = (items || []).filter(function(it) { return it.type === 'vinyl'; });
+      if (!filtered.length) {
+        if (empty) empty.textContent = 'Aucun calcul vinyle enregistré.';
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+      // Supprimer les anciennes lignes sauf l'empty
+      var existing = el.querySelectorAll('.hcs-hist-row');
+      existing.forEach(function(r) { r.remove(); });
+      filtered.forEach(function(item) {
+        var row = document.createElement('div');
+        row.className = 'hcs-hist-row';
+        row.innerHTML =
+          '<div>' +
+            '<div>' + (item.format || 'Vinyle') + ' — qté ' + (item.quantite || 0) + '</div>' +
+            '<div class="hd">' + (item.date || '') + '</div>' +
+          '</div>' +
+          '<div style="text-align:right">' +
+            '<div class="hv">' + ((item.prix_total || 0)).toLocaleString('fr-FR') + ' XPF</div>' +
+            '<div class="hd">' + (item.prix_unitaire || 0) + ' XPF/u</div>' +
+          '</div>';
+        el.appendChild(row);
+      });
+    }).catch(function() {});
   }
 
   document.querySelectorAll('input').forEach(el => el.addEventListener('input', calc));

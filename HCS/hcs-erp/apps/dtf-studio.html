@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DTF STUDIO — Générateur de Collections</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="hcs-api-shared.js"></script>
 <style>
 :root{
   --ocean:#0a1628;--deep:#0d2137;--teal:#0e7c7b;--coral:#e8533a;
@@ -565,6 +566,9 @@ main{position:relative;z-index:10;max-width:1280px;margin:0 auto;padding:32px 40
       <button class="btn-sm" onclick="openHistory()">📚 Historique</button>
       <button class="btn-sm" onclick="exportCurrentZip()" id="btnZip">📥 ZIP</button>
       <button class="btn-sm pri" id="btnExpSel" onclick="openMod()" disabled>⭐ Sélection</button>
+      <button class="btn-sm" onclick="envoyerAtelier()" id="btnAtelier" style="background:rgba(14,124,123,0.15);border-color:var(--teal);color:var(--teal)">🏭 Atelier</button>
+      <button class="btn-sm" onclick="ouvrirMockupForge()" style="background:rgba(240,165,0,0.12);border-color:var(--gold);color:var(--gold)">🖼️ MockupForge</button>
+      <button class="btn-sm" onclick="ouvrirHistoriqueERP()" style="background:rgba(37,99,235,0.12);border-color:var(--v1);color:var(--v1)">📋 Historique ERP</button>
     </div>
   </div>
 
@@ -2296,6 +2300,38 @@ async function archiveSession() {
     await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
     db.close();
     toast('📦 Session archivée dans DTF Studio Database !');
+
+    // Sauvegarde ERP MySQL — logos + assets
+    const nomFichier = (S.coll || 'dtf-collection').replace(/\s+/g, '-').toLowerCase() + '-' + Date.now() + '.png';
+    const clientNom  = S.coll || 'DTF Studio';
+    const dateAuj    = new Date().toISOString().slice(0, 10);
+    const cheminDropbox = '/DTF-Studio/' + nomFichier;
+
+    if (typeof HCSApi !== 'undefined') {
+      HCSApi.save('logos', {
+        nom_fichier: nomFichier,
+        client_nom:  clientNom,
+        format:      'PNG',
+        statut:      'dtf-original',
+        chemin:      cheminDropbox,
+        date:        dateAuj
+      }).catch(() => {});
+
+      HCSApi.save('assets', {
+        nom:      nomFichier,
+        type:     'dtf-studio',
+        client_id: clientNom,
+        tags:     'dtf,creation-originale',
+        notes:    'Créé via DTF Studio',
+        date:     dateAuj
+      }).catch(() => {});
+
+      // Badge confirmation ERP
+      setTimeout(() => {
+        HCSApi.showSavedBadge('btnArchive', false);
+        toast('✓ Sauvegardé ERP');
+      }, 800);
+    }
   } catch(e) {
     toast('❌ Erreur archivage : ' + e.message);
   } finally {
@@ -3125,6 +3161,102 @@ uz.addEventListener('drop', e => {
     onImg({ target: document.getElementById('fi') });
   }
 });
+
+// ============================================================
+// INTÉGRATION ERP HCS
+// ============================================================
+
+// Envoyer la création vers l'Atelier (commandes_atelier MySQL)
+async function envoyerAtelier() {
+  const nomFichier = (S.coll || 'dtf-collection').replace(/\s+/g, '-').toLowerCase() + '-' + Date.now() + '.png';
+  const clientNom  = S.coll || 'DTF Studio';
+  const dateAuj    = new Date().toISOString().slice(0, 10);
+
+  if (typeof HCSApi === 'undefined') { toast('⚠️ HCSApi non chargé'); return; }
+
+  const btn = document.getElementById('btnAtelier');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
+
+  HCSApi.save('commandes_atelier', {
+    type:        'dtf-original',
+    description: 'Fichier DTF à imprimer : ' + nomFichier,
+    client_nom:  clientNom,
+    quantite:    1,
+    statut:      'en-attente',
+    date:        dateAuj
+  }).then(() => {
+    toast('🏭 Envoyé vers Atelier !');
+    setTimeout(() => HCSApi.showSavedBadge('btnAtelier', false), 400);
+  }).catch(() => {
+    toast('⚠️ Atelier : sauvegardé hors-ligne');
+  }).finally(() => {
+    if (btn) { btn.disabled = false; btn.textContent = '🏭 Atelier'; }
+  });
+}
+
+// Ouvrir MockupForge avec le nom du client en localStorage
+function ouvrirMockupForge() {
+  const clientNom = S.coll || 'DTF Studio';
+  localStorage.setItem('mfw_client_name', clientNom);
+  toast('🖼️ Ouverture MockupForge...');
+  setTimeout(() => window.open('../apps/mockup-forge-v12.html', '_blank'), 600);
+}
+
+// Panneau historique ERP — affiche les 8 dernières créations DTF depuis MySQL
+async function ouvrirHistoriqueERP() {
+  // Supprimer modal existante si déjà ouverte
+  document.getElementById('erpHistoryModal')?.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'erpHistoryModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(10,22,40,0.97);z-index:4000;display:flex;flex-direction:column;backdrop-filter:blur(12px);overflow:hidden';
+  modal.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 32px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div>
+        <div style="font-family:'Bebas Neue';font-size:30px;letter-spacing:3px;background:linear-gradient(135deg,var(--teal),var(--v1));-webkit-background-clip:text;-webkit-text-fill-color:transparent">📋 HISTORIQUE ERP — CRÉATIONS DTF</div>
+        <div style="font-family:'Space Mono';font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:2px">8 DERNIÈRES ENTRÉES — TABLE LOGOS (MYSQL)</div>
+      </div>
+      <button onclick="document.getElementById('erpHistoryModal').remove()"
+        style="padding:10px 22px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--white);font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;cursor:pointer">
+        ✕ FERMER
+      </button>
+    </div>
+    <div id="erpHistoryList" style="flex:1;overflow-y:auto;padding:28px 32px">
+      <div style="font-family:'Space Mono';font-size:11px;color:var(--muted);text-align:center;padding:50px">⏳ Chargement depuis MySQL...</div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  if (typeof HCSApi === 'undefined') {
+    document.getElementById('erpHistoryList').innerHTML =
+      '<div style="font-family:\'Space Mono\';font-size:11px;color:var(--coral);text-align:center;padding:50px">⚠️ HCSApi non disponible</div>';
+    return;
+  }
+
+  try {
+    const items = await HCSApi.getRecent('logos', 8);
+    // Filtrer uniquement les entrées dtf-original
+    const dtfItems = (items || []).filter(i => i.statut === 'dtf-original' || i.type === 'dtf-studio' || !i.statut);
+    const list = document.getElementById('erpHistoryList');
+
+    if (!dtfItems.length) {
+      list.innerHTML = '<div style="font-family:\'Space Mono\';font-size:11px;color:var(--muted);text-align:center;padding:70px;line-height:2">Aucune création DTF archivée dans l\'ERP.<br>Cliquez <strong style="color:var(--teal)">📦 Archiver</strong> pour sauvegarder.</div>';
+      return;
+    }
+
+    list.innerHTML = dtfItems.map(item => `
+      <div style="background:rgba(13,33,55,0.78);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:12px;display:flex;align-items:center;gap:18px">
+        <div style="width:44px;height:44px;background:rgba(14,124,123,0.2);border:1px solid var(--teal);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🎨</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;color:var(--white);margin-bottom:3px">${item.nom_fichier || item.nom || '—'}</div>
+          <div style="font-family:'Space Mono';font-size:10px;color:var(--muted)">${item.client_nom || item.client_id || '—'} · ${item.date || '—'}</div>
+        </div>
+        <div style="font-family:'Space Mono';font-size:10px;padding:4px 12px;background:rgba(14,124,123,0.15);border:1px solid rgba(14,124,123,0.4);border-radius:20px;color:var(--teal);white-space:nowrap">${item.statut || item.type || 'dtf'}</div>
+      </div>`).join('');
+  } catch(e) {
+    document.getElementById('erpHistoryList').innerHTML =
+      `<div style="font-family:'Space Mono';font-size:11px;color:var(--coral);text-align:center;padding:50px">❌ Erreur : ${e.message}</div>`;
+  }
+}
 
 // Restaurer les clés au chargement
 window.addEventListener('load', loadKeys);

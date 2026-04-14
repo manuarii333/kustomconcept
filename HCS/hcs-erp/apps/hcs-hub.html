@@ -77,9 +77,16 @@
 
   /* Chart */
   .chart-wrap{position:relative;height:200px}
+  /* Indicateur connexion MySQL */
+  #mysql-status{position:fixed;top:12px;right:16px;font-size:10px;padding:4px 10px;
+    border-radius:20px;z-index:100;transition:all 0.3s;}
+  #mysql-status.ok{background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.3);}
+  #mysql-status.offline{background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.3);}
 </style>
+<script src="hcs-api-shared.js"></script>
 </head>
 <body>
+<div id="mysql-status" class="offline">⚡ API...</div>
 <header>
   <div class="logo">
     <div class="logo-icon">☕</div>
@@ -306,6 +313,35 @@ loadKPIs();
 buildActivity();
 buildChart();
 setInterval(()=>{loadKPIs();},30000);
+
+/* ── Connexion API ERP MySQL ── */
+(async function connecterERP() {
+  const st = document.getElementById('mysql-status');
+  try {
+    const ok = await HCSApi.ping();
+    if (ok) {
+      st.textContent = '🟢 MySQL connecté';
+      st.className = 'ok';
+      /* Enrichir les KPIs avec les vraies données */
+      const [logos, assets, calculs] = await Promise.all([
+        HCSApi.getRecent('logos', 1000),
+        HCSApi.getRecent('assets', 1000),
+        HCSApi.getRecent('calculs', 1000)
+      ]);
+      const el = id => document.getElementById(id);
+      /* Mettre à jour les compteurs si les éléments existent */
+      if (el('kpi-logos'))   el('kpi-logos').textContent   = logos.length;
+      if (el('kpi-assets'))  el('kpi-assets').textContent  = assets.length;
+      if (el('kpi-calculs')) el('kpi-calculs').textContent = calculs.length;
+    } else {
+      st.textContent = '🟡 Hors-ligne';
+      st.className = 'offline';
+    }
+  } catch(e) {
+    st.textContent = '🔴 API indisponible';
+    st.className = 'offline';
+  }
+})();
 </script>
 </body>
 </html>

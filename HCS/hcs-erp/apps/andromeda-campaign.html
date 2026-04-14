@@ -545,9 +545,48 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-prim
 .hcs-toast { background: var(--bg-card); border: 1px solid var(--accent); border-radius: var(--radius-sm); padding: 12px 18px; font-size: 0.82rem; font-weight: 600; color: var(--text-primary); box-shadow: 0 4px 20px rgba(0,0,0,0.5); animation: toastIn 0.3s ease; max-width: 320px; pointer-events: auto; }
 .hcs-toast.alert { border-color: var(--accent-2); }
 @keyframes toastIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+/* ══ HCS API BADGE & HISTORIQUE CAMPAGNES ════════════════════ */
+#hcs-camp-badge {
+  display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: #43e97b; color: #0f0f1a; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.5px;
+  padding: 8px 20px; border-radius: 20px; box-shadow: 0 4px 16px rgba(67,233,123,0.4);
+  z-index: 9999; animation: hcsCampBadgeIn 0.3s ease;
+}
+@keyframes hcsCampBadgeIn { from { opacity:0; transform:translateX(-50%) translateY(10px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+#hcs-camp-history-panel {
+  display: none; position: fixed; bottom: 60px; right: 20px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 16px; min-width: 280px; max-width: 340px; z-index: 9998;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+#hcs-camp-history-panel h4 { font-size: 0.65rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 10px; }
+.hcs-camp-hist-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.hcs-camp-hist-item:last-child { border-bottom: none; }
+.hcs-camp-hist-titre { font-size: 0.68rem; font-weight: 600; color: var(--text-primary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hcs-camp-hist-statut { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--accent); background: rgba(108,99,255,0.15); padding: 2px 7px; border-radius: 10px; flex-shrink: 0; }
+.hcs-camp-hist-date { font-size: 0.6rem; color: var(--text-secondary); flex-shrink: 0; }
+#btn-hcs-camp-history {
+  display: none; position: fixed; bottom: 20px; right: 20px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text-secondary); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px;
+  padding: 6px 14px; cursor: pointer; z-index: 9997; transition: all 0.15s; text-transform: uppercase;
+}
+#btn-hcs-camp-history:hover { border-color: var(--accent); color: var(--accent); }
 </style>
+<script src="hcs-api-shared.js"></script>
 </head>
 <body>
+
+<!-- Badge sauvegarde HCS API Campagne -->
+<div id="hcs-camp-badge">✓ Campagne sauvegardée dans HCS ERP</div>
+<!-- Bouton historique campagnes -->
+<button id="btn-hcs-camp-history" onclick="toggleHcsCampHistory()">📋 Campagnes récentes</button>
+<!-- Panneau historique campagnes -->
+<div id="hcs-camp-history-panel">
+  <h4>5 dernières campagnes</h4>
+  <div id="hcs-camp-history-list"><em style="font-size:0.65rem;color:var(--text-secondary)">Chargement…</em></div>
+</div>
 
 <!-- Modal PayZen Test -->
 <div id="pz-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center">
@@ -2423,6 +2462,8 @@ document.addEventListener('keydown', e => { if(e.key==='Escape'){closeFlow();clo
 </body></html>`;
 
   dl(`andromeda-lp-${c.id}-${c.name.replace(/[^\w]/g,'-').toLowerCase()}.html`, html);
+  // Sauvegarde dans HCS ERP (T-Shirt / Casquette)
+  hcsSaveCampaign(id);
 }
 
 function exportLP(id) {
@@ -2990,6 +3031,8 @@ document.getElementById('modal-overlay').addEventListener('click', e => { if (e.
 <\/script>
 </body></html>`;
   dl(`andromeda-lp-${c.id}-${c.name.replace(/[^\w]/g,'-').toLowerCase()}.html`, html);
+  // Sauvegarde dans HCS ERP
+  hcsSaveCampaign(id);
 }
 
 function exportAd(id) {
@@ -4748,6 +4791,97 @@ async function exportLPImage(id) {
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '🖼️ Exporter PNG'; }
   }
+}
+
+// ═══════════════════════════════════════════════════════
+// HCS API — Sauvegarde campagnes (landing_pages + assets)
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Sauvegarde une campagne dans landing_pages et assets via HCSApi.
+ * Appelé après exportLP() et exportLPTshirt().
+ * @param {number} id - identifiant de la campagne dans CAMPS[]
+ */
+async function hcsSaveCampaign(id) {
+  if (typeof HCSApi === 'undefined') return; // garde si le script n'est pas chargé
+  const c = CAMPS[id];
+  if (!c) return;
+
+  const nomCampagne = c.name || 'Campagne sans nom';
+  const clientNom   = null; // Pas de champ client explicite dans Andromeda
+  const today       = new Date().toISOString().slice(0, 10);
+
+  // Données pour la table landing_pages
+  const lpData = {
+    titre:      nomCampagne,
+    client_nom: clientNom || 'Inconnu',
+    url:        '',
+    statut:     'campagne',
+    notes:      'Créé via Andromeda Campaign',
+    date:       today
+  };
+
+  // Données pour la table assets
+  const assetData = {
+    nom:       nomCampagne,
+    type:      'campagne',
+    client_id: clientNom || 'Inconnu',
+    tags:      'andromeda,campagne',
+    date:      today
+  };
+
+  // Double sauvegarde en parallèle
+  const [offlineLP] = await Promise.all([
+    HCSApi.save('landing_pages', lpData),
+    HCSApi.save('assets',        assetData)
+  ]);
+
+  // Afficher le badge vert 4 secondes
+  const badge = document.getElementById('hcs-camp-badge');
+  if (badge) {
+    badge.textContent = offlineLP
+      ? '✓ Campagne sauvegardée localement (hors-ligne)'
+      : '✓ Campagne sauvegardée dans HCS ERP';
+    badge.style.display = 'block';
+    setTimeout(() => { badge.style.display = 'none'; }, 4000);
+  }
+
+  // Afficher le bouton historique
+  const btnHist = document.getElementById('btn-hcs-camp-history');
+  if (btnHist) btnHist.style.display = 'block';
+
+  // Rafraîchir l'historique
+  hcsLoadCampHistory();
+}
+
+/** Charge et affiche les 5 dernières campagnes depuis l'API */
+async function hcsLoadCampHistory() {
+  const list = document.getElementById('hcs-camp-history-list');
+  if (!list) return;
+  try {
+    const items = await HCSApi.getRecent('landing_pages', 5);
+    if (!items || items.length === 0) {
+      list.innerHTML = '<em style="font-size:0.65rem;color:var(--text-secondary)">Aucune campagne enregistrée.</em>';
+      return;
+    }
+    list.innerHTML = items.map(item => `
+      <div class="hcs-camp-hist-item">
+        <span class="hcs-camp-hist-titre">${item.titre || '—'}</span>
+        <span class="hcs-camp-hist-statut">${item.statut || '—'}</span>
+        <span class="hcs-camp-hist-date">${item.date || ''}</span>
+      </div>`).join('');
+  } catch(e) {
+    list.innerHTML = '<em style="font-size:0.65rem;color:var(--text-secondary)">Erreur chargement historique.</em>';
+  }
+}
+
+/** Bascule la visibilité du panneau historique */
+function toggleHcsCampHistory() {
+  const panel = document.getElementById('hcs-camp-history-panel');
+  if (!panel) return;
+  const visible = panel.style.display === 'block';
+  panel.style.display = visible ? 'none' : 'block';
+  if (!visible) hcsLoadCampHistory();
 }
 
 // Init

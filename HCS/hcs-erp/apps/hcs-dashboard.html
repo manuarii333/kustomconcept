@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HCS Dashboard — Centre de pilotage</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="hcs-api-shared.js"></script>
 <style>
 :root {
   --bg: #070d1a;
@@ -167,9 +168,11 @@ body::before { content:''; position:fixed; inset:0; background:
     </div>
   </div>
   <div class="tb-right">
+    <div class="tb-pill chk" id="pill-mysql">⏳ MySQL...</div>
     <div class="tb-pill chk" id="pill-worker">⏳ Worker...</div>
     <div class="tb-pill chk" id="pill-hub">⏳ Hub...</div>
     <div class="tb-pill chk" id="pill-dtfdb">⏳ DTF DB...</div>
+    <button onclick="chargerKPIsMySQL()" style="font-family:'Space Mono';font-size:9px;padding:4px 10px;border-radius:20px;border:1px solid rgba(14,124,123,0.4);color:var(--teal2);background:rgba(14,124,123,0.1);cursor:pointer;letter-spacing:1px;transition:all .2s" title="Rafraîchir les données MySQL">↻ Rafraîchir</button>
     <div id="tb-clock">--:--</div>
   </div>
 </header>
@@ -227,6 +230,34 @@ body::before { content:''; position:fixed; inset:0; background:
         <div class="kpi-val b">18</div>
         <div class="kpi-sub">outils disponibles</div>
         <div class="kpi-icon">🏠</div>
+      </div>
+    </div>
+
+    <!-- KPI ROW MySQL -->
+    <div class="kpi-row" id="kpi-mysql-row" style="margin-bottom:28px">
+      <div class="kpi-card t">
+        <div class="kpi-label">Contacts MySQL</div>
+        <div class="kpi-val t" id="kpi-contacts">—</div>
+        <div class="kpi-sub">table contacts</div>
+        <div class="kpi-icon">👥</div>
+      </div>
+      <div class="kpi-card c">
+        <div class="kpi-label">Devis MySQL</div>
+        <div class="kpi-val c" id="kpi-devis">—</div>
+        <div class="kpi-sub">table devis</div>
+        <div class="kpi-icon">📄</div>
+      </div>
+      <div class="kpi-card g">
+        <div class="kpi-label">Logos MySQL</div>
+        <div class="kpi-val g" id="kpi-logos">—</div>
+        <div class="kpi-sub">table logos</div>
+        <div class="kpi-icon">🎨</div>
+      </div>
+      <div class="kpi-card b">
+        <div class="kpi-label">Calculs MySQL</div>
+        <div class="kpi-val b" id="kpi-calculs">—</div>
+        <div class="kpi-sub">table calculs</div>
+        <div class="kpi-icon">🧮</div>
       </div>
     </div>
 

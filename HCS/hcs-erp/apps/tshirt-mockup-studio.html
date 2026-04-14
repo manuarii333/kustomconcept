@@ -157,6 +157,20 @@ canvas#export-canvas { display: none; }
 /* Indicateur masque actif sur cellule */
 .mock-mask-ind { position: absolute; top: 4px; left: 4px; z-index: 5; background: rgba(67,233,123,0.85); border-radius: 4px; font-size: 0.48rem; color: #0f0f1a; font-weight: 800; padding: 1px 4px; display: none; pointer-events: none; }
 .mock-cell.mask-on .mock-mask-ind { display: block; }
+
+/* Badge sauvegarde HCS API */
+.tmk-save-badge { display:none; align-items:center; gap:5px; padding:4px 10px; border-radius:8px; font-size:0.65rem; font-weight:700; background:rgba(67,233,123,0.18); border:1px solid rgba(67,233,123,0.5); color:#43e97b; margin-left:8px; }
+.tmk-save-badge.visible { display:inline-flex; }
+
+/* Panneau historique mockups */
+.hist-panel { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); padding: 10px; font-size:0.6rem; }
+.hist-panel-hdr { display:flex; align-items:center; justify-content:space-between; cursor:pointer; font-size:0.62rem; font-weight:800; color:var(--accent2); }
+.hist-panel-body { margin-top:8px; display:none; max-height:150px; overflow-y:auto; }
+.hist-panel-body.open { display:block; }
+.hist-item { padding:5px 0; border-bottom:1px solid var(--border); color:var(--text2); line-height:1.4; }
+.hist-item:last-child { border-bottom:none; }
+.hist-item strong { color:var(--text); display:block; font-size:0.62rem; }
+.hist-item span { font-size:0.55rem; }
 </style>
 </head>
 <body>
@@ -445,6 +459,19 @@ canvas#export-canvas { display: none; }
         <div class="exp-sz" onclick="setExportSize(3000,this)">3000px</div>
       </div>
       <button class="btn btn-dl" style="width:100%;font-size:0.7rem" onclick="downloadSelected()">⬇ Télécharger</button>
+      <!-- Badge confirmation sauvegarde -->
+      <div id="tmk-saved-badge" class="tmk-save-badge">✓ Sauvegardé</div>
+    </div>
+
+    <!-- Panneau historique mockups -->
+    <div class="hist-panel">
+      <div class="hist-panel-hdr" onclick="toggleMockupHist()">
+        <span>📋 Historique mockups</span>
+        <span id="tmk-hist-arrow">▾</span>
+      </div>
+      <div class="hist-panel-body" id="tmk-hist-body">
+        <div style="color:var(--text2);font-size:0.6rem;padding:4px 0" id="tmk-hist-empty">Chargement…</div>
+      </div>
     </div>
 
     <div class="section" style="font-size:0.6rem;color:var(--text2);line-height:1.6">
@@ -466,6 +493,7 @@ canvas#export-canvas { display: none; }
   <div class="zip-status" id="zip-status">Préparation…</div>
 </div>
 
+<script src="hcs-api-shared.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 // ── État ──────────────────────────────────────────────────
@@ -1051,6 +1079,19 @@ async function downloadCell(row, col) {
 async function downloadSelected() {
   if (!selected) { alert('Sélectionnez d\'abord un mockup dans la grille.'); return; }
   await downloadCell(selected.row, selected.col);
+  // Sauvegarde dans la table assets via HCSApi
+  if (window.HCSApi) {
+    const offline = await HCSApi.save('assets', {
+      nom: 'mockup_' + Date.now(),
+      type: 'mockup',
+      client_id: null,
+      tags: 'tshirt-studio',
+      notes: 'Export TShirt Mockup Studio — ' + new Date().toLocaleDateString('fr-FR'),
+      date: new Date().toISOString().slice(0, 10)
+    }).catch(() => true);
+    HCSApi.showSavedBadge('tmk-saved-badge', offline === true);
+    chargerHistMockups();
+  }
 }
 
 async function exportAllMockups() {
@@ -1103,9 +1144,60 @@ async function exportAllMockups() {
     a.download = 'Collection-HCS.zip';
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+
+    // Sauvegarde dans la table assets via HCSApi
+    if (window.HCSApi) {
+      const offline = await HCSApi.save('assets', {
+        nom: 'mockup_' + Date.now(),
+        type: 'mockup',
+        client_id: null,
+        tags: 'tshirt-studio',
+        notes: 'Export ZIP TShirt Mockup Studio (' + jobs.length + ' mockups) — ' + new Date().toLocaleDateString('fr-FR'),
+        date: new Date().toISOString().slice(0, 10)
+      }).catch(() => true);
+      HCSApi.showSavedBadge('tmk-saved-badge', offline === true);
+      chargerHistMockups();
+    }
   } finally {
     setTimeout(() => overlay.classList.remove('visible'), 800);
   }
+}
+
+// ── Historique mockups (panneau collapsible) ──────────────────────────────
+async function chargerHistMockups() {
+  if (!window.HCSApi) return;
+  const body = document.getElementById('tmk-hist-body');
+  const empty = document.getElementById('tmk-hist-empty');
+  try {
+    const items = await HCSApi.getRecent('assets', 8);
+    // Filtrer seulement les mockups tshirt-studio
+    const mockups = (items || []).filter(i => i.tags === 'tshirt-studio' || i.type === 'mockup');
+    if (!mockups.length) {
+      if (empty) empty.textContent = 'Aucun export enregistré.';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    // Utiliser HCSApi.renderHistory si disponible, sinon rendu manuel
+    if (HCSApi.renderHistory) {
+      body.innerHTML = HCSApi.renderHistory(mockups, { dateField: 'date', nameField: 'nom', noteField: 'notes' });
+    } else {
+      body.innerHTML = mockups.map(m => `
+        <div class="hist-item">
+          <strong>${m.nom || '—'}</strong>
+          <span>${m.date || ''} — ${m.notes || ''}</span>
+        </div>`).join('');
+    }
+  } catch {
+    if (empty) empty.textContent = 'Erreur chargement historique.';
+  }
+}
+
+function toggleMockupHist() {
+  const body = document.getElementById('tmk-hist-body');
+  const arrow = document.getElementById('tmk-hist-arrow');
+  const isOpen = body.classList.toggle('open');
+  if (arrow) arrow.textContent = isOpen ? '▴' : '▾';
+  if (isOpen) chargerHistMockups();
 }
 
 function clearAll() {

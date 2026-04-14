@@ -8,7 +8,7 @@
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'highftqb_hcs_erp');
 define('DB_USER', 'highftqb_erp');
-define('DB_PASS', 'MOT_DE_PASSE_ICI');
+define('DB_PASS', '0<@SAc[(>R');
 
 /* Clé API partagée entre l'ERP front et ce backend PHP */
 define('API_KEY', 'hcs-erp-2026');
