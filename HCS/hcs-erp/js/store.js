@@ -190,6 +190,10 @@ const Store = (() => {
 
     db[collection].push(record);
     save();
+
+    /* Sync MySQL asynchrone (fire-and-forget) */
+    _syncMySQLCreate(collection, record);
+
     return record;
   }
 
@@ -209,6 +213,10 @@ const Store = (() => {
       _updatedAt: new Date().toISOString()
     });
     save();
+
+    /* Sync MySQL asynchrone (fire-and-forget) */
+    _syncMySQLUpdate(collection, id, updates);
+
     return db[collection][idx];
   }
 
@@ -222,6 +230,10 @@ const Store = (() => {
     if (!db) load();
     if (!db[collection]) return false;
     const len = db[collection].length;
+
+    /* Sync MySQL avant la suppression (on a encore le record) */
+    _syncMySQLDelete(collection, id);
+
     db[collection] = db[collection].filter(item => item.id !== id);
     save();
     return db[collection].length < len;
@@ -419,6 +431,84 @@ const Store = (() => {
     db = null;
     load();
     console.info('[Store] Base réinitialisée');
+  }
+
+  /* ================================================================
+     SYNC MYSQL — miroir asynchrone vers l'API PHP
+     Fire-and-forget : ne bloque jamais les opérations locales.
+     ================================================================ */
+
+  /* Tables du Store qui ont une contrepartie MySQL */
+  const MYSQL_TABLES = new Set([
+    'contacts', 'produits', 'fournisseurs', 'devis', 'commandes',
+    'factures', 'employes', 'conges', 'commandes_atelier', 'planning_atelier'
+  ]);
+
+  /**
+   * Envoie une création vers MySQL.
+   * Stocke l'ID MySQL retourné dans le record Store (_mysql_id).
+   */
+  async function _syncMySQLCreate(collection, record) {
+    if (!window.MYSQL || !MYSQL_TABLES.has(collection)) return;
+    try {
+      const payload = _buildMySQLPayload(record);
+      const created = await window.MYSQL.create(collection, payload);
+      if (created && created.id) {
+        /* Stocker l'ID MySQL sans déclencher une nouvelle sync */
+        const idx = (db[collection] || []).findIndex(r => r.id === record.id);
+        if (idx !== -1) {
+          db[collection][idx]._mysql_id = created.id;
+          try { localStorage.setItem(LS_KEY, JSON.stringify(db)); } catch (_) {}
+        }
+      }
+    } catch (e) {
+      console.warn(`[Store] MySQL create ${collection} échoué:`, e.message);
+    }
+  }
+
+  /**
+   * Envoie une mise à jour vers MySQL.
+   * Utilise _mysql_id si disponible, sinon ignore.
+   */
+  async function _syncMySQLUpdate(collection, storeId, updates) {
+    if (!window.MYSQL || !MYSQL_TABLES.has(collection)) return;
+    try {
+      const record = (db[collection] || []).find(r => r.id === storeId);
+      if (!record || !record._mysql_id) return;
+      const payload = _buildMySQLPayload(updates);
+      await window.MYSQL.update(collection, record._mysql_id, payload);
+    } catch (e) {
+      console.warn(`[Store] MySQL update ${collection} échoué:`, e.message);
+    }
+  }
+
+  /**
+   * Envoie une suppression vers MySQL.
+   */
+  async function _syncMySQLDelete(collection, storeId) {
+    if (!window.MYSQL || !MYSQL_TABLES.has(collection)) return;
+    try {
+      const record = (db[collection] || []).find(r => r.id === storeId);
+      if (!record || !record._mysql_id) return;
+      await window.MYSQL.delete(collection, record._mysql_id);
+    } catch (e) {
+      console.warn(`[Store] MySQL delete ${collection} échoué:`, e.message);
+    }
+  }
+
+  /**
+   * Prépare les données pour MySQL :
+   * - Exclut les champs internes du Store (_createdAt, _updatedAt, id, _mysql_id)
+   * - Les arrays/objects sont laissés tels quels (base.php les encodera en JSON)
+   * - Les champs inconnus dans MySQL échoueront silencieusement (catch dans les callers)
+   */
+  function _buildMySQLPayload(record) {
+    const exclude = new Set(['_createdAt', '_updatedAt', '_mysql_id', 'id']);
+    const payload = {};
+    for (const [k, v] of Object.entries(record || {})) {
+      if (!exclude.has(k)) payload[k] = v;
+    }
+    return payload;
   }
 
   /* ---------- API PUBLIQUE ---------- */

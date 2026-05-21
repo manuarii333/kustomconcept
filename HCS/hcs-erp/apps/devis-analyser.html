@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analyseur Devis & Marges — HCS ERP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Tokens ───────────────────────────────── */
+    :root {
+      --bg:            #0f0f0f;
+      --bg-card:       #1a1a1a;
+      --bg-row:        #1e1e1e;
+      --bg-row-alt:    #222222;
+      --border:        #2e2e2e;
+      --text:          #e8e8e8;
+      --text-muted:    #888;
+      --accent:        #c4813a;
+      --accent-light:  #e09a4f;
+      --green:         #22c55e;
+      --green-dim:     #16a34a22;
+      --yellow:        #eab308;
+      --yellow-dim:    #ca8a0422;
+      --orange:        #f97316;
+      --orange-dim:    #ea580c22;
+      --red:           #ef4444;
+      --red-dim:       #dc262622;
+      --blue:          #3b82f6;
+      --blue-dim:      #2563eb22;
+      --mono:          'JetBrains Mono', monospace;
+      --sans:          'Inter', sans-serif;
+      --radius:        10px;
+    }
+    [data-theme="light"] {
+      --bg:            #f5f5f4;
+      --bg-card:       #ffffff;
+      --bg-row:        #ffffff;
+      --bg-row-alt:    #f9f9f9;
+      --border:        #e0e0e0;
+      --text:          #1a1a1a;
+      --text-muted:    #666;
+      --green-dim:     #dcfce7;
+      --yellow-dim:    #fef9c3;
+      --orange-dim:    #ffedd5;
+      --red-dim:       #fee2e2;
+      --blue-dim:      #dbeafe;
+    }
+
+    /* ── Reset ───────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    /* ── Header ──────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 24px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header .logo { font-size: 20px; }
+    header h1 { font-size: 16px; font-weight: 700; }
+    header .subtitle { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .btn-back {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      font-family: var(--sans);
+      transition: all .15s;
+    }
+    .btn-back:hover { color: var(--text); border-color: var(--accent); }
+    .btn-theme {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    /* ── Layout ──────────────────────────────── */
+    .main { max-width: 1320px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    /* ── Controls bar ────────────────────────── */
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 800px) { .controls { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+    }
+    .card-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    select, input[type=range] {
+      width: 100%;
+      font-family: var(--sans);
+      font-size: 13px;
+    }
+    select {
+      background: var(--bg-row);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      outline: none;
+      cursor: pointer;
+    }
+    select:focus { border-color: var(--accent); }
+
+    /* ── Combobox recherche devis ── */
+    .devis-search-wrap { position: relative; }
+    .devis-search-input {
+      width: 100%;
+      background: var(--bg-row);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 30px 8px 10px;
+      font-family: var(--sans);
+      font-size: 13px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .devis-search-input:focus { border-color: var(--accent); }
+    .devis-search-input::placeholder { color: var(--text-muted); }
+    .devis-search-clear {
+      position: absolute;
+      right: 8px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      color: var(--text-muted);
+      cursor: pointer; font-size: 14px;
+      line-height: 1; display: none; padding: 2px;
+    }
+    .devis-search-clear:hover { color: var(--text); }
+    .devis-dropdown {
+      position: absolute;
+      top: calc(100% + 4px); left: 0; right: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      max-height: 260px;
+      overflow-y: auto;
+      z-index: 200;
+      display: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,.45);
+    }
+    .devis-dropdown.open { display: block; }
+    .devis-dropdown-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background .1s;
+    }
+    .devis-dropdown-item:last-child { border-bottom: none; }
+    .devis-dropdown-item:hover { background: var(--blue-dim); }
+    .devis-dropdown-item .item-ref {
+      font-weight: 600; color: var(--text);
+      font-family: var(--mono); font-size: 11px;
+    }
+    .devis-dropdown-item .item-detail {
+      color: var(--text-muted); margin-top: 2px; font-size: 11px;
+    }
+    .devis-dropdown-empty {
+      padding: 16px 12px; color: var(--text-muted);
+      font-size: 12px; text-align: center;
+    }
+
+    /* Slider marge */
+    .slider-row { display: flex; align-items: center; gap: 10px; }
+    input[type=range] {
+      flex: 1;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .slider-val {
+      font-family: var(--mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 52px;
+      text-align: right;
+    }
+    .slider-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    /* Stat mini */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stat { text-align: center; }
+    .stat-val {
+      font-family: var(--mono);
+      font-size: 17px;
+      font-weight: 700;
+    }
+    .stat-lbl { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+    /* ── Section title ───────────────────────── */
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .section-sub { font-size: 12px; color: var(--text-muted); margin-left: auto; }
+
+    /* ── Tableau d'analyse ───────────────────── */
+    .table-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: auto;
+      margin-bottom: 24px;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 860px; }
+    thead th {
+      padding: 10px 12px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-muted);
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    thead th.right { text-align: right; }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .1s;
+    }
+    tbody tr:nth-child(odd) { background: var(--bg-row); }
+    tbody tr:nth-child(even) { background: var(--bg-row-alt); }
+    tbody tr:hover { background: var(--blue-dim); }
+    tbody tr:last-child { border-bottom: none; }
+    td {
+      padding: 10px 12px;
+      font-size: 13px;
+      vertical-align: middle;
+    }
+    td.right {
+      text-align: right;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    td.center { text-align: center; }
+    .prod-name { font-weight: 600; color: var(--text); }
+    .prod-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    /* Badge marge */
+    .badge-marge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge-ok   { background: var(--green-dim);  color: var(--green);  }
+    .badge-mid  { background: var(--yellow-dim); color: var(--yellow); }
+    .badge-low  { background: var(--orange-dim); color: var(--orange); }
+    .badge-neg  { background: var(--red-dim);    color: var(--red);    }
+    .badge-none { background: var(--border);     color: var(--text-muted); }
+
+    /* Remise actuelle */
+    .remise-chip {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: var(--mono);
+      font-weight: 600;
+    }
+    .remise-ok  { background: var(--green-dim);  color: var(--green);  }
+    .remise-warn{ background: var(--orange-dim); color: var(--orange); }
+    .remise-crit{ background: var(--red-dim);    color: var(--red);    }
+
+    /* Prix éditable inline */
+    .px-input {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: var(--bg-row);
+      color: var(--text);
+      border: 1px solid transparent;
+      border-radius: 4px;
+      padding: 3px 6px;
+      width: 90px;
+      text-align: right;
+      transition: border-color .15s;
+    }
+    .px-input:focus { border-color: var(--accent); outline: none; }
+
+    /* ── Résumé global ───────────────────────── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 900px) { .summary-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 540px) { .summary-grid { grid-template-columns: 1fr 1fr; } }
+
+    .kpi {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .kpi-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: 6px; }
+    .kpi-val { font-family: var(--mono); font-size: 20px; font-weight: 700; }
+    .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .kpi.green { border-color: var(--green);  }
+    .kpi.green .kpi-val { color: var(--green);  }
+    .kpi.yellow{ border-color: var(--yellow); }
+    .kpi.yellow .kpi-val { color: var(--yellow); }
+    .kpi.orange{ border-color: var(--orange); }
+    .kpi.orange .kpi-val { color: var(--orange); }
+    .kpi.red   { border-color: var(--red);    }
+    .kpi.red   .kpi-val { color: var(--red);    }
+    .kpi.accent{ border-color: var(--accent); }
+    .kpi.accent .kpi-val { color: var(--accent); }
+
+    /* ── Décisions ────────────────────────────── */
+    .decisions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 700px) { .decisions-grid { grid-template-columns: 1fr; } }
+
+    .decision-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+    }
+    .decision-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+    .decision-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .decision-item:last-child { border-bottom: none; }
+    .decision-icon { font-size: 16px; flex-shrink: 0; }
+    .decision-text strong { display: block; font-weight: 600; margin-bottom: 2px; }
+    .decision-text span { color: var(--text-muted); }
+
+    /* ── Empty state ─────────────────────────── */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty p { font-size: 14px; }
+
+    /* ── Calculateur unitaire ───────────────── */
+    .unit-params {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 800px) { .unit-params { grid-template-columns: 1fr; } }
+
+    .toggle-group { display: flex; gap: 4px; margin-top: 6px; }
+    .toggle-btn {
+      flex: 1;
+      padding: 7px 6px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-family: var(--sans);
+      cursor: pointer;
+      transition: all .15s;
+      text-align: center;
+      font-weight: 500;
+    }
+    .toggle-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 700;
+    }
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 0;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--text);
+    }
+    .check-row input[type=checkbox] {
+      accent-color: var(--accent);
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .type-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      cursor: pointer;
+      border: none;
+      font-family: var(--sans);
+      transition: opacity .15s;
+    }
+    .type-tag:hover { opacity: .75; }
+    .type-piece      { background: #3b82f622; color: #60a5fa; }
+    .type-impression { background: #a855f722; color: #c084fc; }
+    .type-frais-tech { background: #f9731622; color: #fb923c; }
+    .type-livraison  { background: #6b728022; color: #9ca3af; }
+    .type-autre      { background: var(--border); color: var(--text-muted); }
+    .unit-results {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 900px) { .unit-results { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 500px) { .unit-results { grid-template-columns: 1fr; } }
+    .unit-kpi {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+    }
+    .unit-kpi-icon { font-size: 22px; margin-bottom: 5px; }
+    .unit-kpi-lbl  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: 4px; }
+    .unit-kpi-val  { font-family: var(--mono); font-size: 21px; font-weight: 700; }
+    .unit-kpi-sub  { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+    .unit-kpi.accent { border-color: var(--accent); }
+    .unit-kpi.accent .unit-kpi-val { color: var(--accent); }
+    .unit-kpi.green  { border-color: var(--green); }
+    .unit-kpi.green  .unit-kpi-val { color: var(--green); }
+    .unit-kpi.blue   { border-color: var(--blue); }
+    .unit-kpi.blue   .unit-kpi-val { color: var(--blue); }
+    .exclu-row td { opacity: .38; }
+    .exclu-row td.type-cell { opacity: 1; }
+
+    /* ── Scroll indic table ──────────────────── */
+    .scroll-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: right;
+      margin-bottom: 6px;
+      display: none;
+    }
+    @media (max-width: 960px) { .scroll-hint { display: block; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">⬡</span>
+  <div>
+    <h1>Analyseur Devis &amp; Marges</h1>
+    <div class="subtitle">HCS ERP — Vérification coûts · Simulation remises · Prix de vente</div>
+  </div>
+  <div class="header-right">
+    <button class="btn-back" onclick="window.location='../index.html'">← Retour ERP</button>
+    <button class="btn-theme" id="btn-theme" title="Basculer thème">🌙</button>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- ── Contrôles ── -->
+  <div class="controls">
+
+    <!-- Sélecteur de devis -->
+    <div class="card">
+      <div class="card-label">📄 Devis à analyser</div>
+      <div class="devis-search-wrap">
+        <input type="text" id="devis-search" class="devis-search-input"
+               placeholder="Rechercher par numéro, client…" autocomplete="off" />
+        <button class="devis-search-clear" id="devis-clear" title="Effacer">✕</button>
+        <div class="devis-dropdown" id="devis-dropdown"></div>
+      </div>
+      <div id="devis-meta" style="margin-top:8px;font-size:11px;color:var(--text-muted);"></div>
+    </div>
+
+    <!-- Marge cible -->
+    <div class="card">
+      <div class="card-label">🎯 Marge cible (taux sur prix de vente)</div>
+      <div class="slider-row">
+        <input type="range" id="marge-slider" min="0" max="80" value="35" step="1" />
+        <span class="slider-val" id="marge-val">35%</span>
+      </div>
+      <div class="slider-hint">
+        Prix min = Coût ÷ (1 − marge%) &nbsp;·&nbsp; Remise max = 1 − Prix min ÷ Prix actuel
+      </div>
+    </div>
+
+    <!-- KPIs rapides -->
+    <div class="card">
+      <div class="card-label">📊 Vue rapide</div>
+      <div class="stat-grid" id="quick-stats">
+        <div class="stat"><div class="stat-val" id="qs-lignes">—</div><div class="stat-lbl">Lignes</div></div>
+        <div class="stat"><div class="stat-val" id="qs-marge" style="color:var(--accent)">—</div><div class="stat-lbl">Marge globale</div></div>
+        <div class="stat"><div class="stat-val" id="qs-ok" style="color:var(--green)">—</div><div class="stat-lbl">Lignes OK</div></div>
+        <div class="stat"><div class="stat-val" id="qs-alert" style="color:var(--red)">—</div><div class="stat-lbl">Lignes alertes</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── KPIs globaux ── -->
+  <div class="summary-grid" id="summary-grid" style="display:none;">
+    <div class="kpi accent">
+      <div class="kpi-lbl">CA brut HT</div>
+      <div class="kpi-val" id="kpi-ca">—</div>
+      <div class="kpi-sub">avant remises</div>
+    </div>
+    <div class="kpi" id="kpi-ca-net-card">
+      <div class="kpi-lbl">CA net HT</div>
+      <div class="kpi-val" id="kpi-ca-net">—</div>
+      <div class="kpi-sub">après remises</div>
+    </div>
+    <div class="kpi" id="kpi-cout-card">
+      <div class="kpi-lbl">Total coûts</div>
+      <div class="kpi-val" id="kpi-cout">—</div>
+      <div class="kpi-sub">coûts connus</div>
+    </div>
+    <div class="kpi" id="kpi-marge-card">
+      <div class="kpi-lbl">Marge brute</div>
+      <div class="kpi-val" id="kpi-marge">—</div>
+      <div class="kpi-sub" id="kpi-marge-sub">—</div>
+    </div>
+    <div class="kpi" id="kpi-ttc-card">
+      <div class="kpi-lbl">Total TTC</div>
+      <div class="kpi-val" id="kpi-ttc">—</div>
+      <div class="kpi-sub">taxes incluses</div>
+    </div>
+  </div>
+
+  <!-- ── Calculateur Coût Unitaire ── -->
+  <div id="unitaire-section" style="display:none; margin-bottom:24px;">
+    <div class="section-head">
+      <span class="section-title">👕 Coût de revient &amp; prix unitaire — pièce imprimée</span>
+      <span class="section-sub" id="unit-sub"></span>
+    </div>
+
+    <div class="unit-params">
+      <!-- Configuration impression -->
+      <div class="card">
+        <div class="card-label">🖨️ Configuration impression</div>
+        <div class="toggle-group" id="toggle-impression">
+          <button class="toggle-btn" data-val="recto">Recto</button>
+          <button class="toggle-btn" data-val="verso">Verso</button>
+          <button class="toggle-btn active" data-val="recto-verso">Recto + Verso</button>
+        </div>
+        <div class="slider-hint" style="margin-top:8px;" id="unit-impressions-hint">—</div>
+      </div>
+
+      <!-- Options exclusion -->
+      <div class="card">
+        <div class="card-label">⚙️ Options de calcul</div>
+        <label class="check-row">
+          <input type="checkbox" id="chk-excl-frais" checked />
+          Exclure frais techniques (setup, vectorisation…)
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="chk-excl-livraison" checked />
+          Exclure frais de livraison / transport
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="chk-apply-remise" />
+          Appliquer la remise du devis
+        </label>
+      </div>
+
+      <!-- Marge cible unitaire -->
+      <div class="card">
+        <div class="card-label">💰 Marge bénéficiaire cible</div>
+        <div class="slider-row">
+          <input type="range" id="unit-marge-slider" min="0" max="80" value="35" step="1" />
+          <span class="slider-val" id="unit-marge-val">35%</span>
+        </div>
+        <div class="slider-hint">Prix conseillé = Coût de revient ÷ (1 − marge%)</div>
+      </div>
+    </div>
+
+    <!-- Tableau classification des lignes -->
+    <div id="unit-lines-wrap" style="display:none; margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:600;color:var(--text-muted);">Classification automatique des lignes</span>
+        <span style="font-size:11px;color:var(--text-muted);margin-left:auto;">Cliquer sur le badge pour changer le type</span>
+      </div>
+      <div class="table-wrap">
+        <table id="unit-lines-table" style="min-width:620px;">
+          <thead>
+            <tr>
+              <th style="width:130px;">Type</th>
+              <th>Description</th>
+              <th class="right">Qté</th>
+              <th class="right">Prix unit HT</th>
+              <th class="right">Remise</th>
+              <th class="right">Sous-total HT</th>
+              <th class="center">Inclus</th>
+            </tr>
+          </thead>
+          <tbody id="unit-lines-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Résultats KPI -->
+    <div class="unit-results" id="unit-results-grid"></div>
+  </div>
+
+  <!-- ── Tableau d'analyse ── -->
+  <div id="analysis-section">
+    <div class="section-head">
+      <span class="section-title">📋 Analyse ligne par ligne</span>
+      <span class="section-sub" id="table-hint"></span>
+    </div>
+
+    <div id="table-empty" class="empty">
+      <div class="empty-icon">📊</div>
+      <p>Sélectionnez un devis pour afficher l'analyse</p>
+    </div>
+
+    <div id="table-wrap-outer" style="display:none;">
+      <div class="scroll-hint">← Faites défiler pour voir toutes les colonnes →</div>
+      <div class="table-wrap">
+        <table id="analysis-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Produit / Description</th>
+              <th class="right">Qté</th>
+              <th class="right">Prix unit HT</th>
+              <th class="right">Coût unit</th>
+              <th class="right">Marge unit</th>
+              <th class="right">Taux marge</th>
+              <th class="right">Remise act.</th>
+              <th class="right" id="th-prixmin">Prix min <span id="th-target" style="font-weight:400;opacity:.7;">(35%)</span></th>
+              <th class="right" id="th-remisemax">Remise max</th>
+              <th class="right">Sous-total HT</th>
+            </tr>
+          </thead>
+          <tbody id="analysis-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Décisions ── -->
+  <div id="decisions-section" style="display:none; margin-top:24px;">
+    <div class="section-head">
+      <span class="section-title">💡 Aide à la décision</span>
+    </div>
+    <div class="decisions-grid">
+      <div class="decision-card">
+        <h3>⚠️ Points d'attention</h3>
+        <div id="dec-alerts"></div>
+      </div>
+      <div class="decision-card">
+        <h3>✅ Recommandations</h3>
+        <div id="dec-reco"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+/* ================================================================
+   Analyseur Devis — HCS ERP
+   Lit localStorage hcs_erp_db — aucune dépendance externe
+   ================================================================ */
+
+const LS_KEY = 'hcs_erp_db';
+let _db       = { devis: [], produits: [] };
+let _devis    = null;   /* devis actif */
+let _margeTarget = 35; /* % marge cible */
+
+/* ── Formatage ── */
+const fmt  = n => Number(n || 0).toLocaleString('fr-FR') + ' XPF';
+const fmtN = n => Number(n || 0).toLocaleString('fr-FR');
+const pct  = n => (Number(n) || 0).toFixed(1) + '%';
+
+/* ── Chargement localStorage ── */
+function loadDb() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) _db = JSON.parse(raw);
+  } catch (e) {
+    console.warn('Erreur lecture hcs_erp_db', e);
+  }
+}
+
+/* ── Chargement MySQL API (fallback si devis absent du cache local) ── */
+async function fetchDevisFromMySQL(id) {
+  const API_BASE = 'https://highcoffeeshirts.com/erp/api';
+  const API_KEY  = localStorage.getItem('hcs_api_key') || 'hcs-erp-2026';
+  try {
+    const r = await fetch(`${API_BASE}/index.php?table=devis&id=${encodeURIComponent(id)}`, {
+      headers: { 'x-api-key': API_KEY }
+    });
+    if (!r.ok) return null;
+    const data = await r.json();
+    /* L'API peut retourner un objet ou un tableau à 1 élément */
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row || !row.id) return null;
+    /* Normaliser les lignes (stockées en JSON string côté MySQL) */
+    if (typeof row.lignes === 'string') {
+      try { row.lignes = JSON.parse(row.lignes); } catch { row.lignes = []; }
+    }
+    return row;
+  } catch (e) {
+    console.warn('fetchDevisFromMySQL échoué', e);
+    return null;
+  }
+}
+
+/* ── Chargement produits depuis MySQL (pour les coûts) ── */
+async function fetchProduitsFromMySQL() {
+  const API_BASE = 'https://highcoffeeshirts.com/erp/api';
+  const API_KEY  = localStorage.getItem('hcs_api_key') || 'hcs-erp-2026';
+  try {
+    const r = await fetch(`${API_BASE}/index.php?table=produits`, {
+      headers: { 'x-api-key': API_KEY }
+    });
+    if (!r.ok) return [];
+    const data = await r.json();
+    return Array.isArray(data) ? data : (data.records || []);
+  } catch (e) {
+    return [];
+  }
+}
+
+/* ── Liste devis (combobox recherche) ── */
+let _devisList = [];
+
+function buildDevisList() {
+  _devisList = (_db.devis || [])
+    .slice()
+    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+}
+
+function getDevisLabel(d) {
+  const total = ((d.lignes || []).reduce((s, l) => {
+    const ht = (l.qte || 0) * (l.prixUnitaire || 0) * (1 - (l.remise || 0) / 100);
+    return s + ht;
+  }, 0));
+  return {
+    id:     d.id,
+    ref:    d.numero || d.id,
+    client: d.clientNom || d.client || '—',
+    date:   d.date ? new Date(d.date).toLocaleDateString('fr-FR') : '',
+    total:  fmt(Math.round(total))
+  };
+}
+
+function renderDevisDropdown(query) {
+  const dropdown = document.getElementById('devis-dropdown');
+  const q = (query || '').toLowerCase().trim();
+
+  const filtered = q
+    ? _devisList.filter(d => {
+        const info = getDevisLabel(d);
+        return (info.ref + ' ' + info.client + ' ' + info.date).toLowerCase().includes(q);
+      })
+    : _devisList;
+
+  if (filtered.length === 0) {
+    dropdown.innerHTML = '<div class="devis-dropdown-empty">Aucun devis trouvé</div>';
+    return;
+  }
+
+  dropdown.innerHTML = filtered.map(d => {
+    const info = getDevisLabel(d);
+    return `<div class="devis-dropdown-item" data-id="${esc(info.id)}">
+      <div class="item-ref">${esc(info.ref)}&nbsp;·&nbsp;${esc(info.date)}</div>
+      <div class="item-detail">${esc(info.client)}&nbsp;·&nbsp;${info.total}</div>
+    </div>`;
+  }).join('');
+
+  dropdown.querySelectorAll('.devis-dropdown-item').forEach(item => {
+    item.addEventListener('mousedown', e => {
+      e.preventDefault();
+      selectDevis(item.dataset.id);
+    });
+  });
+}
+
+function selectDevis(id) {
+  const d = _devisList.find(x => x.id === id);
+  const input    = document.getElementById('devis-search');
+  const dropdown = document.getElementById('devis-dropdown');
+  const clearBtn = document.getElementById('devis-clear');
+
+  if (d) {
+    const info = getDevisLabel(d);
+    input.value = [info.ref, info.client, info.date, info.total].filter(Boolean).join('  ·  ');
+    clearBtn.style.display = 'block';
+  } else {
+    input.value = '';
+    clearBtn.style.display = 'none';
+  }
+
+  dropdown.classList.remove('open');
+  loadDevis(id || '');
+}
+
+function initDevisSearch() {
+  const input    = document.getElementById('devis-search');
+  const dropdown = document.getElementById('devis-dropdown');
+  const clearBtn = document.getElementById('devis-clear');
+
+  input.addEventListener('focus', () => {
+    renderDevisDropdown(input.value);
+    dropdown.classList.add('open');
+  });
+
+  input.addEventListener('input', () => {
+    clearBtn.style.display = input.value ? 'block' : 'none';
+    renderDevisDropdown(input.value);
+    dropdown.classList.add('open');
+  });
+
+  input.addEventListener('blur', () => {
+    setTimeout(() => dropdown.classList.remove('open'), 160);
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { dropdown.classList.remove('open'); input.blur(); }
+  });
+
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    clearBtn.style.display = 'none';
+    loadDevis('');
+    input.focus();
+  });
+}
+
+/* ── Couleur selon taux de marge ── */
+function margeClass(taux) {
+  if (taux === null || taux === undefined || isNaN(taux)) return 'badge-none';
+  if (taux >= 40) return 'badge-ok';
+  if (taux >= 25) return 'badge-mid';
+  if (taux >= 0)  return 'badge-low';
+  return 'badge-neg';
+}
+
+/* ── Calcul d'une ligne ── */
+function calcLigne(l) {
+  const qte      = Number(l.qte) || 0;
+  const prixUnit = Number(l.prixUnitaire) || 0;
+  const remise   = Number(l.remise) || 0;
+  const tauxTVA  = Number(l.tauxTVA !== undefined ? l.tauxTVA : 16);
+
+  /* Coût unitaire — priorité : coutUnitaire stocké dans la ligne par le picker */
+  let coutUnit = null;
+  if (l.coutUnitaire !== undefined && Number(l.coutUnitaire) > 0) {
+    coutUnit = Number(l.coutUnitaire);
+  } else if (l.produitId) {
+    const prod = (_db.produits || []).find(p => p.id === l.produitId);
+    if (prod) {
+      /* Tenter attrCouts si la description contient un nom de valeur d'attribut */
+      if (prod.attrCouts && prod.attrPrix && l.description) {
+        const coutKeys = Object.keys(prod.attrCouts);
+        const matched = coutKeys.find(k => l.description.toLowerCase().includes(k.toLowerCase().replace(/×/g,'x')));
+        if (matched) coutUnit = Number(prod.attrCouts[matched]);
+      }
+      /* Fallback : coût d'une variante correspondante */
+      if (coutUnit === null && prod.variantes && prod.variantes.length > 0 && l.description) {
+        const vMatch = prod.variantes.find(v => {
+          const vals = Object.entries(v)
+            .filter(([k]) => !['ref','prix','cout','quantite','customDims'].includes(k))
+            .map(([,val]) => String(val).toLowerCase());
+          return vals.some(val => l.description.toLowerCase().includes(val));
+        });
+        if (vMatch && Number(vMatch.cout) > 0) coutUnit = Number(vMatch.cout);
+      }
+      /* Fallback global produit */
+      if (coutUnit === null && prod.cout && Number(prod.cout) > 0) {
+        coutUnit = Number(prod.cout);
+      }
+    }
+  }
+
+  const prixApresRemise = prixUnit * (1 - remise / 100);
+  const stHT    = qte * prixApresRemise;
+  const stTTC   = stHT * (1 + tauxTVA / 100);
+
+  /* Marge */
+  let margeUnit = null, tauxMarge = null;
+  if (coutUnit !== null) {
+    margeUnit = prixApresRemise - coutUnit;
+    tauxMarge = prixApresRemise > 0 ? (margeUnit / prixApresRemise) * 100 : null;
+  }
+
+  /* Prix min et remise max selon la marge cible */
+  let prixMin = null, remiseMax = null;
+  if (coutUnit !== null && _margeTarget < 100) {
+    prixMin    = coutUnit / (1 - _margeTarget / 100);
+    remiseMax  = Math.max(0, (1 - prixMin / prixUnit) * 100);
+  }
+
+  return { qte, prixUnit, remise, prixApresRemise, stHT, stTTC,
+           coutUnit, margeUnit, tauxMarge, prixMin, remiseMax, tauxTVA };
+}
+
+/* ── Rendu du tableau ── */
+function renderTable() {
+  if (!_devis) return;
+  const tbody  = document.getElementById('analysis-tbody');
+  const lignes = _devis.lignes || [];
+  tbody.innerHTML = '';
+
+  const thTarget = document.getElementById('th-target');
+  if (thTarget) thTarget.textContent = `(${_margeTarget}%)`;
+
+  let totCA = 0, totCANet = 0, totCout = 0, totST = 0, totTTC = 0;
+  let nbOk = 0, nbAlert = 0;
+
+  lignes.forEach((l, i) => {
+    if (!l.description && !l.produitId && !(l.prixUnitaire > 0)) return;
+
+    const c = calcLigne(l);
+    totCA    += c.qte * c.prixUnit;
+    totCANet += c.stHT;
+    totST    += c.stHT;
+    totTTC   += c.stTTC;
+    if (c.coutUnit !== null) totCout += c.qte * c.coutUnit;
+
+    const hasCout = c.coutUnit !== null;
+    const cls     = hasCout ? margeClass(c.tauxMarge) : 'badge-none';
+    const isAlert = hasCout && (c.tauxMarge < 15 || c.remise > (c.remiseMax || 100));
+    if (hasCout && !isAlert && c.tauxMarge >= 15) nbOk++;
+    if (isAlert) nbAlert++;
+
+    /* Remise actuelle badge */
+    let remiseCls = 'remise-ok';
+    if (c.remiseMax !== null && c.remise > c.remiseMax) remiseCls = 'remise-crit';
+    else if (c.remiseMax !== null && c.remise > c.remiseMax * 0.8) remiseCls = 'remise-warn';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="center" style="color:var(--text-muted);font-size:11px;">${i + 1}</td>
+      <td>
+        <div class="prod-name">${esc(l.description || '—')}</div>
+        ${l.produitId ? `<div class="prod-desc">ID: ${l.produitId}</div>` : ''}
+      </td>
+      <td class="right">${fmtN(c.qte)}</td>
+      <td class="right">${fmt(c.prixUnit)}</td>
+      <td class="right">${hasCout ? fmt(c.coutUnit) : '<span style="color:var(--text-muted);font-size:11px;">—</span>'}</td>
+      <td class="right">${hasCout
+        ? `<span style="color:${c.margeUnit >= 0 ? 'var(--green)' : 'var(--red)'};">${fmt(Math.round(c.margeUnit))}</span>`
+        : '<span style="color:var(--text-muted);font-size:11px;">—</span>'}</td>
+      <td class="center">
+        ${hasCout
+          ? `<span class="badge-marge ${cls}">${pct(c.tauxMarge)}</span>`
+          : `<span class="badge-marge badge-none">N/A</span>`}
+      </td>
+      <td class="center">
+        ${c.remise > 0
+          ? `<span class="remise-chip ${remiseCls}">${pct(c.remise)}</span>`
+          : `<span style="color:var(--text-muted);font-size:11px;">—</span>`}
+      </td>
+      <td class="right">
+        ${c.prixMin !== null
+          ? `<span style="font-family:var(--mono);font-size:12px;color:${c.prixUnit >= c.prixMin ? 'var(--green)' : 'var(--red)'}">${fmt(Math.round(c.prixMin))}</span>`
+          : '<span style="color:var(--text-muted);font-size:11px;">—</span>'}
+      </td>
+      <td class="right">
+        ${c.remiseMax !== null
+          ? `<span style="font-family:var(--mono);font-size:12px;color:${c.remise <= c.remiseMax ? 'var(--green)' : 'var(--red)'};">${pct(c.remiseMax)}</span>`
+          : '<span style="color:var(--text-muted);font-size:11px;">—</span>'}
+      </td>
+      <td class="right" style="font-weight:600;">${fmt(Math.round(c.stHT))}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  /* Ligne totaux */
+  const tfoot = document.createElement('tr');
+  tfoot.style.cssText = 'background:var(--bg-card);border-top:2px solid var(--border);font-weight:700;';
+  const margeGlob = totCANet > 0 && totCout > 0
+    ? ((totCANet - totCout) / totCANet * 100)
+    : null;
+  tfoot.innerHTML = `
+    <td colspan="2" style="padding:10px 12px;font-size:12px;color:var(--text-muted);">TOTAUX</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td class="center">
+      ${margeGlob !== null
+        ? `<span class="badge-marge ${margeClass(margeGlob)}">${pct(margeGlob)}</span>`
+        : ''}
+    </td>
+    <td></td><td></td><td></td>
+    <td class="right" style="font-family:var(--mono);padding:10px 12px;">${fmt(Math.round(totCANet))}</td>`;
+  tbody.appendChild(tfoot);
+
+  /* KPIs globaux */
+  const margeXPF = totCout > 0 ? totCANet - totCout : null;
+  updateKPIs({ totCA, totCANet, totCout, margeXPF, margeGlob, totTTC });
+  updateQuickStats(lignes.length, nbOk, nbAlert, margeGlob);
+  renderDecisions(lignes);
+}
+
+/* ── KPIs ── */
+function updateKPIs({ totCA, totCANet, totCout, margeXPF, margeGlob, totTTC }) {
+  document.getElementById('summary-grid').style.display = '';
+  document.getElementById('kpi-ca').textContent     = fmt(Math.round(totCA));
+  document.getElementById('kpi-ca-net').textContent = fmt(Math.round(totCANet));
+  document.getElementById('kpi-cout').textContent   = totCout > 0 ? fmt(Math.round(totCout)) : 'N/A';
+  document.getElementById('kpi-ttc').textContent    = fmt(Math.round(totTTC));
+
+  const mv = document.getElementById('kpi-marge');
+  const ms = document.getElementById('kpi-marge-sub');
+  const mc = document.getElementById('kpi-marge-card');
+  if (margeXPF !== null) {
+    mv.textContent = fmt(Math.round(margeXPF));
+    ms.textContent = margeGlob !== null ? pct(margeGlob) + ' taux marge' : '';
+    mc.className   = 'kpi ' + (margeGlob >= 40 ? 'green' : margeGlob >= 25 ? 'yellow' : margeGlob >= 0 ? 'orange' : 'red');
+  } else {
+    mv.textContent = 'N/A';
+    ms.textContent = 'coûts non renseignés';
+    mc.className   = 'kpi';
+  }
+}
+
+/* ── Stats rapides ── */
+function updateQuickStats(total, ok, alert, marge) {
+  document.getElementById('qs-lignes').textContent = total;
+  document.getElementById('qs-marge').textContent  = marge !== null ? pct(marge) : '—';
+  document.getElementById('qs-ok').textContent     = ok;
+  document.getElementById('qs-alert').textContent  = alert;
+}
+
+/* ── Aide à la décision ── */
+function renderDecisions(lignes) {
+  const alerts = [];
+  const recos  = [];
+
+  lignes.forEach((l, i) => {
+    if (!l.prixUnitaire) return;
+    const c = calcLigne(l);
+    const nom = l.description || `Ligne ${i + 1}`;
+
+    if (!c.coutUnit) {
+      recos.push({ icon: '💾', title: nom, text: 'Coût non renseigné — renseigner le coût dans la fiche produit pour calculer la marge.' });
+      return;
+    }
+
+    /* Marge négative */
+    if (c.tauxMarge < 0) {
+      alerts.push({ icon: '🔴', title: nom, text: `Marge négative (${pct(c.tauxMarge)}) — prix de vente inférieur au coût. Prix min pour seuil zéro : ${fmt(Math.round(c.coutUnit))}.` });
+    }
+    /* Marge très basse */
+    else if (c.tauxMarge < 15) {
+      alerts.push({ icon: '🟠', title: nom, text: `Marge faible (${pct(c.tauxMarge)}) — sans remise supplémentaire. Prix min pour ${_margeTarget}% : ${c.prixMin ? fmt(Math.round(c.prixMin)) : '—'}.` });
+    }
+    /* Remise dépasse le max */
+    if (c.remiseMax !== null && c.remise > c.remiseMax) {
+      alerts.push({ icon: '⛔', title: nom, text: `Remise actuelle ${pct(c.remise)} dépasse le maximum autorisé (${pct(c.remiseMax)}) pour atteindre ${_margeTarget}% de marge.` });
+    }
+    /* Bonne marge → remise possible */
+    if (c.tauxMarge >= 40 && c.remiseMax > 5) {
+      recos.push({ icon: '✅', title: nom, text: `Marge confortable (${pct(c.tauxMarge)}). Vous pouvez accorder jusqu'à ${pct(c.remiseMax)} de remise tout en maintenant ${_margeTarget}% de marge.` });
+    }
+    /* Prix sous-évalué vs coût */
+    if (c.coutUnit > 0 && c.prixUnit < c.coutUnit * 1.2) {
+      recos.push({ icon: '💡', title: nom, text: `Prix très proche du coût (markup ${pct((c.prixUnit/c.coutUnit - 1)*100)}). Prix conseillé pour ${_margeTarget}% de marge : ${c.prixMin ? fmt(Math.round(c.prixMin)) : '—'}.` });
+    }
+  });
+
+  const alertsEl = document.getElementById('dec-alerts');
+  const recosEl  = document.getElementById('dec-reco');
+
+  alertsEl.innerHTML = alerts.length
+    ? alerts.map(d => `<div class="decision-item"><span class="decision-icon">${d.icon}</span><div class="decision-text"><strong>${esc(d.title)}</strong><span>${d.text}</span></div></div>`).join('')
+    : '<div class="decision-item"><span class="decision-icon">✅</span><div class="decision-text"><strong>Aucune alerte</strong><span>Toutes les lignes avec coût défini sont dans les limites acceptables.</span></div></div>';
+
+  recosEl.innerHTML = recos.length
+    ? recos.map(d => `<div class="decision-item"><span class="decision-icon">${d.icon}</span><div class="decision-text"><strong>${esc(d.title)}</strong><span>${d.text}</span></div></div>`).join('')
+    : '<div class="decision-item"><span class="decision-icon">📝</span><div class="decision-text"><strong>Renseignez les coûts produits</strong><span>Allez dans Stock > Produits et renseignez le champ "Coût" pour activer les recommandations.</span></div></div>';
+
+  document.getElementById('decisions-section').style.display = '';
+}
+
+/* ================================================================
+   CALCULATEUR COÛT UNITAIRE — pièce imprimée
+   ================================================================ */
+
+let _unitConfig = {
+  impression: 'recto-verso', // 'recto' | 'verso' | 'recto-verso'
+  exclFrais:     true,
+  exclLivraison: true,
+  applyRemise:   false,
+  marge:         35
+};
+
+/* Overrides manuels du type de ligne { "devisId_idx": type } */
+let _lineTypeOverrides = {};
+
+const LINE_TYPES    = ['piece', 'impression', 'frais-tech', 'livraison', 'autre'];
+const LINE_TYPE_INFO = {
+  'piece':       { icon: '👕', label: 'Pièce',       css: 'type-piece'      },
+  'impression':  { icon: '🖨️',  label: 'Impression',  css: 'type-impression' },
+  'frais-tech':  { icon: '⚙️',  label: 'Frais tech',  css: 'type-frais-tech' },
+  'livraison':   { icon: '🚚', label: 'Livraison',   css: 'type-livraison'  },
+  'autre':       { icon: '•',  label: 'Autre',       css: 'type-autre'      }
+};
+
+/* Détection automatique par mots-clés */
+function detectLineType(desc) {
+  if (!desc) return 'autre';
+  const d = desc.toLowerCase();
+
+  const LIVR_KW  = ['livraison','transport','expédition','expedition','port','colissimo',
+                    'chronopost','envoi','fret','coursier','dhl','ups','fedex','tapu','postage'];
+  const FRAIS_KW = ['frais','setup','vectoris','fichier','prépar','prepar','retouche',
+                    'mise en page','calage','cliché','ecran','écran','test','prototype',
+                    'création','creation','graphisme','tracé','trace','conception','tarif fixe',
+                    'forfait','honoraire'];
+  const IMPR_KW  = ['dtf','impression','transfert','vinyle','vinyl','flock','flex','marquage',
+                    'broderie','sérigraph','seriograph','print','recto','verso','face',
+                    'imprim','htv','heat transfer','pressage'];
+  const PIECE_KW = ['t-shirt','tshirt','t shirt','polo','casquette','veste','sweat','hoodie',
+                    'bonnet','sac','tote','chemise','gilet','short','bermuda','maillot',
+                    'tablier','jersey','cap','beanie','débardeur','debardeur','manteau',
+                    'poncho','body','peignoir','kimono','tunique','blouse'];
+
+  if (LIVR_KW.some(k  => d.includes(k))) return 'livraison';
+  if (FRAIS_KW.some(k => d.includes(k))) return 'frais-tech';
+  if (IMPR_KW.some(k  => d.includes(k))) return 'impression';
+  if (PIECE_KW.some(k => d.includes(k))) return 'piece';
+  return 'autre';
+}
+
+/* Type effectif d'une ligne (override ou auto) */
+function getLineType(ligneIdx) {
+  if (!_devis) return 'autre';
+  const key = `${_devis.id}_${ligneIdx}`;
+  if (_lineTypeOverrides[key]) return _lineTypeOverrides[key];
+  const l = (_devis.lignes || [])[ligneIdx];
+  return detectLineType(l ? (l.description || '') : '');
+}
+
+/* Calcul coût de revient unitaire */
+function calcUnitaire() {
+  if (!_devis) return null;
+  const lignes = _devis.lignes || [];
+
+  let nbPieces    = 0;
+  let montantBase = 0;
+  let montantExclu = 0;
+
+  lignes.forEach((l, i) => {
+    const qte      = Number(l.qte) || 0;
+    const prixUnit = Number(l.prixUnitaire) || 0;
+    if (!qte && !prixUnit) return;
+
+    const type   = getLineType(i);
+    const remise = Number(l.remise) || 0;
+    const prix   = _unitConfig.applyRemise ? prixUnit * (1 - remise / 100) : prixUnit;
+    const stHT   = qte * prix;
+
+    const isExclu = (type === 'frais-tech' && _unitConfig.exclFrais)
+                 || (type === 'livraison'  && _unitConfig.exclLivraison);
+
+    if (isExclu) {
+      montantExclu += stHT;
+    } else {
+      montantBase += stHT;
+      if (type === 'piece') nbPieces += qte;
+    }
+  });
+
+  const nbFaces       = _unitConfig.impression === 'recto-verso' ? 2 : 1;
+  const nbImpressions = nbPieces * nbFaces;
+
+  const coutRevient   = nbPieces > 0 ? montantBase / nbPieces : null;
+  const prixConseille = (coutRevient !== null && _unitConfig.marge < 100)
+    ? coutRevient / (1 - _unitConfig.marge / 100)
+    : null;
+
+  return { nbPieces, nbImpressions, nbFaces, montantBase, montantExclu, coutRevient, prixConseille };
+}
+
+/* Rendu tableau de classification */
+function renderUnitLines() {
+  if (!_devis) return;
+  const tbody = document.getElementById('unit-lines-tbody');
+  const lignes = _devis.lignes || [];
+  tbody.innerHTML = '';
+
+  lignes.forEach((l, i) => {
+    const qte      = Number(l.qte) || 0;
+    const prixUnit = Number(l.prixUnitaire) || 0;
+    if (!l.description && !prixUnit) return;
+
+    const type   = getLineType(i);
+    const info   = LINE_TYPE_INFO[type];
+    const remise = Number(l.remise) || 0;
+    const prix   = _unitConfig.applyRemise ? prixUnit * (1 - remise / 100) : prixUnit;
+    const stHT   = qte * prix;
+
+    const isExclu = (type === 'frais-tech' && _unitConfig.exclFrais)
+                 || (type === 'livraison'  && _unitConfig.exclLivraison);
+
+    const tr = document.createElement('tr');
+    if (isExclu) tr.classList.add('exclu-row');
+
+    tr.innerHTML = `
+      <td class="type-cell">
+        <button class="type-tag ${info.css}" data-idx="${i}" title="Cliquer pour changer le type">
+          ${info.icon} ${info.label}
+        </button>
+      </td>
+      <td>${esc(l.description || '—')}</td>
+      <td class="right">${fmtN(qte)}</td>
+      <td class="right">${fmt(prixUnit)}</td>
+      <td class="right">${remise > 0 ? pct(remise) : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td class="right" style="font-weight:600;">${fmt(Math.round(stHT))}</td>
+      <td class="center" style="font-size:15px;">
+        ${isExclu
+          ? '<span style="color:var(--red);">✕</span>'
+          : '<span style="color:var(--green);">✓</span>'}
+      </td>`;
+
+    tr.querySelector('.type-tag').addEventListener('click', () => {
+      const key     = `${_devis.id}_${i}`;
+      const cur     = getLineType(i);
+      const curIdx  = LINE_TYPES.indexOf(cur);
+      _lineTypeOverrides[key] = LINE_TYPES[(curIdx + 1) % LINE_TYPES.length];
+      renderUnitaire();
+    });
+
+    tbody.appendChild(tr);
+  });
+}
+
+/* Rendu KPIs résultat */
+function renderUnitResults(res) {
+  const grid = document.getElementById('unit-results-grid');
+  if (!res) { grid.innerHTML = ''; return; }
+
+  const facesLabel = _unitConfig.impression === 'recto-verso'
+    ? 'Recto + Verso'
+    : _unitConfig.impression === 'recto' ? 'Recto seulement' : 'Verso seulement';
+
+  const baseLabel = [
+    _unitConfig.applyRemise ? 'remise appliquée' : 'prix catalogue',
+    res.montantExclu > 0 ? `${fmt(Math.round(res.montantExclu))} exclus` : null
+  ].filter(Boolean).join(' · ');
+
+  const coutCls = res.coutRevient !== null ? 'accent' : '';
+  const pvCls   = res.prixConseille !== null ? 'green' : '';
+
+  grid.innerHTML = `
+    <div class="unit-kpi blue">
+      <div class="unit-kpi-icon">👕</div>
+      <div class="unit-kpi-lbl">Nb pièces</div>
+      <div class="unit-kpi-val">${res.nbPieces > 0 ? fmtN(res.nbPieces) : '—'}</div>
+      <div class="unit-kpi-sub">
+        ${res.nbPieces > 0
+          ? `${res.nbImpressions} impression${res.nbImpressions > 1 ? 's' : ''} (${facesLabel})`
+          : 'Aucune pièce détectée'}
+      </div>
+    </div>
+    <div class="unit-kpi">
+      <div class="unit-kpi-icon">📦</div>
+      <div class="unit-kpi-lbl">Base de calcul HT</div>
+      <div class="unit-kpi-val" style="color:var(--text);font-size:18px;">${fmt(Math.round(res.montantBase))}</div>
+      <div class="unit-kpi-sub">${baseLabel}</div>
+    </div>
+    <div class="unit-kpi ${coutCls}">
+      <div class="unit-kpi-icon">💰</div>
+      <div class="unit-kpi-lbl">Coût de revient HT / pièce</div>
+      <div class="unit-kpi-val">${res.coutRevient !== null ? fmt(Math.round(res.coutRevient)) : '—'}</div>
+      <div class="unit-kpi-sub">
+        ${res.coutRevient !== null ? `÷ ${fmtN(res.nbPieces)} pièce${res.nbPieces > 1 ? 's' : ''}` : 'Classifiez les pièces'}
+      </div>
+    </div>
+    <div class="unit-kpi ${pvCls}">
+      <div class="unit-kpi-icon">🏷️</div>
+      <div class="unit-kpi-lbl">Prix de vente HT conseillé / pièce</div>
+      <div class="unit-kpi-val">${res.prixConseille !== null ? fmt(Math.round(res.prixConseille)) : '—'}</div>
+      <div class="unit-kpi-sub">marge ${_unitConfig.marge}%</div>
+    </div>`;
+}
+
+/* Rendu complet de la section unitaire */
+function renderUnitaire() {
+  if (!_devis) return;
+  const section   = document.getElementById('unitaire-section');
+  const linesWrap = document.getElementById('unit-lines-wrap');
+  const lignes    = _devis.lignes || [];
+
+  section.style.display   = '';
+  linesWrap.style.display = lignes.length > 0 ? '' : 'none';
+
+  /* Sous-titre */
+  const sub = document.getElementById('unit-sub');
+  if (sub) sub.textContent = _devis.clientNom || _devis.client || '';
+
+  /* Hint nb impressions */
+  const nbPieces = lignes.reduce((s, l, i) => {
+    return getLineType(i) === 'piece' ? s + (Number(l.qte) || 0) : s;
+  }, 0);
+  const nbFaces  = _unitConfig.impression === 'recto-verso' ? 2 : 1;
+  const nbImpr   = nbPieces * nbFaces;
+  const hint     = document.getElementById('unit-impressions-hint');
+  if (hint) {
+    hint.textContent = nbPieces > 0
+      ? `${fmtN(nbPieces)} pièce${nbPieces > 1 ? 's' : ''} × ${nbFaces} face${nbFaces > 1 ? 's' : ''} = ${fmtN(nbImpr)} impression${nbImpr > 1 ? 's' : ''}`
+      : 'Aucune pièce détectée — classifiez les lignes';
+  }
+
+  renderUnitLines();
+  renderUnitResults(calcUnitaire());
+}
+
+/* ── Chargement devis ── */
+function loadDevis(id) {
+  _devis = (_db.devis || []).find(d => d.id === id) || null;
+  const meta = document.getElementById('devis-meta');
+  const wrap = document.getElementById('table-wrap-outer');
+  const empty = document.getElementById('table-empty');
+
+  if (!_devis) {
+    wrap.style.display = 'none';
+    empty.style.display = '';
+    document.getElementById('summary-grid').style.display = 'none';
+    document.getElementById('decisions-section').style.display = 'none';
+    document.getElementById('unitaire-section').style.display = 'none';
+    meta.textContent = '';
+    return;
+  }
+
+  const nb = (_devis.lignes || []).length;
+  meta.innerHTML = `
+    <span style="color:var(--text);">${_devis.clientNom || _devis.client || 'Client inconnu'}</span>
+    &nbsp;·&nbsp; ${nb} ligne${nb > 1 ? 's' : ''}
+    &nbsp;·&nbsp; Statut : <strong style="color:var(--accent);">${_devis.statut || '—'}</strong>`;
+
+  empty.style.display = 'none';
+  wrap.style.display = '';
+  renderTable();
+  renderUnitaire();
+}
+
+/* ── Escape HTML ── */
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── Init ── */
+async function init() {
+  loadDb();
+  buildDevisList();
+  initDevisSearch();
+
+  const slider = document.getElementById('marge-slider');
+  const valEl  = document.getElementById('marge-val');
+  slider.addEventListener('input', () => {
+    _margeTarget = parseInt(slider.value, 10);
+    valEl.textContent = _margeTarget + '%';
+    if (_devis) renderTable();
+  });
+
+  /* ── Contrôles calculateur unitaire ── */
+
+  /* Toggle recto / verso / recto-verso */
+  document.getElementById('toggle-impression').addEventListener('click', e => {
+    const btn = e.target.closest('.toggle-btn');
+    if (!btn) return;
+    document.querySelectorAll('#toggle-impression .toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _unitConfig.impression = btn.dataset.val;
+    if (_devis) renderUnitaire();
+  });
+
+  /* Cases à cocher options */
+  document.getElementById('chk-excl-frais').addEventListener('change', e => {
+    _unitConfig.exclFrais = e.target.checked;
+    if (_devis) renderUnitaire();
+  });
+  document.getElementById('chk-excl-livraison').addEventListener('change', e => {
+    _unitConfig.exclLivraison = e.target.checked;
+    if (_devis) renderUnitaire();
+  });
+  document.getElementById('chk-apply-remise').addEventListener('change', e => {
+    _unitConfig.applyRemise = e.target.checked;
+    if (_devis) renderUnitaire();
+  });
+
+  /* Slider marge unitaire */
+  const unitMargeSlider = document.getElementById('unit-marge-slider');
+  const unitMargeVal    = document.getElementById('unit-marge-val');
+  unitMargeSlider.addEventListener('input', () => {
+    _unitConfig.marge = parseInt(unitMargeSlider.value, 10);
+    unitMargeVal.textContent = _unitConfig.marge + '%';
+    if (_devis) renderUnitaire();
+  });
+
+  /* Thème */
+  const btnTheme = document.getElementById('btn-theme');
+  const html = document.documentElement;
+  function applyTheme(dark) {
+    html.setAttribute('data-theme', dark ? 'dark' : 'light');
+    btnTheme.textContent = dark ? '☀️' : '🌙';
+    localStorage.setItem('hcs_theme', dark ? 'dark' : 'light');
+  }
+  const savedTheme = localStorage.getItem('hcs_theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(savedTheme === 'dark' || (!savedTheme && prefersDark));
+  btnTheme.addEventListener('click', () => applyTheme(html.getAttribute('data-theme') !== 'dark'));
+
+  /* Pré-sélection via ?id= dans l'URL (ouverture depuis ERP) */
+  const urlId = new URLSearchParams(window.location.search).get('id');
+  if (urlId) {
+    /* Le devis est peut-être déjà en mémoire locale */
+    if (_devisList.some(d => d.id === urlId)) {
+      selectDevis(urlId);
+    } else {
+      /* Pas trouvé localement → tenter MySQL */
+      const meta = document.getElementById('devis-meta');
+      if (meta) meta.textContent = '⏳ Chargement depuis MySQL…';
+      const row = await fetchDevisFromMySQL(urlId);
+      if (row) {
+        if (!_db.devis) _db.devis = [];
+        const exists = _db.devis.findIndex(d => d.id === row.id);
+        if (exists >= 0) _db.devis[exists] = row; else _db.devis.push(row);
+        if (!_db.produits || _db.produits.length === 0) {
+          _db.produits = await fetchProduitsFromMySQL();
+        }
+        buildDevisList();
+        selectDevis(urlId);
+      } else {
+        if (meta) meta.textContent = '⚠️ Devis introuvable (ni en cache ni dans MySQL).';
+      }
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

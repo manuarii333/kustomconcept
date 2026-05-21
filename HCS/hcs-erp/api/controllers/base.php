@@ -40,8 +40,12 @@ class BaseController {
               . " LIMIT {$limit} OFFSET {$offset}";
         $stmt = $this->db->query($sql);
 
+        $rows = $stmt->fetchAll();
+        /* Décoder les champs JSON stockés en TEXT */
+        $rows = array_map([$this, 'decodeJsonFields'], $rows);
+
         return [
-            'items'  => $stmt->fetchAll(),
+            'items'  => $rows,
             'table'  => $this->table,
             'limit'  => $limit,
             'offset' => $offset,
@@ -65,7 +69,8 @@ class BaseController {
             );
         }
 
-        return $row;
+        /* Décoder les champs JSON stockés en TEXT */
+        return $this->decodeJsonFields($row);
     }
 
     /* ----------------------------------------------------------------
@@ -180,16 +185,41 @@ class BaseController {
     /**
      * Filtre les clés du tableau data.
      * Seules les clés avec des noms de colonnes valides sont conservées.
-     * Cela protège les INSERT/UPDATE dynamiques contre l'injection SQL.
+     * Les arrays/objects sont encodés en JSON string pour MySQL.
      */
     protected function sanitizeData(array $data): array {
         $clean = [];
         foreach ($data as $key => $val) {
             /* Clé valide : lettres, chiffres, underscore uniquement */
             if (preg_match('/^[a-zA-Z0-9_]+$/', $key)) {
-                $clean[$key] = $val;
+                /* Encoder les arrays et objects en JSON string */
+                if (is_array($val) || is_object($val)) {
+                    $clean[$key] = json_encode($val, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                } else {
+                    $clean[$key] = $val;
+                }
             }
         }
         return $clean;
+    }
+
+    /**
+     * Décode les champs JSON stockés en TEXT/LONGTEXT dans MySQL.
+     * Parcourt toutes les colonnes et tente un json_decode sur les strings
+     * qui commencent par [ ou { (tableaux ou objets JSON).
+     */
+    protected function decodeJsonFields(array $row): array {
+        foreach ($row as $key => $val) {
+            if (is_string($val) && strlen($val) > 1) {
+                $first = $val[0];
+                if ($first === '[' || $first === '{') {
+                    $decoded = json_decode($val, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $row[$key] = $decoded;
+                    }
+                }
+            }
+        }
+        return $row;
     }
 }
