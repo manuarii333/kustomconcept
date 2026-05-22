@@ -351,11 +351,14 @@ window.exportLP = function(id) {
   const c = CAMPS[id];
   if (!c) return;
 
-  // V1, V2 → tshirt export (existant)
-  if (c.id === 1 || c.id === 2) { 
-    if (typeof exportLPTshirt === 'function') exportLPTshirt(id);
-    return;
-  }
+  // V0 → Stickers & Decals
+  if (c.id === 0) { exportLP_Stickers(id); return; }
+
+  // V1 → T-Shirt Perso
+  if (c.id === 1) { exportLP_TshirtPerso(id); return; }
+
+  // V2 → Casquette
+  if (c.id === 2) { exportLP_Casquette(id); return; }
 
   // V3 Originals
   if (c.ltype === 'originals') { exportLP_Originals(id); return; }
@@ -372,7 +375,7 @@ window.exportLP = function(id) {
   // V7 Services IA
   if (c.ltype === 'service') { exportLP_Service(id); return; }
 
-  // V0 → generic amélioré
+  // Fallback générique
   _origExportLP(id);
 };
 
@@ -608,9 +611,11 @@ function _getCommonExportVars(id) {
     cv:        g('cv-'+id),
     workerUrl:    g('pz-worker-'+id)?.value?.trim() || 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token',
     workerSecret: g('pz-secret-'+id)?.value?.trim() || 'hcs-payzen-2026',
-    workerMode:   g('pz-mode-'+id)?.value || 'TEST'
+    workerMode:   g('pz-mode-'+id)?.value || 'TEST',
+    whatsapp:     c.whatsapp || '68987000'
   };
 }
+
 
 function _getHeroBg(v) {
   const cvBg = v.cv?.style.background || '';
@@ -625,6 +630,741 @@ function _getProdImgs(id) {
   });
 }
 
+
+// ── V0 Export — Stickers & Decals ──
+function exportLP_Stickers(id) {
+  const v = _getCommonExportVars(id);
+  const heroBg = _getHeroBg(v);
+  const prodImgs = _getProdImgs(id);
+  const prodsJson = JSON.stringify(v.c.products.map((p,i)=>({e:p.e,n:p.n,p:p.p,price:parseInt(p.p.replace(/[^\d]/g,''))||0,img:prodImgs[i]||''})));
+
+  const html = `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${v.headline} — HCS Tahiti</title><meta name="description" content="${v.subline}">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f0f1a;color:#e8e8f0}
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px 20px;background:${heroBg};background-size:cover;background-position:center;position:relative;overflow:hidden}
+.hero-overlay{position:absolute;inset:0;background:${v.c.colors.overlay}}.hero-content{max-width:600px;position:relative;z-index:2}
+h1{font-size:clamp(1.8rem,5vw,3rem);font-weight:900;margin-bottom:14px;line-height:1.1;color:white}
+.sub{font-size:1rem;opacity:.9;margin-bottom:20px;color:rgba(255,255,255,.85)}
+.badge-hp{display:inline-block;background:${v.badge2};color:white;padding:8px 24px;border-radius:24px;font-weight:700;margin-bottom:20px}
+.cta-hero{display:inline-block;background:white;color:${v.primary};padding:14px 36px;border-radius:30px;font-weight:700;font-size:1rem;text-decoration:none;cursor:pointer;border:none;transition:transform .15s;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.cta-hero:hover{transform:translateY(-2px)}
+.section{padding:40px 20px;max-width:960px;margin:0 auto}
+.section-title{font-size:1.1rem;font-weight:800;margin-bottom:8px;text-align:center}
+.section-sub{font-size:.85rem;color:rgba(255,255,255,.6);text-align:center;margin-bottom:20px}
+.prods{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
+.prod{background:rgba(255,255,255,.05);border-radius:14px;overflow:hidden;border:2px solid rgba(255,255,255,.1);cursor:pointer;transition:all .2s;position:relative}
+.prod:hover{border-color:${v.primary};transform:translateY(-3px)}.prod.selected{border-color:${v.primary};box-shadow:0 0 0 4px ${v.primary}33}
+.prod-check{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:${v.primary};display:none;align-items:center;justify-content:center;font-size:.7rem;color:white;font-weight:900}
+.prod.selected .prod-check{display:flex}
+.prod-img{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:48px;background:rgba(255,255,255,.04);overflow:hidden}
+.prod-img img{width:100%;height:100%;object-fit:cover}
+.prod-info{padding:14px}.prod-name{font-weight:600;margin-bottom:6px;font-size:.9rem}.prod-price{color:${v.primary};font-weight:800;font-size:1.1rem}
+.feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-top:28px}
+.feat{background:rgba(255,255,255,.05);border-radius:10px;padding:18px;text-align:center;border:1px solid rgba(255,255,255,.1)}
+.feat-icon{font-size:28px;margin-bottom:8px}.feat-txt{font-size:.82rem;color:rgba(255,255,255,.7)}
+.btn-order{width:100%;padding:16px;background:linear-gradient(135deg,${v.primary},#ff6584);color:white;border:none;border-radius:12px;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 6px 20px ${v.primary}66;transition:all .2s;display:none;margin-top:14px}
+.btn-order.show{display:block}.btn-order:hover{transform:translateY(-2px)}
+footer{text-align:center;padding:28px;color:rgba(255,255,255,.4);font-size:.82rem;border-top:1px solid rgba(255,255,255,.1)}
+.ck-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:950;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.ck-overlay.open{display:flex}@media(min-width:600px){.ck-overlay.open{align-items:center}}
+.ck-box{background:#1a1a2e;border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 48px rgba(0,0,0,.6)}
+@media(min-width:600px){.ck-box{border-radius:20px}}
+.ck-head{padding:16px 20px;border-bottom:1px solid #2a2a4a;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.ck-head-title{font-size:.95rem;font-weight:800}.ck-close{background:none;border:none;color:#9090b0;font-size:1.1rem;cursor:pointer;padding:4px}
+.ck-steps{display:flex;padding:12px 20px;border-bottom:1px solid #2a2a4a;flex-shrink:0}
+.ck-step{flex:1;text-align:center;position:relative}
+.ck-step::after{content:'';position:absolute;top:13px;left:50%;width:100%;height:2px;background:#2a2a4a;z-index:0}
+.ck-step:last-child::after{display:none}
+.ck-dot2{width:26px;height:26px;border-radius:50%;border:2px solid #2a2a4a;background:#1e1e3a;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;margin:0 auto 4px;position:relative;z-index:1;color:#9090b0;transition:all .2s}
+.ck-step.done .ck-dot2{background:#43e97b;border-color:#43e97b;color:#0f0f1a}.ck-step.done::after{background:#43e97b}
+.ck-step.active .ck-dot2{background:${v.primary};border-color:${v.primary};color:white;box-shadow:0 0 12px ${v.primary}66}
+.ck-lbl{font-size:.58rem;color:#9090b0;font-weight:600}.ck-step.active .ck-lbl{color:${v.primary}}.ck-step.done .ck-lbl{color:#43e97b}
+.ck-body{flex:1;overflow-y:auto;padding:20px}.ck-foot{padding:14px 20px;border-top:1px solid #2a2a4a;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.ck-foot-row{display:flex;gap:8px}.ck-field{margin-bottom:12px}.ck-field label{display:block;font-size:.7rem;color:#9090b0;margin-bottom:4px}
+.ck-input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #2a2a4a;background:#1e1e3a;color:#e8e8f0;font-size:.85rem;outline:none;font-family:inherit;transition:border-color .2s}
+.ck-input:focus{border-color:${v.primary}}
+.dlv-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.dlv-opt{padding:14px 10px;border-radius:10px;border:2px solid #2a2a4a;background:#1e1e3a;cursor:pointer;text-align:center;transition:all .2s}
+.dlv-opt:hover,.dlv-opt.sel{border-color:${v.primary};background:${v.primary}1a}
+.recap-box{background:#16213e;border:1px solid #2a2a4a;border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.recap-row{display:flex;justify-content:space-between;font-size:.78rem;padding:4px 0;border-bottom:1px solid #2a2a4a22}
+.recap-row:last-child{border:none;padding-top:8px;border-top:1px solid #2a2a4a}
+.recap-row span:first-child{color:#9090b0}
+.btn-next{flex:1;padding:12px;background:linear-gradient(135deg,${v.primary},#ff6584);color:white;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn-next:hover{opacity:.9}.btn-prev{padding:12px 16px;background:#1e1e3a;border:1px solid #2a2a4a;color:#9090b0;border-radius:8px;font-size:.85rem;cursor:pointer}
+.btn-pass{padding:12px;background:linear-gradient(135deg,#f6d365,#fda085);color:#1a1a2e;border:none;border-radius:8px;font-size:.85rem;font-weight:800;cursor:pointer;width:100%}
+.pz-loading{text-align:center;color:#9090b0;font-size:.85rem;padding:24px}
+.pz-error{background:rgba(255,80,80,.12);border:1px solid rgba(255,80,80,.3);border-radius:8px;padding:12px;color:#ff6b6b;font-size:.8rem;margin-top:10px;display:none}
+.pz-ok{background:rgba(67,233,123,.12);border:1px solid rgba(67,233,123,.3);border-radius:12px;padding:28px;text-align:center;color:#43e97b;display:none}
+.kr-embedded{background:#fff!important;border-radius:14px!important;padding:16px 14px!important;margin-top:4px!important;box-shadow:0 2px 16px rgba(0,0,0,.18)!important}
+.kr-embedded .kr-payment-button{background:linear-gradient(135deg,${v.primary},#ff6584)!important;border-radius:10px!important;font-weight:800!important;font-size:.9rem!important;padding:13px!important;width:100%!important;border:none!important;color:#fff!important;cursor:pointer!important;margin-top:4px!important}
+</style></head><body>
+
+<div class="hero"><div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="badge-hp">${v.badge}</div>
+    <h1>${v.headline}</h1>
+    <p class="sub">${v.subline}</p>
+    <a href="#produits" class="cta-hero">${v.cta}</a>
+  </div>
+</div>
+
+${_parcoursCss(v.primary)}
+${_parcoursHtml([
+  {label:'Choisissez votre format',desc:'Pare-brise, vitrine commerce, casque, véhicule — toutes surfaces'},
+  {label:'Envoyez votre logo',desc:'WhatsApp, email ou déposez directement en boutique HCS Papeete'},
+  {label:'Impression HD résistante UV',desc:'Découpe de précision, couleurs vives, traitement anti-UV longue durée'},
+  {label:'Récupérez ou faites livrer',desc:'Retrait en boutique ou livraison Polynésie sous 3–5 jours ouvrés'}
+])}
+
+<section class="section" id="produits">
+  <div class="section-title">Choisissez votre sticker</div>
+  <div class="section-sub">Impression DTF HD · Résistant UV · Toutes surfaces</div>
+  <div class="prods" id="prods-grid"></div>
+  <div style="background:rgba(255,80,80,.08);border:2px solid rgba(255,80,80,.25);border-radius:14px;padding:20px;margin-top:20px;text-align:center">
+    <div style="font-size:1.4rem;margin-bottom:8px">🔥</div>
+    <div style="font-weight:800;font-size:.95rem;margin-bottom:6px">PROMO — 2ème sticker à -20%</div>
+    <div style="font-size:.8rem;color:rgba(255,255,255,.6);margin-bottom:8px">Ajoutez une 2ème référence dans la même commande</div>
+    <div style="font-size:.72rem;color:#ff8080">Mentionnez-le dans la note de commande · Réduction appliquée manuellement</div>
+  </div>
+  <div class="feats">${v.c.features.map(f=>`<div class="feat"><div class="feat-icon">${f.i}</div><div class="feat-txt">${f.t}</div></div>`).join('')}</div>
+  <div style="text-align:center;margin-top:14px"><span id="total-display" style="color:${v.primary};font-weight:900;font-size:1.1rem"></span></div>
+  <button class="btn-order" id="btn-order" onclick="openCheckout()">🛒 Commander — <span id="total-display-btn">0</span> XPF</button>
+</section>
+
+<footer>
+  <div>High Coffee Shirt · HCS Tahiti · Papeete, Polynésie française</div>
+  <div style="margin-top:8px;font-size:.75rem;opacity:.6">Paiement sécurisé OSB Polynésie · Impression DTF professionnelle</div>
+</footer>
+
+<div class="ck-overlay" id="ck-overlay" onclick="if(event.target===this)closeCk()">
+  <div class="ck-box">
+    <div class="ck-head"><div class="ck-head-title" id="ck-title">📦 Votre commande</div><button class="ck-close" onclick="closeCk()">✕</button></div>
+    <div class="ck-steps">
+      <div class="ck-step active" id="cks1"><div class="ck-dot2">1</div><div class="ck-lbl">Commande</div></div>
+      <div class="ck-step" id="cks2"><div class="ck-dot2">2</div><div class="ck-lbl">Coordonnées</div></div>
+      <div class="ck-step" id="cks3"><div class="ck-dot2">3</div><div class="ck-lbl">Paiement</div></div>
+    </div>
+    <div class="ck-body" id="ck-body"></div>
+    <div class="ck-foot" id="ck-foot"></div>
+  </div>
+</div>
+
+<script>
+const PRODS=${prodsJson};
+const ACCENT='${v.primary}';
+const CAMP_NAME='${v.headline}';
+const WORKER_URL='${v.workerUrl}';
+const WORKER_SECRET='${v.workerSecret}';
+const WORKER_MODE='${v.workerMode}';
+let selected=null,total=0,ckStep=1,ckContact={},ckDelivery={type:'pickup'};
+function init(){
+  document.getElementById('prods-grid').innerHTML=PRODS.map((p,i)=>\`
+    <div class="prod" id="prod-\${i}" onclick="selectProd(\${i})">
+      <div class="prod-check">✓</div>
+      <div class="prod-img">\${p.img?'<img src="'+p.img+'">':p.e}</div>
+      <div class="prod-info"><div class="prod-name">\${p.n}</div><div class="prod-price">\${p.p}</div></div>
+    </div>\`).join('');
+}
+function selectProd(i){
+  document.querySelectorAll('.prod').forEach(p=>p.classList.remove('selected'));
+  document.getElementById('prod-'+i).classList.add('selected');
+  selected=i;total=PRODS[i].price;
+  document.getElementById('total-display').textContent=total.toLocaleString('fr-FR')+' XPF';
+  document.getElementById('total-display-btn').textContent=total.toLocaleString('fr-FR');
+  document.getElementById('btn-order').classList.add('show');
+}
+function openCheckout(){if(selected===null)return;ckStep=1;ckContact={};ckDelivery={type:'pickup'};document.getElementById('ck-overlay').classList.add('open');document.body.style.overflow='hidden';ckRender();}
+function closeCk(){document.getElementById('ck-overlay').classList.remove('open');document.body.style.overflow='';}
+function ckRender(){
+  const titles={1:'📦 Votre commande',2:'👤 Coordonnées',3:'💳 Paiement sécurisé'};
+  document.getElementById('ck-title').textContent=titles[ckStep];
+  for(let i=1;i<=3;i++){document.getElementById('cks'+i).className='ck-step'+(i<ckStep?' done':i===ckStep?' active':'');}
+  if(ckStep===1)ckRecap1();else if(ckStep===2)ckContact1();else ckPayment();
+}
+function ckRecap1(){
+  const name=PRODS[selected].n;
+  document.getElementById('ck-body').innerHTML=\`
+    <div class="recap-box">
+      <div class="recap-row"><span>Produit</span><span>\${name}</span></div>
+      <div class="recap-row"><span style="font-weight:700">Total</span><span style="font-weight:900;color:\${ACCENT};font-size:1.1rem">\${total.toLocaleString('fr-FR')} XPF</span></div>
+    </div>
+    <div style="font-size:.78rem;color:rgba(255,255,255,.5);margin-top:8px;line-height:1.7">Promo 2ème sticker -20% : mentionnez-le dans la note de commande à l'étape suivante.</div>\`;
+  const _pwBtn=HCSPass.canPay(total)?\`<button class="btn-pass" onclick="pwPayCheckout(\${total},'\${name.replace(/'/g,'')}','HCS-STK-'+Date.now(),{type:ckDelivery.type,deliveryDelay:5},'')">🎫 Payer avec Pass · \${HCSPass.getBalance().toLocaleString('fr-FR')} XPF</button>\`:'';
+  document.getElementById('ck-foot').innerHTML=\`<div class="ck-foot-row"><button class="btn-next" onclick="ckStep=2;ckRender()">Continuer →</button></div>\`+(_pwBtn?\`<div class="ck-foot-row">\${_pwBtn}</div>\`:'');
+}
+function ckContact1(){
+  const s=ckContact;
+  document.getElementById('ck-body').innerHTML=\`
+    <div class="ck-field"><label>Prénom & Nom *</label><input class="ck-input" id="ck-name" placeholder="Jean Dupont" value="\${s.name||''}"></div>
+    <div class="ck-field"><label>Email *</label><input class="ck-input" id="ck-email" type="email" placeholder="jean@mail.com" value="\${s.email||''}"></div>
+    <div class="ck-field"><label>Téléphone</label><input class="ck-input" id="ck-phone" type="tel" placeholder="87 00 00 00" value="\${s.phone||''}"></div>
+    <div class="ck-field"><label>Note / 2ème sticker</label><textarea class="ck-input" id="ck-note" placeholder="Ex: Je commande aussi un sticker Vitrine Commerce (promo -20%)"></textarea></div>
+    <div style="font-size:.72rem;color:#9090b0;margin:4px 0 8px">Mode de récupération</div>
+    <div class="dlv-opts">
+      <div class="dlv-opt \${ckDelivery.type==='pickup'?'sel':''}" onclick="swDlv('pickup')"><div style="font-size:24px;margin-bottom:6px">🏪</div><div style="font-size:.82rem;font-weight:700">Retrait boutique</div><div style="font-size:.65rem;color:#9090b0">HCS — Papeete</div></div>
+      <div class="dlv-opt \${ckDelivery.type==='delivery'?'sel':''}" onclick="swDlv('delivery')"><div style="font-size:24px;margin-bottom:6px">🚚</div><div style="font-size:.82rem;font-weight:700">Livraison</div><div style="font-size:.65rem;color:#9090b0">3–5 jours</div></div>
+    </div>
+    <div id="f-delivery" style="\${ckDelivery.type==='delivery'?'':'display:none'}">
+      <div class="ck-field"><label>Adresse *</label><input class="ck-input" id="ck-addr" placeholder="Rue, quartier, commune"></div>
+    </div>\`;
+  document.getElementById('ck-foot').innerHTML=\`<div class="ck-foot-row"><button class="btn-prev" onclick="ckStep=1;ckRender()">← Retour</button><button class="btn-next" onclick="ckSaveContact()">Paiement →</button></div>\`;
+}
+function swDlv(t){ckDelivery.type=t;document.querySelectorAll('.dlv-opt').forEach((el,i)=>el.classList.toggle('sel',i===(t==='pickup'?0:1)));document.getElementById('f-delivery').style.display=t==='delivery'?'':'none';}
+function ckSaveContact(){
+  const name=document.getElementById('ck-name')?.value.trim(),email=document.getElementById('ck-email')?.value.trim();
+  if(!name){alert('Saisissez votre nom.');return;}
+  if(!email||!email.includes('@')){alert('Email invalide.');return;}
+  if(ckDelivery.type==='delivery'){const addr=document.getElementById('ck-addr')?.value.trim();if(!addr){alert('Saisissez votre adresse.');return;}ckDelivery.address=addr;}
+  ckContact={name,email,phone:document.getElementById('ck-phone')?.value.trim()||'',note:document.getElementById('ck-note')?.value.trim()||''};
+  ckStep=3;ckRender();
+}
+async function ckPayment(){
+  const orderId='HCS-STK-'+Date.now();const productName=PRODS[selected].n;
+  document.getElementById('ck-body').innerHTML=\`
+    <div class="recap-box">
+      <div class="recap-row"><span>Produit</span><span>\${productName}</span></div>
+      <div class="recap-row"><span>Client</span><span>\${ckContact.name}</span></div>
+      <div class="recap-row"><span>Livraison</span><span>\${ckDelivery.type==='pickup'?'🏪 Retrait':'🚚 Domicile'}</span></div>
+      <div class="recap-row"><span style="font-weight:700">Total</span><span style="font-weight:900;color:\${ACCENT};font-size:1.1rem">\${total.toLocaleString('fr-FR')} XPF</span></div>
+    </div>
+    \${location.protocol==='file:'?\`<div style="background:rgba(246,211,101,.12);border:2px solid #f6d365;border-radius:12px;padding:20px;text-align:center"><div style="font-size:1.8rem;margin-bottom:8px">⚠️</div><div style="font-weight:800;color:#f6d365;margin-bottom:8px">Fichier local</div><div style="font-size:.8rem;color:rgba(255,255,255,.8)">Publie cette LP via 🚀 Publier dans Andromeda.</div></div>\`:\`<div id="pz-loading" class="pz-loading">🔒 Connexion OSB Polynésie…</div><div class="kr-embedded" id="pz-kr-form" style="display:none"></div><div class="pz-error" id="pz-error"></div><div class="pz-ok" id="pz-ok" style="display:none"><h3 style="font-size:1.2rem;margin-bottom:8px">✅ Paiement accepté !</h3><p style="font-size:.82rem;color:#9090b0;line-height:1.6">Merci <strong>\${ckContact.name}</strong>.<br>Commande <strong>\${orderId}</strong> confirmée.<br>Email envoyé à \${ckContact.email}.</p></div>\`}\`;
+  document.getElementById('ck-foot').innerHTML=\`<div class="ck-foot-row"><button class="btn-prev" id="pz-back" onclick="ckStep=2;ckRender()">← Retour</button></div>\`;
+  if(location.protocol==='file:')return;
+  const oldSdk=document.getElementById('pz-sdk');if(oldSdk)oldSdk.remove();
+  if(window.KR){try{KR.removeForms();}catch(_){}}
+  try{
+    const res=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET},body:JSON.stringify({amount:total,currency:'XPF',orderId,mode:WORKER_MODE,customerEmail:ckContact.email})});
+    if(!res.ok){const e=await res.json();throw new Error(e.error||'Erreur serveur');}
+    const {formToken,publicKey}=await res.json();
+    if(!document.getElementById('pz-css1')){const c1=document.createElement('link');c1.id='pz-css1';c1.rel='stylesheet';c1.href='https://static.osb.pf/static/js/krypton-client/V4.0/stable/classic-reset.min.css';document.head.appendChild(c1);const c2=document.createElement('link');c2.id='pz-css2';c2.rel='stylesheet';c2.href='https://static.osb.pf/static/js/krypton-client/V4.0/stable/classic.min.css';document.head.appendChild(c2);}
+    await new Promise((resolve,reject)=>{
+      if(window.KR){KR.setFormConfig({'kr-public-key':publicKey,'kr-language':'fr-FR'}).then(()=>KR.setFormToken(formToken)).then(resolve).catch(reject);}
+      else{const s=document.createElement('script');s.id='pz-sdk';s.src='https://static.osb.pf/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js';s.setAttribute('kr-public-key',publicKey);s.setAttribute('kr-language','fr-FR');s.onload=()=>KR.setFormToken(formToken).then(resolve);s.onerror=()=>reject(new Error('SDK indisponible'));document.head.appendChild(s);}
+    });
+    document.getElementById('pz-loading').style.display='none';document.getElementById('pz-kr-form').style.display='block';
+    function showSuccess(){
+      document.getElementById('pz-kr-form').style.display='none';
+      const ok=document.getElementById('pz-ok');ok.style.cssText='display:block!important';
+      const bk=document.getElementById('pz-back');if(bk)bk.style.display='none';
+      fetch(WORKER_URL.replace('/payzen-token','/order/save'),{method:'POST',headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET},body:JSON.stringify({orderId,status:'paid',amount:total,currency:'XPF',campaignName:CAMP_NAME,product:productName,client:{name:ckContact.name,email:ckContact.email,phone:ckContact.phone||''},delivery:{type:ckDelivery.type,address:ckDelivery.address||'',deliveryDelay:5},note:'Stickers HCS | '+productName+(ckContact.note?' | '+ckContact.note:'')})}).catch(e=>console.warn(e));
+      addWaBtn(orderId,productName);
+    }
+    KR.onSubmit(d=>{if(['PAID','RUNNING','AUTHORISED'].includes(d?.clientAnswer?.orderStatus)){showSuccess();}return false;});
+    const krForm=document.querySelector('.kr-embedded');
+    if(krForm){let done=false;new MutationObserver(()=>{if(done)return;if(document.querySelector('.kr-payment-success')||krForm.classList.contains('kr-payment-success')){done=true;showSuccess();}}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});}
+  }catch(e){document.getElementById('pz-loading').style.display='none';const err=document.getElementById('pz-error');err.style.display='block';err.textContent='❌ '+e.message;}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCk();});
+init();
+<\/script>
+${_passBlock(v)}
+</body></html>`;
+  _downloadHtml(html, `hcs-stickers-${_slug(v.headline)}.html`);
+}
+
+// ── V1 Export — T-Shirt Perso ──
+function exportLP_TshirtPerso(id) {
+  const v = _getCommonExportVars(id);
+  const heroBg = _getHeroBg(v);
+  const prodImgs = _getProdImgs(id);
+  const prodsJson = JSON.stringify(v.c.products.map((p,i)=>({e:p.e,n:p.n,p:p.p,price:parseInt(p.p.replace(/[^\d]/g,''))||0,img:prodImgs[i]||''})));
+
+  const html = `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${v.headline} — HCS Tahiti</title><meta name="description" content="${v.subline}">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f0f1a;color:#e8e8f0}
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px 20px;background:${heroBg};background-size:cover;background-position:center;position:relative;overflow:hidden}
+.hero-overlay{position:absolute;inset:0;background:${v.c.colors.overlay}}.hero-content{max-width:600px;position:relative;z-index:2}
+h1{font-size:clamp(1.8rem,5vw,3rem);font-weight:900;margin-bottom:14px;line-height:1.1;color:white}
+.sub{font-size:1rem;opacity:.9;margin-bottom:20px;color:rgba(255,255,255,.85)}
+.badge-hp{display:inline-block;background:${v.badge2};color:white;padding:8px 24px;border-radius:24px;font-weight:700;margin-bottom:20px}
+.cta-hero{display:inline-block;background:white;color:${v.primary};padding:14px 36px;border-radius:30px;font-weight:700;font-size:1rem;text-decoration:none;cursor:pointer;border:none;transition:transform .15s;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.cta-hero:hover{transform:translateY(-2px)}
+.section{padding:40px 20px;max-width:960px;margin:0 auto}
+.section-title{font-size:1.1rem;font-weight:800;margin-bottom:8px;text-align:center}
+.section-sub{font-size:.85rem;color:rgba(255,255,255,.6);text-align:center;margin-bottom:20px}
+.prods{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
+.prod{background:rgba(255,255,255,.05);border-radius:14px;overflow:hidden;border:2px solid rgba(255,255,255,.1);cursor:pointer;transition:all .2s;position:relative}
+.prod:hover{border-color:${v.primary};transform:translateY(-3px)}.prod.selected{border-color:${v.primary};box-shadow:0 0 0 4px ${v.primary}33}
+.prod-check{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:${v.primary};display:none;align-items:center;justify-content:center;font-size:.7rem;color:white;font-weight:900}
+.prod.selected .prod-check{display:flex}
+.prod-img{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:48px;background:rgba(255,255,255,.04);overflow:hidden}
+.prod-img img{width:100%;height:100%;object-fit:cover}
+.prod-info{padding:14px}.prod-name{font-weight:600;margin-bottom:6px;font-size:.9rem}.prod-price{color:${v.primary};font-weight:800;font-size:1.1rem}
+.feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-top:28px}
+.feat{background:rgba(255,255,255,.05);border-radius:10px;padding:18px;text-align:center;border:1px solid rgba(255,255,255,.1)}
+.feat-icon{font-size:28px;margin-bottom:8px}.feat-txt{font-size:.82rem;color:rgba(255,255,255,.7)}
+.btn-order{width:100%;padding:16px;background:linear-gradient(135deg,${v.primary},#ff6584);color:white;border:none;border-radius:12px;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 6px 20px ${v.primary}66;transition:all .2s;display:none;margin-top:14px}
+.btn-order.show{display:block}.btn-order:hover{transform:translateY(-2px)}
+footer{text-align:center;padding:28px;color:rgba(255,255,255,.4);font-size:.82rem;border-top:1px solid rgba(255,255,255,.1)}
+.ck-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:950;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.ck-overlay.open{display:flex}@media(min-width:600px){.ck-overlay.open{align-items:center}}
+.ck-box{background:#1a1a2e;border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 48px rgba(0,0,0,.6)}
+@media(min-width:600px){.ck-box{border-radius:20px}}
+.ck-head{padding:16px 20px;border-bottom:1px solid #2a2a4a;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.ck-head-title{font-size:.95rem;font-weight:800}.ck-close{background:none;border:none;color:#9090b0;font-size:1.1rem;cursor:pointer;padding:4px}
+.ck-steps{display:flex;padding:12px 20px;border-bottom:1px solid #2a2a4a;flex-shrink:0}
+.ck-step{flex:1;text-align:center;position:relative}
+.ck-step::after{content:'';position:absolute;top:13px;left:50%;width:100%;height:2px;background:#2a2a4a;z-index:0}
+.ck-step:last-child::after{display:none}
+.ck-dot2{width:26px;height:26px;border-radius:50%;border:2px solid #2a2a4a;background:#1e1e3a;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;margin:0 auto 4px;position:relative;z-index:1;color:#9090b0;transition:all .2s}
+.ck-step.done .ck-dot2{background:#43e97b;border-color:#43e97b;color:#0f0f1a}.ck-step.done::after{background:#43e97b}
+.ck-step.active .ck-dot2{background:${v.primary};border-color:${v.primary};color:white;box-shadow:0 0 12px ${v.primary}66}
+.ck-lbl{font-size:.58rem;color:#9090b0;font-weight:600}.ck-step.active .ck-lbl{color:${v.primary}}.ck-step.done .ck-lbl{color:#43e97b}
+.ck-body{flex:1;overflow-y:auto;padding:20px}.ck-foot{padding:14px 20px;border-top:1px solid #2a2a4a;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.ck-foot-row{display:flex;gap:8px}.ck-field{margin-bottom:12px}.ck-field label{display:block;font-size:.7rem;color:#9090b0;margin-bottom:4px}
+.ck-input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #2a2a4a;background:#1e1e3a;color:#e8e8f0;font-size:.85rem;outline:none;font-family:inherit;transition:border-color .2s}
+.ck-input:focus{border-color:${v.primary}}.ck-textarea{resize:vertical;min-height:60px}
+.dlv-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.dlv-opt{padding:14px 10px;border-radius:10px;border:2px solid #2a2a4a;background:#1e1e3a;cursor:pointer;text-align:center;transition:all .2s}
+.dlv-opt:hover,.dlv-opt.sel{border-color:${v.primary};background:${v.primary}1a}
+.recap-box{background:#16213e;border:1px solid #2a2a4a;border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.recap-row{display:flex;justify-content:space-between;font-size:.78rem;padding:4px 0;border-bottom:1px solid #2a2a4a22}
+.recap-row:last-child{border:none;padding-top:8px;border-top:1px solid #2a2a4a}
+.recap-row span:first-child{color:#9090b0}
+.btn-next{flex:1;padding:12px;background:linear-gradient(135deg,${v.primary},#ff6584);color:white;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn-next:hover{opacity:.9}.btn-prev{padding:12px 16px;background:#1e1e3a;border:1px solid #2a2a4a;color:#9090b0;border-radius:8px;font-size:.85rem;cursor:pointer}
+.btn-pass{padding:12px;background:linear-gradient(135deg,#f6d365,#fda085);color:#1a1a2e;border:none;border-radius:8px;font-size:.85rem;font-weight:800;cursor:pointer;width:100%}
+.pz-loading{text-align:center;color:#9090b0;font-size:.85rem;padding:24px}
+.pz-error{background:rgba(255,80,80,.12);border:1px solid rgba(255,80,80,.3);border-radius:8px;padding:12px;color:#ff6b6b;font-size:.8rem;margin-top:10px;display:none}
+.pz-ok{background:rgba(67,233,123,.12);border:1px solid rgba(67,233,123,.3);border-radius:12px;padding:28px;text-align:center;color:#43e97b;display:none}
+.kr-embedded{background:#fff!important;border-radius:14px!important;padding:16px 14px!important;margin-top:4px!important;box-shadow:0 2px 16px rgba(0,0,0,.18)!important}
+.kr-embedded .kr-payment-button{background:linear-gradient(135deg,${v.primary},#ff6584)!important;border-radius:10px!important;font-weight:800!important;font-size:.9rem!important;padding:13px!important;width:100%!important;border:none!important;color:#fff!important;cursor:pointer!important;margin-top:4px!important}
+</style></head><body>
+
+<div class="hero"><div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="badge-hp">${v.badge}</div>
+    <h1>${v.headline}</h1>
+    <p class="sub">${v.subline}</p>
+    <a href="#produits" class="cta-hero">${v.cta}</a>
+  </div>
+</div>
+
+${_parcoursCss(v.primary)}
+${_parcoursHtml([
+  {label:'Envoyez votre logo',desc:'Photo WhatsApp, fichier email ou déposez directement en boutique HCS Papeete'},
+  {label:'Choisissez votre t-shirt',desc:'Blanc, noir ou hoodie — votre taille · Détourage IA inclus'},
+  {label:'On imprime votre logo',desc:'Impression DTF haute définition · Lavage machine · Couleurs durables'},
+  {label:'Récupérez sous 3–5 jours',desc:'Livraison Polynésie ou retrait HCS Papeete — qualité garantie'}
+])}
+
+<section class="section" id="logo-info">
+  <div style="background:rgba(${_hexToRgb(v.primary)},.1);border:2px solid ${v.primary}33;border-radius:14px;padding:24px;text-align:center">
+    <div style="font-size:2rem;margin-bottom:10px">📁</div>
+    <div style="font-weight:800;font-size:1rem;margin-bottom:8px">Comment nous envoyer votre logo ?</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:14px">
+      <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,.08)"><div style="font-size:1.4rem;margin-bottom:6px">💬</div><div style="font-weight:700;font-size:.82rem">WhatsApp</div><div style="font-size:.72rem;color:#888;margin-top:4px">Envoyez la photo directement</div></div>
+      <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,.08)"><div style="font-size:1.4rem;margin-bottom:6px">📧</div><div style="font-weight:700;font-size:.82rem">Email</div><div style="font-size:.72rem;color:#888;margin-top:4px">contact@highcoffeeshirt.pf</div></div>
+      <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,.08)"><div style="font-size:1.4rem;margin-bottom:6px">🏪</div><div style="font-weight:700;font-size:.82rem">En boutique</div><div style="font-size:.72rem;color:#888;margin-top:4px">HCS Papeete · clé USB / téléphone</div></div>
+    </div>
+    <div style="font-size:.72rem;color:#888;margin-top:12px">✂️ Détourage IA automatique inclus · Format PNG, JPG, SVG acceptés</div>
+  </div>
+</section>
+
+<section class="section" id="produits">
+  <div class="section-title">Choisissez votre article</div>
+  <div class="section-sub">Impression DTF HD · Coton premium · Livraison Polynésie</div>
+  <div class="prods" id="prods-grid"></div>
+  <div style="background:rgba(${_hexToRgb(v.primary)},.08);border:2px solid ${v.primary}33;border-radius:14px;padding:20px;margin-top:20px;text-align:center">
+    <div style="font-size:1.4rem;margin-bottom:8px">👥</div>
+    <div style="font-weight:800;font-size:.95rem;margin-bottom:6px">Pack Équipe — 5 t-shirts -15%</div>
+    <div style="font-size:.8rem;color:rgba(255,255,255,.6);margin-bottom:8px">Pour clubs, associations, entreprises · Même logo</div>
+    <div style="font-size:.82rem;color:${v.primary};font-weight:700">Mentionnez "Pack Équipe x5" dans la note de commande</div>
+  </div>
+  <div class="feats">${v.c.features.map(f=>`<div class="feat"><div class="feat-icon">${f.i}</div><div class="feat-txt">${f.t}</div></div>`).join('')}</div>
+  <div style="text-align:center;margin-top:14px"><span id="total-display" style="color:${v.primary};font-weight:900;font-size:1.1rem"></span></div>
+  <button class="btn-order" id="btn-order" onclick="openCheckout()">🛒 Commander — <span id="total-display-btn">0</span> XPF</button>
+</section>
+
+<footer>
+  <div>High Coffee Shirt · HCS Tahiti · Papeete, Polynésie française</div>
+  <div style="margin-top:8px;font-size:.75rem;opacity:.6">Paiement sécurisé OSB Polynésie · Impression DTF professionnelle</div>
+</footer>
+
+<div class="ck-overlay" id="ck-overlay" onclick="if(event.target===this)closeCk()">
+  <div class="ck-box">
+    <div class="ck-head"><div class="ck-head-title" id="ck-title">📦 Votre commande</div><button class="ck-close" onclick="closeCk()">✕</button></div>
+    <div class="ck-steps">
+      <div class="ck-step active" id="cks1"><div class="ck-dot2">1</div><div class="ck-lbl">Commande</div></div>
+      <div class="ck-step" id="cks2"><div class="ck-dot2">2</div><div class="ck-lbl">Coordonnées</div></div>
+      <div class="ck-step" id="cks3"><div class="ck-dot2">3</div><div class="ck-lbl">Paiement</div></div>
+    </div>
+    <div class="ck-body" id="ck-body"></div>
+    <div class="ck-foot" id="ck-foot"></div>
+  </div>
+</div>
+
+<script>
+const PRODS=${prodsJson};
+const ACCENT='${v.primary}';
+const CAMP_NAME='${v.headline}';
+const WORKER_URL='${v.workerUrl}';
+const WORKER_SECRET='${v.workerSecret}';
+const WORKER_MODE='${v.workerMode}';
+let selected=null,total=0,ckStep=1,ckContact={},ckDelivery={type:'pickup'};
+function init(){
+  document.getElementById('prods-grid').innerHTML=PRODS.map((p,i)=>\`
+    <div class="prod" id="prod-\${i}" onclick="selectProd(\${i})">
+      <div class="prod-check">✓</div>
+      <div class="prod-img">\${p.img?'<img src="'+p.img+'">':p.e}</div>
+      <div class="prod-info"><div class="prod-name">\${p.n}</div><div class="prod-price">\${p.p}</div></div>
+    </div>\`).join('');
+}
+function selectProd(i){
+  document.querySelectorAll('.prod').forEach(p=>p.classList.remove('selected'));
+  document.getElementById('prod-'+i).classList.add('selected');
+  selected=i;total=PRODS[i].price;
+  document.getElementById('total-display').textContent=total.toLocaleString('fr-FR')+' XPF';
+  document.getElementById('total-display-btn').textContent=total.toLocaleString('fr-FR');
+  document.getElementById('btn-order').classList.add('show');
+}
+function openCheckout(){if(selected===null)return;ckStep=1;ckContact={};ckDelivery={type:'pickup'};document.getElementById('ck-overlay').classList.add('open');document.body.style.overflow='hidden';ckRender();}
+function closeCk(){document.getElementById('ck-overlay').classList.remove('open');document.body.style.overflow='';}
+function ckRender(){
+  const titles={1:'📦 Votre commande',2:'👤 Coordonnées',3:'💳 Paiement sécurisé'};
+  document.getElementById('ck-title').textContent=titles[ckStep];
+  for(let i=1;i<=3;i++){document.getElementById('cks'+i).className='ck-step'+(i<ckStep?' done':i===ckStep?' active':'');}
+  if(ckStep===1)ckRecap1();else if(ckStep===2)ckContact1();else ckPayment();
+}
+function ckRecap1(){
+  const name=PRODS[selected].n;
+  document.getElementById('ck-body').innerHTML=\`
+    <div class="recap-box">
+      <div class="recap-row"><span>Article</span><span>\${name}</span></div>
+      <div class="recap-row"><span style="font-weight:700">Total</span><span style="font-weight:900;color:\${ACCENT};font-size:1.1rem">\${total.toLocaleString('fr-FR')} XPF</span></div>
+    </div>
+    <div style="background:rgba(${_hexToRgb(v.primary)},.08);border:1px solid ${v.primary}33;border-radius:8px;padding:12px;font-size:.78rem;margin-top:8px">
+      <strong>Votre logo :</strong> envoyez-le par WhatsApp, email ou mentionnez-le dans la note ci-dessous.
+    </div>\`;
+  const _pwBtn=HCSPass.canPay(total)?\`<button class="btn-pass" onclick="pwPayCheckout(\${total},'\${name.replace(/'/g,'')}','HCS-TSH-'+Date.now(),{type:ckDelivery.type,deliveryDelay:3},'')">🎫 Payer avec Pass · \${HCSPass.getBalance().toLocaleString('fr-FR')} XPF</button>\`:'';
+  document.getElementById('ck-foot').innerHTML=\`<div class="ck-foot-row"><button class="btn-next" onclick="ckStep=2;ckRender()">Continuer →</button></div>\`+(_pwBtn?\`<div class="ck-foot-row">\${_pwBtn}</div>\`:'');
+}
+function ckContact1(){
+  const s=ckContact;
+  document.getElementById('ck-body').innerHTML=\`
+    <div class="ck-field"><label>Prénom & Nom *</label><input class="ck-input" id="ck-name" placeholder="Jean Dupont" value="\${s.name||''}"></div>
+    <div class="ck-field"><label>Email *</label><input class="ck-input" id="ck-email" type="email" placeholder="jean@mail.com" value="\${s.email||''}"></div>
+    <div class="ck-field"><label>Téléphone</label><input class="ck-input" id="ck-phone" type="tel" placeholder="87 00 00 00" value="\${s.phone||''}"></div>
+    <div class="ck-field"><label>Taille & instructions logo</label><textarea class="ck-input ck-textarea" id="ck-note" placeholder="Ex: Taille L · Logo envoyé par WhatsApp · Pack Équipe x5"></textarea></div>
+    <div style="font-size:.72rem;color:#9090b0;margin:4px 0 8px">Mode de récupération</div>
+    <div class="dlv-opts">
+      <div class="dlv-opt \${ckDelivery.type==='pickup'?'sel':''}" onclick="swDlv('pickup')"><div style="font-size:24px;margin-bottom:6px">🏪</div><div style="font-size:.82rem;font-weight:700">Retrait boutique</div><div style="font-size:.65rem;color:#9090b0">HCS — Papeete</div></div>
+      <div class="dlv-opt \${ckDelivery.type==='delivery'?'sel':''}" onclick="swDlv('delivery')"><div style="font-size:24px;margin-bottom:6px">🚚</div><div style="font-size:.82rem;font-weight:700">Livraison</div><div style="font-size:.65rem;color:#9090b0">3–5 jours</div></div>
+    </div>
+    <div id="f-delivery" style="\${ckDelivery.type==='delivery'?'':'display:none'}">
+      <div class="ck-field"><label>Adresse *</label><input class="ck-input" id="ck-addr" placeholder="Rue, quartier, commune"></div>
+    </div>\`;
+  document.getElementById('ck-foot').innerHTML=\`<div class="ck-foot-row"><button class="btn-prev" onclick="ckStep=1;ckRender()">← Retour</button><button class="btn-next" onclick="ckSaveContact()">Paiement →</button></div>\`;
+}
+function swDlv(t){ckDelivery.type=t;document.querySelectorAll('.dlv-opt').forEach((el,i)=>el.classList.toggle('sel',i===(t==='pickup'?0:1)));document.getElementById('f-delivery').style.display=t==='delivery'?'':'none';}
+function ckSaveContact(){
+  const name=document.getElementById('ck-name')?.value.trim(),email=document.getElementById('ck-email')?.value.trim();
+  if(!name){alert('Saisissez votre nom.');return;}
+  if(!email||!email.includes('@')){alert('Email invalide.');return;}
+  if(ckDelivery.type==='delivery'){const addr=document.getElementById('ck-addr')?.value.trim();if(!addr){alert('Saisissez votre adresse.');return;}ckDelivery.address=addr;}
+  ckContact={name,email,phone:document.getElementById('ck-phone')?.value.trim()||'',note:document.getElementById('ck-note')?.value.trim()||''};
+  ckStep=3;ckRender();
+}
+async function ckPayment(){
+  const orderId='HCS-TSH-'+Date.now();const productName=PRODS[selected].n;
+  document.getElementById('ck-body').innerHTML=\`
+    <div class="recap-box">
+      <div class="recap-row"><span>Article</span><span>\${productName}</span></div>
+      <div class="recap-row"><span>Client</span><span>\${ckContact.name}</span></div>
+      <div class="recap-row"><span>Livraison</span><span>\${ckDelivery.type==='pickup'?'🏪 Retrait':'🚚 Domicile'}</span></div>
+      <div class="recap-row"><span style="font-weight:700">Total</span><span style="font-weight:900;color:\${ACCENT};font-size:1.1rem">\${total.toLocaleString('fr-FR')} XPF</span></div>
+    </div>
+    \${location.protocol==='file:'?\`<div style="background:rgba(246,211,101,.12);border:2px solid #f6d365;border-radius:12px;padding:20px;text-align:center"><div style="font-size:1.8rem;margin-bottom:8px">⚠️</div><div style="font-weight:800;color:#f6d365;margin-bottom:8px">Fichier local</div><div style="font-size:.8rem;color:rgba(255,255,255,.8)">Publie cette LP via 🚀 Publier dans Andromeda.</div></div>\`:\`<div id="pz-loading" class="pz-loading">🔒 Connexion OSB Polynésie…</div><div class="kr-embedded" id="pz-kr-form" style="display:none"></div><div class="pz-error" id="pz-error"></div><div class="pz-ok" id="pz-ok" style="display:none"><h3 style="font-size:1.2rem;margin-bottom:8px">✅ Paiement accepté !</h3><p style="font-size:.82rem;color:#9090b0;line-height:1.6">Merci <strong>\${ckContact.name}</strong>.<br>Commande <strong>\${orderId}</strong> confirmée.<br>Email envoyé à \${ckContact.email}.</p></div>\`}\`;
+  document.getElementById('ck-foot').innerHTML=\`<div class="ck-foot-row"><button class="btn-prev" id="pz-back" onclick="ckStep=2;ckRender()">← Retour</button></div>\`;
+  if(location.protocol==='file:')return;
+  const oldSdk=document.getElementById('pz-sdk');if(oldSdk)oldSdk.remove();
+  if(window.KR){try{KR.removeForms();}catch(_){}}
+  try{
+    const res=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET},body:JSON.stringify({amount:total,currency:'XPF',orderId,mode:WORKER_MODE,customerEmail:ckContact.email})});
+    if(!res.ok){const e=await res.json();throw new Error(e.error||'Erreur serveur');}
+    const {formToken,publicKey}=await res.json();
+    if(!document.getElementById('pz-css1')){const c1=document.createElement('link');c1.id='pz-css1';c1.rel='stylesheet';c1.href='https://static.osb.pf/static/js/krypton-client/V4.0/stable/classic-reset.min.css';document.head.appendChild(c1);const c2=document.createElement('link');c2.id='pz-css2';c2.rel='stylesheet';c2.href='https://static.osb.pf/static/js/krypton-client/V4.0/stable/classic.min.css';document.head.appendChild(c2);}
+    await new Promise((resolve,reject)=>{
+      if(window.KR){KR.setFormConfig({'kr-public-key':publicKey,'kr-language':'fr-FR'}).then(()=>KR.setFormToken(formToken)).then(resolve).catch(reject);}
+      else{const s=document.createElement('script');s.id='pz-sdk';s.src='https://static.osb.pf/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js';s.setAttribute('kr-public-key',publicKey);s.setAttribute('kr-language','fr-FR');s.onload=()=>KR.setFormToken(formToken).then(resolve);s.onerror=()=>reject(new Error('SDK indisponible'));document.head.appendChild(s);}
+    });
+    document.getElementById('pz-loading').style.display='none';document.getElementById('pz-kr-form').style.display='block';
+    function showSuccess(){
+      document.getElementById('pz-kr-form').style.display='none';
+      const ok=document.getElementById('pz-ok');ok.style.cssText='display:block!important';
+      const bk=document.getElementById('pz-back');if(bk)bk.style.display='none';
+      fetch(WORKER_URL.replace('/payzen-token','/order/save'),{method:'POST',headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET},body:JSON.stringify({orderId,status:'paid',amount:total,currency:'XPF',campaignName:CAMP_NAME,product:productName,client:{name:ckContact.name,email:ckContact.email,phone:ckContact.phone||''},delivery:{type:ckDelivery.type,address:ckDelivery.address||'',deliveryDelay:3},note:'T-Shirt Perso | '+productName+(ckContact.note?' | '+ckContact.note:'')})}).catch(e=>console.warn(e));
+      addWaBtn(orderId,productName);
+    }
+    KR.onSubmit(d=>{if(['PAID','RUNNING','AUTHORISED'].includes(d?.clientAnswer?.orderStatus)){showSuccess();}return false;});
+    const krForm=document.querySelector('.kr-embedded');
+    if(krForm){let done=false;new MutationObserver(()=>{if(done)return;if(document.querySelector('.kr-payment-success')||krForm.classList.contains('kr-payment-success')){done=true;showSuccess();}}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});}
+  }catch(e){document.getElementById('pz-loading').style.display='none';const err=document.getElementById('pz-error');err.style.display='block';err.textContent='❌ '+e.message;}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCk();});
+init();
+<\/script>
+${_passBlock(v)}
+</body></html>`;
+  _downloadHtml(html, `hcs-tshirt-perso-${_slug(v.headline)}.html`);
+}
+
+// ── V2 Export — Casquette ──
+function exportLP_Casquette(id) {
+  const v = _getCommonExportVars(id);
+  const heroBg = _getHeroBg(v);
+  const prodImgs = _getProdImgs(id);
+  const prodsJson = JSON.stringify(v.c.products.map((p,i)=>({e:p.e,n:p.n,p:p.p,price:parseInt(p.p.replace(/[^\d]/g,''))||0,img:prodImgs[i]||''})));
+
+  const html = `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${v.headline} — HCS Tahiti</title><meta name="description" content="${v.subline}">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f0f1a;color:#e8e8f0}
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px 20px;background:${heroBg};background-size:cover;background-position:center;position:relative;overflow:hidden}
+.hero-overlay{position:absolute;inset:0;background:${v.c.colors.overlay}}.hero-content{max-width:600px;position:relative;z-index:2}
+h1{font-size:clamp(1.8rem,5vw,3rem);font-weight:900;margin-bottom:14px;line-height:1.1;color:white}
+.sub{font-size:1rem;opacity:.9;margin-bottom:20px;color:rgba(255,255,255,.85)}
+.badge-hp{display:inline-block;background:${v.badge2};color:white;padding:8px 24px;border-radius:24px;font-weight:700;margin-bottom:20px}
+.cta-hero{display:inline-block;background:white;color:${v.primary};padding:14px 36px;border-radius:30px;font-weight:700;font-size:1rem;text-decoration:none;cursor:pointer;border:none;transition:transform .15s;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.cta-hero:hover{transform:translateY(-2px)}
+.section{padding:40px 20px;max-width:960px;margin:0 auto}
+.section-title{font-size:1.1rem;font-weight:800;margin-bottom:8px;text-align:center}
+.section-sub{font-size:.85rem;color:rgba(255,255,255,.6);text-align:center;margin-bottom:20px}
+.prods{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
+.prod{background:rgba(255,255,255,.05);border-radius:14px;overflow:hidden;border:2px solid rgba(255,255,255,.1);cursor:pointer;transition:all .2s;position:relative}
+.prod:hover{border-color:${v.primary};transform:translateY(-3px)}.prod.selected{border-color:${v.primary};box-shadow:0 0 0 4px ${v.primary}33}
+.prod-check{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:${v.primary};display:none;align-items:center;justify-content:center;font-size:.7rem;color:white;font-weight:900}
+.prod.selected .prod-check{display:flex}
+.prod-img{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:48px;background:rgba(255,255,255,.04);overflow:hidden}
+.prod-img img{width:100%;height:100%;object-fit:cover}
+.prod-info{padding:14px}.prod-name{font-weight:600;margin-bottom:6px;font-size:.9rem}.prod-price{color:${v.primary};font-weight:800;font-size:1.1rem}
+.feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-top:28px}
+.feat{background:rgba(255,255,255,.05);border-radius:10px;padding:18px;text-align:center;border:1px solid rgba(255,255,255,.1)}
+.feat-icon{font-size:28px;margin-bottom:8px}.feat-txt{font-size:.82rem;color:rgba(255,255,255,.7)}
+.btn-order{width:100%;padding:16px;background:linear-gradient(135deg,${v.primary},#ff6584);color:white;border:none;border-radius:12px;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 6px 20px ${v.primary}66;transition:all .2s;display:none;margin-top:14px}
+.btn-order.show{display:block}.btn-order:hover{transform:translateY(-2px)}
+footer{text-align:center;padding:28px;color:rgba(255,255,255,.4);font-size:.82rem;border-top:1px solid rgba(255,255,255,.1)}
+.ck-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:950;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.ck-overlay.open{display:flex}@media(min-width:600px){.ck-overlay.open{align-items:center}}
+.ck-box{background:#1a1a2e;border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 48px rgba(0,0,0,.6)}
+@media(min-width:600px){.ck-box{border-radius:20px}}
+.ck-head{padding:16px 20px;border-bottom:1px solid #2a2a4a;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.ck-head-title{font-size:.95rem;font-weight:800}.ck-close{background:none;border:none;color:#9090b0;font-size:1.1rem;cursor:pointer;padding:4px}
+.ck-steps{display:flex;padding:12px 20px;border-bottom:1px solid #2a2a4a;flex-shrink:0}
+.ck-step{flex:1;text-align:center;position:relative}
+.ck-step::after{content:'';position:absolute;top:13px;left:50%;width:100%;height:2px;background:#2a2a4a;z-index:0}
+.ck-step:last-child::after{display:none}
+.ck-dot2{width:26px;height:26px;border-radius:50%;border:2px solid #2a2a4a;background:#1e1e3a;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;margin:0 auto 4px;position:relative;z-index:1;color:#9090b0;transition:all .2s}
+.ck-step.done .ck-dot2{background:#43e97b;border-color:#43e97b;color:#0f0f1a}.ck-step.done::after{background:#43e97b}
+.ck-step.active .ck-dot2{background:${v.primary};border-color:${v.primary};color:white;box-shadow:0 0 12px ${v.primary}66}
+.ck-lbl{font-size:.58rem;color:#9090b0;font-weight:600}.ck-step.active .ck-lbl{color:${v.primary}}.ck-step.done .ck-lbl{color:#43e97b}
+.ck-body{flex:1;overflow-y:auto;padding:20px}.ck-foot{padding:14px 20px;border-top:1px solid #2a2a4a;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.ck-foot-row{display:flex;gap:8px}.ck-field{margin-bottom:12px}.ck-field label{display:block;font-size:.7rem;color:#9090b0;margin-bottom:4px}
+.ck-input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #2a2a4a;background:#1e1e3a;color:#e8e8f0;font-size:.85rem;outline:none;font-family:inherit;transition:border-color .2s}
+.ck-input:focus{border-color:${v.primary}}.ck-textarea{resize:vertical;min-height:60px}
+.dlv-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.dlv-opt{padding:14px 10px;border-radius:10px;border:2px solid #2a2a4a;background:#1e1e3a;cursor:pointer;text-align:center;transition:all .2s}
+.dlv-opt:hover,.dlv-opt.sel{border-color:${v.primary};background:${v.primary}1a}
+.recap-box{background:#16213e;border:1px solid #2a2a4a;border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.recap-row{display:flex;justify-content:space-between;font-size:.78rem;padding:4px 0;border-bottom:1px solid #2a2a4a22}
+.recap-row:last-child{border:none;padding-top:8px;border-top:1px solid #2a2a4a}
+.recap-row span:first-child{color:#9090b0}
+.btn-next{flex:1;padding:12px;background:linear-gradient(135deg,${v.primary},#ff6584);color:white;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn-next:hover{opacity:.9}.btn-prev{padding:12px 16px;background:#1e1e3a;border:1px solid #2a2a4a;color:#9090b0;border-radius:8px;font-size:.85rem;cursor:pointer}
+.btn-pass{padding:12px;background:linear-gradient(135deg,#f6d365,#fda085);color:#1a1a2e;border:none;border-radius:8px;font-size:.85rem;font-weight:800;cursor:pointer;width:100%}
+.pz-loading{text-align:center;color:#9090b0;font-size:.85rem;padding:24px}
+.pz-error{background:rgba(255,80,80,.12);border:1px solid rgba(255,80,80,.3);border-radius:8px;padding:12px;color:#ff6b6b;font-size:.8rem;margin-top:10px;display:none}
+.pz-ok{background:rgba(67,233,123,.12);border:1px solid rgba(67,233,123,.3);border-radius:12px;padding:28px;text-align:center;color:#43e97b;display:none}
+.kr-embedded{background:#fff!important;border-radius:14px!important;padding:16px 14px!important;margin-top:4px!important;box-shadow:0 2px 16px rgba(0,0,0,.18)!important}
+.kr-embedded .kr-payment-button{background:linear-gradient(135deg,${v.primary},#ff6584)!important;border-radius:10px!important;font-weight:800!important;font-size:.9rem!important;padding:13px!important;width:100%!important;border:none!important;color:#fff!important;cursor:pointer!important;margin-top:4px!important}
+</style></head><body>
+
+<div class="hero"><div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="badge-hp">${v.badge || '🧢 PERSONNALISATION PREMIUM'}</div>
+    <h1>${v.headline}</h1>
+    <p class="sub">${v.subline}</p>
+    <a href="#guide" class="cta-hero">${v.cta || 'Choisir ma finition'}</a>
+  </div>
+</div>
+
+${_parcoursCss(v.primary)}
+${_parcoursHtml([
+  {label:'Choisissez votre finition',desc:'DTF recommandé pour logos colorés · Broderie pour logos simples et premium'},
+  {label:'Définissez le placement',desc:'Face principale, côté gauche/droit, visière ou arrière — +500 XPF/zone supp.'},
+  {label:'Commandez & payez en ligne',desc:'Paiement sécurisé OSB Polynésie · Pass HCS accepté'},
+  {label:'Récupérez ou faites livrer',desc:'Retrait boutique HCS Papeete ou livraison Polynésie 3–5 jours ouvrés'}
+])}
+
+<section class="section" id="guide">
+  <div class="section-title">DTF ou Broderie ?</div>
+  <div class="section-sub">Choisissez la finition adaptée à votre logo</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div style="background:rgba(${_hexToRgb(v.primary)},.08);border:2px solid ${v.primary}44;border-radius:14px;padding:20px;text-align:center">
+      <div style="font-size:2rem;margin-bottom:8px">🎨</div>
+      <div style="font-weight:800;font-size:.9rem;color:${v.primary};margin-bottom:6px">DTF</div>
+      <div style="font-size:.75rem;color:rgba(255,255,255,.65);line-height:1.7">Logo multicolore<br>Dégradés · Photos<br>Prix accessible<br>Dès 3 000 XPF</div>
+    </div>
+    <div style="background:rgba(246,211,101,.08);border:2px solid rgba(246,211,101,.3);border-radius:14px;padding:20px;text-align:center">
+      <div style="font-size:2rem;margin-bottom:8px">🧵</div>
+      <div style="font-weight:800;font-size:.9rem;color:#f6d365;margin-bottom:6px">Broderie</div>
+      <div style="font-size:.75rem;color:rgba(255,255,255,.65);line-height:1.7">Logo simple 4 couleurs<br>Texture 3D premium<br>Ultra-durable<br>Dès 4 500 XPF</div>
+    </div>
+  </div>
+  <div style="font-size:.7rem;color:#666;text-align:center;margin-top:10px">💡 Logo > 6 couleurs → DTF · Logo simple < 4 couleurs → Broderie idéale</div>
+</section>
+
+<section class="section" id="produits">
+  <div class="section-title">Choisissez votre casquette</div>
+  <div class="section-sub">DTF ou Broderie · 5 zones de placement · Stock disponible</div>
+  <div class="prods" id="prods-grid"></div>
+  <div style="background:rgba(${_hexToRgb(v.primary)},.08);border:2px solid ${v.primary}33;border-radius:14px;padding:20px;margin-top:20px;text-align:center">
+    <div style="font-size:1.4rem;margin-bottom:8px">👕</div>
+    <div style="font-weight:800;font-size:.95rem;margin-bottom:6px">Pack Total Look — Casquette + T-Shirt</div>
+    <div style="font-size:.8rem;color:rgba(255,255,255,.6);margin-bottom:8px">T-shirt assorti avec votre logo · -10% sur le t-shirt</div>
+    <div style="font-size:.82rem;color:${v.primary};font-weight:700">Mentionnez "Pack Total Look" dans la note de commande</div>
+  </div>
+  <div class="feats">${v.c.features.map(f=>`<div class="feat"><div class="feat-icon">${f.i}</div><div class="feat-txt">${f.t}</div></div>`).join('')}</div>
+  <div style="text-align:center;margin-top:14px"><span id="total-display" style="color:${v.primary};font-weight:900;font-size:1.1rem"></span></div>
+  <button class="btn-order" id="btn-order" onclick="openCheckout()">🛒 Commander — <span id="total-display-btn">0</span> XPF</button>
+</section>
+
+<footer>
+  <div>High Coffee Shirt · HCS Tahiti · Papeete, Polynésie française</div>
+  <div style="margin-top:8px;font-size:.75rem;opacity:.6">Paiement sécurisé OSB Polynésie · Broderie & DTF professionnels</div>
+</footer>
+
+<div class="ck-overlay" id="ck-overlay" onclick="if(event.target===this)closeCk()">
+  <div class="ck-box">
+    <div class="ck-head"><div class="ck-head-title" id="ck-title">📦 Votre commande</div><button class="ck-close" onclick="closeCk()">✕</button></div>
+    <div class="ck-steps">
+      <div class="ck-step active" id="cks1"><div class="ck-dot2">1</div><div class="ck-lbl">Commande</div></div>
+      <div class="ck-step" id="cks2"><div class="ck-dot2">2</div><div class="ck-lbl">Coordonnées</div></div>
+      <div class="ck-step" id="cks3"><div class="ck-dot2">3</div><div class="ck-lbl">Paiement</div></div>
+    </div>
+    <div class="ck-body" id="ck-body"></div>
+    <div class="ck-foot" id="ck-foot"></div>
+  </div>
+</div>
+
+<script>
+const PRODS=${prodsJson};
+const ACCENT='${v.primary}';
+const CAMP_NAME='${v.headline}';
+const WORKER_URL='${v.workerUrl}';
+const WORKER_SECRET='${v.workerSecret}';
+const WORKER_MODE='${v.workerMode}';
+let selected=null,total=0,ckStep=1,ckContact={},ckDelivery={type:'pickup'};
+function init(){
+  document.getElementById('prods-grid').innerHTML=PRODS.map((p,i)=>\`
+    <div class="prod" id="prod-\${i}" onclick="selectProd(\${i})">
+      <div class="prod-check">✓</div>
+      <div class="prod-img">\${p.img?'<img src="'+p.img+'">':p.e}</div>
+      <div class="prod-info"><div class="prod-name">\${p.n}</div><div class="prod-price">\${p.p}</div></div>
+    </div>\`).join('');
+}
+function selectProd(i){
+  document.querySelectorAll('.prod').forEach(p=>p.classList.remove('selected'));
+  document.getElementById('prod-'+i).classList.add('selected');
+  selected=i;total=PRODS[i].price;
+  document.getElementById('total-display').textContent=total.toLocaleString('fr-FR')+' XPF';
+  document.getElementById('total-display-btn').textContent=total.toLocaleString('fr-FR');
+  document.getElementById('btn-order').classList.add('show');
+}
+function openCheckout(){if(selected===null)return;ckStep=1;ckContact={};ckDelivery={type:'pickup'};document.getElementById('ck-overlay').classList.add('open');document.body.style.overflow='hidden';ckRender();}
+function closeCk(){document.getElementById('ck-overlay').classList.remove('open');document.body.style.overflow='';}
+function ckRender(){
+  const titles={1:'📦 Votre commande',2:'👤 Coordonnées',3:'💳 Paiement sécurisé'};
+  document.getElementById('ck-title').textContent=titles[ckStep];
+  for(let i=1;i<=3;i++){document.getElementById('cks'+i).className='ck-step'+(i<ckStep?' done':i===ckStep?' active':'');}
+  if(ckStep===1)ckRecap1();else if(ckStep===2)ckContact1();else ckPayment();
+}
+function ckRecap1(){
+  const name=PRODS[selected].n;
+  document.getElementById('ck-body').innerHTML=\`
+    <div class="recap-box">
+      <div class="recap-row"><span>Casquette</span><span>\${name}</span></div>
+      <div class="recap-row"><span style="font-weight:700">Total</span><span style="font-weight:900;color:\${ACCENT};font-size:1.1rem">\${total.toLocaleString('fr-FR')} XPF</span></div>
+    </div>
+    <div style="font-size:.78rem;color:rgba(255,255,255,.5);margin-top:8px">Zone supplémentaire : +500 XPF · Pack Total Look : mentionnez-le dans la note.</div>\`;
+  const _pwBtn=HCSPass.canPay(total)?\`<button class="btn-pass" onclick="pwPayCheckout(\${total},'\${name.replace(/'/g,'')}','HCS-CAP-'+Date.now(),{type:ckDelivery.type,deliveryDelay:5},'')">🎫 Payer avec Pass · \${HCSPass.getBalance().toLocaleString('fr-FR')} XPF</button>\`:'';
+  document.getElementById('ck-foot').innerHTML=\`<div class="ck-foot-row"><button class="btn-next" onclick="ckStep=2;ckRender()">Continuer →</button></div>\`+(_pwBtn?\`<div class="ck-foot-row">\${_pwBtn}</div>\`:'');
+}
+function ckContact1(){
+  const s=ckContact;
+  document.getElementById('ck-body').innerHTML=\`
+    <div class="ck-field"><label>Prénom & Nom *</label><input class="ck-input" id="ck-name" placeholder="Jean Dupont" value="\${s.name||''}"></div>
+    <div class="ck-field"><label>Email *</label><input class="ck-input" id="ck-email" type="email" placeholder="jean@mail.com" value="\${s.email||''}"></div>
+    <div class="ck-field"><label>Téléphone</label><input class="ck-input" id="ck-phone" type="tel" placeholder="87 00 00 00" value="\${s.phone||''}"></div>
+    <div class="ck-field"><label>Finition + zones + options</label><textarea class="ck-input ck-textarea" id="ck-note" placeholder="Ex: DTF · Zone face + côté gauche · Pack Total Look x1 t-shirt L"></textarea></div>
+    <div style="font-size:.72rem;color:#9090b0;margin:4px 0 8px">Mode de récupération</div>
+    <div class="dlv-opts">
+      <div class="dlv-opt \${ckDelivery.type==='pickup'?'sel':''}" onclick="swDlv('pickup')"><div style="font-size:24px;margin-bottom:6px">🏪</div><div style="font-size:.82rem;font-weight:700">Retrait boutique</div><div style="font-size:.65rem;color:#9090b0">HCS — Papeete</div></div>
+      <div class="dlv-opt \${ckDelivery.type==='delivery'?'sel':''}" onclick="swDlv('delivery')"><div style="font-size:24px;margin-bottom:6px">🚚</div><div style="font-size:.82rem;font-weight:700">Livraison</div><div style="font-size:.65rem;color:#9090b0">3–5 jours</div></div>
+    </div>
+    <div id="f-delivery" style="\${ckDelivery.type==='delivery'?'':'display:none'}">
+      <div class="ck-field"><label>Adresse *</label><input class="ck-input" id="ck-addr" placeholder="Rue, quartier, commune"></div>
+    </div>\`;
+  document.getElementById('ck-foot').innerHTML=\`<div class="ck-foot-row"><button class="btn-prev" onclick="ckStep=1;ckRender()">← Retour</button><button class="btn-next" onclick="ckSaveContact()">Paiement →</button></div>\`;
+}
+function swDlv(t){ckDelivery.type=t;document.querySelectorAll('.dlv-opt').forEach((el,i)=>el.classList.toggle('sel',i===(t==='pickup'?0:1)));document.getElementById('f-delivery').style.display=t==='delivery'?'':'none';}
+function ckSaveContact(){
+  const name=document.getElementById('ck-name')?.value.trim(),email=document.getElementById('ck-email')?.value.trim();
+  if(!name){alert('Saisissez votre nom.');return;}
+  if(!email||!email.includes('@')){alert('Email invalide.');return;}
+  if(ckDelivery.type==='delivery'){const addr=document.getElementById('ck-addr')?.value.trim();if(!addr){alert('Saisissez votre adresse.');return;}ckDelivery.address=addr;}
+  ckContact={name,email,phone:document.getElementById('ck-phone')?.value.trim()||'',note:document.getElementById('ck-note')?.value.trim()||''};
+  ckStep=3;ckRender();
+}
+async function ckPayment(){
+  const orderId='HCS-CAP-'+Date.now();const productName=PRODS[selected].n;
+  document.getElementById('ck-body').innerHTML=\`
+    <div class="recap-box">
+      <div class="recap-row"><span>Casquette</span><span>\${productName}</span></div>
+      <div class="recap-row"><span>Client</span><span>\${ckContact.name}</span></div>
+      <div class="recap-row"><span>Livraison</span><span>\${ckDelivery.type==='pickup'?'🏪 Retrait':'🚚 Domicile'}</span></div>
+      <div class="recap-row"><span style="font-weight:700">Total</span><span style="font-weight:900;color:\${ACCENT};font-size:1.1rem">\${total.toLocaleString('fr-FR')} XPF</span></div>
+    </div>
+    \${location.protocol==='file:'?\`<div style="background:rgba(246,211,101,.12);border:2px solid #f6d365;border-radius:12px;padding:20px;text-align:center"><div style="font-size:1.8rem;margin-bottom:8px">⚠️</div><div style="font-weight:800;color:#f6d365;margin-bottom:8px">Fichier local</div><div style="font-size:.8rem;color:rgba(255,255,255,.8)">Publie cette LP via 🚀 Publier dans Andromeda.</div></div>\`:\`<div id="pz-loading" class="pz-loading">🔒 Connexion OSB Polynésie…</div><div class="kr-embedded" id="pz-kr-form" style="display:none"></div><div class="pz-error" id="pz-error"></div><div class="pz-ok" id="pz-ok" style="display:none"><h3 style="font-size:1.2rem;margin-bottom:8px">✅ Paiement accepté !</h3><p style="font-size:.82rem;color:#9090b0;line-height:1.6">Merci <strong>\${ckContact.name}</strong>.<br>Commande <strong>\${orderId}</strong> confirmée.<br>Email envoyé à \${ckContact.email}.</p></div>\`}\`;
+  document.getElementById('ck-foot').innerHTML=\`<div class="ck-foot-row"><button class="btn-prev" id="pz-back" onclick="ckStep=2;ckRender()">← Retour</button></div>\`;
+  if(location.protocol==='file:')return;
+  const oldSdk=document.getElementById('pz-sdk');if(oldSdk)oldSdk.remove();
+  if(window.KR){try{KR.removeForms();}catch(_){}}
+  try{
+    const res=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET},body:JSON.stringify({amount:total,currency:'XPF',orderId,mode:WORKER_MODE,customerEmail:ckContact.email})});
+    if(!res.ok){const e=await res.json();throw new Error(e.error||'Erreur serveur');}
+    const {formToken,publicKey}=await res.json();
+    if(!document.getElementById('pz-css1')){const c1=document.createElement('link');c1.id='pz-css1';c1.rel='stylesheet';c1.href='https://static.osb.pf/static/js/krypton-client/V4.0/stable/classic-reset.min.css';document.head.appendChild(c1);const c2=document.createElement('link');c2.id='pz-css2';c2.rel='stylesheet';c2.href='https://static.osb.pf/static/js/krypton-client/V4.0/stable/classic.min.css';document.head.appendChild(c2);}
+    await new Promise((resolve,reject)=>{
+      if(window.KR){KR.setFormConfig({'kr-public-key':publicKey,'kr-language':'fr-FR'}).then(()=>KR.setFormToken(formToken)).then(resolve).catch(reject);}
+      else{const s=document.createElement('script');s.id='pz-sdk';s.src='https://static.osb.pf/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js';s.setAttribute('kr-public-key',publicKey);s.setAttribute('kr-language','fr-FR');s.onload=()=>KR.setFormToken(formToken).then(resolve);s.onerror=()=>reject(new Error('SDK indisponible'));document.head.appendChild(s);}
+    });
+    document.getElementById('pz-loading').style.display='none';document.getElementById('pz-kr-form').style.display='block';
+    function showSuccess(){
+      document.getElementById('pz-kr-form').style.display='none';
+      const ok=document.getElementById('pz-ok');ok.style.cssText='display:block!important';
+      const bk=document.getElementById('pz-back');if(bk)bk.style.display='none';
+      fetch(WORKER_URL.replace('/payzen-token','/order/save'),{method:'POST',headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET},body:JSON.stringify({orderId,status:'paid',amount:total,currency:'XPF',campaignName:CAMP_NAME,product:productName,client:{name:ckContact.name,email:ckContact.email,phone:ckContact.phone||''},delivery:{type:ckDelivery.type,address:ckDelivery.address||'',deliveryDelay:5},note:'Casquette HCS | '+productName+(ckContact.note?' | '+ckContact.note:'')})}).catch(e=>console.warn(e));
+      addWaBtn(orderId,productName);
+    }
+    KR.onSubmit(d=>{if(['PAID','RUNNING','AUTHORISED'].includes(d?.clientAnswer?.orderStatus)){showSuccess();}return false;});
+    const krForm=document.querySelector('.kr-embedded');
+    if(krForm){let done=false;new MutationObserver(()=>{if(done)return;if(document.querySelector('.kr-payment-success')||krForm.classList.contains('kr-payment-success')){done=true;showSuccess();}}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});}
+  }catch(e){document.getElementById('pz-loading').style.display='none';const err=document.getElementById('pz-error');err.style.display='block';err.textContent='❌ '+e.message;}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCk();});
+init();
+<\/script>
+${_passBlock(v)}
+</body></html>`;
+  _downloadHtml(html, `hcs-casquette-${_slug(v.headline)}.html`);
+}
 
 // ── V3 Export ──
 function exportLP_Originals(id) {
@@ -883,7 +1623,8 @@ function ckRecap() {
     <div style="font-size:.78rem;color:rgba(255,255,255,.5);line-height:1.7;margin-top:8px">
       Livraison en boutique HCS Papeete ou en ligne sur Polynésie.
     </div>\`;
-  document.getElementById('ck-foot').innerHTML = \`<button class="btn-next" onclick="ckStep=2;ckRender()">Continuer — Coordonnées →</button>\`;
+  const _pwBtn=HCSPass.canPay(total)?\`<button class="btn-pass" style="margin-top:8px;width:100%" onclick="pwPayCheckout(\${total},'\${(selected==='trio'?'Pack Trio':PRODS[selected].n).replace(/'/g,'')}','HCS-ORIG-'+Date.now(),{type:'pickup',deliveryDelay:3},'')">🎫 Payer avec Pass · \${HCSPass.getBalance().toLocaleString('fr-FR')} XPF</button>\`:'';
+  document.getElementById('ck-foot').innerHTML = \`<button class="btn-next" onclick="ckStep=2;ckRender()">Continuer — Coordonnées →</button>\`+_pwBtn;
 }
 
 function ckContact1() {
@@ -967,6 +1708,7 @@ async function ckPayment() {
           delivery:{type:ckDelivery.type,address:ckDelivery.address||'',pickupDate:ckDelivery.pickupDate||'',deliveryDelay:3},
           note:'Collection DTF Originals | '+productName})
       }).catch(e=>console.warn('Ordre non sauvegardé:',e));
+      addWaBtn(orderId,productName);
     }
     KR.onSubmit(d=>{if(['PAID','RUNNING','AUTHORISED'].includes(d?.clientAnswer?.orderStatus)){showSuccess();}return false;});
     const krForm=document.querySelector('.kr-embedded');
@@ -1387,6 +2129,7 @@ async function ckPayment() {
           delivery:{type:'pickup',pickupDate:atelierDate,deliveryDelay:0},
           note:[ckContact.note,'Parcours:'+parcours,'Créneau:'+atelierDate+' '+atelierSlot].filter(Boolean).join(' | ')})
       }).catch(e=>console.warn('Ordre non sauvegardé:',e));
+      addWaBtn(orderId,ckProductName);
     }
     KR.onSubmit(d=>{if(['PAID','RUNNING','AUTHORISED'].includes(d?.clientAnswer?.orderStatus)){showSuccess();}return false;});
     const krForm=document.querySelector('.kr-embedded');
@@ -1809,6 +2552,7 @@ async function ckPayment() {
           delivery:{type:'pickup',pickupDate:formDate,deliveryDelay:0},
           note:[ckContact.note,'Pack:'+selectedPack,'Créneau:'+formDate+' '+formSlot,isLarge?'Acompte 30%':'Paiement complet'].filter(Boolean).join(' | ')})
       }).catch(e=>console.warn('Ordre non sauvegardé:',e));
+      addWaBtn(orderId,pack.name);
     }
     KR.onSubmit(d=>{if(['PAID','RUNNING','AUTHORISED'].includes(d?.clientAnswer?.orderStatus)){showSuccess();}return false;});
     const krForm=document.querySelector('.kr-embedded');
@@ -2160,6 +2904,7 @@ async function ckPayment() {
           delivery:{type:'none',deliveryDelay:0},
           note:['Tier:'+tier.id,'Engagement:'+eng.mois+'mois',ckContact.promo?'Parrainage:'+ckContact.promo:''].filter(Boolean).join(' | ')})
       }).catch(e=>console.warn('Ordre non sauvegardé:',e));
+      addWaBtn(orderId,'Abo '+tier.name);
     }
     KR.onSubmit(d=>{if(['PAID','RUNNING','AUTHORISED'].includes(d?.clientAnswer?.orderStatus)){showSuccess();}return false;});
     const krForm=document.querySelector('.kr-embedded');
@@ -2531,6 +3276,21 @@ async function ckPayment() {
           delivery:{type:'email',deliveryDelay:1},
           note:[ckContact.note,briefNote,'Services:'+productList,'Fichier:'+(briefFileData?'oui':'non')].filter(Boolean).join(' | ')})
       }).catch(e=>console.warn('Ordre non sauvegardé:',e));
+      // Bloc livraison email V7
+      addWaBtn(orderId,productList);
+      const ok2=document.getElementById('pz-ok');
+      if(ok2&&!document.getElementById('v7-delivery-block')){
+        const dlv=document.createElement('div');dlv.id='v7-delivery-block';
+        dlv.style.cssText='margin-top:16px;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.25);border-radius:12px;padding:16px';
+        dlv.innerHTML='<div style="font-size:.8rem;font-weight:800;color:#60a5fa;margin-bottom:10px">📧 Livraison par email</div>'+
+          '<div style="display:flex;flex-direction:column;gap:6px">'+
+          '<div style="display:flex;align-items:center;gap:8px;font-size:.75rem"><span style="color:#43e97b;font-weight:700">✓</span><span>Commande reçue — <strong>'+orderId+'</strong></span></div>'+
+          '<div style="display:flex;align-items:center;gap:8px;font-size:.75rem"><span style="color:#f6d365;font-weight:700">⏳</span><span>En traitement par l\'équipe HCS</span></div>'+
+          '<div style="display:flex;align-items:center;gap:8px;font-size:.75rem"><span style="color:#9090b0;font-weight:700">○</span><span>Livraison à <strong>'+ckContact.email+'</strong> sous 24–48h ouvrés</span></div>'+
+          '</div>'+
+          '<div style="margin-top:10px;font-size:.7rem;color:rgba(255,255,255,.4)">Formats : PNG transparent · SVG · PDF selon votre demande</div>';
+        ok2.appendChild(dlv);
+      }
     }
     KR.onSubmit(d=>{if(['PAID','RUNNING','AUTHORISED'].includes(d?.clientAnswer?.orderStatus)){showSuccess();}return false;});
     const krForm=document.querySelector('.kr-embedded');
@@ -2621,9 +3381,20 @@ function _passHtml() {
 
 function _passJs(v) {
   return `
-/* ── HCS Pass JS ── */
+/* ── HCS Pass + WhatsApp JS ── */
+const WA_NUMBER = '${v ? v.whatsapp : '68987000'}';
 const HCS_PASS_KEY = 'hcs_pass';
 const HCS_PASS_BONUS = 0.05;
+function addWaBtn(orderId,productName){
+  const ok=document.getElementById('pz-ok');
+  if(!ok||document.getElementById('wa-btn-paid'))return;
+  const msg=encodeURIComponent('Bonjour HCS ! Ma commande '+orderId+' ('+productName+') est confirmée. Besoin d\\'aide ?');
+  const a=document.createElement('a');a.id='wa-btn-paid';
+  a.href='https://wa.me/'+WA_NUMBER+'?text='+msg;a.target='_blank';
+  a.style.cssText='display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:10px 20px;background:#25D366;color:white;border-radius:24px;font-weight:700;font-size:.82rem;text-decoration:none';
+  a.innerHTML='💬 Contacter HCS sur WhatsApp';ok.appendChild(a);
+  try{const o=JSON.parse(localStorage.getItem('hcs_orders')||'[]');o.unshift({orderId,product:productName,date:new Date().toISOString(),status:'PAID',amount:typeof total!=='undefined'?total:0});if(o.length>200)o.length=200;localStorage.setItem('hcs_orders',JSON.stringify(o));}catch(e){}
+}
 function _pwLoad(){try{return JSON.parse(localStorage.getItem(HCS_PASS_KEY))||{balance:0,history:[],totalReloaded:0};}catch{return{balance:0,history:[],totalReloaded:0};}}
 function _pwSave(d){localStorage.setItem(HCS_PASS_KEY,JSON.stringify(d));}
 const HCSPass={
@@ -2649,6 +3420,27 @@ const HCSPass={
 };
 
 let pwSelectedAmt = 0;
+
+/* Ajoute le bouton WhatsApp dans l'écran PAID après showSuccess */
+function addWaBtn(orderId, productName){
+  const ok=document.getElementById('pz-ok');
+  if(!ok||document.getElementById('wa-btn-paid'))return;
+  const msg=encodeURIComponent('Bonjour HCS ! Ma commande '+orderId+' ('+productName+') est confirmée. Besoin d\'aide ?');
+  const a=document.createElement('a');
+  a.id='wa-btn-paid';
+  a.href='https://wa.me/'+WA_NUMBER+'?text='+msg;
+  a.target='_blank';
+  a.style.cssText='display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:10px 20px;background:#25D366;color:white;border-radius:24px;font-weight:700;font-size:.82rem;text-decoration:none';
+  a.innerHTML='💬 Contacter HCS sur WhatsApp';
+  ok.appendChild(a);
+  // Sauvegarder la commande dans localStorage pour le dashboard
+  try{
+    const orders=JSON.parse(localStorage.getItem('hcs_orders')||'[]');
+    orders.unshift({orderId,product:productName,date:new Date().toISOString(),status:'PAID',amount:typeof total!=='undefined'?total:0});
+    if(orders.length>200)orders.length=200;
+    localStorage.setItem('hcs_orders',JSON.stringify(orders));
+  }catch(e){}
+}
 
 function _pwRefreshWidget(){
   const bal=HCSPass.getBalance();
@@ -2786,7 +3578,106 @@ function _downloadHtml(html, filename) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   8. RE-RENDER SIDEBAR
+   8. PATCH render() — Bouton Hub Sync + Variantes éditables
+   ═══════════════════════════════════════════════════════════ */
+
+/* Injecter le bouton "Hub Sync" dans la barre de campagne après render() */
+const _origRender = window.render;
+window.render = function(id) {
+  if (typeof _origRender === 'function') _origRender(id);
+  // Ajouter bouton Hub Sync si HCSHub disponible
+  setTimeout(() => {
+    const bar = document.querySelector('.camp-bar div:last-child');
+    if (!bar || bar.querySelector('#btn-hub-sync')) return;
+    const btn = document.createElement('button');
+    btn.id = 'btn-hub-sync';
+    btn.className = 'btn btn-outline';
+    btn.style.cssText = 'background:rgba(96,165,250,.12);border-color:#60a5fa;color:#60a5fa';
+    btn.textContent = '🔗 Hub Sync';
+    btn.title = 'Importer mockups depuis HCS Hub';
+    btn.onclick = () => _hubSyncMockups(id);
+    bar.insertBefore(btn, bar.firstChild);
+  }, 50);
+};
+
+/* Importer les mockups hub.mockups dans les slots lpimg de la campagne active */
+async function _hubSyncMockups(campId) {
+  if (typeof HCSHub === 'undefined') {
+    alert('HCS Hub non chargé. Ajoutez hcs-hub.js avant le patch.');
+    return;
+  }
+  try {
+    const entries = await HCSHub.getAll('mockups');
+    const logos   = await HCSHub.getAll('logos');
+    const all = [...entries, ...logos].filter(e => e.data);
+    if (!all.length) { alert('Aucun asset dans HCS Hub. Générez des mockups via MockupForge ou PicWish.'); return; }
+
+    // Ouvrir un sélecteur simple
+    const c = CAMPS[campId];
+    const picker = document.createElement('div');
+    picker.id = 'hub-picker-overlay';
+    picker.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
+    picker.innerHTML = `
+      <div style="background:#1a1a2e;border-radius:16px;padding:24px;max-width:600px;width:90%;max-height:85vh;overflow-y:auto">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="font-weight:800;font-size:.95rem">🔗 Hub Sync — Importer un asset</div>
+          <button onclick="document.getElementById('hub-picker-overlay').remove()" style="background:none;border:none;color:#9090b0;font-size:1.1rem;cursor:pointer">✕</button>
+        </div>
+        <div style="font-size:.75rem;color:#9090b0;margin-bottom:12px">Cliquez sur un asset pour l'affecter au slot produit sélectionné (ou choisissez le slot dans le menu)</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px" id="hub-picker-grid">
+          ${all.map((e) => `
+            <div onclick="_hubApplyAsset('${e.id}','${e.data.slice(0,30)}',${campId})"
+              style="cursor:pointer;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);transition:all .2s"
+              onmouseover="this.style.borderColor='#60a5fa'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)'">
+              <div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;overflow:hidden">
+                <img src="${e.data}" style="width:100%;height:100%;object-fit:cover">
+              </div>
+              <div style="padding:6px 8px;font-size:.65rem;color:#9090b0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.name||e.id}</div>
+            </div>`).join('')}
+        </div>
+        <div style="margin-top:16px;font-size:.75rem;color:#9090b0">
+          Slot cible :
+          ${c.products.map((p,i) => `<button onclick="_hubSetTargetSlot(${i})" id="hub-slot-btn-${i}" style="margin:2px;padding:4px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#e8e8f0;font-size:.7rem;cursor:pointer">${p.n}</button>`).join('')}
+        </div>
+        <div id="hub-picker-status" style="margin-top:10px;font-size:.75rem;color:#43e97b"></div>
+      </div>`;
+    document.body.appendChild(picker);
+    window._hubTargetSlot = 0;
+  } catch(e) {
+    console.error('[Hub Sync]', e);
+    alert('Erreur Hub Sync : ' + e.message);
+  }
+}
+
+window._hubSetTargetSlot = function(idx) {
+  window._hubTargetSlot = idx;
+  document.querySelectorAll('[id^="hub-slot-btn-"]').forEach((btn,i) => {
+    btn.style.background = i === idx ? 'rgba(96,165,250,.2)' : 'rgba(255,255,255,.05)';
+    btn.style.borderColor = i === idx ? '#60a5fa' : 'rgba(255,255,255,.15)';
+  });
+};
+
+window._hubApplyAsset = function(assetId, _dataPrefix, campId) {
+  const slot = window._hubTargetSlot || 0;
+  const lpImgDiv = document.getElementById(`lpimg-${campId}-${slot}`);
+  if (!lpImgDiv) { alert('Slot introuvable — rechargez la campagne.'); return; }
+  // Récupérer la data complète depuis Hub
+  HCSHub.getAll('mockups').then(mockups => {
+    HCSHub.getAll('logos').then(logos => {
+      const entry = [...mockups, ...logos].find(e => e.id === assetId);
+      if (!entry) return;
+      lpImgDiv.innerHTML = `<img src="${entry.data}" style="width:100%;height:100%;object-fit:cover">`;
+      // Avancer auto au slot suivant
+      const nextSlot = slot + 1;
+      if (document.getElementById(`lpimg-${campId}-${nextSlot}`)) _hubSetTargetSlot(nextSlot);
+      const status = document.getElementById('hub-picker-status');
+      if (status) status.textContent = `✓ Asset appliqué au slot "${CAMPS[campId].products[slot].n}"`;
+    });
+  });
+};
+
+/* ═══════════════════════════════════════════════════════════
+   9. RE-RENDER SIDEBAR
    ═══════════════════════════════════════════════════════════ */
 if (typeof buildSidebar === 'function') {
   setTimeout(buildSidebar, 200);
@@ -2795,14 +3686,15 @@ if (typeof buildSidebar === 'function') {
 /* ═══════════════════════════════════════════════════════════
    9. CONSOLE LOG
    ═══════════════════════════════════════════════════════════ */
-console.log('[Andromeda v2] ✓ Patch actif — 8 verticales mises à jour');
-console.log('  V0: Stickers & Decals (élargi)');
-console.log('  V1: T-Shirt Perso (repositionné + PicWish auto)');
-console.log('  V2: Casquette (guide broderie/DTF + zones)');
-console.log('  V3: DTF Originals (parcours collection complet)');
-console.log('  V4: Pack Collector + Atelier (double parcours)');
-console.log('  V5: Formation 3h + Pack Machines');
-console.log('  V6: Abonnements (3 tiers + engagements)');
-console.log('  V7: Services Numériques IA');
+console.log('[Andromeda v2] ✓ Patch actif — 8 verticales complètes');
+console.log('  V0: Stickers & Decals — LP export + Pass HCS + Parcours');
+console.log('  V1: T-Shirt Perso — LP export + Pass HCS + Parcours');
+console.log('  V2: Casquette — LP export + guide DTF/Broderie + Pass HCS');
+console.log('  V3: DTF Originals — Pass HCS ajouté au checkout');
+console.log('  V4: Pack Atelier — Pass HCS + Parcours');
+console.log('  V5: Formation — Pass HCS + Timeline programme');
+console.log('  V6: Abonnements — Pass HCS + Parcours');
+console.log('  V7: Services IA — Pass HCS + Parcours + Freemium');
+console.log('  HUB: Bouton Hub Sync dans barre campagne → import mockups/logos');
 
 })();
