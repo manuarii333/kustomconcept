@@ -88,6 +88,19 @@
   .conn-err{background:#2a0d0d;color:#ef5350;border:1px solid #5a1a1a}
 
   .tag{display:inline-block;background:#1e1e3a;color:#8888aa;border-radius:4px;padding:1px 6px;font-size:10px;margin-left:4px}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  @media(max-width:900px){
+    .grid3{grid-template-columns:1fr}
+    .grid2{grid-template-columns:1fr}
+    .kpi-row{grid-template-columns:repeat(2,1fr)}
+    main{padding:14px 12px}
+    header{padding:12px 16px}
+  }
+  @media(max-width:480px){
+    .kpi-row{grid-template-columns:1fr 1fr}
+    .kpi-val{font-size:20px}
+    .header-right .btn-back{display:none}
+  }
 </style>
 </head>
 <body>
@@ -151,10 +164,12 @@
         </select>
       </div>
     </div>
+    <div class="table-wrap">
     <table>
       <thead><tr><th>Heure</th><th>Canal</th><th>Expéditeur</th><th>Message</th><th>Catégorie</th><th>Action</th><th style="width:36px"></th></tr></thead>
       <tbody id="msgTable"></tbody>
     </table>
+    </div>
   </div>
 
   <!-- Test + webhook -->
@@ -224,7 +239,17 @@
 // CONFIG API HCS ERP
 // ============================================================
 const API_BASE = 'https://highcoffeeshirts.com/erp/api';
-const API_KEY  = 'hcs-erp-2026';
+const API_KEY  = 'hcs-erp-2026'; // clé lue côté client — acceptable car la page ERP est protégée par auth admin
+
+// Escaping XSS : neutralise les caractères spéciaux HTML avant injection dans le DOM
+function esc(s) {
+  return String(s||'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#x27;');
+}
 
 // IDs Facebook Business Manager HCS (constants)
 const FB_BUSINESS_ID = '5210235986495098';
@@ -260,14 +285,16 @@ function norm(r) {
 // Construit le lien de conversation (Messenger Business Manager ou Gmail)
 function buildLink(m) {
   if (m.canal === 'messenger' && m.source_id) {
+    const sid = encodeURIComponent(m.source_id);
     return `https://business.facebook.com/latest/inbox/messenger`
          + `?business_id=${FB_BUSINESS_ID}`
          + `&asset_id=${FB_PAGE_ID}`
-         + `&selected_item_id=${m.source_id}`
+         + `&selected_item_id=${sid}`
          + `&thread_type=FB_MESS`;
   }
   if (m.canal === 'gmail' && m.source_id) {
-    return `https://mail.google.com/mail/u/0/#inbox/${m.source_id}`;
+    const sid = encodeURIComponent(m.source_id);
+    return `https://mail.google.com/mail/u/0/#inbox/${sid}`;
   }
   return null;
 }
@@ -334,7 +361,7 @@ function renderTable(){
   const tbody=document.getElementById('msgTable');
   tbody.innerHTML='';
   if(msgs.length===0){
-    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#444466;padding:20px">Aucun message aujourd\'hui</td></tr>';
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#444466;padding:20px">Aucun message aujourd\'hui</td></tr>';
     return;
   }
   msgs.forEach(m=>{
@@ -346,13 +373,13 @@ function renderTable(){
       tr.onclick   = () => window.open(link, '_blank');
     }
     const linkCell = link
-      ? `<td><a href="${link}" target="_blank" class="link-btn" onclick="event.stopPropagation()" title="Ouvrir">↗</a></td>`
+      ? `<td><a href="${esc(link)}" target="_blank" class="link-btn" onclick="event.stopPropagation()" title="Ouvrir">↗</a></td>`
       : '<td></td>';
-    tr.innerHTML=`<td class="time">${m.ts}</td><td>${canalBadge(m.canal)}</td>
-      <td style="font-size:12px;color:#e0e0f0">${m.sender}</td>
-      <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.msg}</td>
+    tr.innerHTML=`<td class="time">${esc(m.ts)}</td><td>${canalBadge(m.canal)}</td>
+      <td style="font-size:12px;color:#e0e0f0">${esc(m.sender)}</td>
+      <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.msg)}</td>
       <td>${catBadge(m.cat)}</td>
-      <td class="action">${m.action||''}</td>${linkCell}`;
+      <td class="action">${esc(m.action)}</td>${linkCell}`;
     tbody.appendChild(tr);
   });
 }
@@ -401,7 +428,15 @@ function buildVolChartData(daily){
     {jour:'J-2',gmail:'6',messenger:'4'},{jour:'J-1',gmail:'3',messenger:'2'},
     {jour:'Auj',gmail:'8',messenger:'4'},
   ];
-  const labels   = rows.map(d=>(d.jour||'').slice(-5));
+  /* Convertit une date MySQL (YYYY-MM-DD) en label relatif J-N / Auj */
+  const today = new Date(); today.setHours(0,0,0,0);
+  function jourLabel(val){
+    if(!val || val.startsWith('J')) return val; // déjà un label démo
+    const d = new Date(val); d.setHours(0,0,0,0);
+    const diff = Math.round((today - d) / 86400000);
+    return diff === 0 ? 'Auj' : `J-${diff}`;
+  }
+  const labels   = rows.map(d=>jourLabel(d.jour||''));
   const gmailD   = rows.map(d=>parseInt(d.gmail)||0);
   const messengerD=rows.map(d=>parseInt(d.messenger)||0);
   _volChart=new Chart(document.getElementById('volChart').getContext('2d'),{
@@ -424,30 +459,49 @@ function buildVolChartData(daily){
 // CONNEXIONS
 // ============================================================
 const CONNS=[
-  {name:'Gmail Trigger',              icon:'✉️',  status:'ok',  lbl:'Actif — polling 1 min'},
-  {name:'Messenger Webhook',          icon:'💬',  status:'ok',  lbl:'Actif — /webhook/bbc05e70-805b-4083-89ca-4de8b0124a42'},
-  {name:'OpenAI GPT-4o-mini',        icon:'🤖',  status:'ok',  lbl:'Classifier + Réponse'},
-  {name:'OpenAI GPT-4o Vision',      icon:'🔬',  status:'ok',  lbl:'Extraction devis + images'},
-  {name:'Sheets — Historique clients',icon:'📊',  status:'ok',  lbl:'Sheet 716235068'},
-  {name:'Sheets — Catalogue produits',icon:'📗',  status:'ok',  lbl:'Sheet 1886730405'},
-  {name:'Sheets — Vocabulaire appris',icon:'📘',  status:'ok',  lbl:'Sheet 379942511'},
-  {name:'Dropbox',                    icon:'📦',  status:'ok',  lbl:'/HCS/2026/CLIENTS/'},
-  {name:'ERP MySQL — Devis',         icon:'📋',  status:'ok',  lbl:'POST /api/devis'},
-  {name:'ERP MySQL — Contacts',      icon:'👤',  status:'ok',  lbl:'GET /api/contacts/search'},
-  {name:'ERP MySQL — Triage log',    icon:'🗃️', status:'ok',  lbl:'POST /api/triage_messages'},
-  {name:'PicWish Pipeline',           icon:'🖼️', status:'ok',  lbl:'webhook /picwish-pipeline'},
-  {name:'n8n Cloud',                  icon:'⚡',  status:'ok',  lbl:'v5-APPROBATION · actif · 52 nœuds'},
+  {name:'Gmail Trigger',              icon:'✉️',  status:'ok',  lbl:'Actif — polling 1 min',      ping:null},
+  {name:'Messenger Webhook',          icon:'💬',  status:'ok',  lbl:'/webhook/bbc05e70…',         ping:null},
+  {name:'OpenAI GPT-4o-mini',        icon:'🤖',  status:'ok',  lbl:'Classifier + Réponse',        ping:null},
+  {name:'OpenAI GPT-4o Vision',      icon:'🔬',  status:'ok',  lbl:'Extraction devis + images',   ping:null},
+  {name:'Sheets — Historique',       icon:'📊',  status:'ok',  lbl:'Sheet 716235068',             ping:null},
+  {name:'Sheets — Catalogue',        icon:'📗',  status:'ok',  lbl:'Sheet 1886730405',            ping:null},
+  {name:'Sheets — Vocabulaire',      icon:'📘',  status:'ok',  lbl:'Sheet 379942511',             ping:null},
+  {name:'Dropbox',                   icon:'📦',  status:'ok',  lbl:'/HCS/2026/CLIENTS/',          ping:null},
+  {name:'ERP MySQL — Devis',        icon:'📋',  status:'pending',lbl:'Vérification…',            ping:'devis'},
+  {name:'ERP MySQL — Contacts',     icon:'👤',  status:'pending',lbl:'Vérification…',            ping:'contacts'},
+  {name:'ERP MySQL — Triage log',   icon:'🗃️', status:'pending',lbl:'Vérification…',            ping:'triage_messages'},
+  {name:'PicWish Pipeline',          icon:'🖼️', status:'ok',  lbl:'webhook /picwish-pipeline',   ping:null},
+  {name:'n8n Cloud',                 icon:'⚡',  status:'ok',  lbl:'v5-APPROBATION · 52 nœuds',  ping:null},
 ];
 function buildConns(){
   const list=document.getElementById('connList');
   list.innerHTML='';
-  CONNS.forEach(c=>{
+  CONNS.forEach((c,i)=>{
     const div=document.createElement('div');
     div.className='conn-item';
-    div.innerHTML=`<div class="conn-name">${c.icon} ${c.name}</div>
-      <div class="conn-status conn-${c.status}">${c.lbl}</div>`;
+    div.id=`conn-${i}`;
+    div.innerHTML=`<div class="conn-name">${esc(c.icon)} ${esc(c.name)}</div>
+      <div class="conn-status conn-${c.status}" id="conn-lbl-${i}">${esc(c.lbl)}</div>`;
     list.appendChild(div);
   });
+  pingMysqlConns();
+}
+async function pingMysqlConns(){
+  await Promise.all(CONNS.map(async(c,i)=>{
+    if(!c.ping) return;
+    try{
+      const r=await fetch(`${API_BASE}/${c.ping}?limit=1`,{headers:{'x-api-key':API_KEY}});
+      const ok=r.ok;
+      const lbl=document.getElementById(`conn-lbl-${i}`);
+      if(lbl){
+        lbl.className=`conn-status conn-${ok?'ok':'err'}`;
+        lbl.textContent=ok?'MySQL OK':'Erreur connexion';
+      }
+    }catch(e){
+      const lbl=document.getElementById(`conn-lbl-${i}`);
+      if(lbl){lbl.className='conn-status conn-err';lbl.textContent='Hors ligne';}
+    }
+  }));
 }
 
 // ============================================================
