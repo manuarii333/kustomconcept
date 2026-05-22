@@ -258,9 +258,12 @@ class BaseController {
         return $this->_tableColumns;
     }
 
-    /** Convertit camelCase → snake_case (totalHT → total_ht, clientNom → client_nom) */
+    /** Convertit camelCase → snake_case (totalHT → total_ht, sourceId → source_id) */
     protected function camelToSnake(string $str): string {
-        return strtolower(preg_replace('/(?<!^)[A-Z]+/', '_$0', $str));
+        // Insère _ avant chaque lettre majuscule isolée ou début d'un groupe maj
+        $s = preg_replace('/([a-z\d])([A-Z])/', '$1_$2', $str);
+        $s = preg_replace('/([A-Z]+)([A-Z][a-z])/', '$1_$2', $s);
+        return strtolower($s);
     }
 
     /**
