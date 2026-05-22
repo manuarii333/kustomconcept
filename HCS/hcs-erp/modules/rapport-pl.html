@@ -81,6 +81,7 @@ const CONFIG = {
     </div>
     <div class="flex gap-3 mt-4">
       <button onclick="importerLocalStorage()" class="btn-ghost text-sm">📥 Importer depuis Finance Dashboard</button>
+      <button onclick="importerDepuisMySQL()" class="btn-ghost text-sm">☁ Importer depuis MySQL</button>
       <button onclick="reinitialiserSaisie()" class="btn-ghost text-sm">🔄 Réinitialiser</button>
     </div>
     <div id="import-status" class="text-xs text-gray-500 mt-4 hidden"></div>
@@ -99,6 +100,8 @@ const CONFIG = {
       <button onclick="exportPDF()" class="btn-primary text-sm">🖨 Exporter PDF</button>
       <button onclick="exportCSV()" class="btn-ghost text-sm">⬇ Export CSV</button>
       <button onclick="envoyerGmail()" class="btn-ghost text-sm">✉ Gmail</button>
+      <button onclick="sauvegarderRapportMySQL()" class="btn-ghost text-sm" title="Sauvegarder snapshot P&L dans MySQL">💾 MySQL</button>
+      <button id="_btn-pl-mysql" onclick="importerDepuisMySQL()" class="btn-ghost text-sm" title="Charger transactions depuis MySQL">☁ MySQL</button>
     </div>
   </div>
 </div>
@@ -131,6 +134,10 @@ const CONFIG = {
           <input class="input-pl" type="number" id="rev-odoo" value="0" oninput="recalculer()">
         </div>
       </div>
+      <div id="lignes-perso-revenus"></div>
+      <div class="pl-row no-print">
+        <button onclick="ouvrirModalLigne('revenus')" style="background:none;border:none;color:#4ade80;font-size:12px;cursor:pointer;padding:4px 0">+ Ajouter une ligne</button>
+      </div>
       <div class="pl-total">
         <span class="font-bold text-white">TOTAL REVENUS</span>
         <span class="font-bold text-green-400 text-base" id="total-rev">0 XPF</span>
@@ -155,6 +162,10 @@ const CONFIG = {
       <div class="pl-row">
         <span class="label">Vinyle, encre &amp; consommables</span>
         <input class="input-pl" type="number" id="chg-consommables" value="0" oninput="recalculer()">
+      </div>
+      <div id="lignes-perso-chargesVar"></div>
+      <div class="pl-row no-print">
+        <button onclick="ouvrirModalLigne('chargesVar')" style="background:none;border:none;color:#fbbf24;font-size:12px;cursor:pointer;padding:4px 0">+ Ajouter une ligne</button>
       </div>
       <div class="pl-total">
         <span class="font-bold text-white">TOTAL CHARGES VARIABLES</span>
@@ -184,6 +195,10 @@ const CONFIG = {
       <div class="pl-row">
         <span class="label">Autres charges</span>
         <input class="input-pl" type="number" id="chg-autres" value="0" oninput="recalculer()">
+      </div>
+      <div id="lignes-perso-chargesFix"></div>
+      <div class="pl-row no-print">
+        <button onclick="ouvrirModalLigne('chargesFix')" style="background:none;border:none;color:#f87171;font-size:12px;cursor:pointer;padding:4px 0">+ Ajouter une ligne</button>
       </div>
       <div class="pl-total">
         <span class="font-bold text-white">TOTAL CHARGES FIXES</span>
@@ -353,20 +368,26 @@ function recalculer() {
   const revWoo = +document.getElementById('rev-woo').value;
   const revSocial = +document.getElementById('rev-social').value;
   const revOdoo = +document.getElementById('rev-odoo').value;
-  const totalRev = revCash + revWoo + revSocial + revOdoo;
+  // Lignes personnalisées
+  const _lp = getLignesPerso();
+  const _sumPerso = (section) => (_lp[section] || []).reduce((s,l) => {
+    const el = document.getElementById('lp-' + l.id);
+    return s + (el ? +el.value : +l.montant || 0);
+  }, 0);
+  const totalRev = revCash + revWoo + revSocial + revOdoo + _sumPerso('revenus');
 
   const chgTaaroa = +document.getElementById('chg-taaroa').value;
   const chgAnemone = +document.getElementById('chg-anemone').value;
   const chgDtf = +document.getElementById('chg-dtf').value;
   const chgConso = +document.getElementById('chg-consommables').value;
-  const totalChgVar = chgTaaroa + chgAnemone + chgDtf + chgConso;
+  const totalChgVar = chgTaaroa + chgAnemone + chgDtf + chgConso + _sumPerso('chargesVar');
 
   const chgLoyer = +document.getElementById('chg-loyer').value;
   const chgElec = +document.getElementById('chg-elec').value;
   const chgAbo = +document.getElementById('chg-abo').value;
   const chgInvest = +document.getElementById('chg-invest').value;
   const chgAutres = +document.getElementById('chg-autres').value;
-  const totalChgFix = chgLoyer + chgElec + chgAbo + chgInvest + chgAutres;
+  const totalChgFix = chgLoyer + chgElec + chgAbo + chgInvest + chgAutres + _sumPerso('chargesFix');
 
   const totalChg = totalChgVar + totalChgFix;
   const margeB = totalRev > 0 ? ((totalRev - totalChgVar) / totalRev * 100) : 0;
@@ -574,12 +595,188 @@ function envoyerGmail() {
   window.location.href = `mailto:${CONFIG.GMAIL_RECIPIENT}?subject=${sujet}&body=${corps}`;
 }
 
+// ===== LIGNES PERSONNALISÉES =====
+const SECTIONS_LABELS = { revenus: 'Revenus', chargesVar: 'Charges variables', chargesFix: 'Charges fixes' };
+const SECTIONS_COLORS = { revenus: '#4ade80', chargesVar: '#fbbf24', chargesFix: '#f87171' };
+
+function getLignesPerso() {
+  return JSON.parse(localStorage.getItem('hcs_pl_lignes_custom') || '{"revenus":[],"chargesVar":[],"chargesFix":[]}');
+}
+function setLignesPerso(data) {
+  localStorage.setItem('hcs_pl_lignes_custom', JSON.stringify(data));
+}
+
+function afficherLignesPerso() {
+  const data = getLignesPerso();
+  ['revenus', 'chargesVar', 'chargesFix'].forEach(section => {
+    const container = document.getElementById('lignes-perso-' + section);
+    if (!container) return;
+    container.innerHTML = '';
+    (data[section] || []).forEach(ligne => {
+      const div = document.createElement('div');
+      div.className = 'pl-row';
+      div.innerHTML = `
+        <span class="label" style="display:flex;align-items:center;gap:6px">
+          ${ligne.label}
+          <button onclick="supprimerLignePerso('${section}','${ligne.id}')" class="no-print"
+            style="background:none;border:none;color:#6b7280;font-size:11px;cursor:pointer;padding:0">✕</button>
+        </span>
+        <input class="input-pl" type="number" id="lp-${ligne.id}" value="${ligne.montant || 0}" oninput="recalculer()">
+      `;
+      container.appendChild(div);
+    });
+  });
+}
+
+function ouvrirModalLigne(section) {
+  document.getElementById('add-ligne-section').value = section;
+  document.getElementById('add-ligne-label').value = '';
+  document.getElementById('add-ligne-montant').value = '';
+  document.getElementById('add-ligne-titre').textContent = '+ Ligne — ' + SECTIONS_LABELS[section];
+  document.getElementById('modal-add-ligne').style.display = 'flex';
+  document.getElementById('add-ligne-label').focus();
+}
+function fermerModalLigne() {
+  document.getElementById('modal-add-ligne').style.display = 'none';
+}
+function confirmerAjoutLigne() {
+  const section = document.getElementById('add-ligne-section').value;
+  const label = document.getElementById('add-ligne-label').value.trim();
+  if (!label) { document.getElementById('add-ligne-label').focus(); return; }
+  const montant = +document.getElementById('add-ligne-montant').value || 0;
+  const data = getLignesPerso();
+  data[section].push({ id: Date.now().toString(), label, montant });
+  setLignesPerso(data);
+  fermerModalLigne();
+  afficherLignesPerso();
+  recalculer();
+}
+function supprimerLignePerso(section, id) {
+  const data = getLignesPerso();
+  data[section] = data[section].filter(l => l.id !== id);
+  setLignesPerso(data);
+  afficherLignesPerso();
+  recalculer();
+}
+
+// ===== SYNC MYSQL — Rapport P&L =====
+const _PL_API = {
+  get url() { return localStorage.getItem('hcs_api_url') || 'https://highcoffeeshirts.com/erp/api'; },
+  get key() { return localStorage.getItem('hcs_api_key') || 'hcs-erp-2026'; }
+};
+
+// Sauvegarde un snapshot complet du P&L du mois dans MySQL
+async function sauvegarderRapportMySQL() {
+  const mois = document.getElementById('mois-rapport').value || thisMonth();
+  const ids = ['rev-cash','rev-woo','rev-social','rev-odoo',
+                'chg-taaroa','chg-anemone','chg-dtf','chg-consommables',
+                'chg-loyer','chg-elec','chg-abo','chg-invest','chg-autres','n1-ca'];
+  const vals = {};
+  ids.forEach(id => { vals[id] = +(document.getElementById(id)?.value || 0); });
+  vals.lignes_perso = getLignesPerso();
+
+  const totalRev = vals['rev-cash'] + vals['rev-woo'] + vals['rev-social'] + vals['rev-odoo'];
+  const totalChg = vals['chg-taaroa'] + vals['chg-anemone'] + vals['chg-dtf'] + vals['chg-consommables']
+                 + vals['chg-loyer'] + vals['chg-elec'] + vals['chg-abo'] + vals['chg-invest'] + vals['chg-autres'];
+  const resultat = totalRev - totalChg;
+  const marge    = totalRev > 0 ? +((resultat / totalRev) * 100).toFixed(2) : 0;
+
+  const payload = {
+    store_id:      mois,
+    mois,
+    data_json:     JSON.stringify(vals),
+    total_revenus: totalRev,
+    total_charges: totalChg,
+    resultat_net:  resultat,
+    marge_nette:   marge
+  };
+
+  try {
+    const r = await fetch(`${_PL_API.url}/pl_rapports`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': _PL_API.key },
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    alert(`✅ Rapport P&L ${mois} sauvegardé dans MySQL\nCA: ${fmtXPF(totalRev)} | Résultat: ${fmtXPF(resultat)} (${marge}%)`);
+  } catch(e) {
+    alert('❌ Erreur MySQL : ' + e.message);
+  }
+}
+
+// Importe transactions + charges depuis MySQL → met à jour localStorage → recalcule
+async function importerDepuisMySQL() {
+  const btn = document.getElementById('_btn-pl-mysql');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Chargement...'; }
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch(`${_PL_API.url}/finance_transactions?limit=1000`, { headers: { 'x-api-key': _PL_API.key } }),
+      fetch(`${_PL_API.url}/finance_charges?limit=1000`,      { headers: { 'x-api-key': _PL_API.key } })
+    ]);
+    if (!r1.ok || !r2.ok) throw new Error('HTTP ' + r1.status);
+    const { items: txDB } = await r1.json();
+    const { items: chDB } = await r2.json();
+
+    // Convertir au format localStorage Finance Dashboard
+    localStorage.setItem('hcs_transactions', JSON.stringify(
+      txDB.map(r => ({
+        id: r.store_id || String(r.id), date: r.date, canal: r.canal,
+        type: r.type, description: r.description, montant: +r.montant, nb: +(r.nb||1)
+      }))
+    ));
+    localStorage.setItem('hcs_charges', JSON.stringify(
+      chDB.map(r => ({
+        id: r.store_id || String(r.id), date: r.date, fournisseur: r.fournisseur,
+        categorie: r.categorie, montant: +r.montant, numero: r.numero||'', statut: r.statut
+      }))
+    ));
+
+    importerLocalStorage();
+    const statusEl = document.getElementById('import-status');
+    statusEl.textContent = `☁ ${txDB.length} transactions + ${chDB.length} charges chargées depuis MySQL`;
+    statusEl.classList.remove('hidden');
+  } catch(e) {
+    alert('❌ Connexion MySQL échouée : ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '☁ Importer depuis MySQL'; }
+  }
+}
+
 // ===== INITIALISATION =====
 document.getElementById('mois-rapport').value = thisMonth();
 document.getElementById('titre-mois').textContent = getMoisLabel(thisMonth());
 document.getElementById('date-generation').textContent = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
 initialiserInputs12Mois();
+afficherLignesPerso();
 importerLocalStorage();
 </script>
+
+<!-- MODAL Ajouter ligne P&L -->
+<div id="modal-add-ligne" onclick="if(event.target===this)fermerModalLigne()"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:center;justify-content:center">
+  <div style="background:#111;border:1px solid #222;border-radius:12px;width:100%;max-width:380px;padding:24px;margin:0 16px">
+    <h2 id="add-ligne-titre" style="font-size:16px;font-weight:700;color:#fff;margin-bottom:16px">+ Nouvelle ligne</h2>
+    <input type="hidden" id="add-ligne-section">
+    <div style="margin-bottom:12px">
+      <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:6px">Libellé</label>
+      <input type="text" id="add-ligne-label" placeholder="Ex: Salaires, Commission..."
+        style="width:100%;font-size:13px;background:#1a1a1a;border:1px solid #333;color:#e5e5e5;border-radius:8px;padding:8px 12px;outline:none;box-sizing:border-box"
+        onkeydown="if(event.key==='Enter')document.getElementById('add-ligne-montant').focus()">
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:6px">Montant (XPF)</label>
+      <input type="number" id="add-ligne-montant" placeholder="0"
+        style="width:100%;font-size:13px;background:#1a1a1a;border:1px solid #333;color:#e5e5e5;border-radius:8px;padding:8px 12px;outline:none;box-sizing:border-box"
+        onkeydown="if(event.key==='Enter')confirmerAjoutLigne()">
+    </div>
+    <div style="display:flex;gap:12px">
+      <button onclick="confirmerAjoutLigne()"
+        style="flex:1;background:#FF6B00;color:#fff;border:none;border-radius:8px;padding:10px;font-weight:600;cursor:pointer">Ajouter</button>
+      <button onclick="fermerModalLigne()"
+        style="flex:1;background:#1a1a1a;color:#aaa;border:1px solid #333;border-radius:8px;padding:10px;cursor:pointer">Annuler</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

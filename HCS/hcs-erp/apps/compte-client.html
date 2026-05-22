@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon Espace Client — High Coffee Shirt</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --espresso:      #1a0e07;
+  --brown-deep:    #2a1508;
+  --brown-mid:     #3b1f0e;
+  --caramel:       #c4813a;
+  --caramel-light: #e09a4f;
+  --cream:         #f5ede0;
+  --cream-dim:     #c8b89a;
+  --amber:         #f0a030;
+  --border:        rgba(196,129,58,.18);
+  --card-bg:       #231308;
+  --success:       #22c55e;
+  --error:         #ef4444;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--espresso);
+  color: var(--cream);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-image: radial-gradient(ellipse at 20% 0%, rgba(196,129,58,.06) 0%, transparent 60%);
+}
+a { color: var(--caramel-light); text-decoration: none; }
+
+/* ── HEADER ─────────────────────────────────────── */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(26,14,7,.85);
+  backdrop-filter: blur(8px);
+  position: sticky; top: 0; z-index: 100;
+}
+.hdr-logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: var(--caramel);
+  letter-spacing: .08em;
+}
+.hdr-logo span { color: var(--cream-dim); font-size: .85rem; font-weight: 500; margin-left: 10px; font-family: 'Inter', sans-serif; letter-spacing: 0; }
+.hdr-user {
+  display: flex; align-items: center; gap: 10px; font-size: .82rem; color: var(--cream-dim);
+}
+.hdr-user button {
+  background: none; border: 1px solid var(--border); color: var(--cream-dim);
+  padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: .75rem;
+  transition: border-color .2s, color .2s;
+}
+.hdr-user button:hover { border-color: var(--caramel); color: var(--caramel-light); }
+
+/* ── MAIN ────────────────────────────────────────── */
+main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 32px 16px 64px; }
+
+/* ── SCREENS ─────────────────────────────────────── */
+.screen { width: 100%; max-width: 480px; }
+.screen.hidden { display: none !important; }
+
+/* ── CARDS ───────────────────────────────────────── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 28px 32px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--cream);
+  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-subtitle {
+  font-size: .78rem; color: var(--cream-dim); margin-bottom: 20px; line-height: 1.6;
+}
+
+/* ── FORM ────────────────────────────────────────── */
+.form-group { margin-bottom: 16px; }
+label { display: block; font-size: .8rem; color: var(--cream-dim); margin-bottom: 6px; font-weight: 500; }
+input[type=email], input[type=password], input[type=text] {
+  width: 100%;
+  background: rgba(255,255,255,.05);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--cream);
+  padding: 11px 14px;
+  font-size: .88rem;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: border-color .2s;
+}
+input:focus { border-color: var(--caramel); }
+input::placeholder { color: rgba(200,184,154,.4); }
+
+.btn {
+  display: block; width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  font-size: .9rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: opacity .2s, transform .1s;
+}
+.btn:active { transform: scale(.98); }
+.btn-primary { background: var(--caramel); color: #1a0e07; }
+.btn-primary:hover { opacity: .9; }
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--cream-dim);
+  margin-top: 10px;
+}
+.btn-outline:hover { border-color: var(--caramel); color: var(--caramel-light); }
+
+.divider {
+  display: flex; align-items: center; gap: 10px; margin: 18px 0;
+  font-size: .72rem; color: var(--cream-dim);
+}
+.divider::before, .divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+.msg-error {
+  background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3);
+  border-radius: 8px; padding: 10px 14px; font-size: .82rem; color: #fca5a5;
+  margin-bottom: 14px; display: none;
+}
+.msg-ok {
+  background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3);
+  border-radius: 8px; padding: 10px 14px; font-size: .82rem; color: #86efac;
+  margin-bottom: 14px; display: none;
+}
+
+/* ── TABS ────────────────────────────────────────── */
+.tabs { display: flex; gap: 4px; background: rgba(255,255,255,.04); border-radius: 10px; padding: 4px; margin-bottom: 20px; }
+.tab {
+  flex: 1; text-align: center; padding: 8px;
+  border-radius: 7px; cursor: pointer; font-size: .8rem; font-weight: 500;
+  color: var(--cream-dim); border: none; background: none; font-family: 'Inter', sans-serif;
+  transition: background .2s, color .2s;
+}
+.tab.active { background: var(--brown-mid); color: var(--cream); }
+
+/* ── LOYALTY CARD ────────────────────────────────── */
+.loyalty-card {
+  background: linear-gradient(135deg, #2a1508 0%, #3b1f0e 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.loyalty-card::before {
+  content: '⭐';
+  position: absolute; right: -10px; top: -14px;
+  font-size: 7rem; opacity: .06; pointer-events: none;
+}
+.tier-badge {
+  display: inline-block;
+  padding: 4px 14px; border-radius: 20px;
+  font-weight: 700; font-size: .75rem;
+  margin-bottom: 14px;
+}
+.tier-Rookie      { background: rgba(144,144,176,.18); color: #b0b0d0; }
+.tier-Regular     { background: rgba(79,172,254,.15);  color: #4facfe; }
+.tier-Pro         { background: rgba(167,139,250,.15); color: #a78bfa; }
+.tier-Ambassadeur { background: rgba(246,211,101,.15); color: #f6d365; }
+
+.points-display {
+  font-family: 'Syne', sans-serif;
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: var(--amber);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.points-label { font-size: .75rem; color: var(--cream-dim); margin-bottom: 16px; }
+.progress-bar-track {
+  background: rgba(255,255,255,.08);
+  border-radius: 99px; height: 8px; margin-bottom: 8px; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, var(--caramel), var(--amber));
+  transition: width .8s ease;
+}
+.progress-text {
+  display: flex; justify-content: space-between;
+  font-size: .72rem; color: var(--cream-dim);
+}
+.progress-next { color: var(--caramel-light); font-weight: 600; }
+.ca-total {
+  font-size: .82rem; color: var(--cream-dim); margin-top: 14px;
+  padding-top: 14px; border-top: 1px solid rgba(255,255,255,.06);
+}
+.ca-total strong { color: var(--cream); }
+
+/* ── BARÈME ──────────────────────────────────────── */
+.bareme-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.bareme-tier {
+  padding: 12px 14px; border-radius: 10px;
+  border: 1px solid transparent;
+}
+.bareme-tier.active-tier { border-color: var(--caramel); }
+.bareme-name {
+  font-weight: 700; font-size: .82rem; margin-bottom: 2px;
+}
+.bareme-seuil { font-size: .68rem; color: var(--cream-dim); margin-bottom: 4px; }
+.bareme-taux  { font-size: .9rem; font-weight: 700; }
+.bareme-tier.tier-Rookie-bg      { background: rgba(144,144,176,.08); }
+.bareme-tier.tier-Regular-bg     { background: rgba(79,172,254,.08); }
+.bareme-tier.tier-Pro-bg         { background: rgba(167,139,250,.08); }
+.bareme-tier.tier-Ambassadeur-bg { background: rgba(246,211,101,.08); }
+
+/* ── ORDER RECAP ─────────────────────────────────── */
+.recap-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+.recap-ref { font-family: 'Syne', sans-serif; font-weight: 700; font-size: .9rem; color: var(--caramel-light); }
+.recap-date { font-size: .72rem; color: var(--cream-dim); }
+.recap-line {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.05);
+  font-size: .82rem;
+}
+.recap-line:last-child { border-bottom: none; }
+.recap-line-name { color: var(--cream); }
+.recap-line-price { color: var(--cream-dim); white-space: nowrap; margin-left: 8px; }
+.recap-total {
+  display: flex; justify-content: space-between;
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-weight: 600; color: var(--cream);
+}
+.recap-points-earned {
+  margin-top: 12px;
+  background: rgba(240,160,48,.1);
+  border: 1px solid rgba(240,160,48,.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: .82rem;
+  color: var(--amber);
+}
+.recap-pickup {
+  margin-top: 10px; font-size: .8rem; color: var(--cream-dim);
+  display: flex; align-items: center; gap: 6px;
+}
+.recap-pickup strong { color: var(--cream); }
+
+/* ── HISTORY ─────────────────────────────────────── */
+.hist-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+.hist-table th {
+  text-align: left; padding: 6px 8px; font-size: .7rem; font-weight: 600;
+  color: var(--cream-dim); text-transform: uppercase; letter-spacing: .05em;
+  border-bottom: 1px solid var(--border);
+}
+.hist-table td {
+  padding: 9px 8px; border-bottom: 1px solid rgba(255,255,255,.04);
+  color: var(--cream-dim);
+}
+.hist-table td:first-child { color: var(--cream); }
+.hist-pts { font-weight: 700; color: var(--amber); text-align: right; }
+.hist-empty { text-align: center; padding: 24px; color: var(--cream-dim); font-size: .82rem; }
+
+/* ── LOADING ─────────────────────────────────────── */
+.loading-spinner {
+  text-align: center; padding: 60px 20px;
+}
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid rgba(196,129,58,.2);
+  border-top-color: var(--caramel);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin: 0 auto 14px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── WELCOME HIGHLIGHT ───────────────────────────── */
+.welcome-highlight {
+  background: linear-gradient(135deg, rgba(196,129,58,.12), rgba(240,160,48,.08));
+  border: 1px solid rgba(196,129,58,.25);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+.welcome-highlight h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  color: var(--caramel-light);
+  margin-bottom: 6px;
+}
+.welcome-highlight p { font-size: .82rem; color: var(--cream-dim); line-height: 1.6; }
+
+/* ── PASSWORD STRENGTH ───────────────────────────── */
+.pwd-strength { height: 3px; border-radius: 99px; margin-top: 6px; transition: width .3s, background .3s; width: 0; }
+
+/* ── FOOTER ──────────────────────────────────────── */
+footer {
+  text-align: center; padding: 24px;
+  font-size: .72rem; color: rgba(200,184,154,.35);
+  border-top: 1px solid var(--border);
+}
+
+/* ── RESPONSIVE ──────────────────────────────────── */
+@media (max-width: 480px) {
+  .card { padding: 20px 18px 24px; }
+  .points-display { font-size: 2.1rem; }
+  .bareme-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-logo">HCS<span>Espace Client</span></div>
+  <div class="hdr-user" id="hdr-user" style="display:none">
+    <span id="hdr-name"></span>
+    <button onclick="logout()">Déconnexion</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ══ LOADING ══════════════════════════════════════════════ -->
+  <div id="screen-loading" class="screen">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <p style="font-size:.82rem;color:var(--cream-dim)">Chargement…</p>
+    </div>
+  </div>
+
+  <!-- ══ LOGIN ════════════════════════════════════════════════ -->
+  <div id="screen-login" class="screen hidden">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--caramel);margin-bottom:6px">Mon Espace HCS</div>
+      <div style="font-size:.82rem;color:var(--cream-dim)">Consultez vos points fidélité et votre historique d'achats</div>
+    </div>
+
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" id="tab-pwd" onclick="switchTab('pwd')">Mot de passe</button>
+        <button class="tab" id="tab-link" onclick="switchTab('link')">Lien magique</button>
+      </div>
+
+      <!-- Connexion email + mot de passe -->
+      <div id="pane-pwd">
+        <div id="login-error" class="msg-error"></div>
+        <div class="form-group">
+          <label>Adresse email</label>
+          <input type="email" id="login-email" placeholder="vous@email.com" autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label>Mot de passe</label>
+          <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
+            onkeydown="if(event.key==='Enter')doLogin()" />
+        </div>
+        <button class="btn btn-primary" onclick="doLogin()">Se connecter →</button>
+      </div>
+
+      <!-- Connexion par lien magique -->
+      <div id="pane-link" style="display:none">
+        <div id="link-error" class="msg-error"></div>
+        <div id="link-ok" class="msg-ok"></div>
+        <div class="card-subtitle">
+          Entrez votre email pour recevoir un lien de connexion unique valable 24 h.
+        </div>
+        <div class="form-group">
+          <label>Adresse email</label>
+          <input type="email" id="magic-email" placeholder="vous@email.com" autocomplete="email"
+            onkeydown="if(event.key==='Enter')doRequestLink()" />
+        </div>
+        <button class="btn btn-primary" onclick="doRequestLink()">Recevoir mon lien →</button>
+      </div>
+    </div>
+
+    <p style="text-align:center;font-size:.72rem;color:var(--cream-dim);margin-top:12px">
+      Vos achats chez HCS créent automatiquement votre compte fidélité.
+    </p>
+  </div>
+
+  <!-- ══ LIEN ENVOYÉ ══════════════════════════════════════════ -->
+  <div id="screen-link-sent" class="screen hidden">
+    <div class="card" style="text-align:center;padding:40px 28px">
+      <div style="font-size:2.5rem;margin-bottom:16px">📬</div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:var(--caramel-light);margin-bottom:12px">Lien envoyé !</div>
+      <p style="font-size:.85rem;color:var(--cream-dim);line-height:1.7">
+        Si votre email correspond à un compte HCS, vous allez recevoir un lien de connexion sous peu.<br><br>
+        <strong style="color:var(--cream)">Vérifiez votre messagerie</strong> (et vos spams si besoin).
+      </p>
+      <div id="link-sent-info" style="display:none;margin-top:18px;background:rgba(240,160,48,.08);border:1px solid rgba(240,160,48,.2);border-radius:8px;padding:12px;font-size:.75rem;color:var(--cream-dim)"></div>
+      <button class="btn btn-outline" style="margin-top:24px" onclick="showScreen('login')">← Retour</button>
+    </div>
+  </div>
+
+  <!-- ══ BIENVENUE / DÉFINIR MOT DE PASSE ═════════════════════ -->
+  <div id="screen-welcome" class="screen hidden">
+    <div class="welcome-highlight">
+      <h2>🌺 Bienvenue chez HCS !</h2>
+      <p>
+        Votre compte client est prêt. Choisissez un mot de passe pour vous reconnecter facilement à votre espace fidélité.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔑 Définir mon mot de passe</div>
+      <div id="welcome-error" class="msg-error"></div>
+      <div class="form-group">
+        <label>Nouveau mot de passe</label>
+        <input type="password" id="pwd-new" placeholder="6 caractères minimum" autocomplete="new-password"
+          oninput="checkPwdStrength(this.value)" />
+        <div class="pwd-strength" id="pwd-strength-bar"></div>
+      </div>
+      <div class="form-group">
+        <label>Confirmer le mot de passe</label>
+        <input type="password" id="pwd-confirm" placeholder="••••••••" autocomplete="new-password"
+          onkeydown="if(event.key==='Enter')doSetPassword()" />
+      </div>
+      <button class="btn btn-primary" onclick="doSetPassword()">Accéder à mon espace →</button>
+    </div>
+
+    <div class="card" style="font-size:.78rem;color:var(--cream-dim);line-height:1.7">
+      <strong style="color:var(--cream);display:block;margin-bottom:8px">ℹ️ Ce que vous trouverez dans votre espace :</strong>
+      • Le solde de vos points fidélité et votre niveau<br>
+      • L'explication du barème de points<br>
+      • L'historique de tous vos achats HCS<br>
+      • Le récap de vos dernières commandes
+    </div>
+  </div>
+
+  <!-- ══ DASHBOARD ════════════════════════════════════════════ -->
+  <div id="screen-dashboard" class="screen hidden" style="max-width:520px">
+
+    <!-- Carte fidélité -->
+    <div class="loyalty-card" id="loyalty-card"></div>
+
+    <!-- Récap dernière commande (si URL contient ?order=xxx) -->
+    <div id="last-order-card" class="card hidden">
+      <div class="card-title">🧾 Récapitulatif de votre commande</div>
+      <div id="last-order-content"></div>
+    </div>
+
+    <!-- Barème des points -->
+    <div class="card">
+      <div class="card-title">📊 Barème du programme fidélité</div>
+      <div style="font-size:.78rem;color:var(--cream-dim);margin-bottom:14px;line-height:1.6">
+        Plus vous dépensez chez HCS, plus vous gagnez de points rapidement. Vos points s'accumulent sur toute votre vie de client.
+      </div>
+      <div class="bareme-grid" id="bareme-grid"></div>
+      <div style="margin-top:14px;font-size:.73rem;color:var(--cream-dim);line-height:1.6;border-top:1px solid var(--border);padding-top:12px">
+        💡 <strong style="color:var(--cream)">À quoi servent mes points ?</strong> À chaque 100 points, vous bénéficiez d'avantages exclusifs et de réductions HCS. Contactez-nous en boutique pour utiliser vos points.
+      </div>
+    </div>
+
+    <!-- Historique achats -->
+    <div class="card">
+      <div class="card-title">📋 Historique de mes achats</div>
+      <div id="history-content"></div>
+    </div>
+
+  </div>
+
+</main>
+
+<footer>
+  © 2026 High Coffee Shirt — Papeete, Polynésie française &nbsp;•&nbsp;
+  <a href="mailto:highcoffeeshirt@gmail.com">highcoffeeshirt@gmail.com</a>
+</footer>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   CONFIGURATION
+══════════════════════════════════════════════════════ */
+const API_BASE   = 'https://highcoffeeshirts.com/erp/api';
+const PAGE_URL   = 'https://highcoffeeshirts.com/erp/apps/compte-client.html';
+const N8N_NOTIFY = ''; /* URL webhook n8n pour envoi lien (optionnel) */
+
+const TIERS = [
+  { name:'Rookie',      min:       0, taux:1.0,  color:'#b0b0d0', colClass:'tier-Rookie',      bg:'tier-Rookie-bg'      },
+  { name:'Regular',     min:  50000, taux:1.2,  color:'#4facfe', colClass:'tier-Regular',     bg:'tier-Regular-bg'     },
+  { name:'Pro',         min: 150000, taux:1.5,  color:'#a78bfa', colClass:'tier-Pro',         bg:'tier-Pro-bg'         },
+  { name:'Ambassadeur', min: 300000, taux:2.0,  color:'#f6d365', colClass:'tier-Ambassadeur', bg:'tier-Ambassadeur-bg' },
+];
+
+/* ══════════════════════════════════════════════════════
+   ÉTAT
+══════════════════════════════════════════════════════ */
+let _token   = localStorage.getItem('hcs_cc_token') || '';
+let _client  = null;
+let _history = [];
+let _urlToken  = '';
+
+/* ══════════════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+
+function showScreen(name) {
+  ['loading','login','link-sent','welcome','dashboard'].forEach(s => {
+    $('screen-' + s).classList.toggle('hidden', s !== name);
+  });
+}
+
+function fmtXpf(v) {
+  return Number(v || 0).toLocaleString('fr-FR') + ' XPF';
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
+}
+
+function tierOf(totalXpf) {
+  const sorted = [...TIERS].sort((a,b) => b.min - a.min);
+  return sorted.find(t => totalXpf >= t.min) || TIERS[0];
+}
+
+function nextTier(totalXpf) {
+  return TIERS.find(t => t.min > totalXpf);
+}
+
+function tauxOf(tier) {
+  return TIERS.find(t => t.name === tier)?.taux || 1.0;
+}
+
+function checkPwdStrength(v) {
+  const bar = $('pwd-strength-bar');
+  if (!v) { bar.style.width = '0'; return; }
+  const score = [v.length >= 8, /[A-Z]/.test(v), /[0-9]/.test(v), /[^a-zA-Z0-9]/.test(v)].filter(Boolean).length;
+  const colors = ['#ef4444','#f59e0b','#22c55e','#22c55e'];
+  const widths  = ['25%','50%','75%','100%'];
+  bar.style.width     = widths[score - 1] || '15%';
+  bar.style.background = colors[score - 1] || '#ef4444';
+}
+
+/* ══════════════════════════════════════════════════════
+   API
+══════════════════════════════════════════════════════ */
+async function apiPost(action, body) {
+  try {
+    const res = await fetch(`${API_BASE}/compte_client`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, ...body })
+    });
+    return await res.json();
+  } catch(e) {
+    return { error: 'Erreur réseau : ' + e.message };
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════ */
+async function init() {
+  showScreen('loading');
+  const params   = new URLSearchParams(location.search);
+  _urlToken      = params.get('token') || '';
+  const orderRef = params.get('order') || '';
+
+  /* Vérifier le token URL en priorité (lien magique depuis email/WhatsApp) */
+  if (_urlToken) {
+    const data = await apiPost('verify', { token: _urlToken });
+    if (data.ok) {
+      _token   = _urlToken;
+      _client  = data.client;
+      _history = data.history || [];
+      localStorage.setItem('hcs_cc_token', _token);
+      /* Nettoyer l'URL */
+      history.replaceState(null, '', PAGE_URL + (orderRef ? '?order=' + orderRef : ''));
+      if (!parseInt(_client.password_set)) {
+        showScreen('welcome');
+      } else {
+        renderDashboard(orderRef);
+        showScreen('dashboard');
+      }
+      return;
+    } else {
+      showError('login-error', 'Ce lien de connexion est expiré ou invalide.');
+    }
+  }
+
+  /* Essayer le token sauvegardé */
+  if (_token) {
+    const data = await apiPost('verify', { token: _token });
+    if (data.ok) {
+      _client  = data.client;
+      _history = data.history || [];
+      renderDashboard(orderRef);
+      showScreen('dashboard');
+      return;
+    } else {
+      localStorage.removeItem('hcs_cc_token');
+      _token = '';
+    }
+  }
+
+  showScreen('login');
+}
+
+/* ══════════════════════════════════════════════════════
+   AUTHENTIFICATION
+══════════════════════════════════════════════════════ */
+async function doLogin() {
+  const email    = $('login-email').value.trim();
+  const password = $('login-password').value;
+  hideError('login-error');
+
+  if (!email || !password) {
+    showError('login-error', 'Veuillez remplir tous les champs.');
+    return;
+  }
+  const data = await apiPost('login', { email, password });
+  if (data.ok) {
+    _token   = data.token;
+    _client  = data.client;
+    _history = data.history || [];
+    localStorage.setItem('hcs_cc_token', _token);
+    renderDashboard();
+    showScreen('dashboard');
+  } else {
+    showError('login-error', data.error || 'Email ou mot de passe incorrect.');
+  }
+}
+
+async function doRequestLink() {
+  const email = $('magic-email').value.trim();
+  hideError('link-error');
+  $('link-ok').style.display = 'none';
+
+  if (!email || !email.includes('@')) {
+    showError('link-error', 'Veuillez entrer un email valide.');
+    return;
+  }
+  const data = await apiPost('request_link', { email });
+  if (data.ok) {
+    /* Si webhook n8n configuré, appeler pour envoyer l'email/WhatsApp */
+    if (N8N_NOTIFY && data.token) {
+      const magicUrl = PAGE_URL + '?token=' + data.token;
+      fetch(N8N_NOTIFY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, magic_url: magicUrl, name: data.name || email })
+      }).catch(() => {});
+    }
+
+    /* Afficher l'écran de confirmation */
+    showScreen('link-sent');
+
+    /* En mode dev/admin : afficher le lien directement */
+    if (data.token) {
+      const magicUrl = PAGE_URL + '?token=' + data.token;
+      const info = $('link-sent-info');
+      info.style.display = 'block';
+      info.innerHTML = `<strong>Lien généré :</strong><br>
+        <a href="${magicUrl}" style="word-break:break-all;color:var(--caramel-light)">${magicUrl}</a>
+        <br><small style="color:var(--cream-dim)">(Valable 24h — à transmettre au client)</small>`;
+    }
+  } else {
+    showError('link-error', data.error || 'Erreur lors de la demande.');
+  }
+}
+
+async function doSetPassword() {
+  const pwd1 = $('pwd-new').value;
+  const pwd2 = $('pwd-confirm').value;
+  hideError('welcome-error');
+
+  if (pwd1.length < 6) { showError('welcome-error', 'Le mot de passe doit faire au moins 6 caractères.'); return; }
+  if (pwd1 !== pwd2)   { showError('welcome-error', 'Les deux mots de passe ne correspondent pas.'); return; }
+
+  const token = _urlToken || _token;
+  const data  = await apiPost('set_password', { token, password: pwd1 });
+  if (data.ok) {
+    _token   = data.token;
+    _client  = data.client;
+    _history = data.history || [];
+    localStorage.setItem('hcs_cc_token', _token);
+    renderDashboard();
+    showScreen('dashboard');
+  } else {
+    showError('welcome-error', data.error || 'Erreur lors de la mise à jour.');
+  }
+}
+
+function logout() {
+  localStorage.removeItem('hcs_cc_token');
+  _token = ''; _client = null; _history = [];
+  location.href = PAGE_URL;
+}
+
+/* ══════════════════════════════════════════════════════
+   RENDU DASHBOARD
+══════════════════════════════════════════════════════ */
+function renderDashboard(orderRef) {
+  if (!_client) return;
+
+  /* Header */
+  const name = _client.name || _client.email;
+  $('hdr-name').textContent = name;
+  $('hdr-user').style.display = 'flex';
+
+  const totalXpf  = parseInt(_client.total_xpf) || 0;
+  const points    = parseInt(_client.points) || 0;
+  const tier      = _client.tier || 'Rookie';
+  const tierData  = tierOf(totalXpf);
+  const nextT     = nextTier(totalXpf);
+  const pct       = nextT ? Math.min(100, Math.round((totalXpf - tierData.min) / (nextT.min - tierData.min) * 100)) : 100;
+
+  /* ── Carte fidélité ── */
+  $('loyalty-card').innerHTML = `
+    <div class="tier-badge tier-${tier}">${tier}</div>
+    <div class="points-display">${points.toLocaleString('fr-FR')}</div>
+    <div class="points-label">points fidélité</div>
+    <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    <div class="progress-text">
+      <span>${totalXpf.toLocaleString('fr-FR')} XPF dépensés</span>
+      ${nextT ? `<span class="progress-next">encore ${(nextT.min - totalXpf).toLocaleString('fr-FR')} XPF → ${nextT.name}</span>` : '<span class="progress-next">Niveau maximum atteint 🎉</span>'}
+    </div>
+    <div class="ca-total">Multiplicateur actuel : <strong>× ${tauxOf(tier)}</strong> pt par 100 XPF dépensés</div>`;
+
+  /* ── Barème ── */
+  $('bareme-grid').innerHTML = TIERS.map(t => `
+    <div class="bareme-tier ${t.bg} ${t.name === tier ? 'active-tier' : ''}">
+      <div class="bareme-name" style="color:${t.color}">${t.name === tier ? '✓ ' : ''}${t.name}</div>
+      <div class="bareme-seuil">${t.min === 0 ? 'Dès le 1er achat' : 'À partir de ' + t.min.toLocaleString('fr-FR') + ' XPF'}</div>
+      <div class="bareme-taux" style="color:${t.color}">×${t.taux} pt / 100 XPF</div>
+    </div>`).join('');
+
+  /* ── Récap dernière commande ── */
+  const lastHist = _history[0];
+  if (lastHist) {
+    const card = $('last-order-card');
+    const pts  = parseInt(lastHist.points_earned) || 0;
+    card.classList.remove('hidden');
+    $('last-order-content').innerHTML = `
+      <div class="recap-header">
+        <div>
+          <div class="recap-ref">${lastHist.order_id || '—'}</div>
+          <div class="recap-date">${fmtDate(lastHist.updated_at)}</div>
+        </div>
+      </div>
+      <div class="recap-line">
+        <span class="recap-line-name">Montant total</span>
+        <span class="recap-line-price">${fmtXpf(lastHist.amount)}</span>
+      </div>
+      ${lastHist.reason ? `<div class="recap-line"><span class="recap-line-name">${lastHist.reason}</span></div>` : ''}
+      <div class="recap-points-earned">
+        ⭐ +${pts} points gagnés sur cette commande
+        <div style="margin-top:4px;font-size:.72rem;opacity:.8">
+          ${fmtXpf(lastHist.amount)} × ${tauxOf(lastHist.tier_at_time || 'Rookie')} pt/100 XPF (niveau ${lastHist.tier_at_time || 'Rookie'})
+        </div>
+      </div>`;
+  }
+
+  /* ── Historique ── */
+  if (_history.length === 0) {
+    $('history-content').innerHTML = '<div class="hist-empty">Aucun achat enregistré pour l\'instant.</div>';
+  } else {
+    $('history-content').innerHTML = `
+      <table class="hist-table">
+        <thead><tr>
+          <th>Date</th><th>Référence</th><th style="text-align:right">Montant</th><th style="text-align:right">Points</th>
+        </tr></thead>
+        <tbody>
+          ${_history.map(h => `<tr>
+            <td>${fmtDate(h.updated_at)}</td>
+            <td style="color:var(--cream-dim)">${h.order_id || '—'}</td>
+            <td style="text-align:right">${Number(h.amount||0).toLocaleString('fr-FR')} XPF</td>
+            <td class="hist-pts">+${h.points_earned || 0}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   TABS LOGIN
+══════════════════════════════════════════════════════ */
+function switchTab(tab) {
+  $('pane-pwd').style.display  = tab === 'pwd'  ? 'block' : 'none';
+  $('pane-link').style.display = tab === 'link' ? 'block' : 'none';
+  $('tab-pwd').classList.toggle('active',  tab === 'pwd');
+  $('tab-link').classList.toggle('active', tab === 'link');
+}
+
+/* ══════════════════════════════════════════════════════
+   MSG HELPERS
+══════════════════════════════════════════════════════ */
+function showError(id, msg) {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideError(id) {
+  const el = $(id);
+  if (el) { el.textContent = ''; el.style.display = 'none'; }
+}
+
+/* ══════════════════════════════════════════════════════
+   DÉMARRAGE
+══════════════════════════════════════════════════════ */
+init();
+</script>
+</body>
+</html>

@@ -4,6 +4,34 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HCS ERP</title>
+  <!-- Purge automatique des historiques agents corrompus (v2026050103) -->
+  <script>
+  (function() {
+    var HIST_KEY = 'hcs_agents_histories';
+    var MEM_VER  = 'hcs_agents_mem_version';
+    var CURRENT  = '2026050103';
+    if (localStorage.getItem(MEM_VER) !== CURRENT) {
+      /* Première exécution avec cette version : nettoyer l'historique */
+      try {
+        var raw = JSON.parse(localStorage.getItem(HIST_KEY) || '{}');
+        var clean = {};
+        for (var id in raw) {
+          if (Array.isArray(raw[id])) {
+            clean[id] = raw[id]
+              .filter(function(m) { return typeof m.content === 'string' && m.content.length < 20000; })
+              .slice(-20);
+          } else { clean[id] = []; }
+        }
+        localStorage.setItem(HIST_KEY, JSON.stringify(clean));
+        localStorage.setItem(MEM_VER, CURRENT);
+        console.log('[HCS] Historiques agents purgés (' + CURRENT + ').');
+      } catch(e) {
+        localStorage.removeItem(HIST_KEY);
+        localStorage.setItem(MEM_VER, CURRENT);
+      }
+    }
+  })();
+  </script>
 
   <!-- Google Fonts : Inter (moderne, premium) + JetBrains Mono (code/montants) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -22,6 +50,12 @@
   <link rel="stylesheet" href="css/agents.css" />
 </head>
 <body>
+
+  <!-- Barre de progression synchronisation MySQL (fixée en haut de page) -->
+  <div id="sync-progress-wrap" style="display:none;position:fixed;top:0;left:0;right:0;z-index:10000;pointer-events:none;">
+    <div id="sync-progress-bar" style="height:3px;background:var(--caramel,#c4813a);width:0%;transition:width 0.2s ease;box-shadow:0 0 6px rgba(196,129,58,0.6);"></div>
+    <div id="sync-progress-label" style="position:absolute;top:3px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--cream,#f5ede0);background:rgba(26,14,7,0.88);padding:2px 10px;border-radius:0 0 6px 6px;white-space:nowrap;font-family:Inter,sans-serif;letter-spacing:0.02em;"></div>
+  </div>
 
   <!-- ============================================================
        ÉCRAN DE CONNEXION (affiché par défaut, masqué après login)
@@ -50,8 +84,15 @@
       <div class="topbar-right">
         <span id="user-badge" class="user-badge"></span>
         <!-- Bouton bascule mode sombre -->
+        <button id="btn-mysql-pull" class="btn-ghost btn-sm"
+          title="Synchroniser toutes les données depuis le serveur MySQL"
+          style="font-size:1rem;padding:4px 8px;min-width:32px;"
+          onclick="syncFromServer(this)">☁↓</button>
         <button id="btn-theme" class="btn-ghost btn-sm" title="Basculer mode sombre / clair"
           style="font-size:1rem;padding:4px 8px;min-width:32px;">🌙</button>
+        <button class="btn-ghost btn-sm" title="Guide ERP — Mode d'emploi"
+          style="font-size:1rem;padding:4px 8px;min-width:32px;"
+          onclick="window.open('modules/guide-erp.html','_blank')">❓</button>
         <button class="btn-ghost btn-sm" id="btn-logout">⏻ Déconnexion</button>
       </div>
     </header>
@@ -123,43 +164,119 @@
        5. auth (login / session)
        6. app (router principal — doit être chargé en dernier)
        ============================================================ -->
-  <script src="data/seed.js"></script>
+  <script src="data/seed.js?v=2026042703"></script>
   <!-- API MySQL Planet Hoster — doit être chargé avant store.js pour la sync -->
-  <script src="js/mysql-api.js"></script>
-  <script src="js/store.js"></script>
-  <script src="js/utils.js"></script>
+  <script src="js/mysql-api.js?v=2026042001"></script>
+  <script src="js/store.js?v=2026043001"></script>
+  <script src="js/utils.js?v=2026042001"></script>
   <!-- Composants réutilisables -->
-  <script src="js/components/toast.js"></script>
-  <script src="js/components/modal.js"></script>
-  <script src="js/components/form.js"></script>
-  <script src="js/components/table.js"></script>
-  <script src="js/components/kanban.js"></script>
-  <script src="js/components/chart.js"></script>
-  <script src="js/components/commandPalette.js"></script>
+  <script src="js/components/toast.js?v=2026042113"></script>
+  <script src="js/components/modal.js?v=2026042001"></script>
+  <script src="js/components/form.js?v=2026042001"></script>
+  <script src="js/components/table.js?v=2026051401"></script>
+  <script src="js/components/kanban.js?v=2026042001"></script>
+  <script src="js/components/chart.js?v=2026042001"></script>
+  <script src="js/components/commandPalette.js?v=2026042001"></script>
+  <!-- SheetJS : lecture fichiers Excel (.xlsx/.xls) pour l'import produits -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- Modules métier -->
-  <script src="js/modules/crm.js"></script>
-  <script src="js/modules/sales.js"></script>
-  <script src="js/modules/purchases.js"></script>
-  <script src="js/modules/inventory.js"></script>
-  <script src="js/modules/manufacturing.js"></script>
-  <script src="js/modules/accounting.js"></script>
-  <script src="js/modules/discuss.js"></script>
-  <script src="js/modules/users.js"></script>
-  <script src="js/modules/advisor.js"></script>
-  <script src="js/modules/rh.js"></script>
-  <script src="js/modules/agents.js"></script>
-  <script src="js/modules/audit.js"></script>
-  <!-- PocketBase + Migration -->
-  <script src="js/pocketbase.js"></script>
-  <script src="js/migrate.js"></script>
-  <!-- Authentification et router -->
-  <script src="js/auth.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/modules/crm.js?v=2026042001"></script>
+  <script src="js/modules/sales.js?v=2026050701"></script>
+  <script src="js/modules/sales-quotes.js?v=2026051401"></script>
+  <script src="js/modules/sales-orders.js?v=2026050701"></script>
+  <script src="js/modules/sales-invoices.js?v=2026050701"></script>
+  <script src="js/modules/sales-report.js?v=2026050701"></script>
+  <script src="js/modules/sales-ux.js?v=2026042002"></script>
+  <script src="js/modules/purchases.js?v=2026042701"></script>
+  <script src="js/modules/inventory.js?v=2026043008"></script>
+  <script src="js/modules/inventory-ux.js?v=2026042002"></script>
+  <script src="js/modules/manufacturing.js?v=2026042001"></script>
+  <script src="js/modules/accounting.js?v=2026042202"></script>
+  <script src="js/modules/discuss.js?v=2026042001"></script>
+  <script src="js/modules/users.js?v=2026042001"></script>
+  <script src="js/modules/advisor.js?v=2026042001"></script>
+  <script src="js/modules/rh.js?v=2026042001"></script>
+  <script src="js/modules/agents-prompts-enhanced.js?v=2026042001"></script>
+  <script src="js/modules/agents.js?v=2026050201"></script>
+  <script src="js/modules/audit.js?v=2026042001"></script>
+  <!-- app.js doit être chargé AVANT auth.js : l'IIFE d'auth appelle initApp() immédiatement -->
+  <script src="js/app.js?v=2026043001"></script>
+  <script src="js/auth.js?v=2026042001"></script>
 
   <!-- ========================================================
        SIDEBAR TOGGLE — responsive burger menu
        ======================================================== -->
   <script>
+    /* ---- Barre de progression synchronisation MySQL ---- */
+    window.SyncProgress = {
+      show: function(total) {
+        var wrap = document.getElementById('sync-progress-wrap');
+        var bar  = document.getElementById('sync-progress-bar');
+        var lbl  = document.getElementById('sync-progress-label');
+        if (wrap) wrap.style.display = 'block';
+        if (bar)  bar.style.width = '0%';
+        if (lbl)  lbl.textContent = total > 0 ? ('0 / ' + total) : 'Synchronisation…';
+      },
+      update: function(p) {
+        var bar = document.getElementById('sync-progress-bar');
+        var lbl = document.getElementById('sync-progress-label');
+        var pct = p.total > 0 ? Math.round((p.done / p.total) * 100) : 50;
+        if (bar) bar.style.width = pct + '%';
+        if (lbl) lbl.textContent = p.total > 0
+          ? (p.done + ' / ' + p.total + (p.label ? ' — ' + p.label : ''))
+          : 'Synchronisation…';
+      },
+      hide: function() {
+        var bar  = document.getElementById('sync-progress-bar');
+        var wrap = document.getElementById('sync-progress-wrap');
+        if (bar) bar.style.width = '100%';
+        setTimeout(function() {
+          if (wrap) wrap.style.display = 'none';
+          if (bar)  bar.style.width = '0%';
+        }, 900);
+      }
+    };
+
+    /* ---- Pull MySQL global ---- */
+    async function syncFromServer(btn) {
+      if (!btn) btn = document.getElementById('btn-mysql-pull');
+      const orig = btn ? btn.textContent : '';
+      if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+
+      const COLS = ['produits', 'contacts', 'fournisseurs', 'devis', 'commandes', 'factures'];
+      window.SyncProgress.show(COLS.length);
+
+      try {
+        const r = await Store.pullAllFromMySQL(undefined, function(p) {
+          window.SyncProgress.update(p);
+        });
+        window.SyncProgress.hide();
+        const total = r.updated + r.added;
+        let msg, type;
+        if (r.errors.length) {
+          msg = `Sync partielle : ${total} màj, ${r.errors.length} erreur(s)`;
+          type = 'warning';
+        } else if (total === 0) {
+          msg = 'Déjà à jour — aucune modification détectée';
+          type = 'info';
+        } else {
+          msg = `Sync OK — ${r.updated} mis à jour, ${r.added} ajouté(s)`;
+          type = 'success';
+        }
+        if (typeof Toast !== 'undefined') Toast.show(msg, type);
+        else alert(msg);
+        /* Rechargement léger si des données ont changé */
+        if (total > 0) setTimeout(() => window.location.reload(), 1800);
+      } catch(e) {
+        window.SyncProgress.hide();
+        const err = 'Erreur sync : ' + e.message;
+        if (typeof Toast !== 'undefined') Toast.show(err, 'error');
+        else alert(err);
+      } finally {
+        if (btn) { btn.textContent = orig; btn.disabled = false; }
+      }
+    }
+
     /* ---- Bouton mode sombre ---- */
     (function() {
       const btn = document.getElementById('btn-theme');

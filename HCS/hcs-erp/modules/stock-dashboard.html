@@ -97,7 +97,6 @@ const CONFIG = {
         <button class="tab-btn" onclick="switchTab('anemone',this)">🧢 Anémone</button>
         <button class="tab-btn" onclick="switchTab('dtfusa',this)">🇺🇸 DTF USA</button>
         <button class="tab-btn" onclick="switchTab('fournisseurs',this)">🏭 Fournisseurs</button>
-        <button class="tab-btn" id="tab-btn-logos" onclick="switchTab('logos-bibliotheque',this)">🖼 Logos</button>
       </nav>
       <div class="text-xs text-gray-500 hidden lg:block" id="header-date"></div>
     </div>
@@ -304,42 +303,6 @@ function saveN8nUrl() {
           </tbody>
         </table>
       </div>
-    </div>
-  </div>
-
-  <!-- ONGLET LOGOS BIBLIOTHÈQUE -->
-  <div id="tab-logos-bibliotheque" class="tab-content">
-    <!-- Filtres -->
-    <div class="flex flex-wrap items-center gap-3 mb-5">
-      <div class="search-bar flex-1 min-w-52">
-        <span class="search-icon">🔍</span>
-        <input type="text" class="hcs-input" placeholder="Rechercher un logo..." id="logos-search" oninput="filtrerLogos()" style="padding-left:32px;" />
-      </div>
-      <select class="hcs-input" style="width:auto;min-width:160px" id="logos-filtre-client" onchange="filtrerLogos()">
-        <option value="">Tous les clients</option>
-      </select>
-      <select class="hcs-input" style="width:auto;min-width:120px" id="logos-filtre-statut" onchange="filtrerLogos()">
-        <option value="">Tous statuts</option>
-        <option value="detoure">Détoure</option>
-        <option value="recadre">Recadré</option>
-        <option value="final">Final</option>
-      </select>
-      <select class="hcs-input" style="width:auto;min-width:110px" id="logos-filtre-format" onchange="filtrerLogos()">
-        <option value="">Tous formats</option>
-        <option value="PNG">PNG</option>
-        <option value="SVG">SVG</option>
-        <option value="PDF">PDF</option>
-      </select>
-      <button class="btn-primary btn-sm" onclick="chargerBibliothequeLogos()">↻ Rafraîchir</button>
-      <span class="text-xs text-gray-500" id="logos-count">0 logo(s)</span>
-    </div>
-
-    <!-- Galerie -->
-    <div id="logos-galerie-vide" class="panel" style="display:none;">
-      <div class="py-16 text-center text-gray-600 text-sm">Aucun logo trouvé. Les logos traités dans PicWish Pipeline apparaîtront ici.</div>
-    </div>
-    <div id="logos-galerie" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-      <div class="col-span-full text-center text-gray-600 py-16 text-sm">Chargement...</div>
     </div>
   </div>
 
@@ -604,7 +567,6 @@ function switchTab(nom, btn) {
   document.getElementById(`tab-${nom}`).classList.add('active'); btn.classList.add('active');
   if (nom==='recapitulatif') actualiserRecap();
   if (nom==='dtfusa') actualiserDTF();
-  if (nom==='logos-bibliotheque') chargerBibliothequeLogos(); /* Charger la galerie au clic */
 }
 
 /* ============================================================
@@ -1298,150 +1260,6 @@ function confirmerBL(nouveauStatut) {
 
 /* Rafraîchissement alertes toutes les 5 min */
 setInterval(()=>{ const ac=document.querySelector('.tab-content.active'); if(ac){if(ac.id==='tab-dtfusa')actualiserDTF();if(ac.id==='tab-recapitulatif')actualiserRecap();} },5*60*1000);
-
-/* ============================================================
-   BIBLIOTHÈQUE LOGOS — depuis la table "logos" de l'ERP
-   ============================================================ */
-const LOGOS_API_URL = 'https://highcoffeeshirts.com/erp/api';
-const LOGOS_API_KEY = 'hcs-erp-2026';
-let _tousLesLogos = []; /* Cache local pour les filtres côté client */
-
-/* Charge tous les logos depuis l'API */
-async function chargerBibliothequeLogos() {
-  const galerie = document.getElementById('logos-galerie');
-  const vide    = document.getElementById('logos-galerie-vide');
-  galerie.innerHTML = '<div class="col-span-full text-center text-gray-600 py-16 text-sm">Chargement...</div>';
-  vide.style.display = 'none';
-  try {
-    const rep = await fetch(`${LOGOS_API_URL}/logos?sort=id&order=DESC&limit=200`, {
-      headers: { 'x-api-key': LOGOS_API_KEY }
-    });
-    if (!rep.ok) throw new Error(`HTTP ${rep.status}`);
-    const data = await rep.json();
-    _tousLesLogos = data.items || [];
-    /* Peupler le filtre clients */
-    const clients = [...new Set(_tousLesLogos.map(l => l.client_nom).filter(Boolean))].sort();
-    const selClient = document.getElementById('logos-filtre-client');
-    selClient.innerHTML = '<option value="">Tous les clients</option>' +
-      clients.map(c => `<option value="${escapeHtmlStock(c)}">${escapeHtmlStock(c)}</option>`).join('');
-    filtrerLogos();
-  } catch(e) {
-    galerie.innerHTML = `<div class="col-span-full text-center py-16"><p class="text-red-400 text-sm">Erreur chargement logos : ${escapeHtmlStock(e.message)}</p></div>`;
-  }
-}
-
-/* Filtre les logos côté client selon les sélections actives */
-function filtrerLogos() {
-  const recherche = (document.getElementById('logos-search').value || '').toLowerCase();
-  const client    = document.getElementById('logos-filtre-client').value;
-  const statut    = document.getElementById('logos-filtre-statut').value;
-  const format    = document.getElementById('logos-filtre-format').value;
-
-  const filtres = _tousLesLogos.filter(l => {
-    if (client  && l.client_nom !== client)  return false;
-    if (statut  && l.statut    !== statut)   return false;
-    if (format  && l.format    !== format)   return false;
-    if (recherche) {
-      const haystack = `${l.client_nom||''} ${l.nom_fichier||''} ${l.chemin||''}`.toLowerCase();
-      if (!haystack.includes(recherche)) return false;
-    }
-    return true;
-  });
-
-  document.getElementById('logos-count').textContent = `${filtres.length} logo(s)`;
-  afficherGalerieLogos(filtres);
-}
-
-/* Rendu de la galerie */
-function afficherGalerieLogos(logos) {
-  const galerie = document.getElementById('logos-galerie');
-  const vide    = document.getElementById('logos-galerie-vide');
-
-  if (logos.length === 0) {
-    galerie.innerHTML = '';
-    vide.style.display = 'block';
-    return;
-  }
-  vide.style.display = 'none';
-
-  galerie.innerHTML = logos.map(l => {
-    const initiale   = (l.client_nom || '?')[0].toUpperCase();
-    const badgeColor = l.statut === 'detoure' ? '#4ade80' : l.statut === 'recadre' ? '#60a5fa' : '#fbbf24';
-    const badgeBg    = l.statut === 'detoure' ? 'rgba(74,222,128,0.1)' : l.statut === 'recadre' ? 'rgba(96,165,250,0.1)' : 'rgba(251,191,36,0.1)';
-    return `
-      <div style="background:#111111;border:1px solid #222222;border-radius:12px;overflow:hidden;transition:border-color 0.2s;"
-           onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='#222222'">
-        <!-- Miniature -->
-        <div style="height:110px;background:#0d0d0d;display:flex;align-items:center;justify-content:center;
-                    background-image:linear-gradient(45deg,#141414 25%,transparent 25%),linear-gradient(-45deg,#141414 25%,transparent 25%),
-                      linear-gradient(45deg,transparent 75%,#141414 75%),linear-gradient(-45deg,transparent 75%,#141414 75%);
-                    background-size:12px 12px;background-position:0 0,0 6px,6px -6px,-6px 0;background-color:#0a0a0a;">
-          <div style="width:56px;height:56px;border-radius:10px;background:#1a1a1a;border:1px solid #333;
-                      display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#FF6B00;">
-            ${escapeHtmlStock(initiale)}
-          </div>
-        </div>
-        <!-- Infos -->
-        <div style="padding:10px 12px;">
-          <p style="font-size:12px;font-weight:600;color:#e5e5e5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 0 3px;">
-            ${escapeHtmlStock(l.client_nom || '—')}
-          </p>
-          <p style="font-size:10px;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 0 8px;">
-            ${escapeHtmlStock(l.nom_fichier || '—')}
-          </p>
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
-            <span style="font-size:10px;padding:2px 7px;border-radius:8px;background:${badgeBg};color:${badgeColor};border:1px solid ${badgeColor}33;">
-              ${escapeHtmlStock(l.statut || '—')}
-            </span>
-            <span style="font-size:10px;color:#555;">${escapeHtmlStock(l.date || '—')}</span>
-          </div>
-          <!-- Actions -->
-          <div style="display:flex;gap:5px;margin-top:8px;">
-            ${l.chemin ? `<button onclick="telechargerLogo(${JSON.stringify(escapeHtmlStock(l.chemin))})"
-                style="flex:1;padding:5px;border-radius:6px;border:1px solid #333;background:transparent;color:#9ca3af;font-size:10px;cursor:pointer;transition:all 0.2s;"
-                onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#333';this.style.color='#9ca3af'"
-                title="Chemin Dropbox : ${escapeHtmlStock(l.chemin)}">⬇ Info</button>` : ''}
-            <button onclick="utiliserDansMockup(${JSON.stringify({client_nom:l.client_nom,nom_fichier:l.nom_fichier})})"
-              style="flex:1;padding:5px;border-radius:6px;border:1px solid rgba(167,139,250,0.3);background:rgba(167,139,250,0.08);color:#a78bfa;font-size:10px;cursor:pointer;transition:all 0.2s;"
-              onmouseover="this.style.background='rgba(167,139,250,0.15)'" onmouseout="this.style.background='rgba(167,139,250,0.08)'">
-              ⚡ MockupForge
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-/* Affiche l'info de chemin Dropbox */
-function telechargerLogo(chemin) {
-  toast(`📂 Chemin Dropbox : ${chemin}`, 'info');
-}
-
-/* Ouvre MockupForge avec le client pré-rempli */
-function utiliserDansMockup(logo) {
-  const url = `../apps/mockup-forge-v12.html`;
-  /* Stocke le nom client pour que MockupForge le récupère */
-  try { localStorage.setItem('mfw_client_name', logo.client_nom || ''); } catch(e){}
-  window.open(url, '_blank');
-  toast(`Ouverture MockupForge pour "${logo.client_nom}" →`, 'success');
-}
-
-/* Helper HTML escaping */
-function escapeHtmlStock(s) {
-  const d = document.createElement('div');
-  d.appendChild(document.createTextNode(String(s||'')));
-  return d.innerHTML;
-}
-
-/* Activation automatique de l'onglet si URL hash = #logos-bibliotheque */
-document.addEventListener('DOMContentLoaded', () => {
-  if (window.location.hash === '#logos-bibliotheque') {
-    const btn = document.getElementById('tab-btn-logos');
-    if (btn) btn.click();
-  }
-});
-
 </script>
 </body>
 </html>

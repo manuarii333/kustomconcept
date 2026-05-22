@@ -43,10 +43,10 @@
 <!-- ===== SECTION CONFIG ===== -->
 <script>
 const CONFIG = {
-  // --- OpenAI GPT-4o Vision (OCR) ---
-  OPENAI_API_KEY: 'VOTRE_CLE_API_OPENAI',
+  // --- Claude API (Anthropic) — clé lue depuis localStorage ---
+  get ANTHROPIC_API_KEY() { return localStorage.getItem('hcs_anthropic_key') || ''; },
   // --- Odoo API ---
-  ODOO_URL: 'https://VOTRE_ODOO.odoo.com',
+  ODOO_URL: 'https://am595a.odoo.com',
   ODOO_DB: 'VOTRE_DB',
   ODOO_API_KEY: 'VOTRE_CLE_API_ODOO',
   // --- Dropbox ---
@@ -74,9 +74,15 @@ const CONFIG = {
   </div>
 </div>
 
-<!-- Vérification clé API -->
+<!-- Saisie clé API Claude -->
 <div id="api-warning" class="hidden mb-4 p-3 rounded-lg text-sm" style="background:#1a0000;border:1px solid #7f1d1d;color:#fca5a5">
-  ⚠️ Clé API OpenAI non configurée. Ouvrez le fichier et renseignez <code>CONFIG.OPENAI_API_KEY</code>.
+  ⚠️ Clé API Claude non configurée.
+  <div style="display:flex;gap:8px;margin-top:8px;">
+    <input id="key-input" type="password" placeholder="sk-ant-api03-..."
+      style="flex:1;background:#0d0d0d;border:1px solid #7f1d1d;border-radius:6px;padding:6px 10px;color:#e5e5e5;font-size:12px;" />
+    <button onclick="sauvegarderCle()" style="background:#FF6B00;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;font-weight:600;">Enregistrer</button>
+  </div>
+  <p style="margin-top:6px;font-size:11px;color:#f87171;">La clé est stockée dans votre navigateur (localStorage). Elle ne quitte pas votre appareil sauf pour les appels API.</p>
 </div>
 
 <!-- Zone d'import image -->
@@ -113,7 +119,7 @@ const CONFIG = {
 
 <!-- Bouton Analyser + barre de progression -->
 <div class="card p-5 mb-5">
-  <h2 class="text-base font-semibold text-white mb-4">2. Analyser avec GPT-4o Vision</h2>
+  <h2 class="text-base font-semibold text-white mb-4">2. Analyser avec Claude Vision</h2>
 
   <button id="btn-analyser" onclick="analyserDocument()" class="btn-primary w-full" disabled>
     🔍 Analyser le document
@@ -130,7 +136,7 @@ const CONFIG = {
       </div>
       <div class="step" id="step-ocr">
         <div class="step-icon wait" id="icon-ocr">2</div>
-        <span class="text-sm text-gray-400">Analyse OCR (GPT-4o Vision)...</span>
+        <span class="text-sm text-gray-400">Analyse OCR (Claude Vision)...</span>
       </div>
       <div class="step" id="step-parse">
         <div class="step-icon wait" id="icon-parse">3</div>
@@ -243,7 +249,7 @@ const CONFIG = {
 </div>
 
 <div class="mt-6 text-center text-xs text-gray-700">
-  High Coffee Shirt — Agent 9 OCR v1.0 — Propulsé par GPT-4o Vision
+  High Coffee Shirt — Agent 9 OCR v1.0 — Propulsé par Claude Vision
 </div>
 
 <script>
@@ -253,9 +259,18 @@ let imageFile = null;       // Fichier original
 let donneesExtraites = {};  // Résultat OCR parsé
 
 // ===== VÉRIFICATION CLÉ API =====
-if (!CONFIG.OPENAI_API_KEY || CONFIG.OPENAI_API_KEY === 'VOTRE_CLE_API_OPENAI') {
-  document.getElementById('api-warning').classList.remove('hidden');
+function _checkKey() {
+  const ok = CONFIG.ANTHROPIC_API_KEY && CONFIG.ANTHROPIC_API_KEY.startsWith('sk-ant-');
+  document.getElementById('api-warning').classList.toggle('hidden', ok);
+  return ok;
 }
+function sauvegarderCle() {
+  const val = document.getElementById('key-input').value.trim();
+  if (!val.startsWith('sk-ant-')) { alert('Clé invalide — doit commencer par sk-ant-'); return; }
+  localStorage.setItem('hcs_anthropic_key', val);
+  _checkKey();
+}
+_checkKey();
 
 // ===== DRAG & DROP =====
 const dropZone = document.getElementById('drop-zone');
@@ -296,9 +311,7 @@ function chargerImage(file) {
 // ===== ANALYSE OCR =====
 async function analyserDocument() {
   if (!imageDataUrl) { alert('Veuillez d\'abord importer une image.'); return; }
-  if (!CONFIG.OPENAI_API_KEY || CONFIG.OPENAI_API_KEY === 'VOTRE_CLE_API_OPENAI') {
-    alert('Clé API OpenAI non configurée.'); return;
-  }
+  if (!_checkKey()) { alert('Clé API Claude non configurée — renseignez-la dans le bandeau rouge.'); return; }
 
   document.getElementById('progress-section').classList.remove('hidden');
   document.getElementById('btn-analyser').disabled = true;
@@ -313,7 +326,7 @@ async function analyserDocument() {
   const mimeType = imageDataUrl.split(';')[0].split(':')[1];
   setStep('upload', 'done'); setProgress(30);
 
-  setStep('ocr', 'active'); log('Envoi à GPT-4o Vision...');
+  setStep('ocr', 'active'); log('Envoi à Claude Vision...');
 
   // Prompt OCR structuré
   const promptOCR = `Tu es un expert comptable. Analyse ce document comptable (facture, ticket de caisse ou bon de commande) et extrais les informations en JSON strict.
@@ -336,20 +349,22 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans explication) :
 Si une information est absente, mets null. Priorité à la précision des montants.`;
 
   try {
-    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + CONFIG.OPENAI_API_KEY
+        'x-api-key': CONFIG.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
-        max_tokens: 1000,
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
         messages: [{
           role: 'user',
           content: [
-            { type: 'text', text: promptOCR },
-            { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}`, detail: 'high' } }
+            { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } },
+            { type: 'text', text: promptOCR }
           ]
         }]
       })
@@ -357,11 +372,11 @@ Si une information est absente, mets null. Priorité à la précision des montan
 
     if (!resp.ok) {
       const err = await resp.json();
-      throw new Error(err.error?.message || 'Erreur API OpenAI');
+      throw new Error(err.error?.message || 'Erreur API Claude ' + resp.status);
     }
 
     const data = await resp.json();
-    const content = data.choices[0].message.content.trim();
+    const content = (data.content[0]?.text || '').trim();
     setStep('ocr', 'done'); setProgress(70);
 
     setStep('parse', 'active'); log('Extraction des données...');

@@ -47,6 +47,10 @@
   th{background:#0d0d20;color:#666688;padding:8px 10px;text-align:left;font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.4px;border-bottom:1px solid #1e1e3a}
   td{padding:9px 10px;border-bottom:1px solid #0d0d20;color:#a0a0c0;vertical-align:middle}
   tr:hover td{background:#0f0f22}
+  tr.clickable{cursor:pointer}
+  tr.clickable:hover td{background:#111230}
+  .link-btn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;background:#0d1a2e;border:1px solid #1e2e4a;color:#4a9eff;font-size:13px;text-decoration:none;transition:.15s}
+  .link-btn:hover{background:#1a3a5a;border-color:#4a9eff}
   .canal{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:12px;font-weight:500}
   .canal-gmail{background:#1a0d0d;color:#ef5350;border:1px solid #5a1a1a}
   .canal-messenger{background:#0d1a2e;color:#4a9eff;border:1px solid #1a3a5a}
@@ -148,7 +152,7 @@
       </div>
     </div>
     <table>
-      <thead><tr><th>Heure</th><th>Canal</th><th>Expéditeur</th><th>Message</th><th>Catégorie</th><th>Action</th></tr></thead>
+      <thead><tr><th>Heure</th><th>Canal</th><th>Expéditeur</th><th>Message</th><th>Catégorie</th><th>Action</th><th style="width:36px"></th></tr></thead>
       <tbody id="msgTable"></tbody>
     </table>
   </div>
@@ -181,38 +185,134 @@
       <div class="panel-title">⚙️ Configuration workflow
         <span style="font-size:10px;color:#444466">n8n Cloud</span>
       </div>
-      <div style="font-size:12px;color:#666688;margin-bottom:12px">Webhook URL du workflow actif :</div>
+      <div style="font-size:12px;color:#666688;margin-bottom:8px">Webhook URL active :</div>
       <div style="background:#0d0d20;border:1px solid #1e1e3a;border-radius:8px;padding:10px;font-size:11px;color:#4a9eff;word-break:break-all;margin-bottom:14px">
-        https://hcstahiti.app.n8n.cloud/webhook/hcs-triage
+        https://hcstahiti.app.n8n.cloud/webhook/bbc05e70-805b-4083-89ca-4de8b0124a42
       </div>
-      <div style="font-size:12px;color:#666688;margin-bottom:8px">Fichier n8n actif :</div>
+      <div style="font-size:12px;color:#666688;margin-bottom:8px">Workflow n8n actif :</div>
       <div style="background:#0d0d20;border:1px solid #2d7a2d;border-radius:8px;padding:10px;font-size:11px;color:#4caf50;margin-bottom:14px">
-        ✅ HCS — IA Classification Messenger &amp; Gmail v4-fixed.json<br>
-        <span style="color:#444466">35 nœuds · 3 bugs corrigés Session 7</span>
+        ✅ HCS — IA Classification Messenger &amp; Gmail v5-APPROBATION<br>
+        <span style="color:#4caf50">Actif · 52 nœuds · boucle approbation devis ✅</span>
       </div>
-      <div style="font-size:11px;color:#666688;line-height:1.8">
-        <div>📌 Gmail Trigger : <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b8d0d1dfd0dbd7dededdddcbd0d1caccf8dfd5d9d1d496dbd7d5">[email&#160;protected]</a></div>
-        <div>📌 Messenger Webhook : /webhook/messenger</div>
-        <div>📌 Google Sheets : Mémoire clients + Catalogue</div>
-        <div>📌 Dropbox : Archivage /HCS/2026/CLIENTS/</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <a href="https://hcstahiti.app.n8n.cloud/workflows" target="_blank"
+           style="flex:1;text-align:center;background:#1a1a3a;color:#4a9eff;border:1px solid #2a2a5a;border-radius:8px;padding:8px;font-size:11px;text-decoration:none;font-weight:600">
+          ⚙️ Ouvrir n8n
+        </a>
+        <a href="https://hcstahiti.app.n8n.cloud/executions" target="_blank"
+           style="flex:1;text-align:center;background:#1a1a3a;color:#ce93d8;border:1px solid #2a1a3a;border-radius:8px;padding:8px;font-size:11px;text-decoration:none;font-weight:600">
+          📋 Exécutions
+        </a>
+      </div>
+      <div style="font-size:11px;color:#666688;line-height:1.9">
+        <div>📌 Gmail : highcoffeeshirt@gmail.com — polling 1 min</div>
+        <div>📌 Messenger Webhook : /webhook/bbc05e70-805b-4083-89ca-4de8b0124a42</div>
+        <div>📌 OpenAI : gpt-4o-mini (classifier) + gpt-4o (devis)</div>
+        <div>📌 Sheets Historique : 1AezDOlw5S7vJDXfQH…</div>
+        <div>📌 Sheets Catalogue : 1AezDOlw5S7vJDXfQH…</div>
+        <div>📌 Sheets Vocabulaire : 1jly-2WVGVZI8N6NNC…</div>
+        <div>📌 Dropbox : /HCS/2026/CLIENTS/</div>
+        <div>📌 ERP MySQL : /api/devis + /api/contacts + /api/triage_messages</div>
+        <div>📌 PicWish Pipeline : /webhook/picwish-pipeline</div>
       </div>
     </div>
   </div>
 </main>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-// === DONNÉES DÉMO ===
-const DEMO_MESSAGES = [
-  {ts:'08:14',canal:'gmail',sender:'Marie Tamatoa',msg:'Bonjour, je voudrais commander 20 t-shirts pour notre événement du 15 mars...',cat:'DEVIS',action:'→ Agent 2 (Odoo)'},
-  {ts:'08:31',canal:'messenger',sender:'1234567890',msg:'Salut, vous faites du flocage sur casquettes ?',cat:'INFO_PRODUITS',action:'Réponse auto envoyée'},
-  {ts:'09:02',canal:'gmail',sender:'Jean-Pierre Teriimana',msg:'Bonjour, j\'envoie mon logo pour le détourage (voir pièce jointe)',cat:'TRAITEMENT_IMAGE',action:'→ PicWish Pipeline'},
-  {ts:'09:18',canal:'gmail',sender:'Hina Varua',msg:'Pourriez-vous me faire une maquette de mon t-shirt ? Taille L, blanc',cat:'MOCKUP',action:'Réponse : envoi logo demandé'},
-  {ts:'09:45',canal:'messenger',sender:'9876543210',msg:'Quels sont vos délais de livraison ?',cat:'INFO_SERVICES',action:'Réponse auto envoyée'},
-  {ts:'10:20',canal:'gmail',sender:'Faa\'a Sport Club',msg:'Suite à notre échange, voici les quantités confirmées : 50 polo, 30 t-shirts...',cat:'DEVIS',action:'→ Agent 2 (Odoo)'},
-  {ts:'10:55',canal:'messenger',sender:'5647382910',msg:'Vous avez des t-shirts polyester en stock ?',cat:'INFO_PRODUITS',action:'Réponse auto envoyée'},
-  {ts:'11:30',canal:'gmail',sender:'Maeva Nui',msg:'Bonjour, je cherche des informations sur vos services DTF',cat:'INFO_SERVICES',action:'Réponse auto envoyée'},
+<script>
+// ============================================================
+// CONFIG API HCS ERP
+// ============================================================
+const API_BASE = 'https://highcoffeeshirts.com/erp/api';
+const API_KEY  = 'hcs-erp-2026';
+
+// IDs Facebook Business Manager HCS (constants)
+const FB_BUSINESS_ID = '5210235986495098';
+const FB_PAGE_ID     = '128737020795199';
+
+// Données de secours si l'API est indisponible
+const DEMO_FALLBACK = [
+  {ts:'08:14',canal:'gmail',   sender:'Marie Tamatoa',      msg:'Bonjour, je voudrais commander 20 t-shirts pour notre événement...',cat:'DEVIS',           action:'→ Agent 2 (Devis)'},
+  {ts:'08:31',canal:'messenger',sender:'Client Messenger',  msg:'Salut, vous faites du flocage sur casquettes ?',                    cat:'INFO_PRODUITS',    action:'Réponse auto envoyée'},
+  {ts:'09:02',canal:'gmail',   sender:'Jean-Pierre Teriimana',msg:'Bonjour, j\'envoie mon logo pour le détourage',                  cat:'TRAITEMENT_IMAGE', action:'→ PicWish Pipeline'},
+  {ts:'09:18',canal:'gmail',   sender:'Hina Varua',         msg:'Pourriez-vous me faire une maquette de mon t-shirt ?',             cat:'MOCKUP',           action:'Réponse : envoi logo demandé'},
+  {ts:'09:45',canal:'messenger',sender:'Client Messenger',  msg:'Quels sont vos délais de livraison ?',                             cat:'INFO_SERVICES',    action:'Réponse auto envoyée'},
 ];
 
+// Données actives (remplies par l'API)
+let MESSAGES = [];
+
+// ============================================================
+// NORMALISATION : enregistrement API → format interne
+// ============================================================
+function norm(r) {
+  return {
+    ts:        (r.created_at || '').slice(11, 16) || r.ts || '--:--',
+    canal:     r.canal      || 'messenger',
+    sender:    r.expediteur || r.sender || '?',
+    msg:       r.message    || r.msg    || '',
+    cat:       r.categorie  || r.cat    || 'INFO_SERVICES',
+    action:    r.action     || '',
+    source_id: r.source_id  || '',
+  };
+}
+
+// Construit le lien de conversation (Messenger Business Manager ou Gmail)
+function buildLink(m) {
+  if (m.canal === 'messenger' && m.source_id) {
+    return `https://business.facebook.com/latest/inbox/messenger`
+         + `?business_id=${FB_BUSINESS_ID}`
+         + `&asset_id=${FB_PAGE_ID}`
+         + `&selected_item_id=${m.source_id}`
+         + `&thread_type=FB_MESS`;
+  }
+  if (m.canal === 'gmail' && m.source_id) {
+    return `https://mail.google.com/mail/u/0/#inbox/${m.source_id}`;
+  }
+  return null;
+}
+
+// ============================================================
+// CHARGEMENT API
+// ============================================================
+async function loadData() {
+  try {
+    const res = await fetch(`${API_BASE}/triage_messages/today`, {
+      headers: { 'x-api-key': API_KEY }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    MESSAGES = (data.items || []).map(norm);
+    loadKPIs();
+    renderTable();
+    buildCatChart();
+    await loadWeekStats();
+  } catch(e) {
+    console.warn('Triage API indisponible, données démo :', e.message);
+    if (MESSAGES.length === 0) MESSAGES = DEMO_FALLBACK;
+    loadKPIs();
+    renderTable();
+    buildCatChart();
+    buildVolChartData([]);
+  }
+}
+
+async function loadWeekStats() {
+  try {
+    const res = await fetch(`${API_BASE}/triage_messages/stats?days=7`, {
+      headers: { 'x-api-key': API_KEY }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    buildVolChartData(data.daily || []);
+  } catch(e) {
+    buildVolChartData([]);
+  }
+}
+
+// ============================================================
+// BADGES
+// ============================================================
 function canalBadge(c){
   return c==='gmail'
     ? '<span class="canal canal-gmail">✉️ Gmail</span>'
@@ -224,67 +324,123 @@ function catBadge(c){
   return `<span class="cat-badge ${map[c]||''}">${lbl[c]||c}</span>`;
 }
 
+// ============================================================
+// TABLE
+// ============================================================
 function renderTable(){
   const fc=document.getElementById('filterCanal').value;
   const ft=document.getElementById('filterCat').value;
-  const msgs=DEMO_MESSAGES.filter(m=>(fc===''||m.canal===fc)&&(ft===''||m.cat===ft));
+  const msgs=MESSAGES.filter(m=>(fc===''||m.canal===fc)&&(ft===''||m.cat===ft));
   const tbody=document.getElementById('msgTable');
   tbody.innerHTML='';
+  if(msgs.length===0){
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#444466;padding:20px">Aucun message aujourd\'hui</td></tr>';
+    return;
+  }
   msgs.forEach(m=>{
-    const tr=document.createElement('tr');
+    const link = buildLink(m);
+    const tr   = document.createElement('tr');
+    if (link) {
+      tr.className = 'clickable';
+      tr.title     = 'Ouvrir la conversation';
+      tr.onclick   = () => window.open(link, '_blank');
+    }
+    const linkCell = link
+      ? `<td><a href="${link}" target="_blank" class="link-btn" onclick="event.stopPropagation()" title="Ouvrir">↗</a></td>`
+      : '<td></td>';
     tr.innerHTML=`<td class="time">${m.ts}</td><td>${canalBadge(m.canal)}</td>
       <td style="font-size:12px;color:#e0e0f0">${m.sender}</td>
-      <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.msg}</td>
+      <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.msg}</td>
       <td>${catBadge(m.cat)}</td>
-      <td class="action">${m.action}</td>`;
+      <td class="action">${m.action||''}</td>${linkCell}`;
     tbody.appendChild(tr);
   });
 }
 
-// === KPIs ===
+// ============================================================
+// KPIs
+// ============================================================
 function loadKPIs(){
-  const msgs=DEMO_MESSAGES;
-  document.getElementById('kpiTotal').textContent=msgs.length;
-  document.getElementById('kpiGmail').textContent=msgs.filter(m=>m.canal==='gmail').length;
-  document.getElementById('kpiMessenger').textContent=msgs.filter(m=>m.canal==='messenger').length;
-  document.getElementById('kpiDevis').textContent=msgs.filter(m=>m.cat==='DEVIS').length;
-  document.getElementById('kpiImages').textContent=msgs.filter(m=>m.cat==='TRAITEMENT_IMAGE').length;
+  document.getElementById('kpiTotal').textContent    = MESSAGES.length;
+  document.getElementById('kpiGmail').textContent    = MESSAGES.filter(m=>m.canal==='gmail').length;
+  document.getElementById('kpiMessenger').textContent= MESSAGES.filter(m=>m.canal==='messenger').length;
+  document.getElementById('kpiDevis').textContent    = MESSAGES.filter(m=>m.cat==='DEVIS').length;
+  document.getElementById('kpiImages').textContent   = MESSAGES.filter(m=>m.cat==='TRAITEMENT_IMAGE').length;
 }
 
-// === CHARTS ===
-function buildCharts(){
-  const cats=DEMO_MESSAGES.reduce((a,m)=>{a[m.cat]=(a[m.cat]||0)+1;return a},{});
-  new Chart(document.getElementById('catChart').getContext('2d'),{
+// ============================================================
+// GRAPHIQUES
+// ============================================================
+let _catChart = null;
+let _volChart = null;
+
+function buildCatChart(){
+  if(_catChart){_catChart.destroy();_catChart=null;}
+  const cats=MESSAGES.reduce((a,m)=>{a[m.cat]=(a[m.cat]||0)+1;return a},{});
+  _catChart=new Chart(document.getElementById('catChart').getContext('2d'),{
     type:'doughnut',
-    data:{labels:['Devis','Services','Produits','Mockup','Image'],
-      datasets:[{data:[cats.DEVIS||0,cats.INFO_SERVICES||0,cats.INFO_PRODUITS||0,cats.MOCKUP||0,cats.TRAITEMENT_IMAGE||0],
-        backgroundColor:['#f0c040','#4caf50','#4a9eff','#ce93d8','#ff9800'],borderWidth:0,hoverOffset:4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#666688',font:{size:10},boxWidth:10}}}}
+    data:{
+      labels:['Devis','Services','Produits','Mockup','Image'],
+      datasets:[{
+        data:[cats.DEVIS||0,cats.INFO_SERVICES||0,cats.INFO_PRODUITS||0,cats.MOCKUP||0,cats.TRAITEMENT_IMAGE||0],
+        backgroundColor:['#f0c040','#4caf50','#4a9eff','#ce93d8','#ff9800'],
+        borderWidth:0,hoverOffset:4
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'right',labels:{color:'#666688',font:{size:10},boxWidth:10}}}}
   });
-  new Chart(document.getElementById('volChart').getContext('2d'),{
+}
+
+function buildVolChartData(daily){
+  if(_volChart){_volChart.destroy();_volChart=null;}
+  /* Si pas de données API, utiliser des valeurs démo */
+  const rows = daily.length ? daily : [
+    {jour:'J-6',gmail:'4',messenger:'3'},{jour:'J-5',gmail:'7',messenger:'5'},
+    {jour:'J-4',gmail:'5',messenger:'4'},{jour:'J-3',gmail:'9',messenger:'6'},
+    {jour:'J-2',gmail:'6',messenger:'4'},{jour:'J-1',gmail:'3',messenger:'2'},
+    {jour:'Auj',gmail:'8',messenger:'4'},
+  ];
+  const labels   = rows.map(d=>(d.jour||'').slice(-5));
+  const gmailD   = rows.map(d=>parseInt(d.gmail)||0);
+  const messengerD=rows.map(d=>parseInt(d.messenger)||0);
+  _volChart=new Chart(document.getElementById('volChart').getContext('2d'),{
     type:'bar',
-    data:{labels:['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'],
+    data:{
+      labels,
       datasets:[
-        {label:'Gmail',data:[4,7,5,9,6,3,8],backgroundColor:'rgba(239,83,80,.6)'},
-        {label:'Messenger',data:[3,5,4,6,4,2,4],backgroundColor:'rgba(74,158,255,.6)'}
-      ]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#666688',font:{size:10},boxWidth:10}}},
+        {label:'Gmail',    data:gmailD,    backgroundColor:'rgba(239,83,80,.6)'},
+        {label:'Messenger',data:messengerD,backgroundColor:'rgba(74,158,255,.6)'}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#666688',font:{size:10},boxWidth:10}}},
       scales:{x:{stacked:true,grid:{color:'#1e1e3a'},ticks:{color:'#666688',font:{size:9}}},
               y:{stacked:true,grid:{color:'#1e1e3a'},ticks:{color:'#666688',font:{size:9}}}}}
   });
 }
 
-// === CONNEXIONS ===
+// ============================================================
+// CONNEXIONS
+// ============================================================
 const CONNS=[
-  {name:'Gmail Trigger',icon:'✉️',status:'ok',lbl:'Actif'},
-  {name:'Messenger Webhook',icon:'💬',status:'ok',lbl:'Actif'},
-  {name:'OpenAI GPT-4o',icon:'🤖',status:'ok',lbl:'Actif'},
-  {name:'Google Sheets',icon:'📊',status:'ok',lbl:'Connecté'},
-  {name:'Dropbox',icon:'📦',status:'ok',lbl:'Connecté'},
-  {name:'WhatsApp',icon:'📱',status:'warn',lbl:'Non configuré'},
+  {name:'Gmail Trigger',              icon:'✉️',  status:'ok',  lbl:'Actif — polling 1 min'},
+  {name:'Messenger Webhook',          icon:'💬',  status:'ok',  lbl:'Actif — /webhook/bbc05e70-805b-4083-89ca-4de8b0124a42'},
+  {name:'OpenAI GPT-4o-mini',        icon:'🤖',  status:'ok',  lbl:'Classifier + Réponse'},
+  {name:'OpenAI GPT-4o Vision',      icon:'🔬',  status:'ok',  lbl:'Extraction devis + images'},
+  {name:'Sheets — Historique clients',icon:'📊',  status:'ok',  lbl:'Sheet 716235068'},
+  {name:'Sheets — Catalogue produits',icon:'📗',  status:'ok',  lbl:'Sheet 1886730405'},
+  {name:'Sheets — Vocabulaire appris',icon:'📘',  status:'ok',  lbl:'Sheet 379942511'},
+  {name:'Dropbox',                    icon:'📦',  status:'ok',  lbl:'/HCS/2026/CLIENTS/'},
+  {name:'ERP MySQL — Devis',         icon:'📋',  status:'ok',  lbl:'POST /api/devis'},
+  {name:'ERP MySQL — Contacts',      icon:'👤',  status:'ok',  lbl:'GET /api/contacts/search'},
+  {name:'ERP MySQL — Triage log',    icon:'🗃️', status:'ok',  lbl:'POST /api/triage_messages'},
+  {name:'PicWish Pipeline',           icon:'🖼️', status:'ok',  lbl:'webhook /picwish-pipeline'},
+  {name:'n8n Cloud',                  icon:'⚡',  status:'ok',  lbl:'v5-APPROBATION · actif · 52 nœuds'},
 ];
 function buildConns(){
   const list=document.getElementById('connList');
+  list.innerHTML='';
   CONNS.forEach(c=>{
     const div=document.createElement('div');
     div.className='conn-item';
@@ -294,7 +450,9 @@ function buildConns(){
   });
 }
 
-// === TEST CLASSIF (simulation locale) ===
+// ============================================================
+// TEST CLASSIF (simulation locale)
+// ============================================================
 const KEYWORDS={
   DEVIS:['devis','commande','commander','quantité','prix','tarif','combien','facture'],
   TRAITEMENT_IMAGE:['logo','image','photo','png','jpg','fichier','détourage','fond'],
@@ -310,7 +468,7 @@ function simulateClassif(){
     if(score>bestScore){bestScore=score;best=cat;}
   });
   const conf=Math.min(95,70+bestScore*8);
-  const actions={DEVIS:'→ Routé vers Agent 2 (création devis Odoo)',TRAITEMENT_IMAGE:'→ Routé vers PicWish Pipeline',
+  const actions={DEVIS:'→ Routé vers Agent 2 (création devis)',TRAITEMENT_IMAGE:'→ Routé vers PicWish Pipeline',
     MOCKUP:'→ Réponse : envoi logo + détails demandés',INFO_SERVICES:'→ Réponse automatique services',INFO_PRODUITS:'→ Réponse automatique produits'};
   const labels={DEVIS:'💼 DEVIS',TRAITEMENT_IMAGE:'🎨 TRAITEMENT IMAGE',MOCKUP:'🖼️ MOCKUP',INFO_SERVICES:'ℹ️ INFO SERVICES',INFO_PRODUITS:'📦 INFO PRODUITS'};
   const colors={DEVIS:'#f0c040',TRAITEMENT_IMAGE:'#ff9800',MOCKUP:'#ce93d8',INFO_SERVICES:'#4caf50',INFO_PRODUITS:'#4a9eff'};
@@ -319,4 +477,20 @@ function simulateClassif(){
   document.getElementById('resultCat').style.color=colors[best];
   document.getElementById('resultConf').textContent=`Confiance : ${conf}% · ${bestScore} mot(s)-clé(s) détecté(s)`;
   document.getElementById('resultAction').textContent=actions[best];
-  box.className='r
+  box.className='result-box show';
+}
+function clearTest(){
+  document.getElementById('testMsg').value='';
+  document.getElementById('resultBox').className='result-box';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+buildConns();
+loadData();
+// Rafraîchissement automatique toutes les 30 secondes
+setInterval(loadData, 30000);
+</script>
+</body>
+</html>

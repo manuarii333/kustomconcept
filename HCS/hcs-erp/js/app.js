@@ -50,7 +50,9 @@ const APPS = [
       { id: 'contacts',  label: 'Contacts',  icon: '👤', section: 'Clients' },
       { id: 'pipeline',  label: 'Pipeline',  icon: '⊞',  section: 'Clients' },
       { id: 'receipts',     label: 'Bons de livraison', icon: '📋', section: 'Réception' },
-      { id: 'sales-report', label: 'Rapport',           icon: '📈', section: 'Rapports'  }
+      { id: 'sales-report', label: 'Rapport',           icon: '📈', section: 'Rapports'  },
+      { id: 'devis-analyser', label: 'Analyseur Marges', icon: '🔬', section: 'Rapports', href: 'apps/devis-analyser.html' },
+      { id: 'doc-params',   label: 'Mise en forme',    icon: '🎨', section: 'Paramètres' }
     ]
   },
   {
@@ -60,6 +62,8 @@ const APPS = [
     color: '#ff6b6b',
     pinned: true,
     views: [
+      { id: 'planning',     label: 'Planning',       icon: '📅', section: 'Atelier'    },
+      { id: 'hcs-designer', label: '⬡ HCS Designer', icon: '🎨', section: 'Atelier'    },
       { id: 'mo',           label: 'Ordres de fab.', icon: '🔧', section: 'Atelier'    },
       { id: 'bom',          label: 'Nomenclatures',  icon: '📐', section: 'Paramètres' },
       { id: 'work-centers', label: 'Postes',         icon: '🏭', section: 'Paramètres' }
@@ -109,11 +113,25 @@ const APPS = [
      MODULES SECONDAIRES — accessibles via "⋯ Plus"
      ==================================================== */
   {
+    id: 'fidelite',
+    label: 'Fidélité',
+    icon: '⭐',
+    color: '#f6d365',
+    pinned: true,
+    views: [
+      { id: 'programme',  label: 'Programme Fidélité', icon: '⭐', section: 'Comptes Clients',
+        href: 'apps/andromeda-campaign.html' },
+      { id: 'portail',    label: 'Portail Client',     icon: '🔗', section: 'Comptes Clients',
+        href: 'apps/compte-client.html' },
+      { id: 'envoyer-lien', label: 'Envoyer un lien', icon: '📧', section: 'Comptes Clients' }
+    ]
+  },
+  {
     id: 'comptabilite',
     label: 'Comptabilité',
     icon: '💰',
     color: '#00d4aa',
-    pinned: false,
+    pinned: true,
     views: [
       { id: 'tableau-de-bord', label: 'Tableau de bord',    icon: '📊', section: 'Vue globale' },
       { id: 'conseiller',      label: 'Copilote financier',  icon: '🧠', section: 'Vue globale' },
@@ -126,7 +144,23 @@ const APPS = [
       { id: 'bilan',           label: 'Bilan',               icon: '⚖',  section: 'Rapports'    },
       { id: 'balance',         label: 'Balance',             icon: '📊', section: 'Rapports'    },
       { id: 'tax-report',      label: 'Rapport TVA',         icon: '📑', section: 'Rapports'    },
-      { id: 'assistant',       label: '✨ Assistant Comptable', icon: '🤖', section: 'IA'       }
+      { id: 'stats-ventes',   label: 'Stats ventes & TVA',  icon: '📦', section: 'Rapports'    },
+      { id: 'assistant',       label: '✨ Assistant Comptable', icon: '🤖', section: 'IA'       },
+      { id: 'session',         label: '💾 Session / Backup',   icon: '🛡', section: 'IA'       }
+    ]
+  },
+  {
+    id: 'agents',
+    label: 'Agents IA',
+    icon: '🤖',
+    color: '#00d4aa',
+    pinned: true,
+    views: [
+      { id: 'dashboard',       label: 'Tableau de bord',   icon: '⬡',  section: 'Agents IA' },
+      { id: 'chat',            label: 'Chat agents',        icon: '💬', section: 'Agents IA' },
+      { id: 'prompts',         label: 'Prompts',            icon: '📋', section: 'Agents IA' },
+      { id: 'sessions',        label: 'Historique',         icon: '🕓', section: 'Agents IA' },
+      { id: 'apprentissages',  label: 'Apprentissages',     icon: '🧠', section: 'Agents IA' }
     ]
   },
   {
@@ -155,46 +189,50 @@ const APPS = [
     ]
   },
   {
-    id: 'agents',
-    label: 'Agents IA',
-    icon: '⬡',
-    color: '#4a5fff',
-    pinned: true,
-    views: [
-      { id: 'dashboard', label: 'Dashboard',  icon: '⬡',  section: 'Agents' },
-      { id: 'chat',      label: 'Chat',        icon: '💬', section: 'Agents' },
-      { id: 'sessions',  label: 'Sessions',    icon: '📋', section: 'Agents' }
-    ]
-  },
-  {
     id: 'outils',
     label: 'Outils HCS',
     icon: '🔧',
     color: '#6B7280',
-    pinned: false,
     views: [
       { id: 'triage-dashboard',        label: 'Triage & Réception',    icon: '📋', section: 'Opérations'       },
       { id: 'commercial-dashboard',    label: 'Commercial & Devis',    icon: '🤝', section: 'Opérations'       },
       { id: 'boutique-assistant',      label: 'Boutique Assistant',    icon: '🏪', section: 'Opérations'       },
-      { id: 'planning-dashboard',      label: 'Planning Production',   icon: '📅', section: 'Production'       },
       { id: 'atelier-production',      label: 'Atelier Production',    icon: '⚙️', section: 'Production'       },
       { id: 'dtf-atelier-bn20-yannick',label: 'DTF Atelier BN20',     icon: '🖨',  section: 'Production'       },
       { id: 'dtf-atelier-usa',         label: 'DTF Atelier USA',      icon: '🖨',  section: 'Production'       },
       { id: 'dtf-plaques-transfert',   label: 'DTF Plaques Transfert', icon: '🖨', section: 'Production'       },
       { id: 'signmaster-guide',        label: 'SignMaster Guide',      icon: '✂️', section: 'Production'       },
       { id: 'admin-photos-produits',   label: 'Photos Produits',       icon: '📸', section: 'Visuel & Contenu' },
-      { id: 'picwish-pipeline',        label: 'PicWish Pipeline',      icon: '🖼',  section: 'Visuel & Contenu' },
+      { id: 'hcs-designer',            label: '⬡ HCS Designer',        icon: '🎨', section: 'Visuel & Contenu' },
+      { id: 'picwish-pipeline',        label: 'PicWish Pipeline',      icon: '🖼',  section: 'Visuel & Contenu', external: true, url: 'apps/picwish-pipeline.html' },
+      { id: 'tshirt-mockup-studio',    label: 'T-Shirt Mockup Studio', icon: '👕',  section: 'Visuel & Contenu', external: true, url: 'apps/tshirt-mockup-studio.html' },
       { id: 'content-generator',       label: 'Content Generator',     icon: '✍️', section: 'Visuel & Contenu' },
       { id: 'stock-dashboard',         label: 'Stock Dashboard',       icon: '📦', section: 'Gestion'          },
-      { id: 'finance-dashboard',       label: 'Finance Dashboard',     icon: '💰', section: 'Gestion'          },
+      { id: 'finance-dashboard',        label: 'Finance Dashboard',     icon: '💰', section: 'Gestion'          },
       { id: 'rapport-pl',              label: 'Rapport P&L',           icon: '📈', section: 'Gestion'          },
+      { id: 'sessions-comptables',     label: 'Sessions Comptables',   icon: '📅', section: 'Gestion'          },
       { id: 'ocr-scanner',             label: 'Scanner OCR',           icon: '🔍', section: 'Gestion'          },
+      { id: 'guide-erp',               label: '📖 Guide ERP',          icon: '📖', section: 'Aide'             },
       { id: 'supervision-dashboard',   label: 'Supervision',           icon: '👁',  section: 'Supervision'      },
       { id: 'routine-dashboard',       label: 'Routines',              icon: '🔄', section: 'Supervision'      },
       { id: 'vocal-dashboard',         label: 'Agent Vocal',           icon: '🎙', section: 'Supervision'      },
-      { id: 'audit-dashboard',         label: '🔍 Audit ERP',          icon: '🔍', section: 'Supervision'      },
-      { id: 'migration-db',            label: '🗄️ Migration DB',        icon: '🗄️', section: 'Gestion'          },
-      { id: 'apps-hcs',                label: 'Applications HCS',      icon: '🚀', section: 'Applications'     }
+      { id: 'advisor',                  label: '⬡ Grace — Advisor IA',  icon: '🤖', section: 'Supervision'      },
+      { id: 'dev-studio',               label: 'Dev Studio',            icon: '🛠',  section: 'Développement'    },
+      /* ── Applications HCS externes ── */
+      { id: 'ext-andromeda',   label: 'Andromeda Builder', icon: '📡', section: 'Applications HCS', external: true, url: 'apps/andromeda-campaign.html' },
+      { id: 'mockup-forge-v12', label: 'MockupForge v12',   icon: '🖼️', section: 'Applications HCS' },
+      { id: 'dtf-studio',      label: 'DTF Studio Creator', icon: '🎬', section: 'Applications HCS', external: true, url: 'apps/dtf-studio.html' },
+      { id: 'ext-dtf-composer',label: 'DTF Composer v4',   icon: '🎨', section: 'Applications HCS', external: true, url: '../agents/agent3_visuel/dtf-composer-v4.html' },
+      { id: 'calculateur-transfert-dtf-v2',         label: 'Calculateur Transfert DTF V2', icon: '🎨', section: 'Applications HCS' },
+      { id: 'calculateur-vinyl-hcs',               label: 'Calculateur Vinyle',      icon: '✂️', section: 'Applications HCS' },
+      { id: 'calculateur-transfert-thermocollant', label: 'Calculateur Transfert',   icon: '♨️', section: 'Applications HCS' },
+      { id: 'product-creator',                     label: 'Product Creator CSV',     icon: '📦', section: 'Applications HCS' },
+      { id: 'ext-hcs-builder', label: 'HCS Builder v2',    icon: '🏗️', section: 'Applications HCS', external: true, url: '../hcs-builder-v2-fixed.html' },
+      { id: 'ext-pass-hcs',    label: 'Pass HCS',          icon: '🎫', section: 'Applications HCS', external: true, url: '../hcs-hub-ecosystem/hcs-hub-ecosystem/hcs-pass-test.html' },
+      { id: 'ext-hub',         label: 'HCS Hub',           icon: '🗄️', section: 'Applications HCS', external: true, url: '../hcs-hub.html' },
+      { id: 'ext-cockpit',     label: 'HCS Cockpit',       icon: '🚀', section: 'Applications HCS', external: true, url: '../hcs-hub-ecosystem/hcs-hub-ecosystem/hcs-cockpit.html' },
+      { id: 'agents-profiles',  label: 'Profils Agents IA', icon: '🤖', section: 'Applications HCS', external: true, url: 'apps/hcs-agents-profiles.html' },
+      { id: 'workflow-builder', label: 'Workflow Builder',   icon: '⛓',  section: 'Applications HCS', external: true, url: 'apps/hcs-workflow-builder.html' }
     ]
   }
 ];
@@ -209,13 +247,39 @@ const AppState = {
   searchQuery: ''
 };
 
+/* Exposé pour Store.sync — rafraîchit la vue courante après sync MySQL */
+window.App = {
+  refresh: () => {
+    if (AppState.currentView) openView(AppState.currentView);
+    else if (AppState.currentApp) openApp(AppState.currentApp);
+  }
+};
+
 /* ----------------------------------------------------------------
    INITIALISATION
    Lance l'app après le login
    ---------------------------------------------------------------- */
 function initApp() {
   renderTopbar();
-  openApp('dashboard');
+
+  /* Restaurer la navigation depuis le hash URL (lien permanent) */
+  const _startHash = window.location.hash.replace('#', '').trim();
+  if (_startHash && _startHash.includes('/')) {
+    const [_appId, _viewId] = _startHash.split('/');
+    const _appOk = APPS.find(a => a.id === _appId);
+    if (_appOk) {
+      openApp(_appId);
+      if (_viewId) setTimeout(() => openView(_viewId), 80);
+    } else {
+      openApp('dashboard');
+    }
+  } else if (_startHash) {
+    const _appOk = APPS.find(a => a.id === _startHash);
+    openApp(_appOk ? _startHash : 'dashboard');
+  } else {
+    openApp('dashboard');
+  }
+
   bindToolbar();
   bindModal();
   initGlobalSearch(); // Ctrl+K recherche globale
@@ -224,6 +288,25 @@ function initApp() {
   if (typeof Advisor !== 'undefined') {
     setTimeout(() => Advisor.runAtLogin(), 1500);
   }
+
+  /* Listener : reçoit les produits depuis Product Creator (iframe) */
+  window.addEventListener('message', async (e) => {
+    if (!e.data || e.data.type !== 'HCS_SAVE_PRODUCTS') return;
+    const list = e.data.products || [];
+    if (list.length === 0) return;
+    let ok = 0, err = 0;
+    for (const p of list) {
+      try {
+        await Store.create('produits', p);
+        ok++;
+      } catch (_) { err++; }
+    }
+    const msg = err === 0
+      ? `${ok} produit(s) enregistré(s) dans l'ERP ✓`
+      : `${ok} OK · ${err} erreur(s)`;
+    if (typeof showToast === 'function') showToast(msg, err ? 'warning' : 'success');
+    else alert(msg);
+  });
 }
 
 /* ----------------------------------------------------------------
@@ -245,12 +328,24 @@ function renderTopbar() {
   const moreApps      = allAccessible.filter(app => app.pinned === false);
 
   /* Modules principaux */
-  menu.innerHTML = pinnedApps.map(app => `
-    <button class="app-item" data-app="${app.id}" onclick="openApp('${app.id}')">
+  menu.innerHTML = pinnedApps.map(app => {
+    const btn = `<button class="app-item" data-app="${app.id}" onclick="openApp('${app.id}')">
       <span class="app-icon">${app.icon}</span>
       <span class="app-label">${app.label}</span>
+    </button>`;
+    if (app.id === 'ventes') {
+      return btn + `
+    <button class="app-item app-shortcut" onclick="openApp('ventes');setTimeout(()=>openView('quotes'),80)" title="Devis">
+      <span class="app-icon">📄</span>
+      <span class="app-label">Devis</span>
     </button>
-  `).join('');
+    <button class="app-item app-shortcut" onclick="openApp('ventes');setTimeout(()=>openView('invoices'),80)" title="Factures">
+      <span class="app-icon">🧾</span>
+      <span class="app-label">Factures</span>
+    </button>`;
+    }
+    return btn;
+  }).join('');
 
   /* Bouton "⋯ Plus" pour les modules secondaires */
   if (moreApps.length > 0) {
@@ -347,18 +442,20 @@ function openApp(appId) {
     btn.classList.toggle('active', btn.dataset.app === appId);
   });
 
-  // Bouton retour accueil : visible partout sauf sur le dashboard lui-même
-  const btnHome = document.getElementById('btn-home-erp');
-  if (btnHome) {
-    btnHome.style.display = (appId === 'dashboard') ? 'none' : 'inline-flex';
-  }
-
   // Rendre la sidebar
   renderSidebar(app);
 
   // Ouvrir la première vue du module
   if (app.views.length > 0) {
     openView(app.views[0].id);
+  }
+}
+
+/* Synchronise l'URL avec l'état courant (hash routing — lien permanent) */
+function _syncHash() {
+  const hash = '#' + AppState.currentApp + '/' + (AppState.currentView || '');
+  if (window.location.hash !== hash) {
+    history.replaceState(null, '', hash);
   }
 }
 
@@ -384,17 +481,21 @@ function renderSidebar(app) {
   Object.entries(sections).forEach(([section, views]) => {
     if (section) {
       html += `<div class="sidebar-section">
-        <div class="sidebar-section-label">${section}</div>
-        <div class="sidebar-section-items">`;
+        <div class="sidebar-section-label">${section}</div>`;
     }
     views.forEach(v => {
+      const extBadge = v.external
+        ? `<span style="font-size:9px;opacity:.45;margin-left:auto;flex-shrink:0;">↗</span>`
+        : '';
       html += `
-        <button class="sidebar-item" data-view="${v.id}" onclick="openView('${v.id}')" title="${v.label}">
+        <button class="sidebar-item" data-view="${v.id}" onclick="openView('${v.id}')"
+          title="${v.label}${v.external ? ' — ouvre dans un nouvel onglet' : ''}">
           <span class="item-icon">${v.icon}</span>
           <span class="item-label">${v.label}</span>
+          ${extBadge}
         </button>`;
     });
-    if (section) html += '</div></div>';
+    if (section) html += '</div>';
   });
 
   menu.innerHTML = html;
@@ -406,6 +507,7 @@ function renderSidebar(app) {
    ---------------------------------------------------------------- */
 function openView(viewId) {
   AppState.currentView = viewId;
+  _syncHash();
 
   // Marquer actif dans la sidebar
   document.querySelectorAll('.sidebar-item').forEach(btn => {
@@ -427,6 +529,15 @@ function renderView() {
   const container = document.getElementById('view-content');
   if (!container) return;
 
+  /* Toujours réinitialiser les styles inline posés par renderIframe()
+     pour que le overflow-y:scroll du CSS reprenne la main */
+  container.style.overflow = '';
+  container.style.padding  = '';
+
+  /* Restaurer la toolbar ERP (masquée par les modules plein écran) */
+  const _tb = document.getElementById('toolbar');
+  if (_tb) _tb.style.display = '';
+
   const app  = AppState.currentApp;
   const view = AppState.currentView;
 
@@ -440,11 +551,24 @@ function renderView() {
       }
       break;
     case 'ventes':
+      /* Lien externe → ouvrir dans un nouvel onglet */
+      if (view === 'devis-analyser') {
+        window.open('apps/devis-analyser.html', '_blank');
+        break;
+      }
       /* Contacts et Pipeline délégués au module CRM */
-      if ((view === 'contacts' || view === 'pipeline') && typeof CRM !== 'undefined') {
-        CRM.init(document.getElementById('toolbar-actions'), container, view);
-      } else if (typeof Sales !== 'undefined') {
-        Sales.init(document.getElementById('toolbar-actions'), container, view);
+      if ((view === 'contacts' || view === 'pipeline') && typeof window.CRM !== 'undefined') {
+        window.CRM.init(document.getElementById('toolbar-actions'), container, view);
+      } else if (typeof window.Sales !== 'undefined') {
+        try {
+          window.Sales.init(document.getElementById('toolbar-actions'), container, view);
+        } catch(e) {
+          container.innerHTML = `<div style="padding:24px;color:var(--accent-red,#ff6b6b);">
+            <strong>Erreur module Ventes</strong><br><code>${e.message}</code></div>`;
+          console.error('[renderView] Sales.init error:', e);
+        }
+      } else {
+        container.innerHTML = '<div style="padding:24px;color:var(--text-muted);">Module Ventes non chargé.</div>';
       }
       break;
     case 'stock':
@@ -456,8 +580,13 @@ function renderView() {
       }
       break;
     case 'production':
-      // Déléguer au module Production dédié (js/modules/manufacturing.js)
-      if (typeof Manufacturing !== 'undefined') {
+      // La vue Planning charge le dashboard standalone en iframe
+      if (view === 'planning') {
+        renderIframe('modules/planning-dashboard.html', container);
+      } else if (view === 'hcs-designer') {
+        // Agent HCS Designer : DTF Studio + Lecture Devis + Envoi Atelier
+        renderIframe('modules/hcs-designer.html', container);
+      } else if (typeof Manufacturing !== 'undefined') {
         Manufacturing.init(document.getElementById('toolbar-actions'), container, view);
       }
       break;
@@ -471,16 +600,19 @@ function renderView() {
         Accounting.init(document.getElementById('toolbar-actions'), container, view);
       }
       break;
-    case 'rh':
-      if (typeof RH !== 'undefined') {
-        RH.init(document.getElementById('toolbar-actions'), container, view);
+    case 'fidelite':
+      if (view === 'programme') {
+        renderIframe('apps/andromeda-campaign.html', container);
+      } else if (view === 'portail') {
+        window.open('apps/compte-client.html', '_blank');
+        container.innerHTML = `<div class="table-empty"><p>🔗 Portail client ouvert dans un nouvel onglet.</p></div>`;
+      } else if (view === 'envoyer-lien') {
+        renderSendLink(container);
+      } else {
+        container.innerHTML = `<div class="table-empty"><p>⭐ Sélectionnez une vue Fidélité.</p></div>`;
       }
       break;
-    case 'agents':
-      if (typeof Agents !== 'undefined') {
-        Agents.init(document.getElementById('toolbar-actions'), container, view);
-      }
-      break;
+    case 'rh':           renderRH(view, container);           break;
     case 'parametres':
       if (typeof Users !== 'undefined') {
         Users.init(document.getElementById('toolbar-actions'), container, view);
@@ -494,27 +626,43 @@ function renderView() {
     case 'caisse':
       renderIframe(`modules/${view}.html`, container);
       break;
-    case 'outils':
-      /* Vues natives rendues directement (sans iframe) */
-      if (view === 'apps-hcs') {
-        renderAppsHCS(container);
-      } else if (view === 'audit-dashboard') {
-        if (typeof Audit !== 'undefined') {
-          Audit.init(document.getElementById('toolbar-actions'), container, view);
-        }
-      } else if (view === 'migration-db') {
-        if (typeof Migrate !== 'undefined') {
-          Migrate.init(document.getElementById('toolbar-actions'), container, view);
-        }
-      /* Ces vues utilisent la version apps/ (plus récente) */
-      } else if (view === 'picwish-pipeline') {
-        renderIframe('apps/picwish-pipeline.html', container);
-      } else if (view === 'dtf-plaques-transfert') {
-        renderIframe('apps/dtf-plaques-transfert.html', container);
+    case 'agents':
+      container.style.padding = '';
+      container.style.overflow = '';
+      if (typeof Agents !== 'undefined') {
+        Agents.init(document.getElementById('toolbar-actions'), container, view);
       } else {
-        renderIframe(`modules/${view}.html`, container);
+        container.innerHTML = `<div class="table-empty"><p>🤖 Module Agents IA non chargé — vérifiez js/modules/agents.js</p></div>`;
       }
       break;
+    case 'outils': {
+      /* Vue Advisor IA — rendu inline (pas d'iframe) */
+      if (view === 'advisor') {
+        container.style.padding = '';
+        container.style.overflow = '';
+        if (typeof Advisor !== 'undefined') {
+          Advisor.init(document.getElementById('toolbar-actions'), container);
+        } else {
+          container.innerHTML = `<div class="table-empty"><p>⬡ Module Advisor non chargé — vérifiez js/modules/advisor.js</p></div>`;
+        }
+      } else {
+        /* Vérifier si vue externe (Applications HCS) */
+        const outilsApp = APPS.find(a => a.id === 'outils');
+        const viewDef   = outilsApp ? outilsApp.views.find(v => v.id === view) : null;
+        if (viewDef && viewDef.external && viewDef.url) {
+          /* Apps intégrées dans l'ERP via iframe — HCS Builder, Hub, Pass, Cockpit */
+          const IFRAME_APPS = ['ext-hcs-builder', 'ext-hub', 'ext-pass-hcs', 'ext-cockpit'];
+          if (IFRAME_APPS.includes(view)) {
+            renderIframe(viewDef.url, container);
+          } else {
+            window.open(viewDef.url, '_blank');
+          }
+        } else {
+          renderIframe(`modules/${view}.html`, container);
+        }
+      }
+      break;
+    }
     default:             container.innerHTML = `<div class="table-empty"><p>Module "${app}" à venir.</p></div>`;
   }
 }
@@ -532,8 +680,7 @@ function renderToolbarActions() {
   // Ces modules gèrent leur propre toolbar via leur init()
   if (app === 'crm' || app === 'ventes' || app === 'stock' ||
       app === 'production' || app === 'comptabilite' || app === 'messagerie' ||
-      app === 'caisse' || app === 'outils' || app === 'parametres' ||
-      app === 'rh' || app === 'agents') return;
+      app === 'caisse' || app === 'outils' || app === 'parametres') return;
 
   // Mapping app+vue → boutons (modules sans fichier dédié)
   const actionMap = {
@@ -615,230 +762,19 @@ function closeModal() {
    RENDERERS PAR MODULE
    ================================================================ */
 
-/* ---- APPLICATIONS HCS — liens vers les outils HTML externes ---- */
-function renderAppsHCS(container) {
-
-  /* ----------------------------------------------------------------
-     Palette espresso / caramel / cream (cohérente avec Advisor)
-     ---------------------------------------------------------------- */
-  const C = {
-    espresso : '#1a0e07',
-    dark     : '#2a1508',
-    caramel  : '#c4813a',
-    caramelHo: '#e09a4f',
-    cream    : '#f5ede0',
-    muted    : '#c8b89a',
-    border   : 'rgba(196,129,58,0.22)',
-    cardBg   : 'rgba(196,129,58,0.04)',
-    cardHover: 'rgba(196,129,58,0.10)',
-  };
-
-  /* ----------------------------------------------------------------
-     3 SECTIONS — données : icone, nom, description, chemin réel
-     ---------------------------------------------------------------- */
-  const SECTIONS = [
-    {
-      id    : 'production',
-      label : '🏭 Production & Design',
-      color : '#e09a4f',
-      apps  : [
-        { icon:'🖨️', nom:'DTF Plaques',       url:'apps/dtf-plaques-transfert.html',    desc:'Calcul & impression plaques DTF transfert' },
-        { icon:'🧮', nom:'Calculateur DTF',    url:'apps/dtf-calculator-hcs-v2.html',    desc:'Coûts DTF landed en XPF (douane + TVA)'    },
-        { icon:'🎨', nom:'Calculateur Vinyle', url:'apps/calculateur-vinyl-hcs.html',    desc:'Prix de revient vinyle au cm²'              },
-        { icon:'🖼️', nom:'MockupForge v12',    url:'apps/mockup-forge-v12.html',         desc:'Générateur de mockups produits HCS'         },
-        { icon:'🖨️', nom:'DTF Studio',         url:'apps/dtf-studio.html',               desc:'Studio de composition fichiers DTF'         },
-        { icon:'🖼️', nom:'PicWish Pipeline',   url:'apps/picwish-pipeline.html',         desc:'Pipeline retouche & suppression de fond IA' },
-        { icon:'👕', nom:'T-Shirt Mockup',     url:'apps/tshirt-mockup-studio.html',     desc:'Studio mockup t-shirts & textile'           },
-      ]
-    },
-    {
-      id    : 'marketing',
-      label : '📡 Marketing & Ventes',
-      color : '#4a9fff',
-      apps  : [
-        { icon:'📡', nom:'Andromeda Builder',     url:'apps/andromeda-campaign.html',       desc:'Éditeur de campagnes marketing omnicanal'  },
-        { icon:'🏗️', nom:'HCS Builder v2',        url:'apps/hcs-builder-v2-fixed.html',     desc:'Constructeur de pages & landing pages HCS' },
-        { icon:'🚀', nom:'HCS Cockpit',           url:'apps/hcs-cockpit.html',               desc:'Supervision globale — KPI & ops en direct'  },
-        { icon:'🎨', nom:'Kustom Koncept',        url:'apps/kustomkoncept.html',             desc:'Configurateur deco moto 3D KustomKoncept'  },
-        { icon:'📊', nom:'Scenario A — Demo',     url:'apps/scenario-a-demo.html',           desc:'Démo parcours client — Scenario A'         },
-        { icon:'📊', nom:'Scenario B — Demo',     url:'apps/scenario-b-demo.html',           desc:'Démo parcours client — Scenario B'         },
-      ]
-    },
-    {
-      id    : 'gestion',
-      label : '🗄️ Outils & Gestion',
-      color : '#00d4aa',
-      apps  : [
-        { icon:'🗄️', nom:'HCS Hub',              url:'apps/hcs-hub.html',                   desc:'Tableau de bord centralisé toutes apps'    },
-        { icon:'📊', nom:'HCS Dashboard',         url:'apps/hcs-dashboard.html',             desc:'Indicateurs clés & suivi activité HCS'     },
-        { icon:'📋', nom:'Catalogue Complet',     url:'apps/hcs_catalogue_complet_v2.html',  desc:'Catalogue produits HCS — version complète' },
-        { icon:'📋', nom:'Catalogue Offres',      url:'apps/hcs_catalogue_offres.html',      desc:'Catalogue offres & tarifs clients'         },
-        { icon:'🎫', nom:'HCS Pass Test',         url:'apps/hcs-pass-test.html',             desc:'Pass fidélité textile — test & validation'  },
-        { icon:'🔍', nom:'HCS Diagnostic',        url:'apps/hcs-hub-diagnostic.html',        desc:'Diagnostic & état de santé du Hub HCS'     },
-        { icon:'📐', nom:'Andromeda Verticals',   url:'apps/andromeda-verticals-spec.html',  desc:'Spécifications verticales Andromeda v2'    },
-      ]
-    }
-  ];
-
-  /* ----------------------------------------------------------------
-     TEMPLATE D'UNE CARTE
-     ---------------------------------------------------------------- */
-  function cardHtml(app, accentColor) {
-    return `
-      <div
-        onmouseenter="this.style.background='${C.cardHover}';this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(196,129,58,0.18)'"
-        onmouseleave="this.style.background='${C.cardBg}';this.style.transform='none';this.style.boxShadow='none'"
-        style="
-          background:${C.cardBg};
-          border:1px solid ${C.border};
-          border-top:3px solid ${accentColor};
-          border-radius:8px;
-          padding:16px;
-          display:flex;
-          flex-direction:column;
-          gap:10px;
-          transition:background .15s,transform .15s,box-shadow .15s;
-          cursor:default;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:1.6rem;flex-shrink:0;line-height:1;">${app.icon}</span>
-          <span style="
-            font-weight:700;
-            font-size:13px;
-            color:${C.cream};
-            line-height:1.3;">
-            ${escapeHtml(app.nom)}
-          </span>
-        </div>
-        <p style="
-          font-size:11.5px;
-          color:${C.muted};
-          margin:0;
-          flex:1;
-          line-height:1.55;">
-          ${escapeHtml(app.desc)}
-        </p>
-        <button
-          onclick="window.open('${app.url.replace(/'/g,"\\'")}','_blank','noopener,noreferrer')"
-          style="
-            padding:7px 0;
-            background:${accentColor};
-            border:none;
-            border-radius:5px;
-            color:${C.espresso};
-            font-size:12px;
-            font-weight:700;
-            cursor:pointer;
-            transition:background .15s;
-            width:100%;"
-          onmouseenter="this.style.background='${C.caramelHo}'"
-          onmouseleave="this.style.background='${accentColor}'">
-          ↗ Ouvrir
-        </button>
-      </div>`;
-  }
-
-  /* ----------------------------------------------------------------
-     TEMPLATE D'UNE SECTION
-     ---------------------------------------------------------------- */
-  function sectionHtml(section) {
-    return `
-      <div style="margin-bottom:32px;">
-        <div style="
-          display:flex;
-          align-items:center;
-          gap:10px;
-          margin-bottom:14px;
-          padding-bottom:10px;
-          border-bottom:1px solid ${C.border};">
-          <span style="
-            font-size:15px;
-            font-weight:700;
-            color:${section.color};
-            letter-spacing:.01em;">
-            ${section.label}
-          </span>
-          <span style="
-            font-size:11px;
-            color:${C.muted};
-            background:rgba(196,129,58,0.08);
-            border:1px solid ${C.border};
-            border-radius:10px;
-            padding:1px 8px;">
-            ${section.apps.length} outils
-          </span>
-        </div>
-        <div style="
-          display:grid;
-          grid-template-columns:repeat(4,1fr);
-          gap:14px;">
-          ${section.apps.map(app => cardHtml(app, section.color)).join('')}
-        </div>
-      </div>`;
-  }
-
-  /* ----------------------------------------------------------------
-     RENDU FINAL
-     ---------------------------------------------------------------- */
-  container.innerHTML = `
-    <div style="
-      padding:28px 32px;
-      background:${C.espresso};
-      min-height:100%;
-      box-sizing:border-box;">
-
-      <!-- En-tête -->
-      <div style="
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        margin-bottom:28px;
-        flex-wrap:wrap;
-        gap:12px;">
-        <div>
-          <h2 style="
-            font-size:20px;
-            font-weight:800;
-            color:${C.cream};
-            margin:0 0 4px;
-            letter-spacing:.01em;">
-            ⬡ Applications HCS
-          </h2>
-          <p style="
-            font-size:12px;
-            color:${C.muted};
-            margin:0;">
-            ${SECTIONS.reduce((t,s) => t + s.apps.length, 0)} outils disponibles — chaque application s'ouvre dans un nouvel onglet
-          </p>
-        </div>
-        <span style="
-          font-size:11px;
-          color:${C.caramel};
-          background:rgba(196,129,58,0.10);
-          border:1px solid ${C.border};
-          border-radius:12px;
-          padding:4px 14px;
-          font-weight:600;">
-          ● Serveur local actif
-        </span>
-      </div>
-
-      <!-- Sections -->
-      ${SECTIONS.map(sectionHtml).join('')}
-    </div>
-  `;
-}
-
 /* ---- DASHBOARD ---- */
 function renderDashboard(view, container) {
-  const db   = Store.getDB();
-  const now  = new Date();
+  const db      = Store.getDB();
+  const now     = new Date();
   const session = Auth.getSession();
   const isAdmin = session && session.role === 'admin';
 
-  /* ---- KPI 1 : CA du mois (factures payées) ---- */
-  const moisCur = now.getMonth();
-  const anCur   = now.getFullYear();
-  const caMois  = (db.factures || [])
+  /* ── FINANCE ── */
+  const moisCur   = now.getMonth();
+  const anCur     = now.getFullYear();
+  const moisLabel = now.toLocaleDateString('fr-FR', { month: 'long' });
+
+  const caMois = (db.factures || [])
     .filter(f => {
       if (!['Payée','Payé'].includes(f.statut)) return false;
       const d = new Date(f.date || f._createdAt);
@@ -846,213 +782,484 @@ function renderDashboard(view, container) {
     })
     .reduce((s, f) => s + (f.totalTTC || 0), 0);
 
-  /* ---- KPI 2 : Commandes en cours ---- */
-  const commandesEnCours = (db.commandes || [])
-    .filter(c => ['Confirmé','En cours','Prêt','En production'].includes(c.statut)).length;
-
-  /* ---- KPI 3 : Devis en attente ---- */
-  const devisEnAttente = (db.devis || [])
-    .filter(d => ['Brouillon','Envoyé','En attente'].includes(d.statut)).length;
-
-  /* ---- KPI 4 : Alertes stock ---- */
-  const alertesStock = (db.produits || [])
-    .filter(p => (p.stock || 0) <= (p.stockMin || 5)).length;
-
-  /* ---- KPI 5 : OF en production ---- */
-  const ofEnProd = (db.ordresFab || [])
-    .filter(of => ['En cours','Planifié','Prêt'].includes(of.statut)).length;
-
-  /* ---- KPI 6 : Factures impayées ---- */
-  const facturesImpayees = (db.factures || [])
-    .filter(f => !['Payée','Payé','Annulée','Annulé'].includes(f.statut)).length;
-
-  /* ---- KPI 7 : Trésorerie (512000 Banque + 530000 Caisse) ---- */
   const tresorerie = (db.ecritures || [])
     .filter(e => ['512000','530000','512','530'].includes(String(e.compte || '')))
     .reduce((s, e) => s + (Number(e.debit) || 0) - (Number(e.credit) || 0), 0);
 
-  /* ---- KPI 8 : Pipeline CRM ---- */
-  const pipeline = (db.opportunites || [])
-    .filter(o => !['Gagné','Perdu'].includes(o.statut)).length;
+  const impayeesListe    = (db.factures || []).filter(f => !['Payée','Payé','Annulée','Annulé'].includes(f.statut));
+  const facturesImpayees = impayeesListe.length;
+  const montantImpayees  = impayeesListe.reduce((s, f) => s + (f.totalTTC || 0), 0);
 
-  /* ---- CA des 30 derniers jours ---- */
+  const depensesMois = (db.ecritures || [])
+    .filter(e => {
+      const c = String(e.compte || '');
+      if (!/^6/.test(c)) return false;
+      const d = new Date(e.date || e._createdAt);
+      return d.getMonth() === moisCur && d.getFullYear() === anCur;
+    })
+    .reduce((s, e) => s + (Number(e.debit) || 0), 0);
+
+  const resultatNet = caMois - depensesMois;
+  const objectifCA  = Number(localStorage.getItem('hcs_objectif_ca') || 500000);
+  const objectifPct = objectifCA > 0 ? Math.min(100, Math.round((caMois / objectifCA) * 100)) : 0;
+
+  /* ── VENTES ── */
+  const commandesEnCours = (db.commandes || [])
+    .filter(c => ['Confirmé','En cours','Prêt','En production'].includes(c.statut)).length;
+  const devisEnAttente = (db.devis || [])
+    .filter(d => ['Brouillon','Envoyé','En attente'].includes(d.statut)).length;
+  const alertesStock = (db.produits || [])
+    .filter(p => (p.stock || 0) <= (p.stockMin || 5)).length;
+
+  /* ── PRODUCTION ── */
+  const ofEnProd = (db.ordresFab || [])
+    .filter(of => ['En cours','Planifié','Prêt'].includes(of.statut)).length;
+  const ofListe = (db.ordresFab || [])
+    .filter(of => ['En cours','Planifié','Prêt'].includes(of.statut))
+    .sort((a, b) => new Date(a.datePrevue || a._createdAt || 0) - new Date(b.datePrevue || b._createdAt || 0))
+    .slice(0, 5);
+
+  /* ── ACHATS ── */
+  const bonsAchat = (db.bonsAchat || [])
+    .filter(b => !['Reçu','Annulé'].includes(b.statut))
+    .sort((a, b) => new Date(b._createdAt || 0) - new Date(a._createdAt || 0))
+    .slice(0, 5);
+  const stockBas = (db.produits || [])
+    .filter(p => (p.stock || 0) <= (p.stockMin || 5) && (p.stockMin || 5) > 0)
+    .sort((a, b) => (a.stock || 0) - (b.stock || 0))
+    .slice(0, 4);
+
+  /* ── PIPELINE CRM ── */
+  const STAGES_CRM = ['Nouveau','Qualifié','Proposition','Négociation','Gagné'];
+  const STAGE_COLORS = { Nouveau:'#6B7280', Qualifié:'#2563EB', Proposition:'#D97706', Négociation:'#7C3AED', Gagné:'#16A34A' };
+  const pipeline       = (db.opportunites || []).filter(o => !['Gagné','Perdu'].includes(o.statut)).length;
+  const pipelineTotal  = (db.opportunites || []).reduce((s, o) => s + (o.montant || 0), 0);
+  const oppsByStade    = {};
+  STAGES_CRM.forEach(s => { oppsByStade[s] = { count: 0, montant: 0 }; });
+  (db.opportunites || []).forEach(o => {
+    const s = o.stade || 'Nouveau';
+    if (oppsByStade[s]) { oppsByStade[s].count++; oppsByStade[s].montant += (o.montant || 0); }
+  });
+  const topOpps = (db.opportunites || [])
+    .filter(o => o.statut !== 'Perdu')
+    .sort((a, b) => (b.montant || 0) - (a.montant || 0))
+    .slice(0, 5);
+
+  /* ── AGENTS IA ── */
+  const agentsHistory = (() => {
+    try { return JSON.parse(localStorage.getItem('hcs_agents_histories') || '{}'); } catch(e) { return {}; }
+  })();
+  const AGENTS_DASH = [
+    { id:'agent_hcs_triage_1',             nom:'TEIVA',    role:'Triage',     icon:'📨', color:'#10B981' },
+    { id:'agent_011Ca1i5Lk4BaMSRTMCtdkjk', nom:'TAMATOA',  role:'Commercial', icon:'🤝', color:'#4A5FFF' },
+    { id:'agent_hcs_picwish',              nom:'PicWish',  role:'Visuel',     icon:'🖼', color:'#8B5CF6' },
+    { id:'agent_hcs_planning',             nom:'Planning', role:'Production', icon:'📅', color:'#F59E0B' },
+    { id:'agent_hcs_marketing',            nom:'Marketing',role:'Marketing',  icon:'📡', color:'#EC4899' },
+    { id:'agent_hcs_catalogue',            nom:'Catalogue',role:'Catalogue',  icon:'📦', color:'#0891B2' },
+    { id:'agent_hcs_logo',                 nom:'Logo',     role:'Design',     icon:'🎨', color:'#F97316' },
+    { id:'agent_hcs_finance',              nom:'Finance',  role:'Finance',    icon:'💰', color:'#16A34A' }
+  ];
+
+  /* ── CA 30 jours ── */
   const days30 = [];
   for (let i = 29; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
-    days30.push({
-      date:  d.toISOString().slice(0, 10),
-      label: d.getDate() + '/' + (d.getMonth() + 1),
-      ca:    0
-    });
+    days30.push({ date: d.toISOString().slice(0, 10), label: d.getDate() + '/' + (d.getMonth() + 1), ca: 0 });
   }
   (db.factures || []).filter(f => ['Payée','Payé'].includes(f.statut)).forEach(f => {
-    const key = (f.date || f._createdAt || '').slice(0, 10);
+    const key  = (f.date || f._createdAt || '').slice(0, 10);
     const slot = days30.find(x => x.date === key);
     if (slot) slot.ca += (f.totalTTC || 0);
   });
 
-  /* ---- Dernières activités ---- */
+  /* ── Activité récente ── */
   const allActivity = [
-    ...(db.ecritures  || []).map(e => ({ ...e, _type: 'ecriture' })),
-    ...(db.factures   || []).map(f => ({ ...f, _type: 'facture'  })),
-    ...(db.commandes  || []).map(c => ({ ...c, _type: 'commande' }))
-  ].sort((a, b) => {
-    const ta = new Date(b._updatedAt || b._createdAt || b.date || 0).getTime();
-    const tb = new Date(a._updatedAt || a._createdAt || a.date || 0).getTime();
-    return ta - tb;
-  }).slice(0, 5);
+    ...(db.ecritures || []).map(e => ({ ...e, _type: 'ecriture' })),
+    ...(db.factures  || []).map(f => ({ ...f, _type: 'facture'  })),
+    ...(db.commandes || []).map(c => ({ ...c, _type: 'commande' }))
+  ].sort((a, b) => new Date(b._updatedAt || b._createdAt || b.date || 0) - new Date(a._updatedAt || a._createdAt || a.date || 0)).slice(0, 5);
 
-  const moisLabel = now.toLocaleDateString('fr-FR', { month: 'long' });
+  /* ── Alertes ── */
+  const alertsList = [];
+  if (stockBas.length > 0)
+    alertsList.push({ type:'warning', icon:'📦', msg:`${stockBas.length} produit(s) sous le seuil : ${stockBas.slice(0,2).map(p=>p.nom).join(', ')}${stockBas.length>2?'…':''}` });
+  if (impayeesListe.length > 0)
+    alertsList.push({ type:'error', icon:'🧾', msg:`${impayeesListe.length} facture(s) impayée(s) — ${fmt(montantImpayees)}` });
+  const retard = (db.commandes || []).filter(c => ['Confirmé','En production'].includes(c.statut) && c.dateLivraison && new Date(c.dateLivraison) < now);
+  if (retard.length > 0)
+    alertsList.push({ type:'error', icon:'⏰', msg:`${retard.length} commande(s) en retard de livraison.` });
 
+  /* ── Helpers HTML ── */
+  const sTitle = (icon, label, sub, linkApp, linkLabel) =>
+    `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <span style="font-size:16px;">${icon}</span>
+      <div style="flex:1;">
+        <span style="font-size:14px;font-weight:700;">${label}</span>
+        ${sub ? `<span style="font-size:11px;color:#6B7280;margin-left:8px;">${sub}</span>` : ''}
+      </div>
+      ${linkApp ? `<button class="btn btn-ghost btn-sm" onclick="openApp('${linkApp}')" style="font-size:11px;padding:2px 8px;">${linkLabel||'Voir →'}</button>` : ''}
+    </div>`;
+
+  const pill = (label, value, color) =>
+    `<span style="padding:2px 8px;border-radius:12px;font-size:11px;background:${color}22;color:${color};font-weight:600;">${label}: ${value}</span>`;
+
+  const agentMini = (agent) => {
+    const hist    = agentsHistory[agent.id] || [];
+    const lastMsg = hist.filter(m => m.role === 'assistant').slice(-1)[0];
+    const preview = lastMsg ? escapeHtml(lastMsg.content.substring(0, 55)) + '…' : 'Aucune activité';
+    const lastTs  = hist.length > 0 ? (hist[hist.length - 1].ts || '') : '';
+    const active  = hist.length > 0;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);cursor:pointer;"
+      onclick="openApp('agents');setTimeout(()=>openView('chat'),80)">
+      <div style="position:relative;flex-shrink:0;">
+        <div style="width:30px;height:30px;border-radius:50%;background:${agent.color}22;display:flex;align-items:center;justify-content:center;font-size:14px;">${agent.icon}</div>
+        <div style="position:absolute;bottom:0;right:0;width:8px;height:8px;border-radius:50%;background:${active?'#16A34A':'#6B7280'};border:2px solid var(--bg-primary,#1a0e07);"></div>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;font-weight:600;">${agent.nom} <span style="font-weight:400;color:#6B7280;">· ${agent.role}</span></div>
+        <div style="font-size:10px;color:#6B7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${preview}</div>
+      </div>
+      ${lastTs ? `<div style="font-size:10px;color:#6B7280;flex-shrink:0;">${fmtDateRelative(lastTs)}</div>` : ''}
+    </div>`;
+  };
+
+  const objColor = objectifPct >= 80 ? '#16A34A' : objectifPct >= 50 ? '#D97706' : '#DC2626';
+
+  /* ════════════════════════════════════════════════════════
+     RENDU HTML PRINCIPAL
+     ════════════════════════════════════════════════════════ */
   container.innerHTML = `
+
+    <!-- En-tête + Raccourcis -->
     <div class="page-header">
       <div class="page-title">Bonjour, ${escapeHtml(session?.prenom || 'Utilisateur')} 👋</div>
       <div class="page-subtitle">Tableau de bord HCS · ${fmtDate(now)}</div>
     </div>
-
-    <!-- Raccourcis rapides -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
       <button class="btn btn-primary btn-sm" onclick="openApp('ventes')">📄 Nouveau devis</button>
-      <button class="btn btn-secondary btn-sm" onclick="openApp('ventes');setTimeout(()=>openView('orders'),60)">📦 Nouvelle commande</button>
-      <button class="btn btn-secondary btn-sm" onclick="openApp('ventes');setTimeout(()=>openView('contacts'),60)">👤 Nouveau contact</button>
+      <button class="btn btn-secondary btn-sm" onclick="openApp('ventes');setTimeout(()=>openView('orders'),60)">📦 Commande</button>
+      <button class="btn btn-secondary btn-sm" onclick="openApp('ventes');setTimeout(()=>openView('contacts'),60)">👤 Contact</button>
+      <button class="btn btn-secondary btn-sm" onclick="openApp('crm');setTimeout(()=>openView('pipeline'),60)">🎯 Pipeline</button>
       ${isAdmin ? `
-        <button class="btn btn-secondary btn-sm" onclick="openApp('stock')">📋 Nouveau produit</button>
-        <button class="btn btn-secondary btn-sm" onclick="openApp('production')">🏭 Nouvel OF</button>
-        <button class="btn btn-secondary btn-sm" onclick="openApp('caisse')">🛒 Ouvrir caisse</button>
+        <button class="btn btn-secondary btn-sm" onclick="openApp('stock')">📋 Produit</button>
+        <button class="btn btn-secondary btn-sm" onclick="openApp('production')">🏭 OF</button>
+        <button class="btn btn-secondary btn-sm" onclick="openApp('caisse')">🛒 Caisse</button>
+        <button class="btn btn-secondary btn-sm" onclick="openApp('comptabilite')">💰 Compta</button>
       ` : ''}
     </div>
 
-    <!-- Alertes intelligentes -->
-    <div id="dash-alerts-block" style="margin-bottom:18px;"></div>
-
-    <!-- 8 KPI cards en grille 4×2 -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;">
-      <div id="dash-k1"></div>
-      <div id="dash-k2"></div>
-      <div id="dash-k3"></div>
-      <div id="dash-k4"></div>
-      <div id="dash-k5"></div>
-      <div id="dash-k6"></div>
-      <div id="dash-k7"></div>
-      <div id="dash-k8"></div>
+    <!-- Alertes -->
+    <div style="margin-bottom:16px;">
+      ${alertsList.length === 0
+        ? `<div style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:rgba(22,163,74,0.1);border:1px solid rgba(22,163,74,0.25);border-radius:8px;color:#16A34A;font-size:13px;">✅ Tout est en ordre — aucune alerte.</div>`
+        : alertsList.map(a => {
+            const bg  = a.type==='error' ? 'rgba(220,38,38,0.1)' : 'rgba(217,119,6,0.1)';
+            const bdr = a.type==='error' ? 'rgba(220,38,38,0.25)' : 'rgba(217,119,6,0.25)';
+            const cl  = a.type==='error' ? '#DC2626' : '#D97706';
+            return `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:${bg};border:1px solid ${bdr};border-radius:8px;color:${cl};font-size:13px;margin-bottom:6px;">
+              <span style="font-size:15px;">${a.icon}</span><span>${escapeHtml(a.msg)}</span></div>`;
+          }).join('')}
     </div>
 
-    <!-- Graphique CA + Dernières activités -->
-    <div style="display:grid;grid-template-columns:3fr 2fr;gap:20px;">
+    <!-- ══════════════════════════════════════════
+         SECTION 1 — FINANCE & BUDGET
+         ══════════════════════════════════════════ -->
+    <div style="margin-bottom:6px;">${sTitle('💰','Finance & Budget', moisLabel + ' · XPF', 'comptabilite', 'Comptabilité →')}</div>
+
+    <!-- 6 KPIs Finance -->
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px;">
+      <div id="dash-k1"></div>
+      <div id="dash-k7"></div>
+      <div id="dash-k-res"></div>
+      <div id="dash-k-imp"></div>
+      <div id="dash-k-dep"></div>
+      <div id="dash-k-obj"></div>
+    </div>
+
+    <!-- Sparkline CA + Budget -->
+    <div style="display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-bottom:24px;">
       <div class="card">
         <div class="card-header">
           <div class="card-title">CA des 30 derniers jours</div>
           <div style="font-size:12px;color:#6B7280;">Factures payées · XPF</div>
         </div>
-        <div style="padding:4px 16px 16px;">
-          <div id="dash-sparkline" style="height:90px;"></div>
+        <div style="padding:4px 16px 14px;">
+          <div id="dash-sparkline" style="height:85px;"></div>
           <div style="display:flex;justify-content:space-between;font-size:10px;color:#9CA3AF;margin-top:4px;">
-            <span>${days30[0].label}</span>
-            <span>${days30[14].label}</span>
-            <span>${days30[29].label}</span>
+            <span>${days30[0].label}</span><span>${days30[14].label}</span><span>${days30[29].label}</span>
           </div>
         </div>
       </div>
       <div class="card">
         <div class="card-header">
-          <div class="card-title">Dernières activités</div>
+          <div class="card-title">Budget mensuel</div>
+          <div style="font-size:12px;color:#6B7280;">Objectif vs Réalisé</div>
         </div>
-        <div style="padding:0 16px 16px;" id="dash-activities"></div>
+        <div style="padding:0 16px 14px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:12px;color:#6B7280;">Réalisé</span>
+            <span style="font-size:13px;font-weight:700;color:#16A34A;">${fmt(caMois)}</span>
+          </div>
+          <div style="background:rgba(255,255,255,0.08);border-radius:6px;height:8px;overflow:hidden;margin-bottom:4px;">
+            <div style="height:100%;width:${objectifPct}%;background:linear-gradient(90deg,${objColor},${objColor}88);border-radius:6px;transition:width 0.8s ease;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:#6B7280;margin-bottom:14px;">
+            <span>0</span>
+            <span style="color:${objColor};font-weight:600;">${objectifPct}%</span>
+            <span style="cursor:pointer;text-decoration:underline dotted;"
+              onclick="var v=prompt('Objectif CA mensuel (XPF):','${objectifCA}');if(v&&!isNaN(v)){localStorage.setItem('hcs_objectif_ca',v);renderDashboard('overview',document.getElementById('view-content'));}">
+              ${fmt(objectifCA)}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;justify-content:space-between;">
+              <span style="font-size:12px;color:#6B7280;">Recettes</span>
+              <span style="font-size:12px;font-weight:600;color:#16A34A;">+${fmt(caMois)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;">
+              <span style="font-size:12px;color:#6B7280;">Dépenses</span>
+              <span style="font-size:12px;font-weight:600;color:#DC2626;">−${fmt(depensesMois)}</span>
+            </div>
+            <div style="height:1px;background:rgba(255,255,255,0.08);"></div>
+            <div style="display:flex;justify-content:space-between;">
+              <span style="font-size:12px;font-weight:600;">Résultat net</span>
+              <span style="font-size:13px;font-weight:700;color:${resultatNet>=0?'#16A34A':'#DC2626'};">${resultatNet>=0?'+':''}${fmt(resultatNet)}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Mémos rapides -->
-    <div class="card" style="margin-top:20px;">
-      <div class="card-header">
-        <div class="card-title">📝 Mémos rapides</div>
+    <!-- ══════════════════════════════════════════
+         SECTION 2 — PLANNING
+         ══════════════════════════════════════════ -->
+    <div style="margin-bottom:6px;">${sTitle('📅','Planning','Production · Achats · R&D')}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:24px;">
+
+      <!-- Production -->
+      <div class="card">
+        <div style="padding:12px 14px 0;">${sTitle('⚙️','Production',ofEnProd+' OF actifs','production','Atelier →')}</div>
+        <div style="padding:0 14px 12px;">
+          ${ofListe.length === 0
+            ? `<div style="padding:12px;text-align:center;color:#6B7280;font-size:12px;">Aucun OF en cours</div>`
+            : ofListe.map(of => {
+                const sc = of.statut==='En cours'?'#16A34A': of.statut==='Prêt'?'#2563EB':'#D97706';
+                return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <div style="width:7px;height:7px;border-radius:50%;background:${sc};flex-shrink:0;"></div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(of.ref||of.id||'—')}</div>
+                    <div style="font-size:10px;color:#6B7280;">${escapeHtml(of.produit||of.client||'')}${of.datePrevue?' · '+fmtDate(of.datePrevue):''}</div>
+                  </div>
+                  <span style="font-size:9px;padding:1px 5px;border-radius:8px;background:${sc}22;color:${sc};flex-shrink:0;">${escapeHtml(of.statut)}</span>
+                </div>`;
+              }).join('')}
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;">
+            ${pill('En cours',(db.ordresFab||[]).filter(o=>o.statut==='En cours').length,'#16A34A')}
+            ${pill('Planifié',(db.ordresFab||[]).filter(o=>o.statut==='Planifié').length,'#D97706')}
+            ${pill('Prêt',(db.ordresFab||[]).filter(o=>o.statut==='Prêt').length,'#2563EB')}
+          </div>
+        </div>
       </div>
-      <div id="dash-memos" style="padding:0 4px 4px;"></div>
+
+      <!-- Achats -->
+      <div class="card">
+        <div style="padding:12px 14px 0;">${sTitle('🛒','Achats',bonsAchat.length+' bons en attente','stock','Stock →')}</div>
+        <div style="padding:0 14px 12px;">
+          ${bonsAchat.length === 0
+            ? `<div style="padding:8px 0;color:#6B7280;font-size:12px;text-align:center;">Aucun bon en attente</div>`
+            : bonsAchat.map(b => `
+              <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                <span style="font-size:13px;flex-shrink:0;">📄</span>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(b.reference||b.fournisseur||'—')}</div>
+                  <div style="font-size:10px;color:#6B7280;">${escapeHtml(b.fournisseur||'')} · ${fmtDate(b.date)}</div>
+                </div>
+                <span style="font-size:10px;font-weight:600;color:#D97706;flex-shrink:0;">${fmt(b.totalTTC||0)}</span>
+              </div>`).join('')}
+          <div style="margin-top:10px;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;">
+            <div style="font-size:10px;font-weight:600;color:#6B7280;margin-bottom:4px;">⚠️ Stock critique</div>
+            ${stockBas.length === 0
+              ? `<div style="font-size:11px;color:#16A34A;">✅ Aucun produit critique</div>`
+              : stockBas.map(p => `
+                <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:10px;">
+                  <span style="color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;">${escapeHtml(p.nom)}</span>
+                  <span style="color:#DC2626;font-weight:600;">${p.stock||0}/${p.stockMin||5}</span>
+                </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- R&D / Devis -->
+      <div class="card">
+        <div style="padding:12px 14px 0;">${sTitle('🔬','R&D · Devis actifs',devisEnAttente+' en cours','ventes','Devis →')}</div>
+        <div style="padding:0 14px 12px;">
+          ${(db.devis||[]).filter(d=>['Brouillon','Envoyé','En attente'].includes(d.statut))
+              .sort((a,b)=>new Date(b._updatedAt||0)-new Date(a._updatedAt||0)).slice(0,5)
+              .map(d => {
+                const sc = d.statut==='Envoyé'?'#2563EB':'#D97706';
+                return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <div style="width:7px;height:7px;border-radius:50%;background:${sc};flex-shrink:0;"></div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(d.client||d.ref||'—')}</div>
+                    <div style="font-size:10px;color:#6B7280;">${escapeHtml(d.ref||'')} · ${fmtDate(d.date||d._createdAt)}</div>
+                  </div>
+                  <span style="font-size:10px;font-weight:600;color:${sc};flex-shrink:0;">${fmt(d.totalTTC||0)}</span>
+                </div>`;
+              }).join('') || `<div style="padding:12px;text-align:center;color:#6B7280;font-size:12px;">Aucun devis actif</div>`}
+          <div style="display:flex;gap:4px;margin-top:8px;">
+            ${pill('Brouillon',(db.devis||[]).filter(d=>d.statut==='Brouillon').length,'#6B7280')}
+            ${pill('Envoyé',(db.devis||[]).filter(d=>d.statut==='Envoyé').length,'#2563EB')}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 3 — PIPELINE CRM
+         ══════════════════════════════════════════ -->
+    <div style="margin-bottom:6px;">${sTitle('🎯','Pipeline CRM',pipeline+' opportunités actives · '+fmt(pipelineTotal)+' total','crm','Pipeline →')}</div>
+    <div class="card" style="margin-bottom:24px;">
+      <div style="padding:14px 16px;">
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;">
+          ${STAGES_CRM.map(s => {
+            const data  = oppsByStade[s] || { count:0, montant:0 };
+            const color = STAGE_COLORS[s];
+            return `<div style="text-align:center;padding:10px 6px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid ${color}30;cursor:pointer;"
+              onclick="openApp('crm');setTimeout(()=>openView('pipeline'),80)">
+              <div style="font-size:22px;font-weight:800;color:${color};">${data.count}</div>
+              <div style="font-size:11px;font-weight:600;margin:2px 0;">${s}</div>
+              <div style="font-size:10px;color:#6B7280;">${data.montant>0?fmt(data.montant):'—'}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="font-size:11px;font-weight:600;color:#6B7280;margin-bottom:6px;">Top opportunités</div>
+        ${topOpps.length === 0
+          ? `<div style="padding:12px;text-align:center;color:#6B7280;font-size:12px;">Aucune opportunité active</div>`
+          : topOpps.map(o => {
+              const color = STAGE_COLORS[o.stade] || '#6B7280';
+              const prob  = o.probabilite || 0;
+              return `<div style="display:flex;align-items:center;gap:10px;padding:7px 8px;background:rgba(255,255,255,0.02);border-radius:8px;margin-bottom:4px;cursor:pointer;"
+                onclick="openApp('crm');setTimeout(()=>openView('pipeline'),80)">
+                <div style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:12px;font-weight:600;">${escapeHtml(o.nom||'—')}</div>
+                  <div style="font-size:10px;color:#6B7280;">${escapeHtml(o.stade)} · prob. ${prob}%</div>
+                </div>
+                <div style="text-align:right;flex-shrink:0;">
+                  <div style="font-size:11px;font-weight:700;color:${color};">${fmt(o.montant||0)}</div>
+                  <div style="width:56px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:3px;">
+                    <div style="height:100%;width:${prob}%;background:${color};border-radius:2px;"></div>
+                  </div>
+                </div>
+              </div>`;
+            }).join('')}
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 4 — MARKETING & AGENTS IA
+         ══════════════════════════════════════════ -->
+    <div style="margin-bottom:6px;">${sTitle('📡','Marketing & Agents IA','Actions · Planning · Feedback')}</div>
+    <div style="display:grid;grid-template-columns:2fr 3fr;gap:14px;margin-bottom:24px;">
+
+      <!-- Marketing -->
+      <div class="card">
+        <div style="padding:12px 14px 0;">${sTitle('📣','Actions marketing','','outils','Andromeda →')}</div>
+        <div style="padding:0 14px 12px;">
+          <div style="font-size:10px;font-weight:600;color:#6B7280;margin-bottom:6px;">CAMPAGNES & ACTIONS</div>
+          <div id="dash-mkt-actions"></div>
+          <div style="margin-top:10px;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;">
+            <div style="font-size:10px;font-weight:600;color:#6B7280;margin-bottom:4px;">AJOUTER UNE ACTION</div>
+            <div style="display:flex;gap:6px;">
+              <input id="new-mkt-input" type="text" placeholder="Nouvelle action marketing…"
+                style="flex:1;padding:5px 8px;border:1px solid rgba(255,255,255,0.12);border-radius:6px;font-size:11px;background:transparent;color:inherit;outline:none;"
+                onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var m=JSON.parse(localStorage.getItem('hcs_mkt_actions')||'[]');m.unshift({text:v,date:new Date().toISOString()});localStorage.setItem('hcs_mkt_actions',JSON.stringify(m));renderDashboard('overview',document.getElementById('view-content'));}}" />
+              <button onclick="var v=document.getElementById('new-mkt-input')?.value?.trim();if(v){var m=JSON.parse(localStorage.getItem('hcs_mkt_actions')||'[]');m.unshift({text:v,date:new Date().toISOString()});localStorage.setItem('hcs_mkt_actions',JSON.stringify(m));renderDashboard('overview',document.getElementById('view-content'));}"
+                style="padding:5px 10px;background:var(--caramel,#c4813a);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;flex-shrink:0;">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agents IA -->
+      <div class="card">
+        <div style="padding:12px 14px 0;">${sTitle('🤖','Agents IA',AGENTS_DASH.length+' agents configurés','agents','Agents →')}</div>
+        <div style="padding:0 14px 12px;display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+          ${AGENTS_DASH.map(a => agentMini(a)).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         BOTTOM — Activité + Mémos
+         ══════════════════════════════════════════ -->
+    <div style="display:grid;grid-template-columns:3fr 2fr;gap:14px;">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Activité récente</div></div>
+        <div style="padding:0 16px 14px;" id="dash-activities"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📝 Mémos rapides</div></div>
+        <div id="dash-memos" style="padding:0 4px 4px;"></div>
+      </div>
     </div>
   `;
 
-  /* Rendu des KPI cards */
-  statCard('dash-k1', { icon: '💰', value: caMois,          label: 'CA du mois',          color: '#16A34A', format: true, sub: 'Factures payées · ' + moisLabel });
-  statCard('dash-k2', { icon: '📋', value: commandesEnCours, label: 'Commandes en cours',  color: '#2563EB', sub: 'Confirmées / En production' });
-  statCard('dash-k3', { icon: '📝', value: devisEnAttente,   label: 'Devis en attente',    color: '#D97706', sub: 'Brouillons / Envoyés' });
-  statCard('dash-k4', { icon: '⚠️', value: alertesStock,    label: 'Alertes stock',       color: alertesStock > 0 ? '#DC2626' : '#6B7280', sub: 'Produits sous seuil' });
-  statCard('dash-k5', { icon: '🏭', value: ofEnProd,         label: 'OF en production',    color: '#7C3AED', sub: 'En cours / Planifiés' });
-  statCard('dash-k6', { icon: '🧾', value: facturesImpayees, label: 'Factures impayées',   color: facturesImpayees > 0 ? '#DC2626' : '#6B7280', sub: 'En attente de paiement' });
-  statCard('dash-k7', { icon: '🏦', value: tresorerie,       label: 'Trésorerie',          color: '#0891B2', format: true, sub: 'Banque + Caisse' });
-  statCard('dash-k8', { icon: '🎯', value: pipeline,         label: 'Pipeline CRM',        color: '#6D28D9', sub: 'Opportunités actives' });
+  /* ── Post-render : KPIs Finance ── */
+  statCard('dash-k1',    { icon:'💰', value:caMois,          label:'CA du mois',    color:'#16A34A', format:true, sub:'Factures payées · '+moisLabel });
+  statCard('dash-k7',    { icon:'🏦', value:tresorerie,      label:'Trésorerie',    color:'#0891B2', format:true, sub:'Banque + Caisse' });
+  statCard('dash-k-res', { icon:resultatNet>=0?'📈':'📉', value:Math.abs(resultatNet), label:'Résultat net', color:resultatNet>=0?'#16A34A':'#DC2626', format:true, sub:resultatNet>=0?'Bénéfice':'Perte' });
+  statCard('dash-k-imp', { icon:'🧾', value:montantImpayees, label:'Impayées',      color:facturesImpayees>0?'#DC2626':'#6B7280', format:true, sub:facturesImpayees+' facture(s)' });
+  statCard('dash-k-dep', { icon:'💸', value:depensesMois,    label:'Dépenses mois', color:'#D97706', format:true, sub:'Comptes charges' });
+  statCard('dash-k-obj', { icon:'🎯', value:objectifPct,     label:'Objectif CA',   color:objColor, sub:'% atteint ce mois' });
 
-  /* Sparkline CA 30 jours */
-  sparkline('dash-sparkline', { values: days30.map(d => d.ca), color: '#16A34A', height: 80 });
+  /* ── Sparkline ── */
+  sparkline('dash-sparkline', { values: days30.map(d => d.ca), color:'#16A34A', height:80 });
 
-  /* Dernières activités */
+  /* ── Activité récente ── */
   document.getElementById('dash-activities').innerHTML = _dashActivities(allActivity);
 
-  /* ---- Alertes intelligentes ---- */
-  (function renderAlerts() {
-    const block = document.getElementById('dash-alerts-block');
-    if (!block) return;
-    const alerts = [];
-
-    /* Stock bas */
-    const stockBas = (db.produits || []).filter(p => (p.stock || 0) <= (p.stockMin || 5) && (p.stockMin || 5) > 0);
-    if (stockBas.length > 0) {
-      alerts.push({ type: 'warning', icon: '📦', msg: `${stockBas.length} produit(s) sous le seuil d'alerte : ${stockBas.slice(0,2).map(p=>p.nom).join(', ')}${stockBas.length>2?'…':''}` });
-    }
-
-    /* Factures impayées */
-    const impayees = (db.factures || []).filter(f => !['Payé','Annulée','Annulé'].includes(f.statut));
-    if (impayees.length > 0) {
-      const totalImp = impayees.reduce((s,f) => s+(f.totalTTC||0), 0);
-      alerts.push({ type: 'error', icon: '🧾', msg: `${impayees.length} facture(s) en attente de paiement — ${fmt(totalImp)}` });
-    }
-
-    /* Commandes en retard (> 48h depuis date livraison) */
-    const now2 = new Date();
-    const retard = (db.commandes || []).filter(c => {
-      if (!['Confirmé','En production'].includes(c.statut)) return false;
-      if (!c.dateLivraison) return false;
-      return new Date(c.dateLivraison) < now2;
-    });
-    if (retard.length > 0) {
-      alerts.push({ type: 'error', icon: '⏰', msg: `${retard.length} commande(s) en retard de livraison.` });
-    }
-
-    if (alerts.length === 0) {
-      block.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;color:#16A34A;font-size:13px;">✅ Tout est en ordre — aucune alerte.</div>`;
+  /* ── Actions marketing ── */
+  (function() {
+    const el = document.getElementById('dash-mkt-actions');
+    if (!el) return;
+    const actions = JSON.parse(localStorage.getItem('hcs_mkt_actions') || '[]');
+    if (actions.length === 0) {
+      el.innerHTML = `<div style="font-size:11px;color:#6B7280;padding:4px 0;">Aucune action enregistrée — ajoutez une action ci-dessous.</div>`;
       return;
     }
-
-    block.innerHTML = alerts.map(a => {
-      const bg    = a.type === 'error' ? '#FEF2F2' : '#FFFBEB';
-      const border= a.type === 'error' ? '#FECACA' : '#FDE68A';
-      const color = a.type === 'error' ? '#DC2626' : '#D97706';
-      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:${bg};border:1px solid ${border};border-radius:8px;color:${color};font-size:13px;margin-bottom:6px;">
-        <span style="font-size:16px;">${a.icon}</span><span>${escapeHtml(a.msg)}</span>
-      </div>`;
-    }).join('');
+    el.innerHTML = actions.slice(0, 5).map((a, i) => `
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+        <span style="font-size:13px;flex-shrink:0;">📣</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;line-height:1.4;">${escapeHtml(a.text)}</div>
+          <div style="font-size:10px;color:#6B7280;">${fmtDateRelative(a.date)}</div>
+        </div>
+        <button onclick="event.stopPropagation();var m=JSON.parse(localStorage.getItem('hcs_mkt_actions')||'[]');m.splice(${i},1);localStorage.setItem('hcs_mkt_actions',JSON.stringify(m));renderDashboard('overview',document.getElementById('view-content'));"
+          style="background:none;border:none;cursor:pointer;color:#6B7280;font-size:12px;padding:0;flex-shrink:0;">✕</button>
+      </div>`).join('');
   })();
 
-  /* ---- Mémos rapides ---- */
-  (function renderMemos() {
-    const memosEl = document.getElementById('dash-memos');
-    if (!memosEl) return;
+  /* ── Mémos rapides ── */
+  (function() {
+    const el = document.getElementById('dash-memos');
+    if (!el) return;
     const memos = JSON.parse(localStorage.getItem('hcs_memos') || '[]');
-    memosEl.innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        ${memos.slice(0,5).map((m,i) => `
-          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:#FFFBEB;border-radius:6px;border:1px solid #FDE68A;">
-            <span style="font-size:11px;flex:1;color:#92400E;line-height:1.4;">${escapeHtml(m.text)}</span>
-            <button onclick="event.stopPropagation();var m=JSON.parse(localStorage.getItem('hcs_memos')||'[]');m.splice(${i},1);localStorage.setItem('hcs_memos',JSON.stringify(m));renderDashboard('overview',document.getElementById('view-content'));"
-              style="background:none;border:none;cursor:pointer;color:#D97706;font-size:14px;line-height:1;padding:0;">✕</button>
-          </div>`).join('')}
-        <div style="display:flex;gap:6px;margin-top:4px;">
-          <input id="new-memo-input" type="text" placeholder="Nouvelle note rapide…"
-            style="flex:1;padding:6px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;outline:none;"
-            onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var m=JSON.parse(localStorage.getItem('hcs_memos')||'[]');m.unshift({text:v,date:new Date().toISOString()});localStorage.setItem('hcs_memos',JSON.stringify(m));renderDashboard('overview',document.getElementById('view-content'));}}" />
-          <button onclick="var v=document.getElementById('new-memo-input')?.value?.trim();if(v){var m=JSON.parse(localStorage.getItem('hcs_memos')||'[]');m.unshift({text:v,date:new Date().toISOString()});localStorage.setItem('hcs_memos',JSON.stringify(m));renderDashboard('overview',document.getElementById('view-content'));}"
-            style="padding:6px 12px;background:var(--accent-blue);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">Ajouter</button>
-        </div>
-      </div>`;
+    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:5px;padding:4px 10px 8px;">
+      ${memos.slice(0, 4).map((m, i) => `
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;background:rgba(196,129,58,0.08);border-radius:6px;border:1px solid rgba(196,129,58,0.2);">
+          <span style="font-size:11px;flex:1;line-height:1.4;">${escapeHtml(m.text)}</span>
+          <button onclick="event.stopPropagation();var m=JSON.parse(localStorage.getItem('hcs_memos')||'[]');m.splice(${i},1);localStorage.setItem('hcs_memos',JSON.stringify(m));renderDashboard('overview',document.getElementById('view-content'));"
+            style="background:none;border:none;cursor:pointer;color:#c4813a;font-size:12px;padding:0;flex-shrink:0;">✕</button>
+        </div>`).join('')}
+      <div style="display:flex;gap:6px;margin-top:4px;">
+        <input id="new-memo-input" type="text" placeholder="Nouvelle note…"
+          style="flex:1;padding:5px 8px;border:1px solid rgba(255,255,255,0.12);border-radius:6px;font-size:11px;background:transparent;color:inherit;outline:none;"
+          onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var m=JSON.parse(localStorage.getItem('hcs_memos')||'[]');m.unshift({text:v,date:new Date().toISOString()});localStorage.setItem('hcs_memos',JSON.stringify(m));renderDashboard('overview',document.getElementById('view-content'));}}" />
+        <button onclick="var v=document.getElementById('new-memo-input')?.value?.trim();if(v){var m=JSON.parse(localStorage.getItem('hcs_memos')||'[]');m.unshift({text:v,date:new Date().toISOString()});localStorage.setItem('hcs_memos',JSON.stringify(m));renderDashboard('overview',document.getElementById('view-content'));}"
+          style="padding:5px 10px;background:var(--caramel,#c4813a);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;flex-shrink:0;">+</button>
+      </div>
+    </div>`;
   })();
 }
 
@@ -1113,6 +1320,9 @@ function _dashActivities(items) {
 function renderIframe(src, container) {
   container.style.padding = '0';
   container.style.overflow = 'hidden';
+  /* Masquer la toolbar ERP — le module plein écran a sa propre UI */
+  const _tb = document.getElementById('toolbar');
+  if (_tb) _tb.style.display = 'none';
   container.innerHTML = `
     <iframe
       src="${src}"
@@ -1123,8 +1333,134 @@ function renderIframe(src, container) {
 }
 
 /* ---- RH ---- */
-/* ---- RH — délégué à js/modules/rh.js ---- */
-// Les vues RH (employes, conges, planning-rh) sont dans RH.init()
+function renderRH(view, container) {
+  if (typeof RH !== 'undefined' && typeof RH.init === 'function') {
+    RH.init(view, container);
+  } else {
+    container.innerHTML = `
+      <div class="table-empty">
+        <div class="empty-icon">👤</div>
+        <p>Module RH — chargement…</p>
+      </div>`;
+  }
+}
+
+/* ---- FIDÉLITÉ — Envoyer un lien magique au client ---- */
+async function renderSendLink(container) {
+  const ERP_API_LOCAL = 'https://highcoffeeshirts.com/erp/api';
+  const CLIENT_PORTAL_LOCAL = 'https://highcoffeeshirts.com/erp/apps/compte-client.html';
+
+  container.innerHTML = `
+    <div style="max-width:520px;margin:40px auto;padding:0 16px">
+      <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:6px">📧 Envoyer un lien d'accès client</h2>
+      <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:24px">
+        Génère un lien magique et l'envoie par email au client. Il peut consulter ses points fidélité et définir son mot de passe.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label style="display:block;font-size:.82rem;color:var(--text-muted);margin-bottom:5px">Email du client *</label>
+          <input id="sl-email" type="email" placeholder="client@mail.com"
+            style="width:100%;box-sizing:border-box;padding:10px 12px;background:var(--input-bg,#1e1e2e);border:1px solid var(--border,#333);border-radius:8px;color:var(--text-primary,#fff);font-size:.9rem">
+        </div>
+        <div>
+          <label style="display:block;font-size:.82rem;color:var(--text-muted);margin-bottom:5px">Nom du client (optionnel)</label>
+          <input id="sl-name" type="text" placeholder="Prénom Nom"
+            style="width:100%;box-sizing:border-box;padding:10px 12px;background:var(--input-bg,#1e1e2e);border:1px solid var(--border,#333);border-radius:8px;color:var(--text-primary,#fff);font-size:.9rem">
+        </div>
+        <button id="sl-btn" onclick="window._sendMagicLink()"
+          style="padding:12px;background:var(--caramel,#c4813a);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:.9rem">
+          Envoyer le lien magique
+        </button>
+        <div id="sl-result" style="display:none;padding:12px 14px;border-radius:8px;font-size:.85rem"></div>
+      </div>
+    </div>`;
+
+  window._sendMagicLink = async function() {
+    const email = document.getElementById('sl-email')?.value.trim();
+    const name  = document.getElementById('sl-name')?.value.trim();
+    const btn   = document.getElementById('sl-btn');
+    const res   = document.getElementById('sl-result');
+    if (!email || !email.includes('@')) { alert('Email invalide.'); return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Envoi en cours…';
+    res.style.display = 'none';
+
+    try {
+      /* 1. Générer le token */
+      const r1 = await fetch(`${ERP_API_LOCAL}/compte_client`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ action: 'request_link', email, name: name || undefined })
+      });
+      const d1 = await r1.json();
+      if (!d1.token) throw new Error(d1.error || 'Génération token échouée');
+      const magicUrl = `${CLIENT_PORTAL_LOCAL}?token=${d1.token}`;
+
+      /* 2. Envoyer l'email */
+      const clientName = name || d1.name || email.split('@')[0];
+      const emailHtml = `
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;font-size:14px;color:#222">
+  <tr><td style="background:#c4813a;padding:20px 28px;border-radius:8px 8px 0 0">
+    <strong style="color:#fff;font-size:20px">High Coffee Shirt</strong>
+    <span style="display:block;color:rgba(255,255,255,.8);font-size:12px">Papeete, Polynésie française</span>
+  </td></tr>
+  <tr><td style="padding:24px 28px;background:#fff">
+    <p style="font-size:17px;font-weight:700;margin:0 0 8px">🔗 Accédez à votre espace fidélité</p>
+    <p style="color:#444;margin:0 0 20px">Bonjour <strong>${clientName}</strong>,<br>
+    Retrouvez vos points fidélité, votre historique d'achats et vos avantages HCS en un clic :</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px">
+      <tr><td style="background:#1a6ee0;border-radius:8px;text-align:center;padding:14px">
+        <a href="${magicUrl}" style="color:#fff;font-weight:700;font-size:14px;text-decoration:none">🔗 Accéder à mon espace client HCS →</a>
+      </td></tr>
+    </table>
+    <p style="color:#888;font-size:12px;margin:0 0 16px">Ce lien est valable <strong>24 heures</strong>. Vous pouvez définir un mot de passe pour vous connecter à tout moment.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbf0;border:1px solid #f0a030;border-radius:8px;font-size:13px">
+      <tr><td style="padding:12px 16px;font-weight:700;color:#8a6200">⭐ Programme Fidélité HCS</td></tr>
+      <tr><td style="padding:0 16px 12px">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr><td style="padding:4px 0;color:#555">🥉 Rookie</td><td style="text-align:right;color:#555">0 XPF — 1 pt/100 XPF</td></tr>
+          <tr><td style="padding:4px 0;color:#4facfe">🥈 Regular</td><td style="text-align:right;color:#4facfe">50 000 XPF — 1,2 pt/100 XPF</td></tr>
+          <tr><td style="padding:4px 0;color:#a78bfa">🥇 Pro</td><td style="text-align:right;color:#a78bfa">150 000 XPF — 1,5 pt/100 XPF</td></tr>
+          <tr><td style="padding:4px 0;color:#f6a800">🏆 Ambassadeur</td><td style="text-align:right;color:#f6a800">300 000 XPF — 2 pt/100 XPF</td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="background:#f5f5f5;padding:14px 28px;border-radius:0 0 8px 8px;font-size:12px;color:#888;text-align:center">
+    High Coffee Shirt · Papeete, Tahiti · highcoffeeshirt@gmail.com
+  </td></tr>
+</table>`;
+
+      const r2 = await fetch('https://highcoffeeshirts.com/erp/api/send_email.php', {
+        method: 'POST', headers: {'Content-Type':'application/json','x-api-key': localStorage.getItem('hcs_api_key') || 'hcs-erp-2026'},
+        body: JSON.stringify({
+          to: email,
+          subject: '🔗 Votre espace client High Coffee Shirt',
+          bodyHtml: emailHtml,
+          body: ' ',
+          fromName: 'High Coffee Shirt'
+        })
+      });
+      const d2 = await r2.json();
+      if (!d2.success) throw new Error(d2.error || 'Envoi email échoué');
+
+      res.style.display = 'block';
+      res.style.background = 'rgba(34,197,94,.1)';
+      res.style.border = '1px solid rgba(34,197,94,.3)';
+      res.style.color = '#22c55e';
+      res.innerHTML = `✅ Lien envoyé à <strong>${email}</strong>`;
+    } catch(err) {
+      res.style.display = 'block';
+      res.style.background = 'rgba(239,68,68,.1)';
+      res.style.border = '1px solid rgba(239,68,68,.3)';
+      res.style.color = '#ef4444';
+      res.innerHTML = `❌ Erreur : ${err.message}`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Envoyer le lien magique';
+    }
+  };
+}
 
 /* ---- MESSAGERIE — délégué à js/modules/discuss.js ---- */
 // Les fonctions Discussion (inbox, general, production, ventes) sont dans Discuss.init()

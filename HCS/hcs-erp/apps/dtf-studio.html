@@ -8,14 +8,14 @@
 <script src="hcs-api-shared.js"></script>
 <style>
 :root{
-  --ocean:#0a1628;--deep:#0d2137;--teal:#0e7c7b;--coral:#e8533a;
-  --gold:#f0a500;--sand:#f5e6c8;--white:#faf8f3;--muted:#8a9bb0;
-  --border:rgba(14,124,123,0.25);--glow:0 0 28px rgba(14,124,123,0.3);
+  --ocean:#061510;--deep:#0b2218;--teal:#22c55e;--coral:#e8533a;
+  --gold:#f0a500;--sand:#d4f5e0;--white:#f0faf4;--muted:#7aad8f;
+  --border:rgba(34,197,94,0.25);--glow:0 0 28px rgba(34,197,94,0.3);
   --v1:#2563eb;--v2:#dc2626;--v3:#ca8a04;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--ocean);color:var(--white);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 15% 25%,rgba(14,124,123,0.13) 0%,transparent 55%),radial-gradient(ellipse at 85% 75%,rgba(232,83,58,0.08) 0%,transparent 50%);pointer-events:none;z-index:0}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 15% 25%,rgba(34,197,94,0.12) 0%,transparent 55%),radial-gradient(ellipse at 85% 75%,rgba(16,185,129,0.07) 0%,transparent 50%);pointer-events:none;z-index:0}
 
 /* ── HEADER ── */
 header{position:relative;z-index:10;padding:18px 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
@@ -568,6 +568,7 @@ main{position:relative;z-index:10;max-width:1280px;margin:0 auto;padding:32px 40
       <button class="btn-sm pri" id="btnExpSel" onclick="openMod()" disabled>⭐ Sélection</button>
       <button class="btn-sm" onclick="envoyerAtelier()" id="btnAtelier" style="background:rgba(14,124,123,0.15);border-color:var(--teal);color:var(--teal)">🏭 Atelier</button>
       <button class="btn-sm" onclick="ouvrirMockupForge()" style="background:rgba(240,165,0,0.12);border-color:var(--gold);color:var(--gold)">🖼️ MockupForge</button>
+      <button class="btn-sm" onclick="attacherMockupDevis()" id="btnAttachDevis" style="background:rgba(139,92,246,0.12);border-color:#8b5cf6;color:#a78bfa" title="Attacher ce design comme mockup sur un devis ERP">📎 Devis</button>
       <button class="btn-sm" onclick="ouvrirHistoriqueERP()" style="background:rgba(37,99,235,0.12);border-color:var(--v1);color:var(--v1)">📋 Historique ERP</button>
     </div>
   </div>
@@ -919,6 +920,72 @@ function rmImg(e) {
 function tg(el) { el.classList.toggle('on'); saveFields(); }
 
 // ============================================================
+// LOAD FROM HCS DESIGNER — reçoit un logo via localStorage
+// ============================================================
+function loadFromHCSDesigner() {
+  try {
+    const raw = localStorage.getItem('hcs_dtf_to_studio');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data._ts && Date.now() - data._ts > 60000) {
+      localStorage.removeItem('hcs_dtf_to_studio'); return;
+    }
+    localStorage.removeItem('hcs_dtf_to_studio');
+
+    // Injecter l'image dans l'état S
+    S.imgData = data.dataURL;
+    S.imgMime = 'image/png';
+
+    // Mettre à jour le DOM
+    document.getElementById('prevImg').src = S.imgData;
+    document.getElementById('prevName').textContent = data.name + '.png';
+    document.getElementById('prevSz').textContent = 'HCS Designer';
+    document.getElementById('upph').style.display = 'none';
+    document.getElementById('prevCont').style.display = 'flex';
+    document.getElementById('uz').classList.add('has');
+
+    // Pré-remplir thème / collection / contexte si fournis
+    if (data.theme) {
+      const iTheme = document.getElementById('iTheme');
+      if (iTheme) iTheme.value = data.theme;
+    }
+    if (data.name) {
+      const iColl = document.getElementById('iColl');
+      if (iColl) iColl.value = data.name;
+    }
+    if (data.context) {
+      const iCtx = document.getElementById('iCtx');
+      if (iCtx) iCtx.value = data.context;
+    }
+
+    // Bandeau de confirmation
+    const uz = document.getElementById('uz');
+    if (uz) {
+      let banner = document.getElementById('designer-banner');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'designer-banner';
+        banner.style.cssText = [
+          'display:flex;align-items:center;gap:8px',
+          'margin:10px 0 0',
+          'padding:8px 14px',
+          'background:rgba(14,124,123,0.12)',
+          'border:1px solid rgba(14,124,123,0.4)',
+          'border-radius:9px',
+          "font-family:'Space Mono',monospace",
+          'font-size:10px;color:#0e7c7b;letter-spacing:1px'
+        ].join(';');
+        banner.textContent = '\u29e1 Prototype re\u00e7u depuis HCS Designer \u2014 pr\u00eat pour l\u2019analyse IA';
+        uz.parentNode.insertBefore(banner, uz.nextSibling);
+      }
+    }
+
+    if (typeof saveFields === 'function') saveFields();
+  } catch(e) { /* silencieux */ }
+}
+window.loadFromHCSDesigner = loadFromHCSDesigner;
+
+// ============================================================
 // STEP 2 — ANALYZE
 // ============================================================
 async function analyze() {
@@ -1033,7 +1100,7 @@ function enterStep3() {
 }
 
 // Components that are LOCKED identical across all variants
-const LOCKED_KEYS = []; // Tous les champs sont éditables
+const LOCKED_KEYS = ['sujetPrincipal', 'action', 'styleGraphique', 'composition'];
 
 function buildMatrix() {
   S.variations = {};
@@ -1103,33 +1170,36 @@ async function autofill() {
 
   const compList = Object.entries(S.components).map(([k, c]) => `- ${c.label}: ${c.originalValue}`).join('\n');
 
+  const lockedList = Object.entries(S.components)
+    .filter(([k]) => LOCKED_KEYS.includes(k))
+    .map(([k, c]) => `- ${c.label}: ${c.originalValue}`).join('\n');
+  const varList = Object.entries(S.components)
+    .filter(([k]) => !LOCKED_KEYS.includes(k))
+    .map(([k, c]) => `- ${c.label}: ${c.originalValue}`).join('\n');
+
   const SYS = `Tu es expert en design graphique et collections DTF polynésiennes. Réponds UNIQUEMENT en JSON valide.`;
   const USR = `Image originale — composantes:
 ${compList}
 
 Thème: "${S.theme}"
-Concept: MÊME personnage (tatouages, posture, style comic bold, splash fond) · SEULES les composantes changent.
 
-Génère 3 variantes cohérentes. Contraintes:
-- sujetPrincipal: IDENTIQUE dans les 3 variantes (ne pas changer le personnage ni ses tatouages)
-- styleGraphique: IDENTIQUE dans les 3 variantes (même style comic bold)
-- composition: peut légèrement varier
-- objetsAccessoires, tenue, palette, fond: DOIVENT VARIER clairement entre V1/V2/V3
-- Les 3 variantes doivent être distinctes visuellement
+=== VERROUILLÉ — IDENTIQUE DANS LES 3 VARIANTES (NE JAMAIS MODIFIER) ===
+${lockedList}
+Le personnage, son genre, ses tatouages, sa posture et son action sont strictement identiques dans les 3 variantes.
 
-Noms évocateurs pour chaque variante.
+=== VARIABLE — DOIT CLAIREMENT DIFFÉRER ENTRE V1/V2/V3 ===
+${varList}
+C'est UNIQUEMENT sur ces 4 éléments que les variantes se distinguent.
 
-JSON:
+Génère 3 variantes visuellement distinctes avec des noms évocateurs.
+
+JSON (ne pas inclure les composantes verrouillées dans "variations") :
 {
   "variantNames": ["NOM V1", "NOM V2", "NOM V3"],
   "variations": {
-    "sujetPrincipal":    { "v1": "...", "v2": "...", "v3": "..." },
-    "action":            { "v1": "...", "v2": "...", "v3": "..." },
     "objetsAccessoires": { "v1": "...", "v2": "...", "v3": "..." },
     "tenue":             { "v1": "...", "v2": "...", "v3": "..." },
     "palette":           { "v1": "...", "v2": "...", "v3": "..." },
-    "styleGraphique":    { "v1": "...", "v2": "...", "v3": "..." },
-    "composition":       { "v1": "...", "v2": "...", "v3": "..." },
     "fond":              { "v1": "...", "v2": "...", "v3": "..." }
   }
 }`;
@@ -3258,8 +3328,148 @@ async function ouvrirHistoriqueERP() {
   }
 }
 
+// ── ATTACHER LE DESIGN COMME MOCKUP SUR UN DEVIS ERP ───────────────────────────
+async function attacherMockupDevis() {
+  const vt = S.generatedPrompts.find(v => v.imgUrl || (v.imgBase64 && v.imgBase64.startsWith('data:')));
+  if (!vt) { toast('⚠️ Aucune image générée — lancez d\'abord une génération'); return; }
+
+  const btn = document.getElementById('btnAttachDevis');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
+
+  try {
+    let dataUrl;
+    if (vt.imgBase64 && vt.imgBase64.startsWith('data:')) {
+      dataUrl = await _compressDataUrl(vt.imgBase64, 800);
+    } else if (vt.imgUrl) {
+      const raw = await urlToBase64(vt.imgUrl);
+      dataUrl = await _compressDataUrl(raw, 800);
+    }
+    if (!dataUrl) throw new Error('Conversion image impossible');
+
+    const dbRaw = localStorage.getItem('hcs_erp_db');
+    if (!dbRaw) { toast('⚠️ ERP non disponible — ouvrez l\'ERP une fois d\'abord'); return; }
+    let erpDb;
+    try { erpDb = JSON.parse(dbRaw); } catch { toast('❌ Erreur lecture ERP'); return; }
+
+    const devisList = (erpDb.devis || []).filter(d => d.statut !== 'Annulé');
+    if (!devisList.length) { toast('⚠️ Aucun devis actif dans l\'ERP'); return; }
+
+    const clientNorm = (S.coll || '').toLowerCase().replace(/\s+/g, '');
+    const matches = clientNorm
+      ? devisList.filter(d => {
+          const c = (d.client || d.client_nom || '').toLowerCase().replace(/\s+/g, '');
+          return c.includes(clientNorm) || clientNorm.includes(c);
+        })
+      : devisList;
+
+    _showDevisPickerModal(matches.length ? matches : devisList, dataUrl, erpDb);
+  } catch(e) {
+    toast('❌ ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📎 Devis'; }
+  }
+}
+
+/* Compresse une DataURL en JPEG 800px max */
+async function _compressDataUrl(dataUrl, maxPx) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onerror = reject;
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > maxPx || h > maxPx) {
+        if (w >= h) { h = Math.round(h * maxPx / w); w = maxPx; }
+        else        { w = Math.round(w * maxPx / h); h = maxPx; }
+      }
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(cv.toDataURL('image/jpeg', 0.82));
+    };
+    img.src = dataUrl;
+  });
+}
+
+/* Modale de sélection du devis cible */
+function _showDevisPickerModal(devisList, dataUrl, erpDb) {
+  document.getElementById('devisPickerModal')?.remove();
+
+  const listHtml = devisList.slice(0, 30).map((d, i) => `
+    <label style="display:flex;align-items:center;gap:12px;padding:10px 14px;
+                  border:1px solid var(--border);border-radius:8px;cursor:pointer;
+                  margin-bottom:8px;background:rgba(255,255,255,0.03);">
+      <input type="radio" name="pick-devis" value="${i}" style="flex-shrink:0;" />
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:'Bebas Neue';font-size:15px;letter-spacing:2px;color:var(--white);">
+          ${escHtml(d.ref || '—')} — ${escHtml(d.client || d.client_nom || '—')}</div>
+        <div style="font-family:'Space Mono';font-size:9px;color:var(--muted);">
+          ${escHtml(d.date || '')} · ${escHtml(d.statut || '')}
+          ${d.totalTTC != null ? ' · ' + Number(d.totalTTC).toLocaleString('fr-FR') + ' XPF' : ''}</div>
+      </div>
+    </label>`).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'devisPickerModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;background:rgba(8,16,30,0.93);backdrop-filter:blur(6px);';
+  modal.innerHTML = `
+    <div style="background:#0d1829;border:1px solid var(--border);border-radius:14px;
+                padding:24px;width:540px;max-width:96vw;max-height:80vh;
+                display:flex;flex-direction:column;gap:14px;">
+      <div style="font-family:'Bebas Neue';font-size:20px;letter-spacing:3px;color:#a78bfa;">
+        📎 ATTACHER COMME MOCKUP — DEVIS ERP
+      </div>
+      <div style="font-family:'Space Mono';font-size:9px;color:var(--muted);letter-spacing:1px;line-height:1.6;">
+        LE DESIGN ACTUEL SERA AJOUTÉ DANS "🖼 MOCKUP PROJET" DU DEVIS SÉLECTIONNÉ.<br>
+        VISIBLE IMMÉDIATEMENT DANS L'ERP → VENTES → DEVIS.
+      </div>
+      <div style="overflow-y:auto;flex:1;padding-right:4px;">${listHtml}</div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:4px;">
+        <button onclick="document.getElementById('devisPickerModal').remove()"
+                style="padding:8px 20px;background:transparent;border:1px solid var(--border);
+                       border-radius:8px;color:var(--white);cursor:pointer;
+                       font-family:'Bebas Neue';font-size:14px;letter-spacing:1px;">ANNULER</button>
+        <button id="devisPick-confirm"
+                style="padding:8px 26px;background:#8b5cf6;border:none;border-radius:8px;
+                       color:#fff;cursor:pointer;font-family:'Bebas Neue';font-size:14px;
+                       letter-spacing:1px;font-weight:700;">✓ ATTACHER CE DESIGN</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  modal.querySelector('#devisPick-confirm')?.addEventListener('click', () => {
+    const picked = modal.querySelector('input[name="pick-devis"]:checked');
+    if (!picked) { toast('⚠️ Sélectionnez un devis'); return; }
+    const devis = devisList[parseInt(picked.value, 10)];
+    if (!devis) return;
+    modal.remove();
+    _attachMockupToDevis(devis, dataUrl, erpDb);
+  });
+}
+
+/* Sauvegarde le mockup dans le devis ERP (localStorage partagé même origine) */
+function _attachMockupToDevis(devis, dataUrl, erpDb) {
+  try {
+    const nom = ((S.coll ? S.coll + ' — DTF Studio' : 'DTF Studio') +
+                 ' · ' + new Date().toLocaleDateString('fr-FR')).slice(0, 50);
+    if (!Array.isArray(devis.mockupUrls)) devis.mockupUrls = [];
+    devis.mockupUrls.push({ dataUrl, nom, date: new Date().toISOString().slice(0, 10), source: 'dtf-studio' });
+    localStorage.setItem('hcs_erp_db', JSON.stringify(erpDb));
+    toast(`✓ Mockup attaché à ${devis.ref} — visible dans ERP → Devis → Mockup projet`);
+  } catch(e) {
+    toast('❌ Erreur sauvegarde : ' + e.message);
+  }
+}
+
 // Restaurer les clés au chargement
 window.addEventListener('load', loadKeys);
+
+// Auto-trigger si ouvert depuis HCS Designer
+window.addEventListener('load', function() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('from') === 'designer') {
+    setTimeout(loadFromHCSDesigner, 350);
+  }
+});
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="../hcs-hub-ecosystem/hcs-hub-ecosystem/hcs-hub.js"></script>

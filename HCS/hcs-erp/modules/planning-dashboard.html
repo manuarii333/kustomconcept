@@ -20,6 +20,8 @@
     --red: #ef4444;
     --blue: #3b82f6;
     --purple: #a855f7;
+    --teal: #14b8a6;
+    --teal-dim: rgba(20,184,166,0.15);
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
@@ -66,7 +68,7 @@
   .main { display:grid; grid-template-columns:1fr 320px; gap:16px; padding:0 24px 24px; }
 
   /* KANBAN */
-  .kanban { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+  .kanban { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; }
   .kanban-col { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
   .col-header {
     padding:12px 14px; font-size:12px; font-weight:600; text-transform:uppercase;
@@ -109,10 +111,25 @@
   .cmd-btn-next:hover { background:var(--orange); color:#fff; }
   .cmd-btn-del { background:rgba(239,68,68,.1); color:var(--red); }
   .cmd-btn-del:hover { background:var(--red); color:#fff; }
+  /* Mockup sur carte planning */
+  .card-mockups { display:flex; gap:5px; margin-bottom:7px; flex-wrap:wrap; }
+  .card-mockup-thumb {
+    width:56px; height:56px; border-radius:5px; overflow:hidden; flex-shrink:0;
+    border:1px solid var(--border); cursor:zoom-in; position:relative;
+  }
+  .card-mockup-thumb img { width:100%; height:100%; object-fit:cover; display:block; pointer-events:none; }
+  /* Lignes articles sur carte */
+  .card-lignes { font-size:10px; color:var(--text-muted); line-height:1.6; margin-bottom:5px; }
+  .card-ligne-row { display:flex; gap:4px; align-items:baseline; }
+  .card-ligne-qte { color:var(--orange); font-weight:700; flex-shrink:0; }
+  .card-ligne-tech { font-size:9px; padding:1px 5px; border-radius:10px; background:rgba(251,146,60,.1); color:var(--orange); margin-left:4px; }
+  /* Notes de prod */
+  .card-notes-prod { font-size:10px; color:var(--text-muted); font-style:italic; margin-bottom:5px; border-left:2px solid var(--border); padding-left:6px; }
 
   /* COL COLORS */
   .col-header.attendre { color:#a855f7; }
   .col-header.matiere { color:var(--yellow); }
+  .col-header.reservation { color:var(--teal); }
   .col-header.prod { color:var(--orange); }
   .col-header.qualite { color:var(--blue); }
   .col-header.pret { color:var(--green); }
@@ -198,12 +215,349 @@
   /* DROP ZONE */
   .col-body.dragover { background:var(--orange-dim); border-radius:8px; }
 
-  @media(max-width:1400px) { .kanban { grid-template-columns:repeat(3,1fr); } }
+  /* ─── RÉSERVATION ─── */
+  .cmd-btn-reserve { background:var(--teal-dim); color:var(--teal); }
+  .cmd-btn-reserve:hover { background:var(--teal); color:#fff; }
+  .cmd-btn-reserve-edit { background:rgba(168,85,247,.1); color:#a855f7; flex:0 0 auto; padding:4px 8px; }
+  .cmd-btn-reserve-edit:hover { background:#a855f7; color:#fff; }
+  .reserve-badge { display:inline-block; font-size:10px; font-weight:600; padding:2px 8px; border-radius:999px; }
+  .reserve-badge.en_attente { background:rgba(234,179,8,.15); color:var(--yellow); }
+  .reserve-badge.confirme { background:rgba(34,197,94,.15); color:var(--green); }
+  .reserve-badge.non_disponible { background:rgba(239,68,68,.15); color:var(--red); }
+  .reserve-info { font-size:10px; color:var(--text-muted); margin-top:4px; padding:4px 6px; background:var(--bg); border-radius:6px; line-height:1.5; }
+
+  /* STOCK TYPE RADIO */
+  .stock-type-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px; }
+  .stock-type-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px 8px; border:1px solid var(--border); border-radius:8px; cursor:pointer; font-size:12px; text-align:center; transition:all 0.2s; background:var(--surface2); gap:4px; }
+  .stock-type-btn input { display:none; }
+  .stock-type-btn:has(input:checked) { border-color:var(--teal); background:rgba(20,184,166,.1); color:var(--teal); }
+  .stock-type-btn small { color:var(--text-muted); font-size:10px; }
+  .stock-type-btn:has(input:checked) small { color:rgba(20,184,166,.7); }
+
+  /* MODAL WIDE */
+  .modal-wide { width:620px; }
+
+  /* ─── PARCOURS RÉSERVATION : onglets ─── */
+  .r-tab-btn {
+    padding:7px 18px; border-radius:8px; border:1px solid var(--border);
+    background:var(--surface2); color:var(--text-muted); font-size:12px; font-weight:600;
+    cursor:pointer; transition:all .18s; font-family:'Inter',sans-serif;
+  }
+  .r-tab-btn:hover { border-color:var(--teal); color:var(--teal); }
+  .r-tab-btn.r-tab-active {
+    border-color:var(--teal); background:rgba(20,184,166,.12); color:var(--teal);
+  }
+
+  /* ─── Tableau lignes devis ─── */
+  .r-ligne-row {
+    display:grid; grid-template-columns:28px 2fr 60px 80px 90px;
+    gap:6px; align-items:center; padding:7px 10px; font-size:11px;
+    border-bottom:1px solid var(--border); cursor:pointer; transition:background .12s;
+  }
+  .r-ligne-row:last-child { border-bottom:none; }
+  .r-ligne-row:hover { background:rgba(255,255,255,.03); }
+  .r-ligne-row.r-ligne-dtf   { background:rgba(168,85,247,.04); }
+  .r-ligne-row.r-ligne-thermo{ background:rgba(239,68,68,.03); }
+  .r-ligne-row.r-ligne-checked{ background:rgba(20,184,166,.07); }
+  .r-ligne-cb {
+    width:15px; height:15px; accent-color:var(--teal); cursor:pointer; flex-shrink:0;
+  }
+  .r-ligne-header {
+    display:grid; grid-template-columns:28px 2fr 60px 80px 90px;
+    gap:6px; padding:5px 10px; font-size:10px; font-weight:700; letter-spacing:.05em;
+    color:var(--text-muted); text-transform:uppercase; background:var(--surface2);
+    border-bottom:1px solid var(--border);
+  }
+  /* Bouton tout-cocher / décocher */
+  .r-cb-all {
+    width:15px; height:15px; accent-color:var(--teal); cursor:pointer;
+  }
+  .r-ligne-badge {
+    font-size:9px; padding:2px 6px; border-radius:999px; font-weight:700;
+  }
+  .r-ligne-badge.badge-dtf     { background:rgba(168,85,247,.15); color:#a855f7; }
+  .r-ligne-badge.badge-textile { background:rgba(20,184,166,.15);  color:var(--teal); }
+  .r-ligne-badge.badge-vinyl   { background:rgba(251,146,60,.15);  color:var(--orange); }
+  .r-ligne-badge.badge-thermo  { background:rgba(239,68,68,.12);   color:#f87171; }
+
+  /* ─── Tableau visuels DTF ─── */
+  .dtf-vis-row {
+    display:grid; grid-template-columns:1fr 70px 70px 60px 32px;
+    gap:6px; align-items:center; padding:6px 8px; font-size:11px;
+    border-bottom:1px solid var(--border);
+  }
+  .dtf-vis-row:last-child { border-bottom:none; }
+  .dtf-vis-header {
+    display:grid; grid-template-columns:1fr 70px 70px 60px 32px;
+    gap:6px; padding:5px 8px; font-size:10px; font-weight:700; letter-spacing:.05em;
+    color:var(--text-muted); text-transform:uppercase; background:var(--surface2);
+    border-bottom:1px solid var(--border);
+  }
+  .dtf-inp {
+    width:100%; padding:4px 6px; border-radius:5px; border:1px solid var(--border);
+    background:var(--surface2); color:var(--text); font-size:11px; font-family:'Inter',sans-serif;
+  }
+  .dtf-inp:focus { outline:none; border-color:var(--teal); }
+  .dtf-result-box {
+    background:rgba(20,184,166,.07); border:1px solid rgba(20,184,166,.25);
+    border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:12px;
+  }
+  .dtf-result-line { display:flex; justify-content:space-between; align-items:center; padding:4px 0; }
+  .dtf-result-line strong { color:var(--teal); font-size:15px; }
+
+  /* ─── Tableau T-shirts à imprimer (Textile) ─── */
+  .textile-item-header {
+    display:grid; grid-template-columns:minmax(100px,2fr) 60px 72px 72px 72px 50px 30px;
+    gap:5px; padding:5px 8px; font-size:10px; font-weight:700; letter-spacing:.05em;
+    color:var(--text-muted); text-transform:uppercase; background:var(--surface2);
+    border-bottom:1px solid var(--border);
+  }
+  .textile-item-row {
+    display:grid; grid-template-columns:minmax(100px,2fr) 60px 72px 72px 72px 50px 30px;
+    gap:5px; align-items:center; padding:6px 8px; font-size:11px;
+    border-bottom:1px solid var(--border);
+  }
+  .textile-item-row:last-child { border-bottom:none; }
+  .textile-inp {
+    width:100%; padding:4px 5px; border-radius:5px; border:1px solid var(--border);
+    background:var(--surface2); color:var(--text); font-size:11px; font-family:'Inter',sans-serif;
+  }
+  .textile-inp:focus { outline:none; border-color:var(--teal); }
+
+  /* ─── Email preview ─── */
+  .r-email-box {
+    font-family:monospace; font-size:11px; background:var(--surface2);
+    border:1px solid var(--border); border-radius:8px; padding:12px;
+    white-space:pre-wrap; min-height:130px; max-height:220px; overflow-y:auto;
+    color:var(--text); line-height:1.7; width:100%; box-sizing:border-box; resize:vertical;
+  }
+  .r-email-box:focus { outline:none; border-color:var(--teal); }
+  .r-email-to-row {
+    display:flex; align-items:center; gap:6px; margin-bottom:6px;
+  }
+  .r-email-to-row label { font-size:11px; font-weight:600; color:var(--text-muted); white-space:nowrap; }
+  .r-email-to-row input { flex:1; font-size:11px; padding:4px 8px; }
+  .r-email-to-row select { font-size:11px; padding:4px 6px; width:auto; max-width:140px; }
+
+  /* FOURNISSEURS */
+  .fourn-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-bottom:8px; }
+  .fourn-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .fourn-name { font-size:13px; font-weight:600; }
+  .fourn-type-badge { font-size:10px; font-weight:600; padding:2px 7px; border-radius:999px; }
+  .fourn-type-badge.local { background:rgba(34,197,94,.15); color:var(--green); }
+  .fourn-type-badge.etranger { background:rgba(59,130,246,.15); color:var(--blue); }
+  .fourn-contact { font-size:11px; color:var(--text-muted); margin-top:4px; display:flex; gap:14px; flex-wrap:wrap; }
+  .fourn-produits { font-size:11px; color:var(--text-muted); margin-top:3px; }
+  .fourn-actions { display:flex; gap:6px; }
+  .fourn-btn { font-size:10px; font-weight:600; padding:3px 8px; border-radius:6px; border:none; cursor:pointer; font-family:'Inter',sans-serif; }
+  .fourn-btn-edit { background:var(--orange-dim); color:var(--orange); }
+  .fourn-btn-del { background:rgba(239,68,68,.1); color:var(--red); }
+
+  /* ACHATS TABLE */
+  .achat-row { display:grid; grid-template-columns:75px 1fr 110px 65px 100px 80px; gap:8px; align-items:center; padding:8px 10px; border-radius:8px; font-size:11px; border:1px solid var(--border); margin-bottom:6px; background:var(--surface2); }
+  .achat-header { display:grid; grid-template-columns:75px 1fr 110px 65px 100px 80px; gap:8px; padding:6px 10px; font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; }
+  .achat-status { font-size:10px; font-weight:600; padding:2px 6px; border-radius:999px; white-space:nowrap; text-align:center; }
+  .achat-status.en_attente { background:rgba(234,179,8,.15); color:var(--yellow); }
+  .achat-status.commande { background:rgba(59,130,246,.15); color:var(--blue); }
+  .achat-status.recu { background:rgba(34,197,94,.15); color:var(--green); }
+  .achat-status.facture { background:rgba(168,85,247,.15); color:#a855f7; }
+  .achat-action { font-size:10px; background:none; border:none; cursor:pointer; color:var(--text-muted); font-family:'Inter',sans-serif; }
+  .achat-action:hover { color:var(--orange); }
+
+  /* FOURN INFO BLOCK */
+  .fourn-info-block { background:rgba(20,184,166,.08); border:1px solid rgba(20,184,166,.2); border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:12px; line-height:1.6; }
+
+  @media(max-width:1500px) { .kanban { grid-template-columns:repeat(3,1fr); } }
   @media(max-width:900px) {
     .main { grid-template-columns:1fr; }
     .kanban { grid-template-columns:1fr 1fr; }
     .stats-bar { grid-template-columns:repeat(3,1fr); }
+    .achat-row, .achat-header { grid-template-columns:65px 1fr 90px; }
+    .achat-row > *:nth-child(n+4), .achat-header > *:nth-child(n+4) { display:none; }
   }
+
+  /* ─── EMAILS FOURNISSEURS ─── */
+  .email-fourn-section { border-bottom:1px solid var(--border); padding-bottom:14px; margin-bottom:14px; }
+  .email-fourn-section:last-child { border-bottom:none; margin-bottom:0; }
+  .email-fourn-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; flex-wrap:wrap; gap:6px; }
+  .email-fourn-items { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px; margin-bottom:8px; }
+  .email-item-row { display:flex; gap:8px; align-items:flex-start; padding:7px 0; border-bottom:1px solid var(--border); font-size:11px; }
+  .email-item-row:last-child { border-bottom:none; padding-bottom:0; }
+  .email-sent-badge { font-size:10px; font-weight:600; padding:2px 7px; border-radius:999px; background:rgba(34,197,94,.15); color:var(--green); white-space:nowrap; }
+  .email-pending-badge { font-size:10px; font-weight:600; padding:2px 7px; border-radius:999px; background:rgba(59,130,246,.15); color:var(--blue); white-space:nowrap; }
+  .email-no-addr { font-size:11px; color:var(--red); display:flex; align-items:center; gap:8px; }
+
+  /* ─── ORDRE DE FABRICATION ─── */
+  .of-row { display:flex; gap:10px; align-items:center; padding:10px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; margin-bottom:6px; transition:all 0.2s; }
+  .of-row:hover { border-color:var(--orange); }
+  .of-num { width:28px; height:28px; border-radius:50%; background:var(--orange); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; }
+  .of-num.urgent { background:var(--red); }
+  .of-num.express { background:var(--purple); }
+  .of-info { flex:1; min-width:0; }
+  .of-ref { font-size:12px; font-weight:700; color:var(--orange); }
+  .of-client { font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .of-meta { font-size:10px; color:var(--text-muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .of-actions { display:flex; gap:4px; flex-shrink:0; }
+  .of-btn { width:28px; height:28px; border:1px solid var(--border); border-radius:6px; background:none; cursor:pointer; color:var(--text-muted); font-size:14px; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+  .of-btn:hover:not([disabled]) { border-color:var(--orange); color:var(--orange); }
+  .of-btn[disabled] { opacity:.3; cursor:not-allowed; }
+
+  /* HEADER BADGE COMPTEUR */
+  .btn-wrap { position:relative; display:inline-block; }
+  .btn-wrap .n-badge { position:absolute; top:-6px; right:-6px; background:var(--red); color:#fff; font-size:9px; font-weight:700; min-width:16px; height:16px; border-radius:999px; display:flex; align-items:center; justify-content:center; padding:0 3px; pointer-events:none; }
+  .of-sidebar-row { display:flex; gap:8px; align-items:center; padding:7px 0; border-bottom:1px solid var(--border); font-size:11px; }
+  .of-sidebar-row:last-child { border-bottom:none; }
+
+  /* ─── CHECKLIST PRODUCTION ADAPTATIVE ─── */
+  .chk-modal { width:720px; max-width:97vw; }
+  .chk-header-info {
+    background:var(--surface2); border:1px solid var(--border); border-radius:8px;
+    padding:10px 14px; margin-bottom:14px; font-size:12px; color:var(--text-muted); line-height:1.6;
+  }
+  .chk-section { margin-bottom:10px; }
+  .chk-section-title {
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+    padding:8px 12px; display:flex; align-items:center; justify-content:space-between;
+    border-radius:8px 8px 0 0;
+  }
+  .chk-section-title .chk-sec-count { font-size:10px; font-weight:600; opacity:.8; }
+  .chk-section-title.t-prep    { background:rgba(255,107,0,.12); color:var(--orange); border-bottom:1px solid rgba(255,107,0,.2); }
+  .chk-section-title.t-dtf     { background:rgba(168,85,247,.12); color:#a855f7;       border-bottom:1px solid rgba(168,85,247,.2); }
+  .chk-section-title.t-thermo  { background:rgba(239,68,68,.10); color:#f87171;        border-bottom:1px solid rgba(239,68,68,.2); }
+  .chk-section-title.t-textile { background:rgba(20,184,166,.10); color:var(--teal);   border-bottom:1px solid rgba(20,184,166,.2); }
+  .chk-section-title.t-pressage{ background:rgba(234,179,8,.10); color:var(--yellow);  border-bottom:1px solid rgba(234,179,8,.2); }
+  .chk-section-title.t-qualite { background:rgba(59,130,246,.10); color:var(--blue);   border-bottom:1px solid rgba(59,130,246,.2); }
+  .chk-section-title.t-vinyle  { background:rgba(34,197,94,.10); color:var(--green);   border-bottom:1px solid rgba(34,197,94,.2); }
+  .chk-list {
+    border:1px solid var(--border); border-top:none;
+    border-radius:0 0 8px 8px; overflow:hidden;
+  }
+  .chk-item {
+    display:flex; align-items:flex-start; gap:10px; padding:8px 12px;
+    border-bottom:1px solid var(--border); cursor:pointer; transition:background .12s;
+    font-size:12px; user-select:none;
+  }
+  .chk-item:last-child { border-bottom:none; }
+  .chk-item:hover { background:rgba(255,255,255,.025); }
+  .chk-item.chk-done { background:rgba(34,197,94,.05); }
+  .chk-item.chk-done .chk-label { color:var(--text-muted); text-decoration:line-through; }
+  .chk-item input[type=checkbox] {
+    width:16px; height:16px; accent-color:var(--green); cursor:pointer;
+    flex-shrink:0; margin-top:1px;
+  }
+  .chk-label-wrap { flex:1; min-width:0; }
+  .chk-label { line-height:1.5; }
+  .chk-sub { font-size:10px; color:var(--text-muted); margin-top:2px; line-height:1.4; }
+  .chk-badges { display:flex; gap:4px; align-items:center; flex-shrink:0; flex-wrap:wrap; }
+  .chk-badge {
+    font-size:9px; font-weight:700; padding:1px 7px; border-radius:999px; white-space:nowrap;
+  }
+  .chk-badge.b-req   { background:rgba(239,68,68,.15); color:var(--red); }
+  .chk-badge.b-dtf   { background:rgba(168,85,247,.15); color:#a855f7; }
+  .chk-badge.b-thermo{ background:rgba(239,68,68,.12); color:#f87171; }
+  .chk-badge.b-opt   { background:rgba(255,255,255,.06); color:var(--text-muted); }
+
+  /* Press settings box */
+  .press-box {
+    background:var(--bg); border:1px solid var(--border); border-radius:6px;
+    padding:8px 10px; margin-top:6px;
+    display:grid; grid-template-columns:repeat(4,1fr); gap:6px; text-align:center;
+  }
+  .press-val { font-size:16px; font-weight:700; color:var(--orange); }
+  .press-lbl { font-size:9px; color:var(--text-muted); margin-top:2px; text-transform:uppercase; letter-spacing:.04em; }
+  .press-peel { grid-column:1/-1; font-size:10px; color:var(--text-muted); margin-top:4px; border-top:1px solid var(--border); padding-top:6px; }
+  .peel-f { color:var(--blue); font-weight:700; }
+  .peel-c { color:var(--yellow); font-weight:700; }
+
+  /* Warn order banner */
+  .chk-warn-banner {
+    display:flex; align-items:flex-start; gap:10px; padding:10px 12px;
+    background:rgba(234,179,8,.10); border:1px solid rgba(234,179,8,.25);
+    border-radius:8px; margin-bottom:12px; font-size:12px; line-height:1.5;
+  }
+
+  /* Progress */
+  .chk-progress { margin:14px 0 10px; }
+  .chk-prog-bar { height:7px; background:var(--border); border-radius:999px; overflow:hidden; margin-top:6px; }
+  .chk-prog-fill { height:100%; border-radius:999px; transition:width .35s; }
+  .chk-prog-text { display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-top:4px; }
+  .chk-prog-fill.prog-ok  { background:var(--green); }
+  .chk-prog-fill.prog-mid { background:var(--yellow); }
+  .chk-prog-fill.prog-low { background:var(--red); }
+
+  /* Sections verrouillées (étape précédente incomplète) */
+  .chk-section-title.sec-locked {
+    background:rgba(255,255,255,.03) !important;
+    color:var(--text-muted) !important;
+    border-color:rgba(255,255,255,.06) !important;
+    opacity:.7;
+  }
+  .chk-list.sec-locked-list { opacity:.45; }
+  .chk-list.sec-locked-list .chk-item { color:var(--text-muted); }
+  .chk-lock-badge {
+    font-size:11px; margin-left:4px; opacity:.8;
+  }
+  /* Sur la carte */
+  .card-chk-sec.sec-locked .card-chk-sec-hd { opacity:.5; }
+  .card-chk-sec.sec-locked .card-chk-row { opacity:.4; }
+
+  /* ─── CHECKLIST MINI SUR CARTE PRODUCTION ─── */
+  .card-chk-wrap {
+    margin: 7px 0 4px;
+    border-top: 1px solid var(--border);
+    padding-top: 7px;
+  }
+  .card-chk-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 5px; gap: 6px;
+  }
+  .card-chk-toplabel {
+    font-size: 10px; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: .04em; white-space: nowrap;
+  }
+  .card-chk-topstats {
+    font-size: 10px; color: var(--text-muted); white-space: nowrap;
+  }
+  .card-chk-edit-btn {
+    font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 6px;
+    border: 1px solid var(--border); background: none; color: var(--text-muted);
+    cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s;
+    flex-shrink: 0; white-space: nowrap;
+  }
+  .card-chk-edit-btn:hover { border-color: var(--orange); color: var(--orange); }
+  .card-chk-minibar { height: 4px; background: var(--border); border-radius: 999px; overflow: hidden; margin-bottom: 7px; }
+  .card-chk-minibar-fill { height: 100%; border-radius: 999px; transition: width .3s; }
+  .card-chk-sec { margin-bottom: 6px; }
+  .card-chk-sec-hd {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 9px; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: .04em;
+    margin-bottom: 2px; padding: 2px 0;
+  }
+  .card-chk-sec-hd-count {
+    font-size: 9px; font-weight: 600; padding: 1px 5px; border-radius: 999px;
+  }
+  .card-chk-sec-hd-count.all-done { background: rgba(34,197,94,.15); color: var(--green); }
+  .card-chk-sec-hd-count.partial  { background: rgba(234,179,8,.12); color: var(--yellow); }
+  .card-chk-sec-hd-count.none     { background: rgba(255,255,255,.06); color: var(--text-muted); }
+  .card-chk-row {
+    display: flex; align-items: flex-start; gap: 6px; padding: 2px 4px;
+    font-size: 10px; line-height: 1.4; border-radius: 4px; cursor: pointer;
+    transition: background .1s;
+  }
+  .card-chk-row:hover { background: rgba(255,255,255,.04); }
+  .card-chk-row input[type=checkbox] {
+    width: 11px; height: 11px; accent-color: var(--green);
+    cursor: pointer; flex-shrink: 0; margin-top: 2px;
+  }
+  .card-chk-row.done-row { color: var(--text-muted); }
+  .card-chk-row.done-row .card-chk-lbl { text-decoration: line-through; opacity: .6; }
+  .card-chk-row.req-row:not(.done-row) { color: var(--text); }
+  .card-chk-row.opt-row:not(.done-row) { color: var(--text-muted); }
+  .card-chk-lbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card-chk-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .card-chk-dot.req-dot { background: var(--red); }
+  .card-chk-dot.opt-dot { background: var(--border); }
 </style>
 </head>
 <body>
@@ -216,7 +570,20 @@
   </div>
   <div style="display:flex;gap:10px;align-items:center;">
     <span class="live-clock" id="clock"></span>
+    <span id="_sync-toast" style="font-size:11px;opacity:0;transition:opacity .4s;margin-right:2px;"></span>
+    <button id="_btn-pull-planning" class="btn btn-ghost" onclick="_MYSQL.pull()" title="Charger depuis MySQL" style="font-size:11px;padding:6px 10px;">☁↓</button>
+    <button id="_btn-push-planning" class="btn btn-ghost" onclick="_MYSQL.pushAll()" title="Pousser tout vers MySQL" style="font-size:11px;padding:6px 10px;">☁↑</button>
     <button class="btn btn-ghost" onclick="exportPlanning()">Export CSV</button>
+    <button class="btn btn-ghost" onclick="openFournisseursModal()" title="Gérer les fournisseurs">👥 Fournisseurs</button>
+    <button class="btn btn-ghost" onclick="openAchatsModal()" title="Liste des achats / comptabilité">🛒 Achats</button>
+    <div class="btn-wrap">
+      <button class="btn btn-ghost" onclick="openEmailsFournisseursModal()" title="Emails fournisseurs — marchandises en attente">📧 Emails fourn.</button>
+      <span class="n-badge" id="badge-emails" style="display:none;">0</span>
+    </div>
+    <div class="btn-wrap">
+      <button class="btn btn-ghost" onclick="openOFModal()" title="Ordre de fabrication">🔢 Ordre fab.</button>
+      <span class="n-badge" id="badge-of" style="background:var(--orange);display:none;">0</span>
+    </div>
     <button class="btn btn-orange" onclick="openAddModal()">+ Nouvelle commande</button>
   </div>
 </div>
@@ -267,7 +634,16 @@
       <div class="col-body" id="col-matiere" data-col="matiere"
            ondragover="dragOver(event)" ondrop="drop(event)"></div>
     </div>
-    <!-- Col 3 -->
+    <!-- Col 3 — RÉSERVATION -->
+    <div class="kanban-col">
+      <div class="col-header reservation">
+        <span>📦 Réservation</span>
+        <span class="col-badge" id="cnt-reservation">0</span>
+      </div>
+      <div class="col-body" id="col-reservation" data-col="reservation"
+           ondragover="dragOver(event)" ondrop="drop(event)"></div>
+    </div>
+    <!-- Col 4 -->
     <div class="kanban-col">
       <div class="col-header prod">
         <span>En production</span>
@@ -276,7 +652,7 @@
       <div class="col-body" id="col-prod" data-col="prod"
            ondragover="dragOver(event)" ondrop="drop(event)"></div>
     </div>
-    <!-- Col 4 -->
+    <!-- Col 5 -->
     <div class="kanban-col">
       <div class="col-header qualite">
         <span>Contrôle qualité</span>
@@ -285,7 +661,7 @@
       <div class="col-body" id="col-qualite" data-col="qualite"
            ondragover="dragOver(event)" ondrop="drop(event)"></div>
     </div>
-    <!-- Col 5 -->
+    <!-- Col 6 -->
     <div class="kanban-col">
       <div class="col-header pret">
         <span>Prêt / Livré</span>
@@ -309,6 +685,24 @@
     <div class="side-card">
       <div class="side-title">🔔 Alertes</div>
       <div id="alerts-list"></div>
+    </div>
+
+    <!-- RÉSERVATIONS EN ATTENTE -->
+    <div class="side-card">
+      <div class="side-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>📦 Réservations</span>
+        <button class="btn btn-ghost" style="font-size:10px;padding:3px 8px;" onclick="openAchatsModal()">Voir achats →</button>
+      </div>
+      <div id="reservations-sidebar"></div>
+    </div>
+
+    <!-- ORDRE DE FABRICATION -->
+    <div class="side-card">
+      <div class="side-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>🔢 Ordre de fabrication</span>
+        <button class="btn btn-ghost" style="font-size:10px;padding:3px 8px;" onclick="openOFModal()">Gérer →</button>
+      </div>
+      <div id="of-sidebar"></div>
     </div>
 
     <!-- STATS JOUR -->
@@ -401,6 +795,553 @@
   </div>
 </div>
 
+<!-- ══════════════════════════════════════
+     MODAL RÉSERVATION STOCK
+════════════════════════════════════════ -->
+<div class="modal-bg" id="reservationModal">
+  <div class="modal modal-wide" style="max-width:760px;max-height:92vh;overflow-y:auto;">
+    <div class="modal-title">📦 Réservation de stock / Matière</div>
+
+    <!-- Info commande (lecture seule) -->
+    <div id="r-cmd-info" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text-muted);line-height:1.6;"></div>
+
+    <!-- ── Switch parcours ── -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+      <button id="r-tab-textile" class="r-tab-btn r-tab-active" onclick="switchParcours('textile')">🧵 Textile / Matière</button>
+      <button id="r-tab-dtf"     class="r-tab-btn"             onclick="switchParcours('dtf')">🖨️ Transferts DTF</button>
+      <button id="r-tab-thermo"  class="r-tab-btn"             onclick="switchParcours('thermo')">🌡️ Thermocollant</button>
+    </div>
+
+    <!-- ── Lignes du devis (communes à tous les parcours) ── -->
+    <div id="r-lignes-section" style="margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+        📋 Lignes du devis / commande
+        <span id="r-lignes-count" style="font-size:10px;background:var(--surface3,var(--surface2));padding:1px 8px;border-radius:999px;"></span>
+      </div>
+      <div id="r-lignes-list" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;max-height:200px;overflow-y:auto;"></div>
+    </div>
+
+    <!-- ══════════════════════════════
+         PARCOURS TEXTILE / MATIÈRE
+    ══════════════════════════════ -->
+    <div id="r-parcours-textile">
+
+      <!-- Source du stock textile -->
+      <div class="form-row">
+        <label class="form-label">Source du stock *</label>
+        <div class="stock-type-grid">
+          <label class="stock-type-btn">
+            <input type="radio" name="r-type-radio" value="magasin" onchange="toggleReservationType()">
+            <span>🏪 Stock magasin</span>
+            <small>Disponible de suite</small>
+          </label>
+          <label class="stock-type-btn">
+            <input type="radio" name="r-type-radio" value="fournisseur_local" onchange="toggleReservationType()">
+            <span>🚚 Fournisseur local</span>
+            <small>Délai court (PF)</small>
+          </label>
+          <label class="stock-type-btn">
+            <input type="radio" name="r-type-radio" value="fournisseur_etranger" onchange="toggleReservationType()">
+            <span>✈️ Fournisseur étranger</span>
+            <small>Import / délai long</small>
+          </label>
+        </div>
+      </div>
+      <div id="r-bloc-fournisseur" style="display:none;">
+        <div class="form-row-2">
+          <div>
+            <label class="form-label">Fournisseur</label>
+            <select class="form-select" id="r-fournisseur" onchange="onFournisseurChange()">
+              <option value="">-- Sélectionner un fournisseur --</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Mode de contact</label>
+            <select class="form-select" id="r-contact">
+              <option value="telephone">📞 Appel téléphonique</option>
+              <option value="email">📧 Envoi email</option>
+              <option value="les_deux">📞📧 Téléphone + Email</option>
+            </select>
+          </div>
+        </div>
+        <div id="r-fournisseur-info" class="fourn-info-block" style="display:none;"></div>
+        <div style="text-align:right;margin-bottom:8px;">
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px;" onclick="closeReservationModal();openFournisseursModal();">+ Ajouter un fournisseur</button>
+        </div>
+      </div>
+
+      <!-- Tableau T-shirts à imprimer -->
+      <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--teal);margin-bottom:8px;margin-top:4px;">
+        👕 T-shirts à imprimer
+      </div>
+      <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:8px;">
+        <div class="textile-item-header">
+          <div>Description</div><div>Taille</div><div>Couleur</div><div>Matière</div><div>Coupe</div><div>Qté</div><div></div>
+        </div>
+        <div id="r-textile-items"></div>
+      </div>
+      <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px;margin-bottom:14px;" onclick="addTextileItem()">+ Ajouter une ligne</button>
+
+      <!-- Résumé commande textile (auto depuis lignes) -->
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">Produit / Matière à réserver *</label>
+          <input class="form-input" id="r-produit" placeholder="ex: T-shirt polyester blanc coton — tailles assorties">
+        </div>
+        <div>
+          <label class="form-label">Quantité totale</label>
+          <input class="form-input" id="r-qte" type="number" min="1" value="1">
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">Montant estimé (XPF)</label>
+          <input class="form-input" id="r-montant" type="number" placeholder="0" min="0">
+        </div>
+        <div>
+          <label class="form-label">Statut de la réservation</label>
+          <select class="form-select" id="r-status">
+            <option value="en_attente">⏳ En attente de confirmation</option>
+            <option value="confirme">✅ Confirmé — disponible</option>
+            <option value="non_disponible">❌ Non disponible</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Instructions / Notes de commande</label>
+        <textarea class="form-textarea" id="r-notes" placeholder="Ex: couleurs requises, tailles, délai souhaité, conditions spéciales..."></textarea>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Feedback fournisseur</label>
+        <textarea class="form-textarea" id="r-feedback" placeholder="Ex: M. Dupont a confirmé le 14/04, livraison prévue le 16/04..."></textarea>
+      </div>
+      <div style="margin-top:6px;margin-bottom:4px;text-align:right;">
+        <button class="btn btn-ghost" style="font-size:11px;" onclick="generateEmailPreview()">✉️ Prévisualiser l'email fournisseur</button>
+      </div>
+      <div id="r-email-preview" style="display:none;margin-bottom:8px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary,var(--text-muted));margin-bottom:6px;">✉️ Aperçu email — Textile</div>
+        <div class="r-email-to-row">
+          <label>À :</label>
+          <input type="email" id="r-email-to" class="form-input" placeholder="destinataire@gmail.com" list="hcs-email-datalist">
+          <select id="r-email-team-select" class="form-select r-email-to-row" onchange="_pickTeamEmail('r-email-to',this)">
+            <option value="">👥 Équipe HCS</option>
+          </select>
+        </div>
+        <textarea id="r-email-preview-body" class="r-email-box"></textarea>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
+          <button class="btn btn-ghost" style="font-size:11px;" onclick="copyEmailToClipboard()">📋 Copier</button>
+          <button class="btn btn-ghost" style="font-size:11px;" onclick="openEmailClientFromPreview()" title="Ouvrir votre application mail">📧 Messagerie</button>
+          <button class="btn btn-orange" style="font-size:11px;" id="btn-send-email-direct" onclick="sendEmailDirect(this)">📤 Envoyer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         PARCOURS DTF
+    ══════════════════════════════ -->
+    <div id="r-parcours-dtf" style="display:none;">
+
+      <!-- Source du stock DTF -->
+      <div class="form-row">
+        <label class="form-label">Source du stock *</label>
+        <div class="stock-type-grid">
+          <label class="stock-type-btn">
+            <input type="radio" name="r-dtf-type-radio" value="magasin" onchange="toggleDTFSourceType()">
+            <span>🏪 Stock magasin</span>
+            <small>Disponible de suite</small>
+          </label>
+          <label class="stock-type-btn">
+            <input type="radio" name="r-dtf-type-radio" value="fournisseur_local" onchange="toggleDTFSourceType()">
+            <span>🚚 Fournisseur local</span>
+            <small>Délai court (PF)</small>
+          </label>
+          <label class="stock-type-btn">
+            <input type="radio" name="r-dtf-type-radio" value="fournisseur_etranger" onchange="toggleDTFSourceType()">
+            <span>✈️ Fournisseur étranger</span>
+            <small>Import / délai long</small>
+          </label>
+        </div>
+      </div>
+      <div id="r-dtf-bloc-fournisseur" style="display:none;">
+        <div class="form-row-2">
+          <div>
+            <label class="form-label">Fournisseur DTF</label>
+            <select class="form-select" id="r-dtf-fournisseur" onchange="onDTFFournisseurChange()">
+              <option value="">-- Sélectionner un fournisseur --</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Mode de contact</label>
+            <select class="form-select" id="r-dtf-contact" onchange="onDTFFournisseurChange()">
+              <option value="telephone">📞 Appel téléphonique</option>
+              <option value="email">📧 Envoi email</option>
+              <option value="les_deux">📞📧 Téléphone + Email</option>
+            </select>
+          </div>
+        </div>
+        <div id="r-dtf-fournisseur-info" class="fourn-info-block" style="display:none;"></div>
+        <div style="text-align:right;margin-bottom:8px;">
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px;" onclick="closeReservationModal();openFournisseursModal();">+ Ajouter un fournisseur</button>
+        </div>
+      </div>
+
+      <!-- Tableau visuels -->
+      <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#a855f7;margin-bottom:8px;">
+        🖨️ Visuels à imprimer — renseigner les dimensions pour calculer les feuilles
+      </div>
+      <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:8px;">
+        <div class="dtf-vis-header">
+          <div>Nom du visuel</div><div>Larg. (cm)</div><div>Haut. (cm)</div><div>Qté</div><div></div>
+        </div>
+        <div id="r-dtf-visuels"></div>
+      </div>
+      <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px;margin-bottom:16px;" onclick="addDTFVisuel()">+ Ajouter un visuel</button>
+
+      <!-- Calcul feuilles -->
+      <div class="dtf-result-box" id="r-dtf-calc">
+        <div style="font-size:12px;font-weight:700;color:#a855f7;margin-bottom:10px;">📐 Estimation feuilles — 55 × 91 cm (HT4You)</div>
+        <div id="r-dtf-result"><span style="color:var(--text-muted);font-style:italic;">Renseignez les visuels ci-dessus pour calculer.</span></div>
+        <div style="margin-top:10px;display:flex;gap:8px;">
+          <button class="btn btn-ghost" style="font-size:11px;flex:1;" onclick="recalcDTF()">🔄 Recalculer</button>
+        </div>
+      </div>
+
+      <!-- Boutons outils -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+        <button class="btn btn-ghost" style="font-size:11px;" onclick="openDTFPlaquesApp()">🖥️ Ouvrir DTF Plaque Transfert</button>
+        <button class="btn btn-ghost" style="font-size:11px;" onclick="openDTFCalculatorApp()">💰 Calculateur prix DTF</button>
+        <a href="https://heattransfer4you.com" target="_blank" rel="noopener"
+           style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text-muted);text-decoration:none;cursor:pointer;font-family:'Inter',sans-serif;">
+          🌐 Commander HT4You
+        </a>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">Notes de commande DTF</label>
+        <textarea class="form-textarea" id="r-dtf-notes" placeholder="Ex: livraison urgente, qualité textile recommandée, couleurs vives..."></textarea>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Feedback (devis HT4You, confirmation livraison...)</label>
+        <textarea class="form-textarea" id="r-dtf-feedback" placeholder="Ex: devis reçu le 14/04 — 12 feuilles à 2 500 XPF — livraison J+3"></textarea>
+      </div>
+      <div class="form-row-2" style="margin-top:4px;">
+        <div>
+          <label class="form-label">Montant estimé (XPF)</label>
+          <input class="form-input" id="r-dtf-montant" type="number" placeholder="0" min="0">
+        </div>
+        <div>
+          <label class="form-label">Statut</label>
+          <select class="form-select" id="r-dtf-status">
+            <option value="en_attente">⏳ En attente</option>
+            <option value="confirme">✅ Commandé / Confirmé</option>
+            <option value="recu">📦 Reçu</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Email fournisseur DTF -->
+      <div id="r-dtf-email-row" style="margin-top:6px;margin-bottom:4px;text-align:right;display:none;">
+        <button class="btn btn-ghost" style="font-size:11px;" onclick="generateEmailPreviewTransfert('dtf')">✉️ Prévisualiser l'email fournisseur</button>
+      </div>
+      <div id="r-dtf-email-preview" style="display:none;margin-bottom:8px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary,var(--text-muted));margin-bottom:6px;">✉️ Aperçu email — fournisseur DTF</div>
+        <div class="r-email-to-row">
+          <label>À :</label>
+          <input type="email" id="r-dtf-email-to" class="form-input" placeholder="destinataire@gmail.com" list="hcs-email-datalist">
+          <select id="r-dtf-email-team-select" class="form-select r-email-to-row" onchange="_pickTeamEmail('r-dtf-email-to',this)">
+            <option value="">👥 Équipe HCS</option>
+          </select>
+        </div>
+        <textarea id="r-dtf-email-preview-body" class="r-email-box"></textarea>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
+          <button class="btn btn-ghost" style="font-size:11px;" onclick="copyTransfertEmail('dtf')">📋 Copier</button>
+          <button class="btn btn-ghost" style="font-size:11px;" onclick="openTransfertEmailClient('dtf')" title="Ouvrir votre application mail">📧 Messagerie</button>
+          <button class="btn btn-orange" style="font-size:11px;" id="btn-send-dtf-email" onclick="sendTransfertEmail('dtf',this)">📤 Envoyer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         PARCOURS THERMOCOLLANT
+    ══════════════════════════════ -->
+    <div id="r-parcours-thermo" style="display:none;">
+
+      <!-- Source du stock Thermo -->
+      <div class="form-row">
+        <label class="form-label">Source du stock *</label>
+        <div class="stock-type-grid">
+          <label class="stock-type-btn">
+            <input type="radio" name="r-thermo-type-radio" value="magasin" onchange="toggleThermoSourceType()">
+            <span>🏪 Stock magasin</span>
+            <small>Disponible de suite</small>
+          </label>
+          <label class="stock-type-btn">
+            <input type="radio" name="r-thermo-type-radio" value="fournisseur_local" onchange="toggleThermoSourceType()">
+            <span>🚚 Fournisseur local</span>
+            <small>Délai court (PF)</small>
+          </label>
+          <label class="stock-type-btn">
+            <input type="radio" name="r-thermo-type-radio" value="fournisseur_etranger" onchange="toggleThermoSourceType()">
+            <span>✈️ Fournisseur étranger</span>
+            <small>Import / délai long</small>
+          </label>
+        </div>
+      </div>
+      <div id="r-thermo-bloc-fournisseur" style="display:none;">
+        <div class="form-row-2">
+          <div>
+            <label class="form-label">Fournisseur Thermo</label>
+            <select class="form-select" id="r-thermo-fournisseur" onchange="onThermoFournisseurChange()">
+              <option value="">-- Sélectionner un fournisseur --</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Mode de contact</label>
+            <select class="form-select" id="r-thermo-contact" onchange="onThermoFournisseurChange()">
+              <option value="telephone">📞 Appel téléphonique</option>
+              <option value="email">📧 Envoi email</option>
+              <option value="les_deux">📞📧 Téléphone + Email</option>
+            </select>
+          </div>
+        </div>
+        <div id="r-thermo-fournisseur-info" class="fourn-info-block" style="display:none;"></div>
+        <div style="text-align:right;margin-bottom:8px;">
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px;" onclick="closeReservationModal();openFournisseursModal();">+ Ajouter un fournisseur</button>
+        </div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#f87171;margin-bottom:8px;">
+        🌡️ Visuels à découper — rouleau thermocollant 48 × 91 cm
+      </div>
+      <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:8px;">
+        <div class="dtf-vis-header">
+          <div>Nom du visuel</div><div>Larg. (cm)</div><div>Haut. (cm)</div><div>Qté</div><div></div>
+        </div>
+        <div id="r-thermo-visuels"></div>
+      </div>
+      <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px;margin-bottom:16px;" onclick="addThermoVisuel()">+ Ajouter un visuel</button>
+
+      <!-- Calcul sections de rouleau -->
+      <div class="dtf-result-box" id="r-thermo-calc" style="border-color:rgba(248,113,113,.3);background:rgba(239,68,68,.05);">
+        <div style="font-size:12px;font-weight:700;color:#f87171;margin-bottom:10px;">📐 Estimation — Rouleau thermocollant 48 × 91 cm</div>
+        <div id="r-thermo-result"><span style="color:var(--text-muted);font-style:italic;">Renseignez les dimensions des visuels pour calculer.</span></div>
+        <div style="margin-top:10px;">
+          <button class="btn btn-ghost" style="font-size:11px;width:100%;" onclick="recalcThermo()">🔄 Recalculer</button>
+        </div>
+      </div>
+
+      <!-- Boutons outils -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+        <button class="btn btn-ghost" style="font-size:11px;" onclick="openDTFCalculatorFromThermo()">💰 Calculateur prix</button>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">Notes de commande thermocollant</label>
+        <textarea class="form-textarea" id="r-thermo-notes" placeholder="Ex: flex blanc mat, livraison urgente, qualité premium..."></textarea>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Feedback (devis, confirmation fournisseur...)</label>
+        <textarea class="form-textarea" id="r-thermo-feedback" placeholder="Ex: devis reçu — 3 sections à 1 800 XPF — livraison J+2"></textarea>
+      </div>
+      <div class="form-row-2" style="margin-top:4px;">
+        <div>
+          <label class="form-label">Montant estimé (XPF)</label>
+          <input class="form-input" id="r-thermo-montant" type="number" placeholder="0" min="0">
+        </div>
+        <div>
+          <label class="form-label">Statut</label>
+          <select class="form-select" id="r-thermo-status">
+            <option value="en_attente">⏳ En attente</option>
+            <option value="confirme">✅ Commandé / Confirmé</option>
+            <option value="recu">📦 Reçu</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Email fournisseur Thermo -->
+      <div id="r-thermo-email-row" style="margin-top:6px;margin-bottom:4px;text-align:right;display:none;">
+        <button class="btn btn-ghost" style="font-size:11px;" onclick="generateEmailPreviewTransfert('thermo')">✉️ Prévisualiser l'email fournisseur</button>
+      </div>
+      <div id="r-thermo-email-preview" style="display:none;margin-bottom:8px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary,var(--text-muted));margin-bottom:6px;">✉️ Aperçu email — fournisseur Thermocollant</div>
+        <div class="r-email-to-row">
+          <label>À :</label>
+          <input type="email" id="r-thermo-email-to" class="form-input" placeholder="destinataire@gmail.com" list="hcs-email-datalist">
+          <select id="r-thermo-email-team-select" class="form-select r-email-to-row" onchange="_pickTeamEmail('r-thermo-email-to',this)">
+            <option value="">👥 Équipe HCS</option>
+          </select>
+        </div>
+        <textarea id="r-thermo-email-preview-body" class="r-email-box"></textarea>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
+          <button class="btn btn-ghost" style="font-size:11px;" onclick="copyTransfertEmail('thermo')">📋 Copier</button>
+          <button class="btn btn-ghost" style="font-size:11px;" onclick="openTransfertEmailClient('thermo')" title="Ouvrir votre application mail">📧 Messagerie</button>
+          <button class="btn btn-orange" style="font-size:11px;" id="btn-send-thermo-email" onclick="sendTransfertEmail('thermo',this)">📤 Envoyer</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeReservationModal()">Annuler</button>
+      <button class="btn btn-orange" onclick="saveReservation()">💾 Enregistrer la réservation</button>
+    </div>
+  </div>
+</div>
+
+<!-- Suggestions email équipe HCS (partagé par les 3 zones) -->
+<datalist id="hcs-email-datalist"></datalist>
+
+<!-- ══════════════════════════════════════
+     MODAL FOURNISSEURS
+════════════════════════════════════════ -->
+<div class="modal-bg" id="fournisseursModal">
+  <div class="modal modal-wide">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <div class="modal-title" style="margin-bottom:0;">👥 Fournisseurs</div>
+      <button class="btn btn-orange" style="font-size:12px;padding:6px 14px;" onclick="openAddFournisseurForm()">+ Ajouter</button>
+    </div>
+
+    <!-- Formulaire ajout / édition -->
+    <div id="fourn-form" style="display:none;background:var(--surface2);border:1px solid var(--teal);border-radius:10px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--teal);" id="fourn-form-title">✏️ Nouveau fournisseur</div>
+      <input type="hidden" id="ff-id">
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">Nom *</label>
+          <input class="form-input" id="ff-nom" placeholder="Nom du fournisseur">
+        </div>
+        <div>
+          <label class="form-label">Type</label>
+          <select class="form-select" id="ff-type">
+            <option value="local">🚚 Fournisseur local (PF)</option>
+            <option value="etranger">✈️ Fournisseur étranger</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">Téléphone</label>
+          <input class="form-input" id="ff-tel" placeholder="+689 40 00 00 00">
+        </div>
+        <div>
+          <label class="form-label">Email</label>
+          <input class="form-input" id="ff-email" placeholder="contact@fournisseur.com">
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">Pays / Localisation</label>
+          <input class="form-input" id="ff-pays" placeholder="Polynésie française">
+        </div>
+        <div>
+          <label class="form-label">Produits / Spécialités</label>
+          <input class="form-input" id="ff-produits" placeholder="T-shirts, polos, transferts DTF...">
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Notes (délais, MOQ, conditions...)</label>
+        <textarea class="form-textarea" id="ff-notes" style="min-height:50px;" placeholder="Ex: Livraison 24-48h, MOQ 10 pcs, paiement à 30j..."></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost" style="font-size:12px;" onclick="cancelFournisseurForm()">Annuler</button>
+        <button class="btn btn-orange" style="font-size:12px;" onclick="saveFournisseur()">Enregistrer</button>
+      </div>
+    </div>
+
+    <!-- Liste des fournisseurs -->
+    <div id="fourn-list" style="max-height:400px;overflow-y:auto;"></div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeFournisseursModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL ACHATS — COMPTABILITÉ
+════════════════════════════════════════ -->
+<div class="modal-bg" id="achatsModal">
+  <div class="modal modal-wide">
+    <div class="modal-title">🛒 Liste d'achats — Comptabilité fournisseurs</div>
+
+    <!-- Filtres & Actions -->
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+      <select class="form-select" id="ach-filter" onchange="renderAchatsList()" style="max-width:200px;padding:7px 10px;">
+        <option value="">Tous les statuts</option>
+        <option value="en_attente">⏳ En attente</option>
+        <option value="commande">📋 Commandé</option>
+        <option value="recu">📦 Reçu</option>
+        <option value="facture">🧾 Facturé</option>
+      </select>
+      <button class="btn btn-ghost" style="font-size:12px;padding:7px 14px;" onclick="exportAchats()">Export CSV</button>
+    </div>
+
+    <!-- En-tête tableau -->
+    <div class="achat-header">
+      <div>Réf.</div>
+      <div>Client / Produit</div>
+      <div>Fournisseur</div>
+      <div>Qté</div>
+      <div>Statut</div>
+      <div>Montant</div>
+    </div>
+
+    <!-- Lignes -->
+    <div id="achats-list" style="max-height:360px;overflow-y:auto;"></div>
+
+    <!-- Total -->
+    <div id="achats-total" style="margin-top:10px;padding:10px 14px;background:var(--surface2);border-radius:8px;font-size:12px;display:flex;justify-content:space-between;align-items:center;">
+      <span style="color:var(--text-muted);">Total des achats affichés</span>
+      <span id="achats-total-val" style="font-weight:700;font-size:16px;">0 XPF</span>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAchatsModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL EMAILS FOURNISSEURS
+════════════════════════════════════════ -->
+<div class="modal-bg" id="emailsFournisseursModal">
+  <div class="modal modal-wide">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <div class="modal-title" style="margin-bottom:0;">📧 Emails Fournisseurs — Marchandises en attente</div>
+      <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px;" onclick="closeEmailsFournisseursModal()">✕ Fermer</button>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">
+      Toutes les marchandises réservées auprès de fournisseurs, regroupées par fournisseur. Générez un email prêt-à-envoyer en un clic.
+    </p>
+    <div id="emails-fourn-list" style="max-height:500px;overflow-y:auto;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeEmailsFournisseursModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL ORDRE DE FABRICATION
+════════════════════════════════════════ -->
+<div class="modal-bg" id="ofModal">
+  <div class="modal modal-wide" style="max-width:660px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <div class="modal-title" style="margin-bottom:0;">🔢 Ordre de fabrication</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px;" onclick="printOF()">🖨️ Imprimer</button>
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px;" onclick="closeOFModal()">✕ Fermer</button>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">
+      File de production ordonnée. Utilisez ↑ ↓ pour réorganiser manuellement. Par défaut : express → urgent → normal, puis par deadline.
+    </p>
+    <div id="of-list" style="max-height:480px;overflow-y:auto;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeOFModal()">Fermer</button>
+      <button class="btn btn-orange" onclick="printOF()">🖨️ Imprimer OF</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL DÉTAIL -->
 <div class="modal-bg" id="detailModal">
   <div class="modal">
@@ -410,6 +1351,15 @@
       <button class="btn btn-ghost" onclick="closeDetailModal()">Fermer</button>
       <button class="btn btn-orange" id="detail-next-btn">Étape suivante →</button>
     </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL CHECKLIST PRODUCTION ADAPTATIVE
+════════════════════════════════════════ -->
+<div class="modal-bg" id="checklistProdModal">
+  <div class="modal chk-modal" id="checklistProdContent">
+    <!-- contenu généré dynamiquement -->
   </div>
 </div>
 
@@ -425,19 +1375,43 @@ const MACHINES = [
   { id: 'plotter-3', name: 'Plotter Vinyle 3', icon: '✂️' },
 ];
 
-const COLS = ['attente', 'matiere', 'prod', 'qualite', 'pret'];
+const COLS = ['attente', 'matiere', 'reservation', 'prod', 'qualite', 'pret'];
 const COL_LABELS = {
   attente: 'À planifier',
   matiere: 'Attente matière',
+  reservation: 'Réservation stock',
   prod: 'En production',
   qualite: 'Contrôle qualité',
   pret: 'Prêt / Livré'
 };
-const NEXT_COL = { attente:'matiere', matiere:'prod', prod:'qualite', qualite:'pret', pret:null };
+const NEXT_COL = { attente:'matiere', matiere:'reservation', reservation:'prod', prod:'qualite', qualite:'pret', pret:null };
 
 let commandes = JSON.parse(localStorage.getItem('hcs_planning') || '[]');
+let fournisseurs = JSON.parse(localStorage.getItem('hcs_fournisseurs') || '[]');
+let achats = JSON.parse(localStorage.getItem('hcs_achats') || '[]');
 let dragId = null;
 let currentDetailId = null;
+let currentReservationId = null;
+let editingFournisseurId = null;
+
+/* ─── Réservation : état parcours ─── */
+let _currentParcours    = 'textile'; // 'textile' | 'dtf' | 'thermo'
+
+/* ── Emails équipe HCS — modifier la liste ici ── */
+const HCS_TEAM_EMAILS = [
+  { label: 'HCS Principal',    email: 'highcoffeeshirt@gmail.com' },
+  { label: 'Grace — Direction',email: 'grace@highcoffeeshirts.com' },
+  { label: 'Atelier HCS',      email: 'atelier@highcoffeeshirts.com' },
+  { label: 'Commercial HCS',   email: 'commercial@highcoffeeshirts.com' },
+  // Ajouter d'autres membres ici : { label: 'Prénom', email: 'adresse@gmail.com' },
+];
+let _dtfVisuels         = [];        // [{id,nom,largeur,hauteur,qte}]
+let _dtfVisuelCounter   = 0;
+let _thermoVisuels      = [];        // [{id,nom,largeur,hauteur,qte}]
+let _thermoVisuelCounter= 0;
+let _textileItems       = [];        // [{id,nom,taille,couleur,matiere,coupe,qte,_ligneIdx?}]
+let _textileItemCounter = 0;
+let _currentCmdLignes   = [];        // lignes de la commande courante (pour sélection)
 
 // ─── CLOCK ───
 function updateClock() {
@@ -455,12 +1429,15 @@ window.addEventListener('load', () => {
   d.setMinutes(0);
   document.getElementById('f-deadline').value = d.toISOString().slice(0,16);
   loadDemoData();
+  loadDemoFournisseurs();
   render();
+  /* Charger depuis MySQL au démarrage — remplace localStorage si données présentes */
+  _MYSQL.pull();
 });
 
 // ─── DEMO DATA ───
 function loadDemoData() {
-  if (commandes.length > 0) return;
+  if (localStorage.getItem('hcs_planning') !== null) return;
   const now = Date.now();
   commandes = [
     {
@@ -507,10 +1484,255 @@ function loadDemoData() {
   save();
 }
 
+// ─── DEMO FOURNISSEURS ───
+function loadDemoFournisseurs() {
+  if (fournisseurs.length > 0) return;
+  fournisseurs = [
+    { id:'f-1', nom:'Anémone Tahiti', type:'local', telephone:'+689 40 50 00 01', email:'contact@anemone.pf', produits:'T-shirts, polos, casquettes blank', pays:'Polynésie française', notes:'Fournisseur principal textile. Livraison 24-48h. Crédit 30j.' },
+    { id:'f-2', nom:'HT4You', type:'local', telephone:'+689 40 50 00 02', email:'info@ht4you.pf', produits:'Transferts DTF, films, encres', pays:'Polynésie française', notes:'Livraison J+1. MOQ 10 transferts. Paiement à la commande.' },
+    { id:'f-3', nom:'AliExpress Pro', type:'etranger', telephone:'', email:'supplier@alibaba.com', produits:'Textile en gros, casquettes, bags', pays:'Chine', notes:'Délai 15-30 jours. MOQ 100 pcs. Paiement anticipé.' },
+    { id:'f-4', nom:'Stanley/Stella Europe', type:'etranger', telephone:'+32 2 000 0000', email:'orders@stanleystella.com', produits:'T-shirts bio premium, polos éco', pays:'Belgique', notes:'Délai 7-10 jours. Livraison DHL. Facture EUR.' },
+  ];
+  saveFournisseurs();
+}
+
 // ─── SAVE ───
 function save() {
   localStorage.setItem('hcs_planning', JSON.stringify(commandes));
 }
+function saveFournisseurs() {
+  localStorage.setItem('hcs_fournisseurs', JSON.stringify(fournisseurs));
+}
+function saveAchats() {
+  localStorage.setItem('hcs_achats', JSON.stringify(achats));
+}
+
+// ─── MYSQL SYNC ───
+const _MYSQL = (() => {
+  const _url = () => localStorage.getItem('hcs_api_url') || 'https://highcoffeeshirts.com/erp/api';
+  const _key = () => localStorage.getItem('hcs_api_key') || 'hcs-erp-2026';
+  const _h   = () => ({ 'Content-Type': 'application/json', 'x-api-key': _key() });
+
+  function _toast(msg, ok) {
+    const el = document.getElementById('_sync-toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = ok ? 'var(--green)' : 'var(--yellow)';
+    el.style.opacity = '1';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.style.opacity = '0'; }, 3500);
+  }
+
+  function _tryParse(val, fallback) {
+    if (val === null || val === undefined || val === '') return fallback;
+    if (typeof val === 'object') return val;
+    try { return JSON.parse(val); } catch { return fallback; }
+  }
+
+  function _serializeCmd(cmd) {
+    return {
+      store_id:       cmd.id,
+      client:         cmd.client     || '',
+      ref:            cmd.ref        || '',
+      canal:          cmd.canal      || '',
+      desc:           cmd.desc       || '',
+      type:           cmd.type       || 'dtf',
+      machine:        cmd.machine    || '',
+      qty:            cmd.qty        || 1,
+      deadline:       cmd.deadline   || null,
+      priority:       cmd.priority   || 'normal',
+      notes:          cmd.notes      || '',
+      col:            cmd.col        || 'attente',
+      lignes:         JSON.stringify(cmd.lignes        || []),
+      mockup_urls:    JSON.stringify(cmd.mockupUrls    || []),
+      checklist_prod: JSON.stringify(cmd.checklistProd || []),
+      reservation:    JSON.stringify(cmd.reservation   || null),
+    };
+  }
+
+  function _serializeFourn(f) {
+    return {
+      store_id:  f.id,
+      nom:       f.nom       || '',
+      type:      f.type      || 'local',
+      telephone: f.telephone || '',
+      email:     f.email     || '',
+      produits:  f.produits  || '',
+      pays:      f.pays      || '',
+      notes:     f.notes     || '',
+    };
+  }
+
+  function _serializeAchat(a) {
+    return {
+      store_id:    a.id,
+      cmd_id:      a.cmdId          || '',
+      ref:         a.cmdRef         || '',
+      client:      a.cmdClient      || '',
+      fournisseur: a.fournisseurNom || '',
+      produit:     a.produit        || '',
+      qte:         a.qte            || 1,
+      montant:     parseFloat(a.montant) || 0,
+      statut:      a.status         || 'en_attente',
+      notes:       a.notes          || '',
+      feedback:    a.feedback       || '',
+      parcours:    a.parcours       || '',
+    };
+  }
+
+  async function _upsert(table, record, payload) {
+    const mid = record._mysql_id;
+    try {
+      const r = await fetch(
+        mid ? `${_url()}/${table}/${mid}` : `${_url()}/${table}`,
+        { method: mid ? 'PUT' : 'POST', headers: _h(), body: JSON.stringify(payload) }
+      );
+      if (!r.ok) { _toast('⚠ Erreur API ' + r.status, false); return null; }
+      if (!mid) { const j = await r.json(); _toast('☁ Sauvegardé MySQL ✓', true); return j.id || null; }
+      _toast('☁ Mis à jour MySQL ✓', true);
+    } catch(e) { _toast('⚠ Hors-ligne — local seulement', false); }
+    return null;
+  }
+
+  async function _del(table, mysql_id) {
+    if (!mysql_id) return;
+    try {
+      await fetch(`${_url()}/${table}/${mysql_id}`, { method: 'DELETE', headers: { 'x-api-key': _key() } });
+      _toast('🗑 Supprimé MySQL ✓', true);
+    } catch(e) {}
+  }
+
+  async function upsertCmd(cmd) {
+    const mid = await _upsert('planning_commandes', cmd, _serializeCmd(cmd));
+    if (mid) {
+      const idx = commandes.findIndex(c => c.id === cmd.id);
+      if (idx >= 0) { commandes[idx]._mysql_id = mid; save(); }
+    }
+  }
+
+  async function delCmd(cmd) { await _del('planning_commandes', cmd._mysql_id); }
+
+  async function upsertFourn(f) {
+    const mid = await _upsert('planning_fournisseurs', f, _serializeFourn(f));
+    if (mid) {
+      const idx = fournisseurs.findIndex(x => x.id === f.id);
+      if (idx >= 0) { fournisseurs[idx]._mysql_id = mid; saveFournisseurs(); }
+    }
+  }
+
+  async function delFourn(f) { await _del('planning_fournisseurs', f._mysql_id); }
+
+  async function upsertAchat(a) {
+    const mid = await _upsert('planning_achats', a, _serializeAchat(a));
+    if (mid) {
+      const idx = achats.findIndex(x => x.id === a.id);
+      if (idx >= 0) { achats[idx]._mysql_id = mid; saveAchats(); }
+    }
+  }
+
+  async function delAchat(a) { await _del('planning_achats', a._mysql_id); }
+
+  async function pull() {
+    const btn = document.getElementById('_btn-pull-planning');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+    try {
+      const [r1, r2, r3] = await Promise.all([
+        fetch(`${_url()}/planning_commandes?limit=1000&sort=created_at&order=desc`, { headers: { 'x-api-key': _key() } }),
+        fetch(`${_url()}/planning_fournisseurs?limit=500`,                           { headers: { 'x-api-key': _key() } }),
+        fetch(`${_url()}/planning_achats?limit=1000`,                                { headers: { 'x-api-key': _key() } }),
+      ]);
+      if (!r1.ok) throw new Error('HTTP ' + r1.status);
+      const { items: cmds }   = await r1.json();
+      const { items: fourns } = r2.ok ? await r2.json() : { items: [] };
+      const { items: achs }   = r3.ok ? await r3.json() : { items: [] };
+
+      const toCmd = r => ({
+        id:            r.store_id    || String(r.id),
+        _mysql_id:     r.id,
+        client:        r.client      || '',
+        ref:           r.ref         || '',
+        canal:         r.canal       || '',
+        desc:          r.desc        || '',
+        type:          r.type        || 'dtf',
+        machine:       r.machine     || '',
+        qty:           +(r.qty       || 1),
+        deadline:      r.deadline    || new Date(Date.now() + 7 * 86400000).toISOString(),
+        priority:      r.priority    || 'normal',
+        notes:         r.notes       || '',
+        col:           r.col         || 'attente',
+        lignes:        _tryParse(r.lignes,         []),
+        mockupUrls:    _tryParse(r.mockup_urls,    []),
+        checklistProd: _tryParse(r.checklist_prod, []),
+        reservation:   _tryParse(r.reservation,    null),
+        createdAt:     r.created_at  || new Date().toISOString(),
+      });
+      const toFourn = r => ({
+        id: r.store_id || String(r.id), _mysql_id: r.id,
+        nom: r.nom || '', type: r.type || 'local',
+        telephone: r.telephone || '', email: r.email || '',
+        produits: r.produits || '', pays: r.pays || '', notes: r.notes || '',
+      });
+      const toAchat = r => ({
+        id: r.store_id || String(r.id), _mysql_id: r.id,
+        cmdId: r.cmd_id || '', cmdRef: r.ref || '', cmdClient: r.client || '',
+        fournisseurNom: r.fournisseur || '',
+        produit: r.produit || '', qte: +(r.qte || 1),
+        montant: r.montant || '0', status: r.statut || 'en_attente',
+        notes: r.notes || '', feedback: r.feedback || '',
+        parcours: r.parcours || '', dateCreation: r.created_at || '',
+      });
+
+      /* Conserver les entrées locales jamais synchronisées */
+      const dbIds = new Set(cmds.map(r => r.store_id).filter(Boolean));
+      const localCmds = commandes.filter(c => !dbIds.has(c.id) && !c._mysql_id);
+      const foIds = new Set(fourns.map(r => r.store_id).filter(Boolean));
+      const localFourns = fournisseurs.filter(f => !foIds.has(f.id) && !f._mysql_id);
+      const acIds = new Set(achs.map(r => r.store_id).filter(Boolean));
+      const localAchs = achats.filter(a => !acIds.has(a.id) && !a._mysql_id);
+
+      commandes    = [...cmds.map(toCmd),    ...localCmds];
+      fournisseurs = [...fourns.map(toFourn), ...localFourns];
+      achats       = [...achs.map(toAchat),  ...localAchs];
+
+      save(); saveFournisseurs(); saveAchats();
+      render();
+      _toast(`☁ ${cmds.length} projets + ${fourns.length} fournisseurs chargés`, true);
+    } catch(e) {
+      _toast('⚠ MySQL hors-ligne — données locales', false);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '☁↓'; }
+    }
+  }
+
+  async function pushAll() {
+    const btn = document.getElementById('_btn-push-planning');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+    let count = 0;
+    try {
+      for (const cmd of [...commandes]) {
+        const mid = await _upsert('planning_commandes', cmd, _serializeCmd(cmd));
+        if (mid) { const i = commandes.findIndex(c => c.id === cmd.id); if (i >= 0) commandes[i]._mysql_id = mid; }
+        count++;
+      }
+      for (const f of [...fournisseurs]) {
+        const mid = await _upsert('planning_fournisseurs', f, _serializeFourn(f));
+        if (mid) { const i = fournisseurs.findIndex(x => x.id === f.id); if (i >= 0) fournisseurs[i]._mysql_id = mid; }
+        count++;
+      }
+      for (const a of [...achats]) {
+        const mid = await _upsert('planning_achats', a, _serializeAchat(a));
+        if (mid) { const i = achats.findIndex(x => x.id === a.id); if (i >= 0) achats[i]._mysql_id = mid; }
+        count++;
+      }
+      save(); saveFournisseurs(); saveAchats();
+      _toast(`☁↑ ${count} éléments synchronisés ✓`, true);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '☁↑'; }
+    }
+  }
+
+  return { upsertCmd, delCmd, upsertFourn, delFourn, upsertAchat, delAchat, pull, pushAll };
+})();
 
 // ─── RENDER ───
 function render() {
@@ -528,7 +1750,53 @@ function render() {
   renderStats();
   renderMachines();
   renderAlerts();
+  renderReservationsSidebar();
+  renderOFSidebar();
   renderStatsToday();
+  updateHeaderBadges();
+}
+
+/* Échappe le HTML pour éviter les XSS dans les cartes */
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* Aperçu mockup agrandi au survol d'une vignette de carte planning */
+/* Store en mémoire pour les dataUrls mockup — évite de les mettre dans les attributs HTML */
+const _planMockupStore = {};
+
+function planMockupShow(thumb) {
+  const key = thumb.dataset.mk;
+  const m   = _planMockupStore[key];
+  if (!m) return;
+  let box = document.getElementById('plan-mockup-hover');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'plan-mockup-hover';
+    box.style.cssText = [
+      'position:fixed;z-index:9500;pointer-events:none;',
+      'background:#111;border:1px solid var(--border,#444);border-radius:10px;',
+      'box-shadow:0 12px 40px rgba(0,0,0,.8);overflow:hidden;',
+      'transition:opacity .12s ease;opacity:0;max-width:300px;'
+    ].join('');
+    document.body.appendChild(box);
+  }
+  box.innerHTML = `
+    <img src="${escHtml(m.dataUrl)}" style="display:block;max-width:300px;max-height:300px;object-fit:contain;" />
+    ${m.nom ? `<div style="padding:5px 10px;font-size:10px;color:#aaa;border-top:1px solid #333;
+                            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(m.nom)}</div>` : ''}`;
+  const r  = thumb.getBoundingClientRect();
+  const pw = 300, ph = 330;
+  const left = (r.right + 12 + pw < window.innerWidth) ? r.right + 12 : r.left - pw - 12;
+  const top  = Math.max(8, Math.min(r.top, window.innerHeight - ph - 8));
+  box.style.left = left + 'px';
+  box.style.top  = top  + 'px';
+  box.style.opacity = '1';
+}
+
+function planMockupHide() {
+  const box = document.getElementById('plan-mockup-hover');
+  if (box) box.style.opacity = '0';
 }
 
 function urgencyClass(cmd) {
@@ -559,23 +1827,172 @@ function typeTag(type) {
   return `<span class="tag ${map[type]||'tag-dtf'}">${labels[type]||type}</span>`;
 }
 
+function getReservationStatusBadge(status) {
+  const map = {
+    en_attente: '⏳ En attente confirmation',
+    confirme: '✅ Confirmé — disponible',
+    non_disponible: '❌ Non disponible',
+  };
+  return `<span class="reserve-badge ${status||'en_attente'}">${map[status] || '⏳ En attente'}</span>`;
+}
+
 function renderCard(c) {
   const urg = urgencyClass(c);
   const nextCol = NEXT_COL[c.col];
-  const nextLabel = nextCol ? COL_LABELS[nextCol] : null;
+
+  // ── Bloc statuts de réservation (visible dès qu'une réservation existe) ──
+  let reserveInfo = '';
+  if (c.reservation) {
+    const res = c.reservation;
+    const statusIcon  = { en_attente:'⏳', confirme:'✅', non_disponible:'❌', commande:'📋', recu:'📦' };
+    const statusLabel = { en_attente:'En attente', confirme:'Confirmé', non_disponible:'Indispo', commande:'Commandé', recu:'Reçu' };
+    const srcLabel    = { magasin:'🏪 Magasin', fournisseur_local:'🚚 Local', fournisseur_etranger:'✈️ Import' };
+    const lines       = [];
+
+    // Ligne textile / matière
+    if (res.produit || res.type === 'magasin' || res.parcours === 'textile') {
+      const src      = srcLabel[res.type] || '📦';
+      const icon     = statusIcon[res.status] || '⏳';
+      const slabel   = statusLabel[res.status] || 'En attente';
+      const fournTxt = res.fournisseurNom ? ` · <span style="color:var(--teal);">${escHtml(res.fournisseurNom)}</span>` : '';
+      lines.push(`<span style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;">
+        ${icon} <strong>🧵 Textile</strong> · ${src}${fournTxt}
+        <span style="font-size:9px;background:rgba(20,184,166,.12);color:var(--teal);border-radius:4px;padding:1px 5px;">${slabel}</span>
+      </span>`);
+    }
+
+    // Ligne DTF
+    if (res.dtfVisuels && res.dtfVisuels.length) {
+      const icon     = statusIcon[res.dtfStatus] || '⏳';
+      const slabel   = statusLabel[res.dtfStatus] || 'En attente';
+      const nb       = res.dtfFeuilles || _calcDTFSheets(res.dtfVisuels);
+      const src      = srcLabel[res.dtfType] || '';
+      const fournTxt = res.dtfFournisseurNom ? ` · <span style="color:#a855f7;">${escHtml(res.dtfFournisseurNom)}</span>` : '';
+      lines.push(`<span style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;">
+        ${icon} <strong>🖨️ DTF</strong> · <strong>${nb} feuille${nb > 1 ? 's' : ''}</strong>${src ? ' · ' + src : ''}${fournTxt}
+        <span style="font-size:9px;color:var(--text-muted);">55×91 cm</span>
+        <span style="font-size:9px;background:rgba(168,85,247,.12);color:#a855f7;border-radius:4px;padding:1px 5px;">${slabel}</span>
+      </span>`);
+    }
+
+    // Ligne thermocollant
+    if (res.thermoVisuels && res.thermoVisuels.length) {
+      const icon     = statusIcon[res.thermoStatus] || '⏳';
+      const slabel   = statusLabel[res.thermoStatus] || 'En attente';
+      const nb       = res.thermoSections || _calcThermoSections(res.thermoVisuels);
+      const src      = srcLabel[res.thermoType] || '';
+      const fournTxt = res.thermoFournisseurNom ? ` · <span style="color:#f87171;">${escHtml(res.thermoFournisseurNom)}</span>` : '';
+      lines.push(`<span style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;">
+        ${icon} <strong>🌡️ Thermo</strong> · <strong>${nb} section${nb > 1 ? 's' : ''}</strong>${src ? ' · ' + src : ''}${fournTxt}
+        <span style="font-size:9px;color:var(--text-muted);">48×91 cm</span>
+        <span style="font-size:9px;background:rgba(239,68,68,.12);color:#f87171;border-radius:4px;padding:1px 5px;">${slabel}</span>
+      </span>`);
+    }
+
+    // Feedback (tronqué)
+    const fb = res.feedback || res.dtfFeedback || res.thermoFeedback || '';
+
+    if (lines.length) {
+      reserveInfo = `<div class="reserve-info" style="border-top:1px solid var(--border);margin-top:5px;padding-top:5px;display:flex;flex-direction:column;gap:3px;font-size:10px;">
+        ${lines.join('')}
+        ${fb ? `<em style="color:var(--text-muted);font-size:9px;">${fb.substring(0,70)}${fb.length > 70 ? '…' : ''}</em>` : ''}
+      </div>`;
+    }
+  }
+
+  // ── Boutons d'action selon la colonne ──
+  let actionsHtml = '';
+
+  /* Bouton "Lancer en production" : visible si la carte n'est pas encore en prod/qualite/pret */
+  const canLaunch = !['prod','qualite','pret'].includes(c.col);
+  const btnLancer = canLaunch
+    ? `<button class="cmd-btn cmd-btn-prod" onclick="lancerEnProduction('${c.id}')"
+        title="Lancer directement en production" style="background:var(--accent-green,#00d4aa);color:#000;font-weight:600;">
+        🚀 Lancer en prod.
+       </button>`
+    : '';
+
+  if (c.col === 'matiere') {
+    actionsHtml = `
+      <button class="cmd-btn cmd-btn-reserve" onclick="openReservationModal('${c.id}')">📦 Réserver stock</button>
+      ${btnLancer}
+      <button class="cmd-btn cmd-btn-del" onclick="deleteCmd('${c.id}')">✕</button>
+    `;
+  } else if (c.col === 'reservation') {
+    const res = c.reservation || {};
+    const canAdvance = res.status === 'confirme';
+    actionsHtml = `
+      <div style="width:100%;margin-bottom:6px;">${getReservationStatusBadge(res.status)}</div>
+      <button class="cmd-btn cmd-btn-reserve-edit" onclick="openReservationModal('${c.id}')">✏️</button>
+      <button class="cmd-btn cmd-btn-next" onclick="advanceCmd('${c.id}')"
+        ${!canAdvance ? 'disabled style="opacity:.4;cursor:not-allowed;"' : ''}
+        title="${canAdvance ? 'Passer en production' : 'Confirmez la disponibilité pour débloquer'}">
+        → Production
+      </button>
+      ${btnLancer}
+      <button class="cmd-btn cmd-btn-del" onclick="deleteCmd('${c.id}')">✕</button>
+    `;
+  } else {
+    const nextLabel = nextCol ? COL_LABELS[nextCol] : null;
+    actionsHtml = `
+      ${nextLabel
+        ? `<button class="cmd-btn cmd-btn-next" onclick="advanceCmd('${c.id}')">→ ${nextLabel}</button>`
+        : '<button class="cmd-btn cmd-btn-next" style="opacity:.4" disabled>✅ Terminé</button>'}
+      ${btnLancer}
+      <button class="cmd-btn cmd-btn-del" onclick="deleteCmd('${c.id}')">✕</button>
+    `;
+  }
+
+  /* ── Mockups — stockage en mémoire JS, pas dans les attributs HTML ── */
+  const mockups = c.mockupUrls || [];
+  mockups.slice(0, 4).forEach((m, mi) => {
+    _planMockupStore[c.id + '-' + mi] = { dataUrl: m.dataUrl, nom: m.nom || '' };
+  });
+  const mockupHtml = mockups.length ? `
+    <div class="card-mockups">
+      ${mockups.slice(0, 4).map((m, mi) => `
+        <div class="card-mockup-thumb" data-mk="${c.id}-${mi}"
+             onmouseenter="planMockupShow(this)"
+             onmouseleave="planMockupHide()">
+          <img src="${escHtml(m.dataUrl)}" alt="${escHtml(m.nom || 'mockup')}" />
+        </div>`).join('')}
+      ${mockups.length > 4 ? `<div style="font-size:10px;color:var(--text-muted);align-self:center;">+${mockups.length - 4}</div>` : ''}
+    </div>` : '';
+
+  /* ── Lignes articles ── */
+  const lignes = c.lignes || [];
+  const lignesHtml = lignes.length ? `
+    <div class="card-lignes">
+      ${lignes.map(l => `
+        <div class="card-ligne-row">
+          <span class="card-ligne-qte">${l.qte}×</span>
+          <span>${escHtml(l.produit)}</span>
+          ${l.technique ? `<span class="card-ligne-tech">${escHtml(l.technique)}</span>` : ''}
+        </div>
+        ${l.notesDesign ? `<div style="padding-left:14px;font-size:9px;color:var(--text-muted);font-style:italic;">${escHtml(l.notesDesign)}</div>` : ''}
+      `).join('')}
+    </div>` : `<div class="cmd-detail">${c.desc.substring(0,80)}${c.desc.length>80?'…':''}<br>Qté: ${c.qty} · ${c.machine}</div>`;
+
+  /* ── Notes de production ── */
+  const notesHtml = c.notes ? `<div class="card-notes-prod">${escHtml(c.notes)}</div>` : '';
+
+  /* ── Checklist prod (colonne prod uniquement) ── */
+  const checklistHtml = (c.col === 'prod' && c.checklistProd && c.checklistProd.length)
+    ? renderCardChecklist(c)
+    : '';
+
   return `<div class="cmd-card ${urg}" draggable="true" id="card-${c.id}"
     ondragstart="dragStart('${c.id}')"
     ondragend="dragEnd()">
     <div class="cmd-ref">${c.ref || 'CMD'} ${c.priority==='urgent'?'🔴':c.priority==='express'?'⚡':''}${typeTag(c.type)}</div>
     <div class="cmd-client">${c.client}</div>
-    <div class="cmd-detail">${c.desc.substring(0,80)}${c.desc.length>80?'…':''}<br>Qté: ${c.qty} · ${c.machine}</div>
-    <div class="cmd-footer">
-      ${formatDeadline(c.deadline)}
-    </div>
-    <div class="cmd-actions">
-      ${nextLabel ? `<button class="cmd-btn cmd-btn-next" onclick="advanceCmd('${c.id}')">→ ${nextLabel}</button>` : '<button class="cmd-btn cmd-btn-next" style="opacity:.4" disabled>✅ Terminé</button>'}
-      <button class="cmd-btn cmd-btn-del" onclick="deleteCmd('${c.id}')">✕</button>
-    </div>
+    ${mockupHtml}
+    ${lignesHtml}
+    ${notesHtml}
+    ${reserveInfo}
+    ${checklistHtml}
+    <div class="cmd-footer">${formatDeadline(c.deadline)}</div>
+    <div class="cmd-actions">${actionsHtml}</div>
   </div>`;
 }
 
@@ -635,6 +2052,34 @@ function renderAlerts() {
   </div>`).join('');
 }
 
+// ─── RÉSERVATIONS SIDEBAR ───
+function renderReservationsSidebar() {
+  const el = document.getElementById('reservations-sidebar');
+  const reserved = commandes.filter(c => c.col === 'reservation');
+  if (reserved.length === 0) {
+    el.innerHTML = '<div class="empty" style="padding:12px;">Aucune réservation en cours</div>';
+    return;
+  }
+  const statusColors = { en_attente:'var(--yellow)', confirme:'var(--green)', non_disponible:'var(--red)' };
+  const statusIcons = { en_attente:'⏳', confirme:'✅', non_disponible:'❌' };
+  el.innerHTML = reserved.map(c => {
+    const res = c.reservation || {};
+    const color = statusColors[res.status] || 'var(--yellow)';
+    const icon = statusIcons[res.status] || '⏳';
+    const typeShort = { magasin:'Stock', fournisseur_local:'Local', fournisseur_etranger:'Import' }[res.type] || '—';
+    return `<div style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);font-size:11px;cursor:pointer;"
+              onclick="openReservationModal('${c.id}')">
+      <span style="color:${color};font-size:14px;flex-shrink:0;">${icon}</span>
+      <div style="flex:1;">
+        <div style="font-weight:600;">${c.client}</div>
+        <div style="color:var(--text-muted);">${c.ref} · ${typeShort}${res.fournisseurNom?' · '+res.fournisseurNom:''}</div>
+      </div>
+      <button class="cmd-btn cmd-btn-reserve-edit" style="padding:2px 6px;font-size:10px;flex-shrink:0;"
+        onclick="event.stopPropagation();openReservationModal('${c.id}')">✏️</button>
+    </div>`;
+  }).join('');
+}
+
 // ─── STATS TODAY ───
 function renderStatsToday() {
   const el = document.getElementById('stats-today');
@@ -675,7 +2120,7 @@ function drop(e) {
   e.currentTarget.classList.remove('dragover');
   if (!dragId) return;
   const cmd = commandes.find(c => c.id === dragId);
-  if (cmd) { cmd.col = col; save(); render(); }
+  if (cmd) { cmd.col = col; save(); _MYSQL.upsertCmd(cmd); render(); }
   dragId = null;
 }
 
@@ -684,13 +2129,651 @@ function advanceCmd(id) {
   const cmd = commandes.find(c => c.id === id);
   if (!cmd) return;
   const next = NEXT_COL[cmd.col];
-  if (next) { cmd.col = next; save(); render(); }
+  if (!next) return;
+  // Intercept transition vers production → ouvre la checklist
+  if (next === 'prod') {
+    openChecklistProdModal(cmd);
+  } else {
+    cmd.col = next;
+    save();
+    _MYSQL.upsertCmd(cmd);
+    render();
+  }
+}
+
+function lancerEnProduction(id) {
+  const cmd = commandes.find(c => c.id === id);
+  if (!cmd) return;
+  openChecklistProdModal(cmd);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CHECKLIST PRODUCTION ADAPTATIVE
+// ══════════════════════════════════════════════════════════════
+
+function analyzeCmd(cmd) {
+  const lignes = cmd.lignes || [];
+  const allLignesText = lignes.map(l =>
+    [(l.produit||''), (l.technique||''), (l.notesDesign||''), (l.notes_design||'')].join(' ')
+  ).join(' ').toLowerCase();
+  const desc = (cmd.desc || '').toLowerCase();
+  const allText = desc + ' ' + allLignesText;
+
+  // ── Techniques ──
+  const hasDTF      = /\bdtf\b|transfert dtf/i.test(allText) || cmd.type === 'dtf' ||
+                      lignes.some(l => /\bdtf\b/i.test(l.technique || ''));
+  const hasThermo   = /thermocollant|flex\b|flock/i.test(allText) ||
+                      lignes.some(l => /thermocollant|flex\b|flock/i.test(l.technique || ''));
+  const hasVinyle   = /\bvinyle\b|\bvinyl\b|oracal|plotter/i.test(allText) || cmd.type === 'vinyle';
+  const hasBroderie = /broderie/i.test(allText);
+  const hasSublimation = /sublimation/i.test(allText);
+
+  // ── Matière thermocollant ──
+  const thermoIsFlock  = /flock/i.test(allText);
+  const thermoIsFlex   = /flex\b/i.test(allText);
+  const thermoIsVinyle = hasVinyle && hasThermo && !thermoIsFlock && !thermoIsFlex;
+  const thermoMat = thermoIsFlock ? 'flock' : thermoIsVinyle ? 'vinyle' : 'flex';
+
+  // ── Support textile ──
+  const isCasquette  = /casquette|snapback|trucker|\bcap\b/i.test(allText) || cmd.type === 'casquette';
+  const isSac        = /\bsac\b|tote\b|\bbag\b/i.test(allText);
+  const isNylon      = /\bnylon\b|imperméable|coupe.?vent/i.test(allText);
+  const isMix        = /poly.*coton|coton.*poly|50[%\s]*50|65[%\s]*35/i.test(allText);
+  const isPolyester  = /polyester|poly\b|dri.?fit|respirant|technique/i.test(allText);
+  const isCotton     = /\bcoton\b|\bcotton\b|100\s*%\s*co/i.test(allText);
+
+  let support = 'polyester';
+  if (isCasquette) support = 'casquette';
+  else if (isSac)  support = 'sac';
+  else if (isNylon) support = 'nylon';
+  else if (isMix)  support = 'mix';
+  else if (isCotton) support = 'coton';
+  else if (isPolyester) support = 'polyester';
+
+  const supportLabel = {
+    polyester:'Polyester', coton:'Coton', mix:'Mix Poly/Coton',
+    nylon:'Nylon / Synthétique', casquette:'Casquette', sac:'Sac / Tote bag'
+  }[support] || 'Textile';
+
+  // ── Réglages presse DTF selon support ──
+  const DTF_PRESS = {
+    polyester: { temp:'160°C', duree:'15 s', pression:'Moyenne',  peel:'froid', peelTxt:'Film froid obligatoire' },
+    coton:     { temp:'165°C', duree:'15 s', pression:'Moyenne',  peel:'froid', peelTxt:'Film froid obligatoire' },
+    mix:       { temp:'160°C', duree:'15 s', pression:'Moyenne',  peel:'froid', peelTxt:'Film froid obligatoire' },
+    nylon:     { temp:'130°C', duree:'8 s',  pression:'Légère',   peel:'chaud', peelTxt:'Film chaud — SENSIBLE à la chaleur' },
+    casquette: { temp:'165°C', duree:'20 s', pression:'Adaptée',  peel:'froid', peelTxt:'Presse casquette — film froid' },
+    sac:       { temp:'155°C', duree:'12 s', pression:'Moyenne',  peel:'froid', peelTxt:'Film froid' },
+  };
+  const dtfPress = DTF_PRESS[support] || DTF_PRESS.polyester;
+
+  // ── Réglages presse Thermo selon matière ──
+  const THERMO_PRESS = {
+    flex:   { temp:'150°C', duree:'12 s', pression:'Moy.-forte', peel:'froid', peelTxt:'Film froid — attendre refroidissement complet' },
+    flock:  { temp:'160°C', duree:'15 s', pression:'Forte',      peel:'froid', peelTxt:'Film froid — plus épais, pression forte' },
+    vinyle: { temp:'130°C', duree:'8 s',  pression:'Moyenne',    peel:'chaud', peelTxt:'Film chaud possible' },
+  };
+  const thermoPress = THERMO_PRESS[thermoMat] || THERMO_PRESS.flex;
+
+  // ── Données réservation ──
+  const res = cmd.reservation || {};
+  const dtfVisuels    = res.dtfVisuels    || [];
+  const thermoVisuels = res.thermoVisuels || [];
+  const dtfFeuilles   = res.nbFeuilles    || (dtfVisuels.length ? Math.max(1, Math.ceil(dtfVisuels.length / 4)) : 1);
+
+  // Lignes filtrées par technique
+  const dtfPositions   = lignes.filter(l => /\bdtf\b/i.test(l.technique || ''));
+  const thermoLignes   = lignes.filter(l => /thermocollant|flex\b|flock/i.test(l.technique || ''));
+  const thermoSections = thermoVisuels.length || thermoLignes.length || 1;
+
+  return {
+    hasDTF, hasThermo, hasVinyle, hasBroderie, hasSublimation,
+    support, supportLabel,
+    thermoMat, thermoIsFlex, thermoIsFlock, thermoIsVinyle,
+    dtfPress, thermoPress,
+    dtfVisuels, thermoVisuels, dtfPositions, thermoLignes,
+    thermoSections, dtfFeuilles,
+    lignes, qty: cmd.qty || 1,
+    res
+  };
+}
+
+function genChecklist(cmd, A) {
+  const sections = [];
+  const multi = A.hasDTF && A.hasThermo;
+
+  // ── 1. PRÉPARATION POSTE ──
+  const prepItems = [
+    { label:`Vérifier stocks textiles — ${A.qty}× ${A.supportLabel}`, req:true },
+    A.hasDTF    && { label:'Vérifier stocks DTF', sub:'Film PET, poudre hot-melt, feutre antiadhésif', req:true },
+    A.hasThermo && { label:`Vérifier stocks thermocollant (${A.thermoMat === 'flock' ? 'Flock' : A.thermoMat === 'vinyle' ? 'Vinyle thermo' : 'Flex'})`, sub:'Film de protection intact, pas de décollement bords', req:true },
+    A.hasVinyle && !A.hasThermo && { label:'Vérifier stock vinyle plotter', sub:'Rouleau Oracal, lame plotter calibrée, support découpe', req:true },
+    { label:'Préchauffer la presse à chaud', sub:A.hasDTF ? `Cible DTF : ${A.dtfPress.temp}` : A.hasThermo ? `Cible thermo : ${A.thermoPress.temp}` : '', req:true },
+    A.hasDTF    && { label:'Préparer l\'imprimante DTF', sub:'Vérifier têtes, encres, film PET chargé' },
+    A.hasDTF    && { label:'Vérifier le four / tunnel curing', sub:'Température cible ~120–130 °C' },
+    A.hasThermo && { label:'Préparer le traceur / plotter si découpe requise', sub:'Profondeur lame, vitesse, test de découpe' },
+    { label:'EPI prêts', sub:'Gants thermiques, spatule, rouleau silicone' },
+  ].filter(Boolean);
+  sections.push({ title:'⚙️ Préparation poste de travail', type:'prep', items:prepItems });
+
+  // ── 2. IMPRESSION DTF ──
+  if (A.hasDTF) {
+    const feuillesTxt = A.dtfFeuilles > 1 ? `${A.dtfFeuilles} feuilles` : `${A.dtfFeuilles} feuille`;
+    sections.push({ title:'🖨️ Impression DTF', type:'dtf', items:[
+      { label:`Ouvrir le fichier gang sheet validé (${feuillesTxt})`, sub:'Vérifier dimensions, imposition, quantités', req:true },
+      { label:'Lancer l\'impression DTF', sub:'Profil couleur adapté, résolution 720 dpi minimum', req:true },
+      { label:'Contrôle visuel impression sortie', sub:'Couleurs, netteté, registration — vérifier avant application poudre', req:true },
+      { label:'Application poudre hot-melt', sub:'Uniforme, sans surplus ni manque sur les zones imprimées', req:true },
+      { label:'Passage au four / tunnel curing', sub:'Polymérisation complète — ~120–130 °C', req:true },
+    ]});
+  }
+
+  // ── 3. COMPTAGE TRANSFERTS DTF ──
+  if (A.hasDTF) {
+    const countItems = [];
+    if (A.dtfPositions.length > 0) {
+      A.dtfPositions.forEach(l => {
+        const dimMatch = (l.notesDesign || l.notes_design || '').match(/\d+(?:[.,]\d+)?\s*[x×]\s*\d+(?:[.,]\d+)?\s*cm/i);
+        countItems.push({
+          label:`${l.qte}× ${l.produit}`,
+          sub: dimMatch ? `Taille transfert : ${dimMatch[0]}` : `Quantité : ${l.qte}`,
+          req:true, badge:'dtf'
+        });
+      });
+    } else {
+      countItems.push({ label:`Compter tous les transferts DTF — ${A.qty}× pièces`, sub:`Vérifier vs devis ${cmd.ref || ''}`, req:true });
+    }
+    countItems.push({ label:'Regrouper par type de position / par feuille', req:false });
+    sections.push({ title:'🔢 Comptage transferts DTF', type:'dtf', items:countItems });
+  }
+
+  // ── 4. DÉCOUPE & ÉCHENILLAGE DTF ──
+  if (A.hasDTF) {
+    sections.push({ title:'✂️ Découpe & échenillage DTF', type:'dtf', items:[
+      { label:'Découpe des transferts DTF', sub:'Cutter ou traceur — marges 3–5 mm autour des motifs', req:true },
+      { label:'Échenillage — retrait film PET excédentaire', sub:'Contrôle détails fins : textes, contours, petits éléments', req:true },
+      { label:'Éliminer ponts / arrachages / résidus', req:false },
+      { label:'Trier les transferts par position dans l\'ordre de pressage', req:false },
+    ]});
+  }
+
+  // ── 5. PRÉPARATION THERMOCOLLANT ──
+  if (A.hasThermo) {
+    const thermoNom = A.thermoMat === 'flock' ? 'Flock' : A.thermoMat === 'vinyle' ? 'Vinyle thermo' : 'Flex';
+    const thermoItems = [
+      A.thermoSections > 0
+        ? { label:`Réceptionner les ${A.thermoSections} section(s) thermocollante(s) — ${thermoNom}`, req:true }
+        : { label:`Réceptionner les sections thermocollantes — ${thermoNom}`, req:true },
+      { label:'Contrôle état : film de protection intact, bords non décollés', req:true },
+      A.thermoSections > 1 && { label:'Identifier l\'ordre d\'application des sections', sub:'Fond d\'abord si superposition, puis détails dessus', req:true },
+      { label:'Vérification découpe et échenillage (si non pré-découpé) :', sub:'Charger fichier sur traceur → découpe → retirer parties négatives → contrôle détails', req:false },
+    ].filter(Boolean);
+    sections.push({ title:`🌡️ Préparation thermocollant — ${thermoNom}`, type:'thermo', items:thermoItems });
+  }
+
+  // ── 6. PRÉPARATION TEXTILES ──
+  const textileItems = [
+    { label:`Compter et trier les ${A.qty}× textiles (${A.supportLabel})`, req:true },
+    { label:'Contrôle état : pas de défauts, plis, taches', req:true },
+    A.support === 'nylon'
+      ? { label:'⚠️ Support nylon : test thermique obligatoire sur chute', sub:'Très sensible à la chaleur — valider la température avant pressage série', req:true }
+      : { label:'Défroisser si nécessaire (vapeur légère avant pressage)', req:false },
+    A.lignes.some(l => l.taille)
+      ? { label:'Trier et étiqueter par taille', sub:'Regrouper pour faciliter l\'attribution des transferts', req:false }
+      : null,
+  ].filter(Boolean);
+  sections.push({ title:`👕 Préparation textiles — ${A.supportLabel}`, type:'textile', items:textileItems });
+
+  // ── 7. PRESSAGE THERMO (EN PREMIER si multi-technique) ──
+  if (A.hasThermo) {
+    const thermoNom  = A.thermoMat === 'flock' ? 'Flock' : A.thermoMat === 'vinyle' ? 'Vinyle thermo' : 'Flex';
+    const pressItems = [{
+      label:`Régler presse → ${A.thermoPress.temp} / ${A.thermoPress.duree} / Pression : ${A.thermoPress.pression}`,
+      sub:'Vérifier plaque propre et température stabilisée',
+      req:true, badge:'thermo',
+      pressBox: A.thermoPress
+    }];
+    if (A.thermoSections > 1) {
+      for (let i = 1; i <= Math.min(A.thermoSections, 8); i++) {
+        pressItems.push({
+          label:`Section ${i} — Placement + pressage + refroidissement`,
+          sub:i === 1 ? 'Commencer par les éléments de fond si superposition' : 'Attendre refroidissement avant section suivante',
+          req:true, badge:'thermo'
+        });
+      }
+    } else {
+      pressItems.push({ label:'Placement + pressage + refroidissement complet', req:true, badge:'thermo' });
+    }
+    pressItems.push({ label:`Décollage film à ${A.thermoPress.peel === 'froid' ? 'FROID — attendre refroidissement complet' : 'CHAUD'}`, sub:A.thermoPress.peelTxt, req:true, badge:'thermo' });
+    pressItems.push({ label:'Contrôle adhérence : bords, coins, zones de jonction', req:true });
+
+    const titleThermo = multi
+      ? `🌡️ Pressage thermocollant EN PREMIER — ${A.thermoPress.temp} (${thermoNom})`
+      : `🌡️ Pressage thermocollant — ${A.thermoPress.temp} (${thermoNom})`;
+    sections.push({ title:titleThermo, type:'thermo', items:pressItems });
+  }
+
+  // ── 8. PRESSAGE DTF (après thermo si multi) ──
+  if (A.hasDTF) {
+    const pressItems = [{
+      label:`Régler presse → ${A.dtfPress.temp} / ${A.dtfPress.duree} / Pression : ${A.dtfPress.pression}`,
+      sub:'Vérifier plaque propre et température stabilisée',
+      req:true, badge:'dtf',
+      pressBox: A.dtfPress
+    }];
+    if (A.dtfPositions.length > 0) {
+      A.dtfPositions.forEach(l => {
+        pressItems.push({ label:`${l.produit} — Placement + pressage + retrait film`, req:true, badge:'dtf' });
+      });
+    } else {
+      pressItems.push({ label:'Placer les transferts selon gabarit (centrage, hauteur standard HCS)', req:true });
+      pressItems.push({ label:'Presser + retrait film DTF', req:true });
+    }
+    pressItems.push({ label:`Décollage film ${A.dtfPress.peel === 'froid' ? 'à FROID' : 'à CHAUD'}`, sub:A.dtfPress.peelTxt, req:true });
+    pressItems.push({ label:'Laisser refroidir avant manipulation suivante', req:false });
+
+    const titleDTF = multi
+      ? `♨️ Pressage DTF APRÈS thermocollant — ${A.dtfPress.temp} / ${A.supportLabel}`
+      : `♨️ Pressage DTF — ${A.dtfPress.temp} / ${A.supportLabel}`;
+    sections.push({ title:titleDTF, type:'pressage', items:pressItems });
+  }
+
+  // ── 9. VINYLE PLOTTER (technique seule) ──
+  if (A.hasVinyle && !A.hasDTF && !A.hasThermo) {
+    sections.push({ title:'✂️ Découpe & application vinyle', type:'vinyle', items:[
+      { label:'Charger le fichier sur le traceur / plotter', req:true },
+      { label:'Lancer la découpe vinyle', sub:'Profondeur lame, vitesse, pression adaptées au type Oracal', req:true },
+      { label:'Échenillage : retirer le vinyle négatif', req:true },
+      { label:'Appliquer le papier de transfert (masque)', req:true },
+      { label:'Placement sur textile + pressage', sub:'Vérifier positionnement et adhérence du masque', req:true },
+      { label:'Retirer le papier de transfert', sub:'À froid de préférence pour les vinyles fins', req:true },
+      { label:'Contrôle adhérence bords et coins', req:true },
+    ]});
+  }
+
+  // ── 10. CURING FINAL ──
+  if (A.hasDTF) {
+    sections.push({ title:'🔥 Curing final', type:'pressage', items:[
+      { label:'Passage au tunnel curing si requis (fixation longue durée)', req:false },
+      { label:'Contrôle température de sortie', req:false },
+      { label:'Temps de repos avant test qualité (minimum 2 min)', req:false },
+    ]});
+  }
+
+  // ── 11. CONTRÔLE QUALITÉ ──
+  const qcItems = [];
+  if (A.hasDTF) {
+    qcItems.push({ label:'DTF — Adhérence à froid (grattage au coin)', req:true, badge:'dtf' });
+    qcItems.push({ label:'DTF — Flexibilité (pliage textile)', req:true, badge:'dtf' });
+    qcItems.push({ label:'DTF — Contrôle visuel : couleurs, contours, finition', req:true, badge:'dtf' });
+  }
+  if (A.hasThermo) {
+    qcItems.push({ label:'Thermo — Adhérence bords et coins', req:true, badge:'thermo' });
+    qcItems.push({ label:'Thermo — Flexibilité et tenue sous contrainte', req:true, badge:'thermo' });
+    A.thermoSections > 1 && qcItems.push({ label:`Thermo — Jonctions entre les ${A.thermoSections} sections (alignement, pas de chevauchement)`, req:true, badge:'thermo' });
+  }
+  qcItems.push({ label:`Contrôle visuel 100% des ${A.qty} pièces`, req:true });
+  qcItems.push({ label:'Test lavage 40 °C sur 1 pièce pilote si délai le permet', req:false });
+  qcItems.push({ label:'Pliage / conditionnement par taille', req:false });
+  qcItems.push({ label:'Photo(s) pour archivage Dropbox', req:false });
+  sections.push({ title:'✅ Contrôle qualité', type:'qualite', items:qcItems });
+
+  return sections;
+}
+
+// ── Rendu de la modale checklist ──
+let _chkCmdId = null;
+let _chkSections = [];
+
+function openChecklistProdModal(cmd) {
+  _chkCmdId = cmd.id;
+  const A = analyzeCmd(cmd);
+  _chkSections = genChecklist(cmd, A);
+
+  const multi = A.hasDTF && A.hasThermo;
+  const techTags = [
+    A.hasDTF      && '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(168,85,247,.15);color:#a855f7;">DTF</span>',
+    A.hasThermo   && `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(239,68,68,.12);color:#f87171;">Thermo (${A.thermoMat === 'flock' ? 'Flock' : A.thermoMat === 'vinyle' ? 'Vinyle' : 'Flex'})</span>`,
+    A.hasVinyle   && '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(34,197,94,.12);color:var(--green);">Vinyle</span>',
+    A.hasBroderie && '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(59,130,246,.12);color:var(--blue);">Broderie</span>',
+  ].filter(Boolean).join(' ');
+
+  let sectionsHtml = '';
+
+  _chkSections.forEach((sec, si) => {
+    const reqTotal = sec.items.filter(it => it.req).length;
+    let itemsHtml = '';
+    sec.items.forEach((it, ii) => {
+      const badges = [
+        it.req && '<span class="chk-badge b-req">obligatoire</span>',
+        it.badge === 'dtf'    && '<span class="chk-badge b-dtf">DTF</span>',
+        it.badge === 'thermo' && '<span class="chk-badge b-thermo">Thermo</span>',
+        !it.req && !it.badge  && '<span class="chk-badge b-opt">optionnel</span>',
+      ].filter(Boolean).join('');
+
+      let pressHtml = '';
+      if (it.pressBox) {
+        const p = it.pressBox;
+        const peelClass = p.peel === 'froid' ? 'peel-f' : 'peel-c';
+        pressHtml = `<div class="press-box">
+          <div><div class="press-val">${p.temp}</div><div class="press-lbl">Température</div></div>
+          <div><div class="press-val">${p.duree}</div><div class="press-lbl">Durée</div></div>
+          <div><div class="press-val">${p.pression}</div><div class="press-lbl">Pression</div></div>
+          <div><div class="press-val" style="font-size:13px;">${p.peel === 'froid' ? '❄️' : '🔥'}</div><div class="press-lbl">Décollage</div></div>
+          <div class="press-peel">Décollage : <span class="${peelClass}">${p.peelTxt}</span></div>
+        </div>`;
+      }
+
+      itemsHtml += `<div class="chk-item" id="chk-${si}-${ii}" onclick="toggleChkItem(${si},${ii})">
+        <input type="checkbox" id="chkbox-${si}-${ii}" onclick="event.stopPropagation();toggleChkItem(${si},${ii})">
+        <div class="chk-label-wrap">
+          <div class="chk-label">${escHtml(it.label)}</div>
+          ${it.sub ? `<div class="chk-sub">${escHtml(it.sub)}</div>` : ''}
+          ${pressHtml}
+        </div>
+        <div class="chk-badges">${badges}</div>
+      </div>`;
+    });
+
+    sectionsHtml += `<div class="chk-section" id="chk-sec-${si}">
+      <div class="chk-section-title t-${sec.type}" id="chk-sec-title-${si}">
+        <span id="chk-sec-label-${si}">${sec.title}</span>
+        <span class="chk-sec-count" id="chk-sec-count-${si}">0 / ${sec.items.length}</span>
+      </div>
+      <div class="chk-list" id="chk-sec-list-${si}">${itemsHtml}</div>
+    </div>`;
+  });
+
+  const totalReq = _chkSections.reduce((s, sec) => s + sec.items.filter(i => i.req).length, 0);
+  const totalAll = _chkSections.reduce((s, sec) => s + sec.items.length, 0);
+
+  document.getElementById('checklistProdContent').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <div class="modal-title" style="margin:0;">🚀 Checklist production — ${escHtml(cmd.client || cmd.ref)}</div>
+      <button class="btn btn-ghost" onclick="closeChecklistProdModal()" style="font-size:11px;padding:4px 10px;">✕ Fermer</button>
+    </div>
+
+    <div class="chk-header-info">
+      <strong>${escHtml(cmd.ref || '')}</strong> — ${escHtml(cmd.client || '')}
+      &nbsp;|&nbsp; Qté : <strong>${A.qty}</strong>
+      &nbsp;|&nbsp; Support : <strong>${A.supportLabel}</strong>
+      &nbsp;|&nbsp; ${techTags || '<em>Type non détecté</em>'}
+      ${cmd.deadline ? `&nbsp;|&nbsp; Deadline : <strong>${new Date(cmd.deadline).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</strong>` : ''}
+    </div>
+
+    ${multi ? `<div class="chk-warn-banner">
+      ⚠️&nbsp; <span><strong>Ordre de pressage obligatoire :</strong> appliquer le <strong>thermocollant EN PREMIER</strong> sur tous les textiles, puis le DTF par-dessus. Inverser cet ordre provoque du bullage et décollement.</span>
+    </div>` : ''}
+
+    <div class="chk-progress">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);">
+        <span>Progression</span>
+        <span id="chk-prog-label">0 / ${totalAll} tâches — <strong style="color:var(--red);">0 / ${totalReq} obligatoires</strong></span>
+      </div>
+      <div class="chk-prog-bar"><div class="chk-prog-fill prog-low" id="chk-prog-fill" style="width:0%"></div></div>
+    </div>
+
+    ${sectionsHtml}
+
+    <div class="modal-footer" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+      <button class="btn btn-ghost" onclick="closeChecklistProdModal()">Annuler</button>
+      <button class="btn" id="chk-validate-btn"
+        onclick="confirmLancerProd()"
+        disabled
+        style="background:var(--surface2);color:var(--text-muted);cursor:not-allowed;transition:all .2s;">
+        🔒 Valider et lancer en production
+      </button>
+    </div>
+  `;
+
+  document.getElementById('checklistProdModal').classList.add('open');
+  updateChecklistProgress();
+}
+
+function toggleChkItem(si, ii) {
+  const box = document.getElementById(`chkbox-${si}-${ii}`);
+  const row = document.getElementById(`chk-${si}-${ii}`);
+  box.checked = !box.checked;
+  row.classList.toggle('chk-done', box.checked);
+  updateChecklistProgress();
+}
+
+function updateChecklistProgress() {
+  let totalDone = 0, totalAll = 0, reqDone = 0, reqAll = 0;
+
+  // 1. Calculer les compteurs par section
+  const secStats = _chkSections.map((sec, si) => {
+    let secDone = 0, secReqDone = 0, secReqAll = 0;
+    sec.items.forEach((it, ii) => {
+      const box = document.getElementById(`chkbox-${si}-${ii}`);
+      const checked = box && box.checked;
+      totalAll++; if (checked) totalDone++;
+      if (it.req) { secReqAll++; reqAll++; if (checked) { secReqDone++; reqDone++; } }
+      if (checked) secDone++;
+    });
+    return { secDone, secReqDone, secReqAll, total: sec.items.length };
+  });
+
+  // 2. Mise à jour compteurs + verrouillage séquentiel
+  _chkSections.forEach((sec, si) => {
+    const s = secStats[si];
+    const countEl = document.getElementById(`chk-sec-count-${si}`);
+    if (countEl) countEl.textContent = `${s.secDone} / ${s.total}`;
+
+    // Section verrouillée si la section précédente n'a pas tous ses req cochés
+    const locked = si > 0 && secStats[si - 1].secReqDone < secStats[si - 1].secReqAll;
+    const titleEl = document.getElementById(`chk-sec-title-${si}`);
+    const listEl  = document.getElementById(`chk-sec-list-${si}`);
+    const labelEl = document.getElementById(`chk-sec-label-${si}`);
+
+    if (titleEl) titleEl.classList.toggle('sec-locked', locked);
+    if (listEl)  listEl.classList.toggle('sec-locked-list', locked);
+    if (labelEl) {
+      // Ajoute ou retire le badge cadenas
+      const existingBadge = labelEl.querySelector('.chk-lock-badge');
+      if (locked && !existingBadge) {
+        labelEl.insertAdjacentHTML('beforeend', ' <span class="chk-lock-badge">🔒</span>');
+      } else if (!locked && existingBadge) {
+        existingBadge.remove();
+      }
+    }
+  });
+
+  // 3. Barre de progression + bouton
+  const pct  = totalAll ? Math.round(totalDone / totalAll * 100) : 0;
+  const fill  = document.getElementById('chk-prog-fill');
+  const label = document.getElementById('chk-prog-label');
+  const btn   = document.getElementById('chk-validate-btn');
+  if (!fill || !label || !btn) return;
+
+  fill.style.width = pct + '%';
+  fill.className = 'chk-prog-fill ' + (pct >= 80 ? 'prog-ok' : pct >= 40 ? 'prog-mid' : 'prog-low');
+  const reqOk = reqDone >= reqAll;
+  label.innerHTML = `${totalDone} / ${totalAll} tâches — <strong style="color:${reqOk ? 'var(--green)' : 'var(--red)'};">${reqDone} / ${reqAll} obligatoires</strong>`;
+
+  if (reqOk) {
+    btn.disabled = false;
+    btn.style.background = '#00d4aa';
+    btn.style.color = '#000';
+    btn.style.cursor = 'pointer';
+    btn.textContent = '✅ Valider et lancer en production';
+  } else {
+    btn.disabled = true;
+    btn.style.background = 'var(--surface2)';
+    btn.style.color = 'var(--text-muted)';
+    btn.style.cursor = 'not-allowed';
+    btn.textContent = `🔒 ${reqAll - reqDone} tâche(s) obligatoire(s) restante(s)`;
+  }
+}
+
+function closeChecklistProdModal() {
+  document.getElementById('checklistProdModal').classList.remove('open');
+}
+
+function confirmLancerProd() {
+  const cmd = commandes.find(c => c.id === _chkCmdId);
+  if (!cmd) return;
+
+  // Capturer l'état complet de la checklist
+  cmd.checklistProd = _chkSections.map((sec, si) => ({
+    title: sec.title,
+    type: sec.type,
+    items: sec.items.map((it, ii) => ({
+      label: it.label,
+      req: !!it.req,
+      badge: it.badge || null,
+      done: !!(document.getElementById(`chkbox-${si}-${ii}`)?.checked)
+    }))
+  }));
+
+  cmd.col = 'prod';
+  cmd.lancedAt = new Date().toISOString();
+  closeChecklistProdModal();
+  save();
+  _MYSQL.upsertCmd(cmd);
+  render();
+}
+
+// ─── CHECKLIST MINI SUR CARTE ───
+
+function renderCardChecklist(c) {
+  const chk = c.checklistProd;
+  if (!chk || !chk.length) return '';
+
+  // Calcul global
+  let totalAll = 0, totalDone = 0, reqAll = 0, reqDone = 0;
+  chk.forEach(sec => sec.items.forEach(it => {
+    totalAll++; if (it.done) totalDone++;
+    if (it.req) { reqAll++; if (it.done) reqDone++; }
+  }));
+
+  const pct     = totalAll ? Math.round(totalDone / totalAll * 100) : 0;
+  const barColor = pct >= 80 ? '#22c55e' : pct >= 40 ? '#eab308' : '#ef4444';
+  const allReqOk = reqDone >= reqAll;
+
+  // Sections
+  const secHtml = chk.map((sec, si) => {
+    const secDone  = sec.items.filter(it => it.done).length;
+    const secTotal = sec.items.length;
+    const allDone  = secDone === secTotal;
+    const noDone   = secDone === 0;
+    const countCls = allDone ? 'all-done' : noDone ? 'none' : 'partial';
+
+    // Verrouillage séquentiel : section précédente req incomplète
+    const prevSec = chk[si - 1];
+    const locked = si > 0 && prevSec
+      ? prevSec.items.filter(it => it.req).some(it => !it.done)
+      : false;
+    const lockedClass = locked ? ' sec-locked' : '';
+    const lockIcon    = locked ? ' 🔒' : '';
+
+    // Icône courte du titre
+    const titleShort = sec.title.replace(/^([^\s]+)\s/, '$1 ').split(' ').slice(0, 3).join(' ');
+
+    const itemsHtml = sec.items.map((it, ii) => {
+      const doneClass = it.done ? 'done-row' : it.req ? 'req-row' : 'opt-row';
+      const dotClass  = it.req ? 'req-dot' : 'opt-dot';
+      const lbl = it.label.length > 42 ? it.label.substring(0, 42) + '…' : it.label;
+      return `<div class="card-chk-row ${doneClass}"
+        onclick="event.stopPropagation();toggleCardChkItem('${c.id}',${si},${ii})">
+        <input type="checkbox" ${it.done ? 'checked' : ''}
+          onclick="event.stopPropagation();toggleCardChkItem('${c.id}',${si},${ii})">
+        <span class="card-chk-dot ${dotClass}"></span>
+        <span class="card-chk-lbl">${escHtml(lbl)}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="card-chk-sec${lockedClass}">
+      <div class="card-chk-sec-hd">
+        <span>${titleShort}${lockIcon}</span>
+        <span class="card-chk-sec-hd-count ${countCls}">${secDone}/${secTotal}</span>
+      </div>
+      ${itemsHtml}
+    </div>`;
+  }).join('');
+
+  return `<div class="card-chk-wrap" id="card-chk-${c.id}"
+    onmouseenter="cardChkEnter('${c.id}')"
+    onmouseleave="cardChkLeave('${c.id}')">
+    <div class="card-chk-topbar">
+      <span class="card-chk-toplabel">🏭 Checklist prod.</span>
+      <span class="card-chk-topstats" style="color:${allReqOk ? 'var(--green)' : 'var(--red)'};">
+        ${reqDone}/${reqAll} oblig. ${allReqOk ? '✅' : '⚠️'}
+      </span>
+      <button class="card-chk-edit-btn"
+        onclick="event.stopPropagation();reopenChecklistProd('${c.id}')">✏️ Modifier</button>
+    </div>
+    <div class="card-chk-minibar">
+      <div class="card-chk-minibar-fill" style="width:${pct}%;background:${barColor};"></div>
+    </div>
+    ${secHtml}
+  </div>`;
+}
+
+// Désactive le drag sur la carte quand la souris est sur la checklist
+function cardChkEnter(cardId) {
+  const el = document.getElementById('card-' + cardId);
+  if (el) el.setAttribute('draggable', 'false');
+}
+function cardChkLeave(cardId) {
+  const el = document.getElementById('card-' + cardId);
+  if (el) el.setAttribute('draggable', 'true');
+}
+
+function toggleCardChkItem(cmdId, si, ii) {
+  const cmd = commandes.find(c => c.id === cmdId);
+  if (!cmd || !cmd.checklistProd) return;
+  const it = cmd.checklistProd[si]?.items[ii];
+  if (!it) return;
+  it.done = !it.done;
+  save();
+  // Mise à jour ciblée du bloc checklist sans re-render complet
+  const wrap = document.getElementById('card-chk-' + cmdId);
+  if (wrap) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = renderCardChecklist(cmd);
+    const newWrap = tmp.firstElementChild;
+    if (newWrap) wrap.replaceWith(newWrap);
+  }
+}
+
+function reopenChecklistProd(cmdId) {
+  const cmd = commandes.find(c => c.id === cmdId);
+  if (!cmd) return;
+  // Reconstituer _chkSections depuis les données sauvegardées + re-générer si absent
+  if (cmd.checklistProd && cmd.checklistProd.length) {
+    _chkCmdId   = cmdId;
+    _chkSections = cmd.checklistProd.map(sec => ({
+      title: sec.title,
+      type:  sec.type,
+      items: sec.items.map(it => ({ label: it.label, req: it.req, badge: it.badge }))
+    }));
+    // Ouvrir la modale avec état pré-coché
+    openChecklistProdModal(cmd);
+    // Cocher les items déjà faits après rendu
+    setTimeout(() => {
+      cmd.checklistProd.forEach((sec, si) => {
+        sec.items.forEach((it, ii) => {
+          const box = document.getElementById(`chkbox-${si}-${ii}`);
+          const row = document.getElementById(`chk-${si}-${ii}`);
+          if (box && it.done) {
+            box.checked = true;
+            row && row.classList.add('chk-done');
+          }
+        });
+      });
+      updateChecklistProgress();
+    }, 50);
+  } else {
+    openChecklistProdModal(cmd);
+  }
 }
 
 // ─── DELETE ───
 function deleteCmd(id) {
   if (!confirm('Supprimer cette commande du planning ?')) return;
+  const cmdDel = commandes.find(c => c.id === id);
   commandes = commandes.filter(c => c.id !== id);
+  if (cmdDel) _MYSQL.delCmd(cmdDel);
   save(); render();
 }
 
@@ -729,7 +2812,9 @@ function saveCommande() {
     createdAt: now.toISOString()
   };
   commandes.unshift(cmd);
-  save(); render(); closeAddModal();
+  save();
+  _MYSQL.upsertCmd(cmd);
+  render(); closeAddModal();
   // reset
   ['f-client','f-ref','f-desc','f-notes'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('f-qty').value = '1';
@@ -739,6 +2824,1353 @@ function saveCommande() {
 
 // ─── DETAIL MODAL ───
 function closeDetailModal() { document.getElementById('detailModal').classList.remove('open'); }
+
+// ════════════════════════════════════════
+//  MODAL RÉSERVATION
+// ════════════════════════════════════════
+function openReservationModal(cmdId) {
+  currentReservationId = cmdId;
+  const cmd = commandes.find(c => c.id === cmdId);
+  if (!cmd) return;
+
+  // Info commande
+  const descCourt = (cmd.desc || '').substring(0, 90);
+  const lignesCount = (cmd.lignes || []).length;
+  document.getElementById('r-cmd-info').innerHTML =
+    `<strong>${cmd.ref}</strong> — ${escHtml(cmd.client)} &nbsp;|&nbsp; ${escHtml(descCourt)}${cmd.desc.length > 90 ? '…' : ''}${lignesCount ? ' <em>(' + lignesCount + ' ligne' + (lignesCount > 1 ? 's' : '') + ')</em>' : ''} &nbsp;|&nbsp; Qté: <strong>${cmd.qty}</strong>`;
+
+  // Stocker les lignes de la commande pour y accéder depuis les callbacks
+  const lignes = cmd.lignes || [];
+  _currentCmdLignes = lignes;
+  const hasThermoLines = lignes.some(l => /thermocollant|flex|flock/i.test(l.technique || ''));
+  const hasDTFLines    = lignes.some(l => /\bdtf\b/i.test(l.technique || ''));
+  const autoParcours   = hasThermoLines ? 'thermo'
+                       : (cmd.type === 'dtf' || hasDTFLines) ? 'dtf'
+                       : 'textile';
+
+  const res = cmd.reservation || {};
+
+  // Initialiser items textile (sera auto-populé par renderLignesDevis si vide)
+  _textileItems       = [];
+  _textileItemCounter = 0;
+
+  // Initialiser visuels DTF
+  _dtfVisuels = (res.dtfVisuels && res.dtfVisuels.length)
+    ? res.dtfVisuels.map(v => ({ ...v }))
+    : _buildDTFVisuelsFromLignes(lignes, cmd, 'dtf');
+  _dtfVisuelCounter = _dtfVisuels.length;
+
+  // Initialiser visuels thermocollant
+  _thermoVisuels = (res.thermoVisuels && res.thermoVisuels.length)
+    ? res.thermoVisuels.map(v => ({ ...v }))
+    : _buildDTFVisuelsFromLignes(lignes, cmd, 'thermo');
+  _thermoVisuelCounter = _thermoVisuels.length;
+
+  // Afficher le bon parcours (réservation existante > auto-détection)
+  switchParcours(res.parcours || autoParcours);
+
+  // ── Rendre les lignes du devis (déclenche onLigneCbChange → auto-popule _textileItems)
+  renderLignesDevis(lignes, cmd);
+
+  // ── Restaurer les items textile sauvegardés (priorité sur l'auto-population)
+  if (res.textileItems && res.textileItems.length) {
+    _textileItems       = res.textileItems.map(v => ({ ...v }));
+    _textileItemCounter = Math.max(0, ..._textileItems.map(v => v.id));
+    renderTextileItems();
+  }
+
+  // ── Parcours textile — champs produit/statut ──
+  const produitAuto = lignes.length
+    ? lignes.map(l => `${l.qte}× ${l.produit}${l.taille ? ' ' + l.taille : ''}${l.couleur ? ' ' + l.couleur : ''}`).join(' / ')
+    : cmd.desc.substring(0, 200);
+  document.getElementById('r-produit').value = res.produit || produitAuto;
+  document.getElementById('r-qte').value     = res.qte || cmd.qty;
+  document.getElementById('r-montant').value = res.montant || '';
+  document.getElementById('r-notes').value   = res.notes   || cmd.notes || '';
+  document.getElementById('r-feedback').value= res.feedback || '';
+  document.getElementById('r-status').value  = res.status  || 'en_attente';
+  document.getElementById('r-email-preview').style.display = 'none';
+
+  // ── Parcours DTF ──
+  document.getElementById('r-dtf-notes').value    = res.dtfNotes    || cmd.notes || '';
+  document.getElementById('r-dtf-feedback').value = res.dtfFeedback || '';
+  document.getElementById('r-dtf-montant').value  = res.dtfMontant  || '';
+  document.getElementById('r-dtf-status').value   = res.dtfStatus   || 'en_attente';
+  renderDTFVisuels();
+  recalcDTF();
+
+  // ── Parcours Thermocollant ──
+  document.getElementById('r-thermo-notes').value    = res.thermoNotes    || cmd.notes || '';
+  document.getElementById('r-thermo-feedback').value = res.thermoFeedback || '';
+  document.getElementById('r-thermo-montant').value  = res.thermoMontant  || '';
+  document.getElementById('r-thermo-status').value   = res.thermoStatus   || 'en_attente';
+  renderThermoVisuels();
+  recalcThermo();
+
+  // ── Textile fournisseur ──
+  const typeVal = res.type || 'magasin';
+  document.querySelectorAll('input[name="r-type-radio"]').forEach(r => { r.checked = (r.value === typeVal); });
+  updateFournisseurSelect(res.fournisseurId || '');
+  document.getElementById('r-contact').value = res.contactMethod || 'telephone';
+  toggleReservationType();
+
+  // ── DTF fournisseur ──
+  const dtfTypeVal = res.dtfType || 'fournisseur_etranger';
+  document.querySelectorAll('input[name="r-dtf-type-radio"]').forEach(r => { r.checked = (r.value === dtfTypeVal); });
+  updateDTFFournisseurSelect(res.dtfFournisseurId || '');
+  document.getElementById('r-dtf-contact').value = res.dtfContactMethod || 'email';
+  toggleDTFSourceType();
+
+  // ── Thermo fournisseur ──
+  const thermoTypeVal = res.thermoType || 'fournisseur_local';
+  document.querySelectorAll('input[name="r-thermo-type-radio"]').forEach(r => { r.checked = (r.value === thermoTypeVal); });
+  updateThermoFournisseurSelect(res.thermoFournisseurId || '');
+  document.getElementById('r-thermo-contact').value = res.thermoContactMethod || 'telephone';
+  toggleThermoSourceType();
+
+  _populateTeamEmailSelects();
+  document.getElementById('reservationModal').classList.add('open');
+}
+
+/* Construire les lignes du devis dans le tableau du modal (avec checkboxes) */
+function renderLignesDevis(lignes, cmd) {
+  const container = document.getElementById('r-lignes-list');
+  const count     = document.getElementById('r-lignes-count');
+
+  if (!lignes || lignes.length === 0) {
+    count.textContent = '0 ligne';
+    container.innerHTML = `<div style="padding:10px 12px;font-size:11px;color:var(--text-muted);font-style:italic;">
+      Aucune ligne structurée — description générale : ${escHtml((cmd.desc || '').substring(0, 120))}
+    </div>`;
+    return;
+  }
+  count.textContent = lignes.length + ' ligne' + (lignes.length > 1 ? 's' : '');
+
+  const badgeClass = (tech) => {
+    if (!tech) return 'badge-textile';
+    if (/thermocollant|flex|flock/i.test(tech)) return 'badge-thermo';
+    if (/\bdtf\b|transfert/i.test(tech)) return 'badge-dtf';
+    if (/vinyl|vinyle/i.test(tech)) return 'badge-vinyl';
+    return 'badge-textile';
+  };
+
+  const rowClass = (tech) => {
+    if (/thermocollant|flex|flock/i.test(tech || '')) return 'r-ligne-thermo';
+    if (/\bdtf\b|transfert/i.test(tech || '')) return 'r-ligne-dtf';
+    return '';
+  };
+
+  container.innerHTML = `
+    <div class="r-ligne-header">
+      <input type="checkbox" class="r-cb-all" id="r-cb-all" title="Tout cocher / décocher" onchange="toggleAllLignes(this.checked)">
+      <div>Description</div><div>Qté</div><div>Technique</div><div>Taille / Couleur</div>
+    </div>
+    ${lignes.map((l, i) => {
+      const tech = l.technique || '';
+      return `
+      <div class="r-ligne-row ${rowClass(tech)}" id="r-ligne-row-${i}" onclick="toggleLigneCb(${i})">
+        <input type="checkbox" class="r-ligne-cb" id="r-ligne-cb-${i}"
+          data-idx="${i}" data-tech="${escHtml(tech)}"
+          onchange="onLigneCbChange()" onclick="event.stopPropagation()">
+        <div style="font-size:11px;color:var(--text);line-height:1.4;">${escHtml(l.produit || l.description || '—')}</div>
+        <div style="font-weight:700;color:var(--orange);">${l.qte || 1}</div>
+        <div>
+          <span class="r-ligne-badge ${badgeClass(tech)}">${tech ? escHtml(tech) : '—'}</span>
+        </div>
+        <div style="font-size:10px;color:var(--text-muted);">
+          ${l.taille ? escHtml(l.taille) : ''}${l.taille && l.couleur ? ' · ' : ''}${l.couleur ? escHtml(l.couleur) : ''}${(!l.taille && !l.couleur) ? '—' : ''}
+        </div>
+      </div>`;
+    }).join('')}
+  `;
+  // Pré-sélection selon le parcours actif
+  _preselectLignes(_currentParcours);
+}
+
+/* Clic sur la ligne entière → toggle la checkbox */
+function toggleLigneCb(i) {
+  const cb = document.getElementById('r-ligne-cb-' + i);
+  if (cb) { cb.checked = !cb.checked; onLigneCbChange(); }
+}
+
+/* Tout cocher / décocher */
+function toggleAllLignes(checked) {
+  document.querySelectorAll('.r-ligne-cb').forEach(cb => { cb.checked = checked; });
+  onLigneCbChange();
+}
+
+/* Pré-sélectionner les lignes pertinentes selon le parcours */
+function _preselectLignes(parcours) {
+  document.querySelectorAll('.r-ligne-cb').forEach(cb => {
+    const tech = cb.dataset.tech || '';
+    const isDTF   = /\bdtf\b|transfert/i.test(tech);
+    const isThermo= /thermocollant|flex|flock/i.test(tech);
+    const isTextile = !isDTF && !isThermo;
+    cb.checked = parcours === 'dtf'    ? isDTF
+               : parcours === 'thermo' ? isThermo
+               : isTextile; // textile : cocher uniquement les lignes sans technique spécifique
+  });
+  onLigneCbChange();
+}
+
+/* Retourner les lignes cochées */
+function _getSelectedLignes() {
+  const selected = [];
+  document.querySelectorAll('.r-ligne-cb:checked').forEach(cb => {
+    const idx = parseInt(cb.dataset.idx);
+    if (!isNaN(idx) && _currentCmdLignes[idx]) selected.push(_currentCmdLignes[idx]);
+  });
+  return selected;
+}
+
+/* Mettre à jour les champs produit/qte + surligner les lignes cochées */
+function onLigneCbChange() {
+  const sel = _getSelectedLignes();
+
+  // Surligner les lignes cochées
+  document.querySelectorAll('.r-ligne-cb').forEach(cb => {
+    const row = document.getElementById('r-ligne-row-' + cb.dataset.idx);
+    if (row) row.classList.toggle('r-ligne-checked', cb.checked);
+  });
+
+  // Mettre à jour "tout cocher" selon l'état
+  const all = document.querySelectorAll('.r-ligne-cb');
+  const allCb = document.getElementById('r-cb-all');
+  if (allCb) allCb.indeterminate = sel.length > 0 && sel.length < all.length;
+  if (allCb) allCb.checked = sel.length === all.length && all.length > 0;
+
+  // ── Parcours TEXTILE : sync tableau T-shirts + résumé produit/qté ──
+  if (_currentParcours === 'textile') {
+    _syncTextileItemsFromDOM(); // préserver les valeurs déjà saisies
+
+    const checkedMap = {};
+    document.querySelectorAll('.r-ligne-cb').forEach(cb => {
+      if (cb.checked) {
+        const idx = parseInt(cb.dataset.idx);
+        if (!isNaN(idx) && _currentCmdLignes[idx]) checkedMap[idx] = _currentCmdLignes[idx];
+      }
+    });
+
+    // Supprimer les lignes auto-ajoutées désormais décochées
+    for (let i = _textileItems.length - 1; i >= 0; i--) {
+      if (_textileItems[i]._ligneIdx !== undefined && checkedMap[_textileItems[i]._ligneIdx] === undefined) {
+        _textileItems.splice(i, 1);
+      }
+    }
+
+    // Ajouter les nouvelles lignes cochées
+    Object.keys(checkedMap).forEach(idxStr => {
+      const idx   = parseInt(idxStr);
+      const ligne = checkedMap[idx];
+      if (_textileItems.find(v => v._ligneIdx === idx)) return;
+      _textileItems.push({
+        id: ++_textileItemCounter,
+        nom:     (ligne.produit || ligne.description || 'Article').substring(0, 80),
+        taille:  ligne.taille  || '',
+        couleur: ligne.couleur || '',
+        matiere: '',
+        coupe:   '',
+        qte:     ligne.qte    || 1,
+        _ligneIdx: idx
+      });
+    });
+
+    renderTextileItems();
+    _syncTextileToSummary();
+
+    const prev = document.getElementById('r-email-preview');
+    if (prev) prev.style.display = 'none';
+    return;
+  }
+
+  // ── Parcours DTF / THERMO : synchroniser le tableau Visuels avec les cases cochées ──
+  _syncDTFVisuelsFromDOM(); // préserver les dimensions déjà saisies
+
+  // Construire la map des lignes cochées {idx → ligne}
+  const checkedMap = {};
+  document.querySelectorAll('.r-ligne-cb').forEach(cb => {
+    if (cb.checked) {
+      const idx = parseInt(cb.dataset.idx);
+      if (!isNaN(idx) && _currentCmdLignes[idx]) checkedMap[idx] = _currentCmdLignes[idx];
+    }
+  });
+
+  const isDTF = _currentParcours === 'dtf';
+  const arr   = isDTF ? _dtfVisuels : _thermoVisuels;
+
+  // Supprimer les visuels auto-ajoutés dont la case est désormais décochée
+  for (let i = arr.length - 1; i >= 0; i--) {
+    if (arr[i]._ligneIdx !== undefined && checkedMap[arr[i]._ligneIdx] === undefined) {
+      arr.splice(i, 1);
+    }
+  }
+
+  // Ajouter un visuel pour chaque ligne nouvellement cochée (si absent)
+  Object.keys(checkedMap).forEach(idxStr => {
+    const idx   = parseInt(idxStr);
+    const ligne = checkedMap[idx];
+    if (arr.find(v => v._ligneIdx === idx)) return; // déjà présent
+    const id  = isDTF ? ++_dtfVisuelCounter : ++_thermoVisuelCounter;
+    const nom = (ligne.produit || ligne.description || 'Visuel').substring(0, 80);
+    arr.push({ id, nom, largeur: '', hauteur: '', qte: ligne.qte || 1, _ligneIdx: idx });
+  });
+
+  // Re-rendre le tableau Visuels
+  if (isDTF) { renderDTFVisuels(); recalcDTF(); }
+  else        { renderThermoVisuels(); recalcThermo(); }
+}
+
+/* Construire les visuels depuis les lignes — filtré par type ('dtf' ou 'thermo') */
+function _buildDTFVisuelsFromLignes(lignes, cmd, type) {
+  const isDTF   = type === 'dtf';
+  const regex   = isDTF ? /\bdtf\b|transfert/i : /thermocollant|flex|flock/i;
+  const visuels = [];
+  let ctr = 0;
+  (lignes || []).forEach(l => {
+    const tech  = l.technique || '';
+    const notes = l.notesDesign || l.notes_design || '';
+    const dims  = [...notes.matchAll(/(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*cm/gi)];
+    if (dims.length) {
+      dims.forEach(m => {
+        visuels.push({ id: ++ctr, nom: l.produit || 'Visuel', largeur: parseFloat(m[1]), hauteur: parseFloat(m[2]), qte: l.qte || 1 });
+      });
+    } else if (regex.test(tech)) {
+      visuels.push({ id: ++ctr, nom: l.produit || (isDTF ? 'Visuel DTF' : 'Visuel Thermo'), largeur: '', hauteur: '', qte: l.qte || 1 });
+    }
+  });
+  return visuels;
+}
+
+/* Switch entre les trois parcours */
+function switchParcours(parcours) {
+  _currentParcours = parcours;
+  ['textile','dtf','thermo'].forEach(p => {
+    document.getElementById('r-tab-' + p).classList.toggle('r-tab-active', parcours === p);
+    document.getElementById('r-parcours-' + p).style.display = parcours === p ? '' : 'none';
+  });
+  _preselectLignes(parcours);
+}
+
+function closeReservationModal() {
+  document.getElementById('reservationModal').classList.remove('open');
+}
+
+function toggleReservationType() {
+  const selected = document.querySelector('input[name="r-type-radio"]:checked');
+  const type = selected ? selected.value : 'magasin';
+  const bloc = document.getElementById('r-bloc-fournisseur');
+  if (type === 'magasin') {
+    bloc.style.display = 'none';
+    document.getElementById('r-status').value = 'confirme';
+  } else {
+    bloc.style.display = 'block';
+    updateFournisseurSelect('');
+    const filterType = type === 'fournisseur_local' ? 'local' : 'etranger';
+    const opts = document.getElementById('r-fournisseur').options;
+    for (let i = 1; i < opts.length; i++) {
+      opts[i].style.display = opts[i].dataset.type === filterType ? '' : 'none';
+    }
+    onFournisseurChange();
+  }
+}
+
+function toggleDTFSourceType() {
+  const selected = document.querySelector('input[name="r-dtf-type-radio"]:checked');
+  const type = selected ? selected.value : 'fournisseur_etranger';
+  const bloc = document.getElementById('r-dtf-bloc-fournisseur');
+  if (type === 'magasin') {
+    bloc.style.display = 'none';
+    document.getElementById('r-dtf-status').value = 'confirme';
+  } else {
+    bloc.style.display = 'block';
+    updateDTFFournisseurSelect('');
+    const filterType = type === 'fournisseur_local' ? 'local' : 'etranger';
+    const opts = document.getElementById('r-dtf-fournisseur').options;
+    for (let i = 1; i < opts.length; i++) {
+      opts[i].style.display = opts[i].dataset.type === filterType ? '' : 'none';
+    }
+    onDTFFournisseurChange();
+  }
+}
+
+function toggleThermoSourceType() {
+  const selected = document.querySelector('input[name="r-thermo-type-radio"]:checked');
+  const type = selected ? selected.value : 'fournisseur_etranger';
+  const bloc = document.getElementById('r-thermo-bloc-fournisseur');
+  if (type === 'magasin') {
+    bloc.style.display = 'none';
+    document.getElementById('r-thermo-status').value = 'confirme';
+  } else {
+    bloc.style.display = 'block';
+    updateThermoFournisseurSelect('');
+    const filterType = type === 'fournisseur_local' ? 'local' : 'etranger';
+    const opts = document.getElementById('r-thermo-fournisseur').options;
+    for (let i = 1; i < opts.length; i++) {
+      opts[i].style.display = opts[i].dataset.type === filterType ? '' : 'none';
+    }
+    onThermoFournisseurChange();
+  }
+}
+
+function _buildFournisseurOptions(selectedId) {
+  let html = '<option value="">-- Sélectionner un fournisseur --</option>';
+  fournisseurs.forEach(f => {
+    html += `<option value="${f.id}" data-type="${f.type}"${f.id === selectedId ? ' selected' : ''}>${escHtml(f.nom)} (${escHtml(f.pays)})</option>`;
+  });
+  return html;
+}
+
+function _renderFournisseurInfo(elId, fournisseurId) {
+  const info = document.getElementById(elId);
+  if (!info) return;
+  const f = fournisseurs.find(x => x.id === fournisseurId);
+  if (f) {
+    info.style.display = 'block';
+    info.innerHTML = `<strong>${escHtml(f.nom)}</strong> — ${escHtml(f.pays)}<br>
+      ${f.telephone ? '📞 <a href="tel:' + f.telephone + '" style="color:var(--teal);">' + f.telephone + '</a>&emsp;' : ''}
+      ${f.email ? '📧 <a href="mailto:' + f.email + '" style="color:var(--teal);">' + f.email + '</a>' : ''}<br>
+      ${f.produits ? '<em style="color:var(--text-muted);">Produits : ' + escHtml(f.produits) + '</em>' : ''}
+      ${f.notes ? '<br><span style="color:var(--text-muted);">' + escHtml(f.notes) + '</span>' : ''}`;
+  } else {
+    info.style.display = 'none';
+  }
+}
+
+function updateFournisseurSelect(selectedId) {
+  document.getElementById('r-fournisseur').innerHTML = _buildFournisseurOptions(selectedId);
+  onFournisseurChange();
+}
+function onFournisseurChange() {
+  _renderFournisseurInfo('r-fournisseur-info', document.getElementById('r-fournisseur').value);
+}
+
+function updateDTFFournisseurSelect(selectedId) {
+  document.getElementById('r-dtf-fournisseur').innerHTML = _buildFournisseurOptions(selectedId);
+  onDTFFournisseurChange();
+}
+function onDTFFournisseurChange() {
+  const fId = document.getElementById('r-dtf-fournisseur').value;
+  _renderFournisseurInfo('r-dtf-fournisseur-info', fId);
+  const f = fournisseurs.find(x => x.id === fId);
+  const contact = document.getElementById('r-dtf-contact').value;
+  const showEmail = !!(f && f.email && /email|les_deux/.test(contact));
+  const row = document.getElementById('r-dtf-email-row');
+  if (row) row.style.display = showEmail ? '' : 'none';
+  const prev = document.getElementById('r-dtf-email-preview');
+  if (prev) prev.style.display = 'none';
+}
+
+function updateThermoFournisseurSelect(selectedId) {
+  document.getElementById('r-thermo-fournisseur').innerHTML = _buildFournisseurOptions(selectedId);
+  onThermoFournisseurChange();
+}
+function onThermoFournisseurChange() {
+  const fId = document.getElementById('r-thermo-fournisseur').value;
+  _renderFournisseurInfo('r-thermo-fournisseur-info', fId);
+  const f = fournisseurs.find(x => x.id === fId);
+  const contact = document.getElementById('r-thermo-contact').value;
+  const showEmail = !!(f && f.email && /email|les_deux/.test(contact));
+  const row = document.getElementById('r-thermo-email-row');
+  if (row) row.style.display = showEmail ? '' : 'none';
+  const prev = document.getElementById('r-thermo-email-preview');
+  if (prev) prev.style.display = 'none';
+}
+
+function saveReservation() {
+  const cmd = commandes.find(c => c.id === currentReservationId);
+  if (!cmd) return;
+
+  const selectedRadio = document.querySelector('input[name="r-type-radio"]:checked');
+  const type = selectedRadio ? selectedRadio.value : 'magasin';
+  const fournisseurId = document.getElementById('r-fournisseur').value;
+  const fournisseur   = fournisseurs.find(f => f.id === fournisseurId);
+  const status = type === 'magasin' ? 'confirme' : document.getElementById('r-status').value;
+
+  const dtfRadio = document.querySelector('input[name="r-dtf-type-radio"]:checked');
+  const dtfType  = dtfRadio ? dtfRadio.value : 'fournisseur_etranger';
+  const dtfFournisseurId = document.getElementById('r-dtf-fournisseur').value;
+  const dtfFournisseur   = fournisseurs.find(f => f.id === dtfFournisseurId);
+
+  const thermoRadio = document.querySelector('input[name="r-thermo-type-radio"]:checked');
+  const thermoType  = thermoRadio ? thermoRadio.value : 'fournisseur_local';
+  const thermoFournisseurId = document.getElementById('r-thermo-fournisseur').value;
+  const thermoFournisseur   = fournisseurs.find(f => f.id === thermoFournisseurId);
+
+  // Lire les visuels DTF / items textile depuis les tableaux
+  _syncDTFVisuelsFromDOM();
+  _syncTextileItemsFromDOM();
+
+  cmd.reservation = {
+    parcours:       _currentParcours,
+    type,
+    fournisseurId,
+    fournisseurNom: fournisseur ? fournisseur.nom : '',
+    contactMethod:  document.getElementById('r-contact').value,
+    textileItems:   _textileItems.map(v => ({ ...v })),
+    produit:        document.getElementById('r-produit').value.trim(),
+    qte:            parseInt(document.getElementById('r-qte').value) || cmd.qty,
+    montant:        document.getElementById('r-montant').value.trim(),
+    notes:          document.getElementById('r-notes').value.trim(),
+    feedback:       document.getElementById('r-feedback').value.trim(),
+    status,
+    /* données DTF */
+    dtfType,
+    dtfFournisseurId,
+    dtfFournisseurNom: dtfFournisseur ? dtfFournisseur.nom : '',
+    dtfContactMethod: document.getElementById('r-dtf-contact').value,
+    dtfVisuels:   _dtfVisuels,
+    dtfNotes:     document.getElementById('r-dtf-notes').value.trim(),
+    dtfFeedback:  document.getElementById('r-dtf-feedback').value.trim(),
+    dtfMontant:   document.getElementById('r-dtf-montant').value.trim(),
+    dtfStatus:    document.getElementById('r-dtf-status').value,
+    dtfFeuilles:  _calcDTFSheets(_dtfVisuels),
+    /* données Thermocollant */
+    thermoType,
+    thermoFournisseurId,
+    thermoFournisseurNom: thermoFournisseur ? thermoFournisseur.nom : '',
+    thermoContactMethod: document.getElementById('r-thermo-contact').value,
+    thermoVisuels:   _thermoVisuels,
+    thermoNotes:     document.getElementById('r-thermo-notes').value.trim(),
+    thermoFeedback:  document.getElementById('r-thermo-feedback').value.trim(),
+    thermoMontant:   document.getElementById('r-thermo-montant').value.trim(),
+    thermoStatus:    document.getElementById('r-thermo-status').value,
+    thermoSections:  _calcThermoSections(_thermoVisuels),
+    dateReservation: cmd.reservation?.dateReservation || new Date().toISOString(),
+    dateConfirmation: (status === 'confirme' && !cmd.reservation?.dateConfirmation)
+      ? new Date().toISOString()
+      : (cmd.reservation?.dateConfirmation || null),
+  };
+
+  // Déplacer vers la colonne réservation si on vient de matiere
+  if (cmd.col === 'matiere') cmd.col = 'reservation';
+
+  // Créer ou mettre à jour l'entrée dans la liste d'achats (si fournisseur externe)
+  if (type !== 'magasin') {
+    const existing = achats.find(a => a.cmdId === cmd.id);
+    if (!existing) {
+      achats.push({
+        id: 'ach-' + Date.now(),
+        cmdId: cmd.id,
+        cmdRef: cmd.ref,
+        cmdClient: cmd.client,
+        fournisseurId,
+        fournisseurNom: fournisseur ? fournisseur.nom : 'Inconnu',
+        produit: cmd.reservation.produit,
+        qte: cmd.reservation.qte,
+        montant: cmd.reservation.montant || '0',
+        status: status === 'confirme' ? 'commande' : 'en_attente',
+        dateCreation: new Date().toISOString(),
+        notes: cmd.reservation.notes,
+      });
+      _MYSQL.upsertAchat(achats[achats.length - 1]);
+    } else {
+      existing.fournisseurId = fournisseurId;
+      existing.fournisseurNom = fournisseur ? fournisseur.nom : existing.fournisseurNom;
+      existing.montant = cmd.reservation.montant || existing.montant;
+      existing.status = status === 'confirme' ? 'commande' : (status === 'non_disponible' ? 'en_attente' : existing.status);
+      existing.notes = cmd.reservation.notes;
+      existing.produit = cmd.reservation.produit;
+      existing.qte = cmd.reservation.qte;
+      _MYSQL.upsertAchat(existing);
+    }
+    saveAchats();
+  }
+
+  save();
+  _MYSQL.upsertCmd(cmd);
+  render();
+  closeReservationModal();
+}
+
+// ════════════════════════════════════════
+//  FONCTIONS PARCOURS DTF
+// ════════════════════════════════════════
+
+/* Rendu du tableau des visuels DTF */
+function renderDTFVisuels() {
+  const el = document.getElementById('r-dtf-visuels');
+  if (!el) return;
+  if (_dtfVisuels.length === 0) {
+    el.innerHTML = `<div style="padding:10px 12px;font-size:11px;color:var(--text-muted);font-style:italic;">
+      Aucun visuel — cliquez sur "+ Ajouter un visuel" ou revenez à l'onglet Textile si aucun transfert DTF.
+    </div>`;
+    return;
+  }
+  el.innerHTML = _dtfVisuels.map((v, i) => `
+    <div class="dtf-vis-row" id="dtf-vis-${v.id}">
+      <input class="dtf-inp" type="text"   value="${escHtml(v.nom)}"     placeholder="Ex: Logo cœur"     onchange="updateDTFVisuel(${v.id},'nom',this.value)">
+      <input class="dtf-inp" type="number" value="${v.largeur}"          placeholder="cm"  min="1"       onchange="updateDTFVisuel(${v.id},'largeur',+this.value)" oninput="recalcDTF()">
+      <input class="dtf-inp" type="number" value="${v.hauteur}"          placeholder="cm"  min="1"       onchange="updateDTFVisuel(${v.id},'hauteur',+this.value)" oninput="recalcDTF()">
+      <input class="dtf-inp" type="number" value="${v.qte}"              placeholder="qté" min="1"       onchange="updateDTFVisuel(${v.id},'qte',+this.value)"     oninput="recalcDTF()">
+      <button onclick="removeDTFVisuel(${v.id})" title="Supprimer" style="background:rgba(239,68,68,.1);border:none;border-radius:5px;color:var(--red,#ef4444);cursor:pointer;font-size:13px;width:26px;height:26px;">✕</button>
+    </div>
+  `).join('');
+}
+
+function updateDTFVisuel(id, field, val) {
+  const v = _dtfVisuels.find(x => x.id === id);
+  if (v) v[field] = val;
+  recalcDTF();
+}
+
+function addDTFVisuel() {
+  _dtfVisuels.push({ id: ++_dtfVisuelCounter, nom: '', largeur: '', hauteur: '', qte: 1 });
+  renderDTFVisuels();
+  // Focus sur le premier champ de la nouvelle ligne
+  setTimeout(() => {
+    const row = document.getElementById('dtf-vis-' + _dtfVisuelCounter);
+    if (row) row.querySelector('input')?.focus();
+  }, 50);
+}
+
+function removeDTFVisuel(id) {
+  _dtfVisuels = _dtfVisuels.filter(v => v.id !== id);
+  renderDTFVisuels();
+  recalcDTF();
+}
+
+/* Lire les valeurs actuelles du DOM avant sauvegarde */
+function _syncDTFVisuelsFromDOM() {
+  _dtfVisuels.forEach(v => {
+    const row = document.getElementById('dtf-vis-' + v.id);
+    if (!row) return;
+    const inputs = row.querySelectorAll('input');
+    if (inputs[0]) v.nom     = inputs[0].value.trim();
+    if (inputs[1]) v.largeur = parseFloat(inputs[1].value) || 0;
+    if (inputs[2]) v.hauteur = parseFloat(inputs[2].value) || 0;
+    if (inputs[3]) v.qte     = parseInt(inputs[3].value)   || 1;
+  });
+  _thermoVisuels.forEach(v => {
+    const row = document.getElementById('thermo-vis-' + v.id);
+    if (!row) return;
+    const inputs = row.querySelectorAll('input');
+    if (inputs[0]) v.nom     = inputs[0].value.trim();
+    if (inputs[1]) v.largeur = parseFloat(inputs[1].value) || 0;
+    if (inputs[2]) v.hauteur = parseFloat(inputs[2].value) || 0;
+    if (inputs[3]) v.qte     = parseInt(inputs[3].value)   || 1;
+  });
+}
+
+// ════════════════════════════════════════
+//  FONCTIONS TABLEAU T-SHIRTS (TEXTILE)
+// ════════════════════════════════════════
+
+function renderTextileItems() {
+  const el = document.getElementById('r-textile-items');
+  if (!el) return;
+  if (_textileItems.length === 0) {
+    el.innerHTML = `<div style="padding:10px 12px;font-size:11px;color:var(--text-muted);font-style:italic;">
+      Cochez des lignes dans le tableau ci-dessus ou cliquez sur "+ Ajouter une ligne".
+    </div>`;
+    return;
+  }
+  el.innerHTML = _textileItems.map(v => `
+    <div class="textile-item-row" id="textile-item-${v.id}">
+      <input class="textile-inp" type="text"   value="${escHtml(v.nom)}"     placeholder="Ex: T-shirt blanc polyester"  onchange="updateTextileItem(${v.id},'nom',this.value)">
+      <input class="textile-inp" type="text"   value="${escHtml(v.taille)}"  placeholder="S/M/L/XL"                     onchange="updateTextileItem(${v.id},'taille',this.value)">
+      <input class="textile-inp" type="text"   value="${escHtml(v.couleur)}" placeholder="Blanc"                        onchange="updateTextileItem(${v.id},'couleur',this.value)">
+      <input class="textile-inp" type="text"   value="${escHtml(v.matiere)}" placeholder="Polyester"                   onchange="updateTextileItem(${v.id},'matiere',this.value)">
+      <input class="textile-inp" type="text"   value="${escHtml(v.coupe)}"   placeholder="Regular"                     onchange="updateTextileItem(${v.id},'coupe',this.value)">
+      <input class="textile-inp" type="number" value="${v.qte}"              placeholder="1" min="1"                   onchange="updateTextileItem(${v.id},'qte',+this.value)" oninput="_syncTextileToSummary()">
+      <button onclick="removeTextileItem(${v.id})" title="Supprimer"
+        style="background:rgba(239,68,68,.1);border:none;border-radius:5px;color:#ef4444;cursor:pointer;font-size:13px;width:26px;height:26px;">✕</button>
+    </div>
+  `).join('');
+}
+
+function updateTextileItem(id, field, val) {
+  const v = _textileItems.find(x => x.id === id);
+  if (v) { v[field] = val; _syncTextileToSummary(); }
+}
+
+function addTextileItem() {
+  _textileItems.push({ id: ++_textileItemCounter, nom: '', taille: '', couleur: '', matiere: '', coupe: '', qte: 1 });
+  renderTextileItems();
+  setTimeout(() => {
+    const row = document.getElementById('textile-item-' + _textileItemCounter);
+    if (row) row.querySelector('input')?.focus();
+  }, 50);
+}
+
+function removeTextileItem(id) {
+  _textileItems = _textileItems.filter(v => v.id !== id);
+  renderTextileItems();
+  _syncTextileToSummary();
+}
+
+function _syncTextileItemsFromDOM() {
+  _textileItems.forEach(v => {
+    const row = document.getElementById('textile-item-' + v.id);
+    if (!row) return;
+    const inp = row.querySelectorAll('input');
+    if (inp[0]) v.nom     = inp[0].value.trim();
+    if (inp[1]) v.taille  = inp[1].value.trim();
+    if (inp[2]) v.couleur = inp[2].value.trim();
+    if (inp[3]) v.matiere = inp[3].value.trim();
+    if (inp[4]) v.coupe   = inp[4].value.trim();
+    if (inp[5]) v.qte     = parseInt(inp[5].value) || 1;
+  });
+}
+
+function _syncTextileToSummary() {
+  _syncTextileItemsFromDOM();
+  const totalQte  = _textileItems.reduce((s, v) => s + (parseInt(v.qte) || 1), 0);
+  const produitTxt = _textileItems.map(v => {
+    let t = `${v.qte || 1}× ${v.nom || '—'}`;
+    if (v.taille)  t += ` ${v.taille}`;
+    if (v.couleur) t += ` ${v.couleur}`;
+    return t;
+  }).join(' / ');
+  const elP = document.getElementById('r-produit');
+  const elQ = document.getElementById('r-qte');
+  if (elP) elP.value = produitTxt.substring(0, 300);
+  if (elQ) elQ.value = totalQte;
+}
+
+/* Calcul du nombre de feuilles 55×91 cm */
+function _calcDTFSheets(visuels) {
+  const SW = 55; // largeur feuille cm
+  const SH = 91; // hauteur feuille cm
+  let total = 0;
+  (visuels || []).forEach(v => {
+    const w = parseFloat(v.largeur) || 0;
+    const h = parseFloat(v.hauteur) || 0;
+    const q = parseInt(v.qte)       || 0;
+    if (!w || !h || !q) return;
+    if (w > SW) { total += q; return; } // plus large que feuille
+    const parLigne  = Math.floor(SW / w);
+    const parColonne= Math.floor(SH / h);
+    const parFeuille= parLigne * parColonne || 1;
+    total += Math.ceil(q / parFeuille);
+  });
+  return total;
+}
+
+/* Recalculer et afficher l'estimation */
+function recalcDTF() {
+  _syncDTFVisuelsFromDOM();
+  const el = document.getElementById('r-dtf-result');
+  if (!el) return;
+
+  const valides = _dtfVisuels.filter(v => v.largeur && v.hauteur && v.qte);
+  if (valides.length === 0) {
+    el.innerHTML = '<span style="color:var(--text-muted);font-style:italic;">Renseignez les dimensions des visuels pour calculer.</span>';
+    return;
+  }
+
+  const nbFeuilles = _calcDTFSheets(valides);
+  const totalVisuels = valides.reduce((s, v) => s + (v.qte || 0), 0);
+  const surfaceTotale = valides.reduce((s, v) => s + (v.largeur * v.hauteur * v.qte), 0);
+
+  el.innerHTML = `
+    <div class="dtf-result-line">
+      <span>Visuels distincts</span><span style="font-weight:600;">${valides.length}</span>
+    </div>
+    <div class="dtf-result-line">
+      <span>Total impressions</span><span style="font-weight:600;">${totalVisuels} unités</span>
+    </div>
+    <div class="dtf-result-line">
+      <span>Surface totale des visuels</span><span style="font-weight:600;">${surfaceTotale.toLocaleString('fr-FR')} cm²</span>
+    </div>
+    <div class="dtf-result-line" style="border-top:1px solid rgba(168,85,247,.2);margin-top:6px;padding-top:6px;">
+      <span style="font-size:13px;font-weight:700;">🖨️ Feuilles 55×91 cm estimées</span>
+      <strong style="font-size:18px;color:#a855f7;">${nbFeuilles} feuille${nbFeuilles > 1 ? 's' : ''}</strong>
+    </div>
+    ${valides.map(v => `
+      <div style="font-size:10px;color:var(--text-muted);display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid var(--border);">
+        <span>${escHtml(v.nom || '?')} — ${v.largeur}×${v.hauteur} cm × ${v.qte}</span>
+        <span>${Math.ceil(v.qte / Math.max(1, Math.floor(55 / v.largeur) * Math.floor(91 / v.hauteur)))} f.</span>
+      </div>
+    `).join('')}
+  `;
+
+  // Auto-remplir le montant estimé si vide (2 500 XPF / feuille HT4You indicatif)
+  const elMontant = document.getElementById('r-dtf-montant');
+  if (elMontant && !elMontant.value) {
+    elMontant.value = nbFeuilles * 2500;
+  }
+}
+
+/* Ouvrir DTF Plaque Transfert avec les visuels pré-chargés via localStorage */
+function openDTFPlaquesApp() {
+  _syncDTFVisuelsFromDOM();
+  const cmd = commandes.find(c => c.id === currentReservationId) || {};
+  localStorage.setItem('hcs_dtf_import', JSON.stringify({
+    source:  'planning',
+    cmdRef:  cmd.ref  || '',
+    client:  cmd.client || '',
+    date:    new Date().toISOString().slice(0, 10),
+    visuels: _dtfVisuels.filter(v => v.largeur && v.hauteur).map(v => ({
+      nom: v.nom || 'Visuel', largeur: v.largeur, hauteur: v.hauteur, qte: v.qte || 1
+    }))
+  }));
+  window.open('../apps/dtf-plaques-transfert.html', '_blank');
+}
+
+/* Ouvrir Calculateur Prix DTF avec le nombre de feuilles pré-rempli */
+function openDTFCalculatorApp() {
+  _syncDTFVisuelsFromDOM();
+  const nb = _calcDTFSheets(_dtfVisuels);
+  localStorage.setItem('hcs_dtf_calc_import', JSON.stringify({ nbFeuilles: nb }));
+  window.open('../apps/dtf-calculator-hcs-v2.html', '_blank');
+}
+
+// ════════════════════════════════════════
+//  FONCTIONS PARCOURS THERMOCOLLANT
+//  Rouleau : 48 × 91 cm
+// ════════════════════════════════════════
+
+function renderThermoVisuels() {
+  const el = document.getElementById('r-thermo-visuels');
+  if (!el) return;
+  if (_thermoVisuels.length === 0) {
+    el.innerHTML = `<div style="padding:10px 12px;font-size:11px;color:var(--text-muted);font-style:italic;">
+      Aucun visuel — cliquez sur "+ Ajouter un visuel" pour renseigner les découpes thermocollant.
+    </div>`;
+    return;
+  }
+  el.innerHTML = _thermoVisuels.map(v => `
+    <div class="dtf-vis-row" id="thermo-vis-${v.id}">
+      <input class="dtf-inp" type="text"   value="${escHtml(v.nom)}"  placeholder="Ex: Logo poitrine" onchange="updateThermoVisuel(${v.id},'nom',this.value)">
+      <input class="dtf-inp" type="number" value="${v.largeur}"       placeholder="cm" min="1"         onchange="updateThermoVisuel(${v.id},'largeur',+this.value)" oninput="recalcThermo()">
+      <input class="dtf-inp" type="number" value="${v.hauteur}"       placeholder="cm" min="1"         onchange="updateThermoVisuel(${v.id},'hauteur',+this.value)" oninput="recalcThermo()">
+      <input class="dtf-inp" type="number" value="${v.qte}"           placeholder="qté" min="1"        onchange="updateThermoVisuel(${v.id},'qte',+this.value)"     oninput="recalcThermo()">
+      <button onclick="removeThermoVisuel(${v.id})" title="Supprimer"
+        style="background:rgba(239,68,68,.1);border:none;border-radius:5px;color:#ef4444;cursor:pointer;font-size:13px;width:26px;height:26px;">✕</button>
+    </div>
+  `).join('');
+}
+
+function updateThermoVisuel(id, field, val) {
+  const v = _thermoVisuels.find(x => x.id === id);
+  if (v) v[field] = val;
+  recalcThermo();
+}
+
+function addThermoVisuel() {
+  _thermoVisuels.push({ id: ++_thermoVisuelCounter, nom: '', largeur: '', hauteur: '', qte: 1 });
+  renderThermoVisuels();
+  setTimeout(() => {
+    const row = document.getElementById('thermo-vis-' + _thermoVisuelCounter);
+    if (row) row.querySelector('input')?.focus();
+  }, 50);
+}
+
+function removeThermoVisuel(id) {
+  _thermoVisuels = _thermoVisuels.filter(v => v.id !== id);
+  renderThermoVisuels();
+  recalcThermo();
+}
+
+/* Calcul sections rouleau 48×91 cm */
+function _calcThermoSections(visuels) {
+  const SW = 48; // largeur rouleau cm
+  const SH = 91; // hauteur section cm
+  let total = 0;
+  (visuels || []).forEach(v => {
+    const w = parseFloat(v.largeur) || 0;
+    const h = parseFloat(v.hauteur) || 0;
+    const q = parseInt(v.qte)       || 0;
+    if (!w || !h || !q) return;
+    if (w > SW) { total += q; return; }
+    const parLigne   = Math.floor(SW / w);
+    const parColonne = Math.floor(SH / h);
+    const parSection = parLigne * parColonne || 1;
+    total += Math.ceil(q / parSection);
+  });
+  return total;
+}
+
+function recalcThermo() {
+  _syncDTFVisuelsFromDOM();
+  const el = document.getElementById('r-thermo-result');
+  if (!el) return;
+  const valides = _thermoVisuels.filter(v => v.largeur && v.hauteur && v.qte);
+  if (valides.length === 0) {
+    el.innerHTML = '<span style="color:var(--text-muted);font-style:italic;">Renseignez les dimensions pour calculer.</span>';
+    return;
+  }
+  const nbSections    = _calcThermoSections(valides);
+  const totalVisuels  = valides.reduce((s, v) => s + (v.qte || 0), 0);
+  const surfaceTotale = valides.reduce((s, v) => s + (v.largeur * v.hauteur * v.qte), 0);
+
+  el.innerHTML = `
+    <div class="dtf-result-line"><span>Visuels distincts</span><span style="font-weight:600;">${valides.length}</span></div>
+    <div class="dtf-result-line"><span>Total découpes</span><span style="font-weight:600;">${totalVisuels} unités</span></div>
+    <div class="dtf-result-line"><span>Surface totale</span><span style="font-weight:600;">${surfaceTotale.toLocaleString('fr-FR')} cm²</span></div>
+    <div class="dtf-result-line" style="border-top:1px solid rgba(248,113,113,.2);margin-top:6px;padding-top:6px;">
+      <span style="font-size:13px;font-weight:700;">🌡️ Sections rouleau 48×91 cm</span>
+      <strong style="font-size:18px;color:#f87171;">${nbSections} section${nbSections > 1 ? 's' : ''}</strong>
+    </div>
+    ${valides.map(v => {
+      const parL = Math.floor(48 / v.largeur) || 1;
+      const parC = Math.floor(91 / v.hauteur) || 1;
+      const sec  = Math.ceil(v.qte / (parL * parC));
+      return `<div style="font-size:10px;color:var(--text-muted);display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid var(--border);">
+        <span>${escHtml(v.nom || '?')} — ${v.largeur}×${v.hauteur} cm × ${v.qte} (${parL}×${parC}/section)</span>
+        <span>${sec} sec.</span>
+      </div>`;
+    }).join('')}
+  `;
+
+  const elMontant = document.getElementById('r-thermo-montant');
+  if (elMontant && !elMontant.value) {
+    elMontant.value = nbSections * 1800; // prix indicatif 1 800 XPF/section
+  }
+}
+
+function openDTFCalculatorFromThermo() {
+  _syncDTFVisuelsFromDOM();
+  const nb = _calcThermoSections(_thermoVisuels);
+  localStorage.setItem('hcs_dtf_calc_import', JSON.stringify({ nbFeuilles: nb }));
+  window.open('../apps/dtf-calculator-hcs-v2.html', '_blank');
+}
+
+// ════════════════════════════════════════
+//  FONCTIONS EMAIL FOURNISSEUR (TEXTILE)
+// ════════════════════════════════════════
+
+/* Peupler les selects équipe + datalist avec HCS_TEAM_EMAILS */
+function _populateTeamEmailSelects() {
+  // Datalist (autocomplétion input)
+  const dl = document.getElementById('hcs-email-datalist');
+  if (dl) {
+    dl.innerHTML = HCS_TEAM_EMAILS.map(m =>
+      `<option value="${m.email}">${m.label}</option>`
+    ).join('');
+  }
+  // Selects équipe rapide
+  ['r-email-team-select','r-dtf-email-team-select','r-thermo-email-team-select'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    while (sel.options.length > 1) sel.remove(1);
+    HCS_TEAM_EMAILS.forEach(m => sel.add(new Option(`${m.label} — ${m.email}`, m.email)));
+  });
+}
+
+function _pickTeamEmail(inputId, select) {
+  if (select.value) {
+    document.getElementById(inputId).value = select.value;
+    select.selectedIndex = 0;
+  }
+}
+
+/* Construire le corps de l'email avec les lignes du devis */
+function _buildEmailBody(cmd) {
+  const f = fournisseurs.find(x => x.id === document.getElementById('r-fournisseur').value);
+  const civilite = f ? `Bonjour,\n\nNous souhaitions vous contacter concernant la commande client ${cmd.ref}.` : 'Bonjour,\n\nNous avons une commande à traiter :';
+  const ref = cmd.ref || '';
+  const client = cmd.client || '';
+  const date = new Date().toLocaleDateString('fr-FR');
+
+  // Lignes du devis — textile : seules les lignes cochées ; autres parcours : toutes les lignes
+  const selLignes = _currentParcours === 'textile' ? _getSelectedLignes() : (cmd.lignes || []);
+  let lignesText = '';
+  if (selLignes.length) {
+    lignesText = '\nDétail des articles :\n';
+    selLignes.forEach(l => {
+      lignesText += `  • ${l.qte || l.qte === 0 ? l.qte : 1}× ${l.produit || l.description || '—'}`;
+      if (l.taille)   lignesText += ` — Taille : ${l.taille}`;
+      if (l.couleur)  lignesText += ` — Couleur : ${l.couleur}`;
+      if (l.technique && !/dtf|thermocollant/i.test(l.technique)) lignesText += ` — ${l.technique}`;
+      if (l.notesDesign) lignesText += `\n    Précisions : ${l.notesDesign}`;
+      lignesText += '\n';
+    });
+  } else {
+    const produit = document.getElementById('r-produit').value.trim();
+    const qte     = document.getElementById('r-qte').value;
+    lignesText = `\nArticle : ${produit || '—'}\nQuantité : ${qte || 1}\n`;
+  }
+
+  const notes = document.getElementById('r-notes').value.trim();
+  const notesBlock = notes ? `\nInstructions particulières :\n  ${notes}\n` : '';
+
+  return `${civilite}
+
+Réf. commande HCS : ${ref}
+Client : ${client}
+Date : ${date}
+${lignesText}${notesBlock}
+Pourriez-vous nous confirmer la disponibilité et le délai de livraison au plus tôt ?
+
+Cordialement,
+High Coffee Shirt — Papeete, Polynésie française
+📞 +689 — ✉️ highcoffeeshirt@gmail.com`;
+}
+
+function generateEmailPreview() {
+  const cmd = commandes.find(c => c.id === currentReservationId);
+  if (!cmd) return;
+  const f    = fournisseurs.find(x => x.id === document.getElementById('r-fournisseur').value);
+  const body = _buildEmailBody(cmd);
+  document.getElementById('r-email-preview-body').value = body;
+  const toInp = document.getElementById('r-email-to');
+  if (toInp && !toInp.value && f && f.email) toInp.value = f.email;
+  document.getElementById('r-email-preview').style.display = '';
+  document.getElementById('r-email-preview').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function copyEmailToClipboard() {
+  const txt = document.getElementById('r-email-preview-body').value;
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn = event.target;
+    btn.textContent = '✅ Copié !';
+    setTimeout(() => { btn.textContent = '📋 Copier'; }, 2000);
+  });
+}
+
+function openEmailClientFromPreview() {
+  const cmd  = commandes.find(c => c.id === currentReservationId);
+  const to   = document.getElementById('r-email-to').value.trim();
+  const subj = `HCS — Commande ${cmd ? cmd.ref : ''} — ${new Date().toLocaleDateString('fr-FR')}`;
+  const body = document.getElementById('r-email-preview-body').value;
+  window.open(`mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`);
+}
+
+async function sendEmailDirect(btn) {
+  const cmd  = commandes.find(c => c.id === currentReservationId);
+  const to   = document.getElementById('r-email-to').value.trim();
+  if (!to || !to.includes('@')) {
+    _toast('⚠ Renseignez un destinataire valide dans le champ "À".', false); return;
+  }
+  const subj = `HCS — Commande ${cmd ? cmd.ref : ''} — ${new Date().toLocaleDateString('fr-FR')}`;
+  const body = document.getElementById('r-email-preview-body').value;
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Envoi…';
+  try {
+    const apiUrl = (localStorage.getItem('hcs_api_url') || 'https://highcoffeeshirts.com/erp/api')
+                    .replace(/\/api$/, '/api/send_email.php');
+    const r = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': localStorage.getItem('hcs_api_key') || 'hcs-erp-2026' },
+      body: JSON.stringify({ to: f.email, subject: subj, body })
+    });
+    const json = await r.json();
+    if (r.ok && json.success) {
+      btn.textContent = '✅ Envoyé !';
+      _toast(`✉️ Email envoyé à ${f.email}`, true);
+      setTimeout(() => { btn.disabled = false; btn.textContent = '📤 Envoyer'; }, 3000);
+    } else {
+      throw new Error(json.error || 'Erreur serveur');
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '📤 Envoyer';
+    _toast('⚠ ' + e.message, false);
+  }
+}
+
+// ════════════════════════════════════════
+//  FONCTIONS EMAIL FOURNISSEUR — DTF / THERMO
+// ════════════════════════════════════════
+
+/* Construire le corps de l'email pour un fournisseur transfert */
+function _buildTransfertEmailBody(cmd, parcours) {
+  const isDTF = parcours === 'dtf';
+  const fId   = document.getElementById(isDTF ? 'r-dtf-fournisseur' : 'r-thermo-fournisseur').value;
+  const f     = fournisseurs.find(x => x.id === fId);
+  _syncDTFVisuelsFromDOM();
+  const visuels = isDTF ? _dtfVisuels : _thermoVisuels;
+
+  const ref    = cmd ? cmd.ref    : '';
+  const client = cmd ? cmd.client : '';
+  const date   = new Date().toLocaleDateString('fr-FR');
+  const typeLabel = isDTF ? 'transferts DTF' : 'thermocollants';
+
+  let visuelsText = '';
+  if (visuels.length) {
+    visuelsText = '\nVisuels à ' + (isDTF ? 'imprimer (transfert DTF)' : 'découper (thermocollant)') + ' :\n';
+    visuels.forEach(v => {
+      let ligne = `  • ${v.nom || 'Visuel'}`;
+      if (v.largeur && v.hauteur) ligne += ` — ${v.largeur} × ${v.hauteur} cm`;
+      if (v.qte) ligne += ` × ${v.qte} unité(s)`;
+      visuelsText += ligne + '\n';
+    });
+    const valides = visuels.filter(v => v.largeur && v.hauteur && v.qte);
+    if (valides.length) {
+      if (isDTF) {
+        visuelsText += `\nEstimation : ${_calcDTFSheets(valides)} feuille(s) 55 × 91 cm\n`;
+      } else {
+        visuelsText += `\nEstimation : ${_calcThermoSections(valides)} section(s) rouleau 48 × 91 cm\n`;
+      }
+    }
+  }
+
+  const notes = document.getElementById(isDTF ? 'r-dtf-notes' : 'r-thermo-notes').value.trim();
+  const notesBlock = notes ? `\nInstructions particulières :\n  ${notes}\n` : '';
+
+  return `Bonjour${f ? ' ' + f.nom : ''},
+
+Nous souhaiterions passer commande de ${typeLabel} pour la commande client suivante.
+
+Réf. commande HCS : ${ref}
+Client : ${client}
+Date : ${date}
+${visuelsText}${notesBlock}
+Pourriez-vous nous confirmer votre disponibilité, le tarif et le délai de livraison ?
+
+Cordialement,
+High Coffee Shirt — Papeete, Polynésie française
+📞 +689 — ✉️ highcoffeeshirt@gmail.com`;
+}
+
+function generateEmailPreviewTransfert(parcours) {
+  const cmd  = commandes.find(c => c.id === currentReservationId);
+  if (!cmd) return;
+  const isDTF = parcours === 'dtf';
+  const fId  = document.getElementById(isDTF ? 'r-dtf-fournisseur' : 'r-thermo-fournisseur').value;
+  const f    = fournisseurs.find(x => x.id === fId);
+  const body = _buildTransfertEmailBody(cmd, parcours);
+  document.getElementById(isDTF ? 'r-dtf-email-preview-body' : 'r-thermo-email-preview-body').value = body;
+  const toInp = document.getElementById(isDTF ? 'r-dtf-email-to' : 'r-thermo-email-to');
+  if (toInp && !toInp.value && f && f.email) toInp.value = f.email;
+  const prev = document.getElementById(isDTF ? 'r-dtf-email-preview' : 'r-thermo-email-preview');
+  prev.style.display = '';
+  prev.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function copyTransfertEmail(parcours) {
+  const isDTF = parcours === 'dtf';
+  const txt = document.getElementById(isDTF ? 'r-dtf-email-preview-body' : 'r-thermo-email-preview-body').value;
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn = event.target;
+    btn.textContent = '✅ Copié !';
+    setTimeout(() => { btn.textContent = '📋 Copier'; }, 2000);
+  });
+}
+
+function openTransfertEmailClient(parcours) {
+  const isDTF = parcours === 'dtf';
+  const cmd  = commandes.find(c => c.id === currentReservationId);
+  const to   = document.getElementById(isDTF ? 'r-dtf-email-to' : 'r-thermo-email-to').value.trim();
+  const subj = `HCS — ${isDTF ? 'Commande DTF' : 'Commande Thermocollant'} ${cmd ? cmd.ref : ''} — ${new Date().toLocaleDateString('fr-FR')}`;
+  const body = document.getElementById(isDTF ? 'r-dtf-email-preview-body' : 'r-thermo-email-preview-body').value;
+  window.open(`mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`);
+}
+
+async function sendTransfertEmail(parcours, btn) {
+  const isDTF = parcours === 'dtf';
+  const cmd  = commandes.find(c => c.id === currentReservationId);
+  const to   = document.getElementById(isDTF ? 'r-dtf-email-to' : 'r-thermo-email-to').value.trim();
+  if (!to || !to.includes('@')) { _toast('⚠ Renseignez un destinataire valide dans le champ "À".', false); return; }
+  const subj = `HCS — ${isDTF ? 'Commande DTF' : 'Commande Thermocollant'} ${cmd ? cmd.ref : ''} — ${new Date().toLocaleDateString('fr-FR')}`;
+  const body = document.getElementById(isDTF ? 'r-dtf-email-preview-body' : 'r-thermo-email-preview-body').value;
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Envoi…';
+  try {
+    const apiUrl = (localStorage.getItem('hcs_api_url') || 'https://highcoffeeshirts.com/erp/api')
+                    .replace(/\/api$/, '/api/send_email.php');
+    const r = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': localStorage.getItem('hcs_api_key') || 'hcs-erp-2026' },
+      body: JSON.stringify({ to: f.email, subject: subj, body })
+    });
+    const json = await r.json();
+    if (r.ok && json.success) {
+      btn.textContent = '✅ Envoyé !';
+      _toast(`✉️ Email envoyé à ${f.email}`, true);
+      setTimeout(() => { btn.disabled = false; btn.textContent = '📤 Envoyer'; }, 3000);
+    } else {
+      throw new Error(json.error || 'Erreur serveur');
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '📤 Envoyer';
+    _toast('⚠ ' + e.message, false);
+  }
+}
+
+// ════════════════════════════════════════
+//  MODAL FOURNISSEURS
+// ════════════════════════════════════════
+function openFournisseursModal() {
+  renderFournisseursList();
+  document.getElementById('fourn-form').style.display = 'none';
+  document.getElementById('fournisseursModal').classList.add('open');
+}
+function closeFournisseursModal() {
+  document.getElementById('fournisseursModal').classList.remove('open');
+}
+
+function openAddFournisseurForm() {
+  editingFournisseurId = null;
+  document.getElementById('fourn-form-title').textContent = '✏️ Nouveau fournisseur';
+  ['ff-id','ff-nom','ff-tel','ff-email','ff-pays','ff-produits','ff-notes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('ff-type').value = 'local';
+  document.getElementById('fourn-form').style.display = 'block';
+  document.getElementById('fourn-form').scrollIntoView({ behavior:'smooth' });
+}
+
+function editFournisseur(id) {
+  const f = fournisseurs.find(x => x.id === id);
+  if (!f) return;
+  editingFournisseurId = id;
+  document.getElementById('fourn-form-title').textContent = '✏️ Modifier — ' + f.nom;
+  document.getElementById('ff-id').value = f.id;
+  document.getElementById('ff-nom').value = f.nom;
+  document.getElementById('ff-type').value = f.type;
+  document.getElementById('ff-tel').value = f.telephone || '';
+  document.getElementById('ff-email').value = f.email || '';
+  document.getElementById('ff-pays').value = f.pays || '';
+  document.getElementById('ff-produits').value = f.produits || '';
+  document.getElementById('ff-notes').value = f.notes || '';
+  document.getElementById('fourn-form').style.display = 'block';
+  document.getElementById('fourn-form').scrollIntoView({ behavior:'smooth' });
+}
+
+function cancelFournisseurForm() {
+  document.getElementById('fourn-form').style.display = 'none';
+  editingFournisseurId = null;
+}
+
+function saveFournisseur() {
+  const nom = document.getElementById('ff-nom').value.trim();
+  if (!nom) { alert('Le nom du fournisseur est obligatoire.'); return; }
+  const data = {
+    nom,
+    type: document.getElementById('ff-type').value,
+    telephone: document.getElementById('ff-tel').value.trim(),
+    email: document.getElementById('ff-email').value.trim(),
+    pays: document.getElementById('ff-pays').value.trim(),
+    produits: document.getElementById('ff-produits').value.trim(),
+    notes: document.getElementById('ff-notes').value.trim(),
+  };
+  let savedFourn;
+  if (editingFournisseurId) {
+    const idx = fournisseurs.findIndex(f => f.id === editingFournisseurId);
+    if (idx >= 0) {
+      fournisseurs[idx] = { id: editingFournisseurId, _mysql_id: fournisseurs[idx]._mysql_id, ...data };
+      savedFourn = fournisseurs[idx];
+    }
+  } else {
+    savedFourn = { id: 'f-' + Date.now(), ...data };
+    fournisseurs.push(savedFourn);
+  }
+  saveFournisseurs();
+  if (savedFourn) _MYSQL.upsertFourn(savedFourn);
+  cancelFournisseurForm();
+  renderFournisseursList();
+}
+
+function deleteFournisseur(id) {
+  if (!confirm('Supprimer ce fournisseur ?')) return;
+  const fDel = fournisseurs.find(f => f.id === id);
+  fournisseurs = fournisseurs.filter(f => f.id !== id);
+  if (fDel) _MYSQL.delFourn(fDel);
+  saveFournisseurs();
+  renderFournisseursList();
+}
+
+function renderFournisseursList() {
+  const el = document.getElementById('fourn-list');
+  if (fournisseurs.length === 0) {
+    el.innerHTML = '<div class="empty">Aucun fournisseur enregistré. Cliquez sur "+ Ajouter".</div>';
+    return;
+  }
+  el.innerHTML = fournisseurs.map(f => {
+    const typeLabel = f.type === 'local' ? '🚚 Local' : '✈️ Étranger';
+    return `<div class="fourn-card">
+      <div class="fourn-header">
+        <div>
+          <span class="fourn-name">${f.nom}</span>
+          &nbsp;<span class="fourn-type-badge ${f.type}">${typeLabel}</span>
+        </div>
+        <div class="fourn-actions">
+          <button class="fourn-btn fourn-btn-edit" onclick="editFournisseur('${f.id}')">✏️ Modifier</button>
+          <button class="fourn-btn fourn-btn-del" onclick="deleteFournisseur('${f.id}')">✕</button>
+        </div>
+      </div>
+      <div class="fourn-contact">
+        ${f.telephone ? '<span>📞 <a href="tel:' + f.telephone + '" style="color:var(--teal);">' + f.telephone + '</a></span>' : ''}
+        ${f.email ? '<span>📧 <a href="mailto:' + f.email + '" style="color:var(--teal);">' + f.email + '</a></span>' : ''}
+        ${f.pays ? '<span>📍 ' + f.pays + '</span>' : ''}
+      </div>
+      ${f.produits ? '<div class="fourn-produits">Produits : ' + f.produits + '</div>' : ''}
+      ${f.notes ? '<div style="font-size:10px;color:var(--text-muted);margin-top:3px;font-style:italic;">' + f.notes + '</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════
+//  MODAL ACHATS — COMPTABILITÉ
+// ════════════════════════════════════════
+function openAchatsModal() {
+  renderAchatsList();
+  document.getElementById('achatsModal').classList.add('open');
+}
+function closeAchatsModal() {
+  document.getElementById('achatsModal').classList.remove('open');
+}
+
+function renderAchatsList() {
+  const el = document.getElementById('achats-list');
+  const filter = document.getElementById('ach-filter').value;
+  let list = achats;
+  if (filter) list = achats.filter(a => a.status === filter);
+
+  if (list.length === 0) {
+    el.innerHTML = '<div class="empty">Aucun achat enregistré' + (filter ? ' pour ce statut' : '') + '.</div>';
+    document.getElementById('achats-total-val').textContent = '0 XPF';
+    return;
+  }
+
+  const statusLabels = { en_attente:'⏳ En attente', commande:'📋 Commandé', recu:'📦 Reçu', facture:'🧾 Facturé' };
+  const total = list.reduce((s, a) => s + (parseFloat(a.montant)||0) * (parseInt(a.qte)||1), 0);
+
+  el.innerHTML = list.map(a => `
+    <div class="achat-row">
+      <div style="font-weight:700;color:var(--orange);font-size:10px;">${a.cmdRef || '—'}</div>
+      <div>
+        <div style="font-weight:600;">${a.cmdClient || '—'}</div>
+        <div style="color:var(--text-muted);font-size:10px;">${(a.produit||'').substring(0,40)}${(a.produit||'').length>40?'…':''}</div>
+      </div>
+      <div style="color:var(--text-muted);">${a.fournisseurNom || '—'}</div>
+      <div style="text-align:center;">${a.qte || '—'}</div>
+      <div>
+        <select onchange="updateAchatStatus('${a.id}', this.value)"
+          style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 6px;font-size:10px;color:var(--text);cursor:pointer;width:100%;">
+          ${['en_attente','commande','recu','facture'].map(s =>
+            `<option value="${s}" ${a.status===s?'selected':''}>${statusLabels[s]}</option>`
+          ).join('')}
+        </select>
+      </div>
+      <div style="text-align:right;font-weight:600;">${a.montant ? Number(a.montant).toLocaleString('fr-FR') + ' XPF' : '—'}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('achats-total-val').textContent =
+    total.toLocaleString('fr-FR') + ' XPF';
+}
+
+function updateAchatStatus(id, newStatus) {
+  const a = achats.find(x => x.id === id);
+  if (a) { a.status = newStatus; saveAchats(); renderAchatsList(); }
+}
+
+function exportAchats() {
+  const filter = document.getElementById('ach-filter').value;
+  let list = filter ? achats.filter(a => a.status === filter) : achats;
+  const header = 'Réf commande,Client,Produit,Fournisseur,Qté,Montant XPF,Statut,Date création,Notes';
+  const rows = list.map(a =>
+    [a.cmdRef, a.cmdClient,
+     '"'+(a.produit||'').replace(/"/g,'""')+'"',
+     a.fournisseurNom, a.qte, a.montant||0, a.status,
+     new Date(a.dateCreation).toLocaleDateString('fr-FR'),
+     '"'+(a.notes||'').replace(/"/g,'""')+'"'
+    ].join(',')
+  );
+  const csv = [header,...rows].join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a2 = document.createElement('a');
+  a2.href = url; a2.download = 'achats_hcs_' + new Date().toISOString().slice(0,10) + '.csv';
+  a2.click(); URL.revokeObjectURL(url);
+}
 
 // ─── EXPORT ───
 function exportPlanning() {
@@ -761,9 +4193,381 @@ document.getElementById('addModal').addEventListener('click', function(e) {
 document.getElementById('detailModal').addEventListener('click', function(e) {
   if (e.target === this) closeDetailModal();
 });
+document.getElementById('reservationModal').addEventListener('click', function(e) {
+  if (e.target === this) closeReservationModal();
+});
+document.getElementById('fournisseursModal').addEventListener('click', function(e) {
+  if (e.target === this) closeFournisseursModal();
+});
+document.getElementById('achatsModal').addEventListener('click', function(e) {
+  if (e.target === this) closeAchatsModal();
+});
+document.getElementById('emailsFournisseursModal').addEventListener('click', function(e) {
+  if (e.target === this) closeEmailsFournisseursModal();
+});
+document.getElementById('ofModal').addEventListener('click', function(e) {
+  if (e.target === this) closeOFModal();
+});
 
 // ─── AUTO REFRESH ALERTES ───
-setInterval(() => { renderAlerts(); renderStats(); }, 60000);
+setInterval(() => { renderAlerts(); renderStats(); updateHeaderBadges(); }, 60000);
+
+// ════════════════════════════════════════
+//  BADGES HEADER (compteurs visuels)
+// ════════════════════════════════════════
+function updateHeaderBadges() {
+  // Emails en attente = réservations fournisseur sans emailEnvoye
+  const emailsPending = commandes.filter(c =>
+    c.reservation &&
+    c.reservation.type !== 'magasin' &&
+    c.reservation.fournisseurId &&
+    !c.reservation.emailEnvoye &&
+    (c.col === 'reservation' || c.col === 'matiere')
+  ).length;
+  const bEmail = document.getElementById('badge-emails');
+  bEmail.textContent = emailsPending;
+  bEmail.style.display = emailsPending > 0 ? 'flex' : 'none';
+
+  // Commandes en production
+  const ofCount = commandes.filter(c => c.col === 'prod').length;
+  const bOF = document.getElementById('badge-of');
+  bOF.textContent = ofCount;
+  bOF.style.display = ofCount > 0 ? 'flex' : 'none';
+}
+
+// ════════════════════════════════════════
+//  ORDRE DE FABRICATION
+// ════════════════════════════════════════
+function getOFList() {
+  const prioMap = { express: 0, urgent: 1, normal: 2 };
+  return commandes
+    .filter(c => c.col === 'prod')
+    .sort((a, b) => {
+      // Si les deux ont un ofOrder, on respecte l'ordre manuel
+      if (a.ofOrder !== undefined && b.ofOrder !== undefined) return a.ofOrder - b.ofOrder;
+      if (a.ofOrder !== undefined) return -1;
+      if (b.ofOrder !== undefined) return 1;
+      // Sinon : tri par priorité puis deadline
+      const dp = (prioMap[a.priority] || 1) - (prioMap[b.priority] || 1);
+      if (dp !== 0) return dp;
+      return new Date(a.deadline) - new Date(b.deadline);
+    });
+}
+
+function renderOFSidebar() {
+  const el = document.getElementById('of-sidebar');
+  const ofList = getOFList();
+  if (ofList.length === 0) {
+    el.innerHTML = '<div class="empty" style="padding:12px;">Aucune commande en production</div>';
+    return;
+  }
+  el.innerHTML = ofList.map((c, i) => {
+    const urg = urgencyClass(c);
+    const numClass = c.priority === 'express' ? 'express' : (urg === 'urgent' ? 'urgent' : '');
+    return `<div class="of-sidebar-row">
+      <div class="of-num ${numClass}" style="width:22px;height:22px;font-size:11px;">${i + 1}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.client}</div>
+        <div style="color:var(--text-muted);font-size:10px;">${c.ref} · ${c.qty} pcs · ${c.machine}</div>
+      </div>
+      ${formatDeadline(c.deadline)}
+    </div>`;
+  }).join('');
+}
+
+function openOFModal() {
+  renderOFModal();
+  document.getElementById('ofModal').classList.add('open');
+}
+function closeOFModal() {
+  document.getElementById('ofModal').classList.remove('open');
+}
+
+function renderOFModal() {
+  const el = document.getElementById('of-list');
+  const ofList = getOFList();
+  if (ofList.length === 0) {
+    el.innerHTML = '<div class="empty" style="padding:24px;">Aucune commande en production actuellement</div>';
+    return;
+  }
+  // Initialise ofOrder si pas encore défini
+  ofList.forEach((c, i) => { if (c.ofOrder === undefined) c.ofOrder = i; });
+
+  const pLabels = { express: '⚡ Express', urgent: '🔴 Urgent', normal: '⚪ Normal' };
+
+  el.innerHTML = ofList.map((c, i) => {
+    const urg = urgencyClass(c);
+    const numClass = c.priority === 'express' ? 'express' : (urg === 'urgent' ? 'urgent' : '');
+    const isFirst = i === 0;
+    const isLast = i === ofList.length - 1;
+    return `<div class="of-row" id="of-row-${c.id}">
+      <div class="of-num ${numClass}">${i + 1}</div>
+      <div class="of-info">
+        <div class="of-ref">${c.ref} &nbsp;<span style="font-size:10px;font-weight:500;color:var(--text-muted);">${pLabels[c.priority] || c.priority}</span></div>
+        <div class="of-client">${c.client}</div>
+        <div class="of-meta">${c.desc.substring(0, 65)}${c.desc.length > 65 ? '…' : ''} · ${c.qty} pcs · ${c.machine}</div>
+      </div>
+      <div style="flex-shrink:0;">${formatDeadline(c.deadline)}</div>
+      <div class="of-actions">
+        <button class="of-btn" onclick="moveOF('${c.id}', -1)" title="Monter" ${isFirst ? 'disabled' : ''}>↑</button>
+        <button class="of-btn" onclick="moveOF('${c.id}', 1)" title="Descendre" ${isLast ? 'disabled' : ''}>↓</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function moveOF(cmdId, direction) {
+  const ofList = getOFList();
+  // Garantit que tous ont un ofOrder numérique
+  ofList.forEach((c, i) => { if (c.ofOrder === undefined) c.ofOrder = i; });
+
+  const idx = ofList.findIndex(c => c.id === cmdId);
+  if (idx < 0) return;
+  const newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= ofList.length) return;
+
+  // Échange les positions
+  const tmp = ofList[idx].ofOrder;
+  ofList[idx].ofOrder = ofList[newIdx].ofOrder;
+  ofList[newIdx].ofOrder = tmp;
+
+  save();
+  renderOFModal();
+  renderOFSidebar();
+}
+
+function printOF() {
+  const ofList = getOFList();
+  const date = new Date().toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const rows = ofList.map((c, i) => `
+    <tr>
+      <td style="text-align:center;font-weight:700;font-size:16px;">${i + 1}</td>
+      <td style="font-weight:700;color:#FF6B00;">${c.ref}</td>
+      <td>${c.client}</td>
+      <td>${c.desc.substring(0, 70)}${c.desc.length > 70 ? '…' : ''}</td>
+      <td style="text-align:center;">${c.qty}</td>
+      <td>${c.machine}</td>
+      <td>${new Date(c.deadline).toLocaleDateString('fr-FR')} ${new Date(c.deadline).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}</td>
+      <td style="text-align:center;font-weight:600;">${c.priority === 'express' ? '⚡ Express' : c.priority === 'urgent' ? '🔴 Urgent' : 'Normal'}</td>
+    </tr>`
+  ).join('');
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html lang="fr"><head>
+    <meta charset="UTF-8">
+    <title>Ordre de Fabrication — HCS</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 24px; color: #000; }
+      h1 { font-size: 22px; margin-bottom: 4px; }
+      .meta { color: #666; font-size: 13px; margin-bottom: 20px; }
+      table { width: 100%; border-collapse: collapse; font-size: 12px; }
+      th { background: #f0f0f0; padding: 9px 10px; text-align: left; border-bottom: 2px solid #000; font-size:11px; text-transform:uppercase; letter-spacing:.04em; }
+      td { padding: 8px 10px; border-bottom: 1px solid #ddd; vertical-align: top; }
+      tr:nth-child(even) td { background: #fafafa; }
+      @media print { button { display: none; } }
+    </style>
+  </head><body>
+    <h1>🔢 Ordre de Fabrication — High Coffee Shirt</h1>
+    <div class="meta">Imprimé le ${date} &nbsp;|&nbsp; ${ofList.length} commande${ofList.length > 1 ? 's' : ''} en production</div>
+    <table>
+      <thead><tr>
+        <th>#</th><th>Réf.</th><th>Client</th><th>Description</th>
+        <th>Qté</th><th>Machine</th><th>Deadline</th><th>Priorité</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <script>window.onload = () => window.print();<\/script>
+  </body></html>`);
+  win.document.close();
+}
+
+// ════════════════════════════════════════
+//  EMAILS FOURNISSEURS
+// ════════════════════════════════════════
+function openEmailsFournisseursModal() {
+  renderEmailsFournisseurs();
+  document.getElementById('emailsFournisseursModal').classList.add('open');
+}
+function closeEmailsFournisseursModal() {
+  document.getElementById('emailsFournisseursModal').classList.remove('open');
+}
+
+// Regroupe les commandes avec réservation fournisseur par fournisseur
+function getPendingByFournisseur() {
+  const withReserv = commandes.filter(c =>
+    c.reservation &&
+    c.reservation.type !== 'magasin' &&
+    c.reservation.fournisseurId &&
+    (c.col === 'reservation' || c.col === 'matiere')
+  );
+
+  const grouped = {};
+  withReserv.forEach(c => {
+    const fId = c.reservation.fournisseurId;
+    if (!grouped[fId]) {
+      const f = fournisseurs.find(x => x.id === fId) || {
+        id: fId,
+        nom: c.reservation.fournisseurNom || 'Fournisseur inconnu',
+        email: '',
+        telephone: '',
+        type: 'local'
+      };
+      grouped[fId] = { fournisseur: f, items: [] };
+    }
+    grouped[fId].items.push(c);
+  });
+  return Object.values(grouped);
+}
+
+function renderEmailsFournisseurs() {
+  const el = document.getElementById('emails-fourn-list');
+  const groups = getPendingByFournisseur();
+
+  if (groups.length === 0) {
+    el.innerHTML = '<div class="empty" style="padding:32px;text-align:center;">Aucune marchandise en attente auprès de fournisseurs.<br><span style="font-size:11px;color:var(--text-muted);">Les réservations avec fournisseur local ou étranger apparaîtront ici.</span></div>';
+    return;
+  }
+
+  el.innerHTML = groups.map(g => {
+    const f = g.fournisseur;
+    const pendingCount = g.items.filter(c => c.reservation.status !== 'confirme').length;
+    const confirmedCount = g.items.filter(c => c.reservation.status === 'confirme').length;
+    const sentCount = g.items.filter(c => c.reservation.emailEnvoye).length;
+
+    const itemsHtml = g.items.map(c => {
+      const res = c.reservation;
+      const sent = res.emailEnvoye;
+      const dateEnvoi = res.dateEmailEnvoye
+        ? new Date(res.dateEmailEnvoye).toLocaleDateString('fr-FR', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})
+        : null;
+      return `<div class="email-item-row">
+        <div style="flex:1;">
+          <span style="font-weight:700;color:var(--orange);">${c.ref}</span> — <strong>${c.client}</strong><br>
+          <span style="color:var(--text-muted);">${(res.produit || c.desc).substring(0, 80)} · Qté: ${res.qte || c.qty}</span>
+          ${res.notes ? `<br><em style="color:var(--text-muted);font-style:italic;">${res.notes.substring(0, 60)}</em>` : ''}
+        </div>
+        <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;gap:3px;align-items:flex-end;">
+          ${getReservationStatusBadge(res.status)}
+          <span class="${sent ? 'email-sent-badge' : 'email-pending-badge'}">
+            ${sent ? '✉️ Envoyé' + (dateEnvoi ? ' ' + dateEnvoi : '') : '📤 À envoyer'}
+          </span>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Bloc actions selon email disponible ou non
+    let actionsHtml;
+    if (f.email) {
+      actionsHtml = `
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;flex-wrap:wrap;">
+          ${sentCount > 0 ? `<button class="btn btn-ghost" style="font-size:11px;padding:5px 12px;" onclick="resetEmailsSent('${f.id}')">↩️ Réinitialiser envoi</button>` : ''}
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px;" onclick="markAllEmailSent('${f.id}')">✅ Marquer envoyé</button>
+          <button class="btn btn-orange" style="font-size:11px;padding:5px 14px;" onclick="generateEmail('${f.id}')">📧 Générer & envoyer email</button>
+        </div>`;
+    } else {
+      actionsHtml = `
+        <div class="email-no-addr">
+          <span>⚠️ Aucune adresse email pour ce fournisseur.</span>
+          <button class="btn btn-ghost" style="font-size:11px;padding:3px 8px;"
+            onclick="closeEmailsFournisseursModal();openFournisseursModal()">Ajouter l'email →</button>
+        </div>`;
+    }
+
+    return `<div class="email-fourn-section">
+      <div class="email-fourn-header">
+        <div>
+          <span style="font-size:14px;font-weight:700;">${f.nom}</span>
+          <span class="fourn-type-badge ${f.type}" style="margin-left:8px;">${f.type === 'local' ? '🚚 Local' : '✈️ Étranger'}</span>
+          ${f.email ? `<span style="color:var(--teal);font-size:11px;margin-left:10px;">${f.email}</span>` : ''}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${pendingCount > 0 ? `<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:rgba(234,179,8,.15);color:var(--yellow);">${pendingCount} en attente</span>` : ''}
+          ${confirmedCount > 0 ? `<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:rgba(34,197,94,.15);color:var(--green);">${confirmedCount} confirmé${confirmedCount > 1 ? 's' : ''}</span>` : ''}
+          ${sentCount === g.items.length ? `<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:rgba(34,197,94,.15);color:var(--green);">✉️ Emails envoyés</span>` : ''}
+        </div>
+      </div>
+      <div class="email-fourn-items">${itemsHtml}</div>
+      ${actionsHtml}
+    </div>`;
+  }).join('');
+}
+
+function generateEmail(fournisseurId) {
+  const group = getPendingByFournisseur().find(g => g.fournisseur.id === fournisseurId);
+  if (!group) return;
+  const f = group.fournisseur;
+
+  const subject = `HCS — Réservation marchandise — ${new Date().toLocaleDateString('fr-FR')}`;
+
+  const lignes = group.items.map(c => {
+    const res = c.reservation;
+    const cmdLignes = c.lignes || [];
+    let bloc = `\nRéf. ${c.ref} — Client : ${c.client}\n`;
+
+    if (cmdLignes.length) {
+      cmdLignes.forEach(l => {
+        bloc += `  • ${l.qte}× ${l.produit || l.description || '—'}`;
+        if (l.taille)  bloc += ` — Taille : ${l.taille}`;
+        if (l.couleur) bloc += ` — Couleur : ${l.couleur}`;
+        if (l.technique && !/dtf|thermocollant/i.test(l.technique)) bloc += ` — ${l.technique}`;
+        bloc += '\n';
+        if (l.notesDesign) bloc += `    ↳ ${l.notesDesign}\n`;
+      });
+    } else {
+      bloc += `  • ${res.produit || c.desc} (Qté : ${res.qte || c.qty})\n`;
+    }
+
+    if (res.notes) bloc += `  Instructions : ${res.notes}\n`;
+    return bloc;
+  }).join('');
+
+  const body = `Bonjour,
+
+Suite à nos commandes en cours, nous souhaitons vous commander les marchandises suivantes :
+${lignes}
+Pourriez-vous nous confirmer la disponibilité et les délais de livraison au plus tôt ?
+
+En cas de question, n'hésitez pas à nous contacter.
+
+Cordialement,
+High Coffee Shirt — Papeete, Polynésie française
+📞 +689 — ✉️ highcoffeeshirt@gmail.com`;
+
+  const mailtoUrl = `mailto:${encodeURIComponent(f.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = mailtoUrl;
+
+  // Marquer comme envoyé après 1,5s (temps d'ouverture du client mail)
+  setTimeout(() => {
+    markAllEmailSent(fournisseurId);
+  }, 1500);
+}
+
+function markAllEmailSent(fournisseurId) {
+  const now = new Date().toISOString();
+  commandes.forEach(c => {
+    if (c.reservation && c.reservation.fournisseurId === fournisseurId) {
+      c.reservation.emailEnvoye = true;
+      c.reservation.dateEmailEnvoye = c.reservation.dateEmailEnvoye || now;
+    }
+  });
+  save();
+  renderEmailsFournisseurs();
+  updateHeaderBadges();
+  // Actualise la sidebar réservations
+  renderReservationsSidebar();
+}
+
+function resetEmailsSent(fournisseurId) {
+  commandes.forEach(c => {
+    if (c.reservation && c.reservation.fournisseurId === fournisseurId) {
+      delete c.reservation.emailEnvoye;
+      delete c.reservation.dateEmailEnvoye;
+    }
+  });
+  save();
+  renderEmailsFournisseurs();
+  updateHeaderBadges();
+}
 </script>
 </body>
 </html>

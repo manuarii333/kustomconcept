@@ -138,63 +138,63 @@ const AGENTS = [
   {
     num:'01', icon:'📥', name:'Triage & Réception', color:'#4a9eff',
     desc:'Classification IA des messages entrants (Gmail + Messenger). Routage vers les bons agents.',
-    file:'agents/agent1_triage/triage-dashboard.html',
+    file:'../modules/triage-dashboard.html',
     badges:['Gmail','Messenger','OpenAI'],
     lsKey:null, statLabel:'Messages/jour', statDemo:'12'
   },
   {
     num:'02', icon:'💼', name:'Commercial & Devis', color:'#f0c040',
     desc:'Création automatique de devis Odoo depuis les emails clients. Lignes générées par IA.',
-    file:'agents/agent2_commercial/commercial-dashboard.html',
+    file:'../modules/commercial-dashboard.html',
     badges:['Odoo','Gmail','OpenAI'],
     lsKey:null, statLabel:'Devis/semaine', statDemo:'8'
   },
   {
     num:'03', icon:'🎨', name:'Production Visuelle', color:'#e91e63',
     desc:'Détourage PicWish, amélioration image, archivage Dropbox. Interface mockup client.',
-    file:'agents/agent3_visuel/picwish-pipeline.html',
+    file:'../modules/picwish-pipeline.html',
     badges:['PicWish','Dropbox'],
     lsKey:null, statLabel:'Logos traités', statDemo:'24'
   },
   {
     num:'04', icon:'📦', name:'Stock & Fournisseurs', color:'#ff7043',
     desc:'Réservations fournisseurs (Taaroa, Anémone, DTF USA). Suivi groupages et tracking.',
-    file:'agents/agent4_stock/stock-dashboard.html',
+    file:'../modules/stock-dashboard.html',
     badges:['Taaroa','DTF USA'],
     lsKey:null, statLabel:'Réservations', statDemo:'5'
   },
   {
     num:'05', icon:'📅', name:'Planning Production', color:'#26c6da',
-    desc:'Kanban 5 colonnes, 7 machines, alertes délai 48h, export CSV. · <a href="agents/agent5_planning/atelier-production.html" style="color:#f0c040;text-decoration:none;">⚒️ Atelier ↗</a>',
-    file:'agents/agent5_planning/planning-dashboard.html',
+    desc:'Kanban 5 colonnes, 7 machines, alertes délai 48h, export CSV. · <a href="../modules/atelier-production.html" style="color:#f0c040;text-decoration:none;">⚒️ Atelier ↗</a>',
+    file:'../modules/planning-dashboard.html',
     badges:['7 machines','⚒️ Atelier'],
     lsKey:'hcs_planning', statLabel:'En production', statDemo:'3'
   },
   {
     num:'06', icon:'📸', name:'Contenu & Marketing', color:'#66bb6a',
     desc:'Posts réseaux sociaux (GPT-4o), logos DALL-E 3, fiches WooCommerce SEO.',
-    file:'agents/agent6_contenu/content-generator.html',
+    file:'../modules/content-generator.html',
     badges:['DALL-E 3','GPT-4o'],
     lsKey:null, statLabel:'Posts générés', statDemo:'17'
   },
   {
     num:'07', icon:'📊', name:'Supervision & KPIs', color:'#ab47bc',
     desc:'Vue globale entreprise : KPIs, alertes, finances, planning machines, export rapport.',
-    file:'agents/agent7_supervision/supervision-dashboard.html',
+    file:'../modules/supervision-dashboard.html',
     badges:['KPIs','Alertes'],
     lsKey:'hcs_planning', statLabel:'Alertes actives', statDemo:'2'
   },
   {
     num:'08', icon:'🏪', name:'Interface Boutique', color:'#ffa726',
     desc:'Kaina — assistante IA vocale en boutique. Mode vendeur + mode client autonome.',
-    file:'agents/agent8_boutique/boutique-assistant.html',
+    file:'../modules/boutique-assistant.html',
     badges:['Vocal','Canvas'],
     lsKey:'hcs_boutique_orders', statLabel:'Commandes boutique', statDemo:'6'
   },
   {
     num:'09', icon:'💰', name:'Finances & Comptabilité', color:'#ef5350',
     desc:'OCR factures, P&L mensuel, routines quotidiennes, dashboard financier complet.',
-    file:'agents/agent9_finances/finance-dashboard.html',
+    file:'../modules/finance-dashboard.html',
     badges:['OCR','P&L'],
     lsKey:'hcs_transactions', statLabel:'Transactions/mois', statDemo:'34'
   }

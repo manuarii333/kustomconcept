@@ -5,9 +5,20 @@
 
 Options -Indexes
 
+# ── Bloquer l'accès direct aux fichiers sensibles ───────────────
+<FilesMatch "^\.env">
+  Require all denied
+</FilesMatch>
+<FilesMatch "^(config|db)\.php$">
+  Require all denied
+</FilesMatch>
+<FilesMatch "\.(yml|yaml|ini|log|conf|sql|md|sqlite)$">
+  Require all denied
+</FilesMatch>
+
 RewriteEngine On
 
-# Ne pas réécrire si le fichier existe réellement (ex : config.php)
+# Ne pas réécrire si le fichier existe réellement (endpoints .php)
 RewriteCond %{REQUEST_FILENAME} !-f
 
 # Tout le reste va vers index.php, avec la query string préservée

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PicWish Pipeline — HCS</title>
+  <title>HCS Image Pipeline</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -106,9 +106,38 @@
     #crop-rect { position: absolute; border: 2px solid #FF6B00; box-shadow: 0 0 0 9999px rgba(0,0,0,0.55); pointer-events: none; background: transparent; }
     #crop-handles span { position: absolute; width: 10px; height: 10px; background: #FF6B00; border-radius: 2px; }
     .crop-actions { display: flex; gap: 8px; margin-top: 8px; }
+    /* Fond quadrillé vert sur la carte recadrage */
+    #wrap-3 {
+      background-image: linear-gradient(45deg,#0c2010 25%,transparent 25%),linear-gradient(-45deg,#0c2010 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#0c2010 75%),linear-gradient(-45deg,transparent 75%,#0c2010 75%);
+      background-size: 12px 12px;
+      background-position: 0 0,0 6px,6px -6px,-6px 0;
+      background-color: #061409;
+    }
     /* Agrandissement carte recadrage */
     #card-3.expanded { grid-column: span 2; }
     #card-3.expanded .step-card-img-wrap { min-height: 420px; }
+    /* Plein écran recadrage */
+    #card-3.crop-fullscreen {
+      position: fixed; inset: 0; z-index: 2500; border-radius: 0; margin: 0;
+      display: flex; flex-direction: column; background: #050d07;
+      grid-column: unset !important;
+    }
+    #card-3.crop-fullscreen .step-card-img-wrap { flex:1; min-height:0; max-height:none; }
+    #card-3.crop-fullscreen .step-card-img { max-height:calc(100vh - 100px); max-width:100%; }
+    #card-3.crop-fullscreen #wrap-3 {
+      background-size: 18px 18px; background-position: 0 0,0 9px,9px -9px,-9px 0;
+    }
+    #btn-crop-fullscreen { transition: background 0.2s, color 0.2s; }
+    #btn-crop-fullscreen:hover { background:#FF6B00 !important; color:#fff !important; border-color:#FF6B00 !important; }
+    /* Onglets détourage */
+    .tab-btn { flex:1; padding:7px 0; font-size:12px; font-weight:600; border-radius:6px; cursor:pointer; transition:all 0.2s; border:1px solid transparent; background:transparent; color:#555; font-family:'Inter',sans-serif; }
+    .tab-btn.active-tab { background:rgba(255,107,0,0.12); border-color:rgba(255,107,0,0.4); color:#FF6B00; }
+    .tab-btn:hover:not(.active-tab) { color:#ccc; border-color:#333; }
+    /* Canvas sélection couleur */
+    #sel-canvas { display:block; width:100%; cursor:crosshair; background-image:linear-gradient(45deg,#aaaaaa 25%,transparent 25%),linear-gradient(-45deg,#aaaaaa 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#aaaaaa 75%),linear-gradient(-45deg,transparent 75%,#aaaaaa 75%); background-size:12px 12px; background-position:0 0,0 6px,6px -6px,-6px 0; background-color:#cccccc; }
+    #sel-zone { position:relative; margin-top:12px; border-radius:8px; overflow:hidden; border:2px dashed #333; min-height:72px; display:flex; align-items:center; justify-content:center; transition:border-color 0.2s; }
+    #sel-zone.has-image { border-style:solid; border-color:#FF6B00; }
+    #sel-canvas-overlay { position:absolute; inset:0; pointer-events:none; z-index:4; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -121,8 +150,8 @@
     <div class="flex items-center gap-3">
       <span style="font-size:28px;">🖼️</span>
       <div>
-        <h1 class="text-xl font-bold text-white leading-tight">PicWish Pipeline</h1>
-        <p class="text-xs" style="color:#888;">HCS — Traitement images automatique</p>
+        <h1 class="text-xl font-bold text-white leading-tight">HCS Image Pipeline</h1>
+        <p class="text-xs" style="color:#888;">Détourage remove.bg · Amélioration PicWish</p>
       </div>
     </div>
     <div class="flex items-center gap-2 text-xs" style="color:#555;">
@@ -174,6 +203,78 @@
         <h2 class="text-sm font-semibold uppercase tracking-widest mb-4" style="color:#888;">2. Nom du client</h2>
         <input type="text" id="client-name" class="hcs-input" placeholder="Ex : Mairie de Papeete" autocomplete="off" />
         <p class="text-xs mt-2" style="color:#555;">Utilisé pour nommer le fichier et le chemin Dropbox.</p>
+      </div>
+
+      <!-- Section 3 : Détourage -->
+      <div style="background-color:#111111;border:1px solid #222222;border-radius:12px;padding:20px;">
+        <h2 class="text-sm font-semibold uppercase tracking-widest mb-3" style="color:#888;">3. Détourage local</h2>
+        <!-- Onglets -->
+        <div style="display:flex;gap:4px;background:#0d0d0d;padding:4px;border-radius:8px;margin-bottom:14px;">
+          <button id="tab-fond-uni" class="tab-btn active-tab" onclick="switchDetourageTab('fond-uni')">Fond uni</button>
+          <button id="tab-selection" class="tab-btn" onclick="switchDetourageTab('selection')">Sélection couleur</button>
+        </div>
+
+        <!-- Panneau : fond uni -->
+        <div id="panel-fond-uni">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-size:12px;color:#aaa;">Tolérance couleur</span>
+            <span id="tol-value" style="font-size:13px;font-weight:700;color:#FF6B00;">30</span>
+          </div>
+          <input type="range" id="tol-slider" min="5" max="120" value="30" step="1"
+            style="width:100%;accent-color:#FF6B00;cursor:pointer;"
+            oninput="document.getElementById('tol-value').textContent=this.value" />
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="font-size:10px;color:#444;">Précis (5)</span>
+            <span style="font-size:10px;color:#444;">Large (120)</span>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 10px;background:#0d0d0d;border-radius:6px;border:1px solid #1e1e1e;cursor:pointer;">
+            <input type="checkbox" id="chk-iles" style="width:14px;height:14px;accent-color:#FF6B00;cursor:pointer;flex-shrink:0;" />
+            <span style="font-size:11px;color:#aaa;">Supprimer aussi les zones intérieures (îles)</span>
+          </label>
+          <p class="text-xs mt-2" style="color:#555;">BFS depuis les bords — supprime le fond uni. Cochez "îles" pour effacer aussi les zones intérieures de même couleur (ex : intérieur de lettres, trous).</p>
+        </div>
+
+        <!-- Panneau : sélection couleur -->
+        <div id="panel-selection" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-size:12px;color:#aaa;">Tolérance</span>
+            <span id="sel-tol-value" style="font-size:13px;font-weight:700;color:#FF6B00;">20</span>
+          </div>
+          <input type="range" id="sel-tol-slider" min="1" max="120" value="20" step="1"
+            style="width:100%;accent-color:#FF6B00;cursor:pointer;"
+            oninput="document.getElementById('sel-tol-value').textContent=this.value" />
+          <!-- Zone canvas interactive -->
+          <div id="sel-zone">
+            <span id="sel-hint" style="font-size:11px;color:#444;text-align:center;padding:16px;">Chargez une image — cliquez sur le fond à supprimer.</span>
+            <canvas id="sel-canvas"></canvas>
+          </div>
+          <!-- Actions -->
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <button id="btn-sel-undo" class="btn-secondary px-3 py-1.5 rounded-lg text-xs" onclick="annulerSelection()" disabled>↩ Annuler</button>
+            <button id="btn-sel-reset" class="btn-secondary px-3 py-1.5 rounded-lg text-xs" onclick="reinitialiserSelection()" disabled>⟲ Réinitialiser</button>
+          </div>
+          <!-- Palette couleurs supprimées -->
+          <div id="sel-palette" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;min-height:16px;"></div>
+          <p class="text-xs mt-2" style="color:#555;">Cliquez sur n'importe quelle zone colorée pour la supprimer (BFS depuis le point cliqué). Plusieurs clics cumulatifs possibles.</p>
+          <!-- Actions post-sélection -->
+          <div id="sel-actions-post" style="display:none;margin-top:12px;border-top:1px solid #2a2a2a;padding-top:12px;">
+            <p style="font-size:11px;color:#888;margin-bottom:8px;">Résultat prêt — que voulez-vous faire ?</p>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-secondary rounded-lg text-xs" style="flex:1;padding:8px 4px;display:flex;align-items:center;justify-content:center;gap:5px;" onclick="recadrerDepuisSelection()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 3 3 3 3 6"/><polyline points="18 3 21 3 21 6"/><polyline points="6 21 3 21 3 18"/><polyline points="18 21 21 21 21 18"/><rect x="7" y="7" width="10" height="10"/></svg>
+                Recadrer
+              </button>
+              <button class="btn-primary rounded-lg text-xs" style="flex:1;padding:8px 4px;display:flex;align-items:center;justify-content:center;gap:5px;" onclick="telechargerSelectionCourante()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Télécharger PNG
+              </button>
+            </div>
+            <button class="rounded-lg text-xs" style="width:100%;margin-top:8px;padding:8px 6px;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.4);color:#a78bfa;cursor:pointer;font-family:inherit;font-weight:600;" onclick="envoyerSelectionVersMockupForge()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              Envoyer vers MockupForge v12 — Banque / Logos Clients
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Bouton traiter -->
@@ -277,7 +378,12 @@
           <div class="step-card" id="card-3">
             <div class="step-card-header">
               <span class="step-card-label">Recadrage final</span>
-              <span class="step-card-badge badge-wait" id="badge-3">En attente</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <button id="btn-crop-fullscreen" onclick="toggleCropFullscreen()"
+                  style="background:rgba(0,0,0,0.5);border:1px solid #333;color:#888;border-radius:5px;padding:2px 7px;font-size:11px;cursor:pointer;display:none;"
+                  title="Plein écran pour recadrer avec précision">⤢ Plein écran</button>
+                <span class="step-card-badge badge-wait" id="badge-3">En attente</span>
+              </div>
             </div>
             <div class="step-card-img-wrap" id="wrap-3" style="cursor:default;">
               <div class="step-card-placeholder" id="placeholder-3">
@@ -295,11 +401,22 @@
               </div>
             </div>
             <!-- Actions recadrage -->
-            <div id="crop-actions" class="hidden" style="padding:8px 10px;border-top:1px solid #1a1a1a;display:flex;gap:6px;align-items:center;justify-content:space-between;">
-              <span style="font-size:10px;color:#666;">Glissez le cadre pour ajuster</span>
-              <div style="display:flex;gap:6px;">
-                <button class="btn-secondary px-3 py-1 rounded text-xs" onclick="resetCrop()">↺ Auto</button>
-                <button class="btn-primary px-3 py-1 rounded text-xs" onclick="appliquerCropManuel()">✓ Appliquer</button>
+            <div id="crop-actions" class="hidden" style="padding:8px 10px;border-top:1px solid #1a1a1a;">
+              <!-- Mode : en cours d'ajustement -->
+              <div id="crop-mode-adjust" style="display:flex;gap:6px;align-items:center;justify-content:space-between;">
+                <span style="font-size:10px;color:#666;">Glissez le cadre pour ajuster</span>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn-secondary px-3 py-1 rounded text-xs" onclick="resetCrop()">↺ Auto</button>
+                  <button class="btn-primary px-3 py-1 rounded text-xs" onclick="appliquerCropManuel()">✓ Appliquer</button>
+                </div>
+              </div>
+              <!-- Mode : recadrage appliqué -->
+              <div id="crop-mode-applied" style="display:none;gap:6px;align-items:center;justify-content:space-between;">
+                <span style="font-size:10px;color:#4ade80;">✓ Recadrage appliqué</span>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn-secondary px-3 py-1 rounded text-xs" onclick="annulerCrop()" id="btn-undo-crop">↩ Annuler</button>
+                  <button class="btn-secondary px-3 py-1 rounded text-xs" onclick="reajusterCrop()">✎ Ré-ajuster</button>
+                </div>
               </div>
             </div>
           </div>
@@ -366,22 +483,6 @@
       </div>
     </div>
   </div>
-
-  <!-- LOGOS RÉCENTS SAUVEGARDÉS -->
-  <div style="margin-top:32px;background-color:#111111;border:1px solid #222222;border-radius:12px;padding:24px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
-      <h2 class="text-sm font-semibold uppercase tracking-widest" style="color:#888;">Logos récents sauvegardés</h2>
-      <a href="../modules/stock-dashboard.html#logos-bibliotheque" target="_blank"
-         style="font-size:12px;color:#FF6B00;text-decoration:none;padding:6px 14px;border:1px solid rgba(255,107,0,0.3);border-radius:8px;transition:background 0.2s;"
-         onmouseover="this.style.background='rgba(255,107,0,0.1)'" onmouseout="this.style.background='transparent'">
-        Voir tous les logos →
-      </a>
-    </div>
-    <div id="logos-recents-list">
-      <p style="color:#555;font-size:12px;text-align:center;padding:16px;">Chargement...</p>
-    </div>
-  </div>
-
 </main>
 
 <!-- MODAL ZOOM : Détourage vs Amélioration -->
@@ -434,7 +535,9 @@ const CONFIG = {
 const MOIS_FR = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
 
 /* État global */
-const state = { fichierSource: null, base64Source: null, base64Traitee: null, nomClient: '', enTraitement: false, resultUrlStep2: null };
+const state      = { fichierSource: null, base64Source: null, base64Traitee: null, nomClient: '', enTraitement: false, resultUrlStep2: null };
+const selState   = { historique: [], base: null };
+const cropHistory = []; // pile d'états { src, dim, size } pour annuler le recadrage
 
 /* Initialisation */
 document.addEventListener('DOMContentLoaded', () => {
@@ -444,7 +547,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('file-input').addEventListener('change', (e) => { if (e.target.files?.[0]) gererFichier(e.target.files[0]); });
   document.getElementById('client-name').addEventListener('input', verifierPret);
   ajouterLog('Pipeline HCS initialisé.', 'info');
-  chargerLogosRecents(); /* Afficher les logos déjà sauvegardés */
 });
 
 /* Zone drag & drop */
@@ -474,6 +576,12 @@ function gererFichier(fichier) {
     document.getElementById('badge-0').className = 'step-card-badge badge-done';
     document.getElementById('badge-0').textContent = '✓';
     document.getElementById('btn-reset').classList.remove('hidden');
+    // Init état sélection couleur
+    selState.historique = [evt.target.result];
+    selState.base = evt.target.result;
+    if (document.getElementById('panel-selection').style.display !== 'none') {
+      initCanvasSelection(evt.target.result);
+    }
     verifierPret(); setEtape(0);
     ajouterLog(`Image sélectionnée : ${fichier.name} (${(fichier.size/1024).toFixed(0)} Ko)`, 'success');
   };
@@ -513,6 +621,114 @@ function afficherToast(msg, type='info', duree=4000) {
 function extraireBase64Pur(dataUrl) { return dataUrl.split(',')[1]; }
 function blobVersBase64(blob) { return new Promise((res,rej) => { const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(blob); }); }
 
+/* ============================================================
+   DÉTOURAGE LOCAL — BFS depuis les bords (fond uni → transparent)
+   ============================================================ */
+
+/* Distance euclidienne RGB */
+function _colorDist(a, b) {
+  return Math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2);
+}
+
+/* Analyse tous les pixels de bord pour détecter la couleur dominante du fond */
+function detecterCouleurFond(pixels, W, H) {
+  const comptage = {};
+  const analyserPixel = (x, y) => {
+    const i = (y * W + x) * 4;
+    if (pixels[i+3] < 10) return;
+    // Arrondir à 8 près pour regrouper les couleurs proches
+    const r = Math.round(pixels[i]   / 8) * 8;
+    const g = Math.round(pixels[i+1] / 8) * 8;
+    const b = Math.round(pixels[i+2] / 8) * 8;
+    const k = `${r},${g},${b}`;
+    comptage[k] = (comptage[k] || 0) + 1;
+  };
+  const STEP = 2;
+  for (let x = 0; x < W; x += STEP) { analyserPixel(x, 0); analyserPixel(x, H-1); }
+  for (let y = 0; y < H; y += STEP) { analyserPixel(0, y); analyserPixel(W-1, y); }
+  let best = null, bestN = 0;
+  for (const [k, n] of Object.entries(comptage)) { if (n > bestN) { bestN = n; best = k; } }
+  return best ? best.split(',').map(Number) : [pixels[0], pixels[1], pixels[2]];
+}
+
+/* Vérifie si un pixel appartient au fond */
+function _estFond(pixels, W, x, y, bgColor, tol) {
+  const i = (y * W + x) * 4;
+  if (pixels[i+3] === 0) return true;
+  return _colorDist([pixels[i], pixels[i+1], pixels[i+2]], bgColor) <= tol;
+}
+
+/* Supprime les îles intérieures (zones de même couleur que le fond, non connectées aux bords) */
+function supprimerIlesInterieures(pixels, W, H, bgColor, tolerance) {
+  const n = W * H;
+  // On cherche tous les pixels non-transparents correspondant au fond → îles
+  for (let i = 0; i < n; i++) {
+    const idx = i * 4;
+    if (pixels[idx+3] > 0 && _colorDist([pixels[idx], pixels[idx+1], pixels[idx+2]], bgColor) <= tolerance) {
+      pixels[idx+3] = 0;
+    }
+  }
+}
+
+/**
+ * Détourage fond uni :
+ * 1) Détecte la couleur dominante sur les 4 bords
+ * 2) BFS depuis tous les pixels de bord correspondants → transparent
+ * 3) (optionnel) Supprime aussi les îles intérieures de même couleur
+ */
+function detourer_local_canvas(imageDataUrl, tolerance = 30, inclureIles = false) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const W = img.naturalWidth, H = img.naturalHeight;
+        const canvas = document.createElement('canvas');
+        canvas.width = W; canvas.height = H;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const imgData = ctx.getImageData(0, 0, W, H);
+        const pixels = imgData.data;
+
+        // Étape 1 : détecter la couleur du fond depuis les bords
+        const bgColor = detecterCouleurFond(pixels, W, H);
+
+        // Étape 2 : BFS depuis les 4 bords
+        const visited = new Uint8Array(W * H);
+        const queue = [];
+        const ajouter = (x, y) => {
+          const pos = y * W + x;
+          if (visited[pos]) return;
+          if (_estFond(pixels, W, x, y, bgColor, tolerance)) {
+            visited[pos] = 1;
+            queue.push(pos);
+          }
+        };
+        for (let x = 0; x < W; x++) { ajouter(x, 0); ajouter(x, H-1); }
+        for (let y = 0; y < H; y++) { ajouter(0, y); ajouter(W-1, y); }
+
+        let head = 0;
+        while (head < queue.length) {
+          const pos = queue[head++];
+          pixels[pos * 4 + 3] = 0;
+          const px = pos % W, py = Math.floor(pos / W);
+          if (px > 0)   ajouter(px-1, py);
+          if (px < W-1) ajouter(px+1, py);
+          if (py > 0)   ajouter(px, py-1);
+          if (py < H-1) ajouter(px, py+1);
+        }
+
+        // Étape 3 (optionnelle) : supprimer îles intérieures de même couleur
+        if (inclureIles) supprimerIlesInterieures(pixels, W, H, bgColor, tolerance);
+
+        ctx.putImageData(imgData, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch(e) { reject(e); }
+    };
+    img.onerror = () => reject(new Error("Impossible de charger l'image pour le détourage."));
+    img.src = imageDataUrl;
+  });
+}
+
 /* Pipeline principal */
 async function lancerPipeline() {
   if (state.enTraitement || !state.base64Source) return;
@@ -528,12 +744,15 @@ async function lancerPipeline() {
   document.getElementById('badge-0').className = 'step-card-badge badge-done';
   document.getElementById('badge-0').textContent = '✓';
   try {
-    /* Étape 1 — Détourage */
-    setEtape(1); setEtapeEnCours(1); ajouterLog("Étape 1 — Détourage PicWish...", 'info');
+    /* Étape 1 — Détourage local canvas (fond uni → transparent) */
+    setEtape(1); setEtapeEnCours(1);
+    const tolerance = parseInt(document.getElementById('tol-slider').value, 10);
+    const inclureIles = document.getElementById('chk-iles').checked;
+    ajouterLog(`Étape 1 — Détourage fond uni (tolérance ${tolerance}${inclureIles ? ', îles incluses' : ''})...`, 'info');
     let img1;
     try {
-      img1 = await appelPicWish('https://api.picwish.com/open-api/async-task/remove-image-background', state.base64Source, 'Détourage');
-      afficherPreviewEtape(1, img1); ajouterLog('Étape 1 — OK', 'success');
+      img1 = await detourer_local_canvas(state.base64Source, tolerance, inclureIles);
+      afficherPreviewEtape(1, img1); ajouterLog('Étape 1 — Détourage OK ✓', 'success');
     } catch (e) {
       ajouterLog(`Étape 1 — Erreur : ${e.message}`, 'error');
       img1 = state.base64Source;
@@ -587,8 +806,6 @@ async function lancerPipeline() {
     afficherResultat(state.base64Traitee);
     ['btn-download','btn-dropbox','btn-gmail','btn-compare','btn-mockup','btn-preview-full'].forEach(id => { document.getElementById(id).disabled = false; });
     afficherToast('Traitement terminé ! Ajustez le recadrage si besoin.', 'success', 6000);
-    /* Sauvegarde automatique dans la table logos de l'ERP */
-    sauvegarderLogoERP().catch(e => ajouterLog('ERP : erreur sauvegarde — ' + e.message, 'warn'));
   } catch (e) {
     ajouterLog(`Erreur critique : ${e.message}`, 'error'); afficherToast(`Erreur : ${e.message}`, 'error', 6000);
   } finally {
@@ -599,9 +816,10 @@ async function lancerPipeline() {
   }
 }
 
-/* Appel PicWish (détourage ou amélioration) — retourne { dataUrl, resultUrl } */
+/* Appel Worker (détourage remove.bg ou amélioration PicWish) — retourne { dataUrl, resultUrl } */
 async function appelPicWishAvecUrl(operation, imageDataUrl, nom) {
-  ajouterLog(`${nom} : appel via Worker Cloudflare...`, 'info');
+  const provider = operation === 'remove-background' ? 'remove.bg' : 'PicWish';
+  ajouterLog(`${nom} [${provider}] : appel via Worker Cloudflare...`, 'info');
   const rep = await fetch(`${CONFIG.WORKER_URL}/api/picwish`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Worker-Secret': CONFIG.WORKER_SECRET },
@@ -612,8 +830,17 @@ async function appelPicWishAvecUrl(operation, imageDataUrl, nom) {
     throw new Error(`Worker HTTP ${rep.status}${txt ? ' — ' + txt.slice(0, 100) : ''}`);
   }
   const data = await rep.json();
-  if (!data.success || !data.result_url) throw new Error(data.error || 'Pas d\'URL de résultat.');
-  ajouterLog(`${nom} : téléchargement du résultat...`, 'info');
+  if (!data.success) throw new Error(data.error || 'Erreur Worker.');
+
+  /* remove.bg retourne directement le PNG en base64 (pas d'URL externe) */
+  if (data.result_base64) {
+    ajouterLog(`${nom} [${provider}] : image reçue ✓`, 'info');
+    return { dataUrl: data.result_base64, resultUrl: null };
+  }
+
+  /* PicWish retourne une URL → on télécharge l'image */
+  if (!data.result_url) throw new Error(data.error || 'Pas d\'URL de résultat.');
+  ajouterLog(`${nom} [${provider}] : téléchargement du résultat...`, 'info');
   const repF = await fetch(data.result_url);
   const blob = await repF.blob();
   const dataUrl = await blobVersBase64(blob);
@@ -793,11 +1020,25 @@ function masquerResultats() {
   document.getElementById('meta-panel').classList.add('hidden');
   document.getElementById('preview-compare').classList.add('hidden');
   document.getElementById('card-3').classList.remove('expanded');
+  // Remettre la barre crop-actions en mode ajustement
+  cropHistory.length = 0;
+  document.getElementById('crop-mode-adjust').style.display  = 'flex';
+  document.getElementById('crop-mode-applied').style.display = 'none';
+  document.getElementById('crop-actions').classList.add('hidden');
+  document.getElementById('crop-actions').style.display = 'none';
+  // Quitter le plein écran si actif
+  const c3 = document.getElementById('card-3');
+  c3.classList.remove('crop-fullscreen');
+  document.body.style.overflow = '';
+  document.getElementById('btn-crop-fullscreen').textContent = '⤢ Plein écran';
+  document.getElementById('btn-crop-fullscreen').style.display = 'none';
 }
 
 /* Réinitialisation */
 function resetAll() {
   state.fichierSource=null; state.base64Source=null; state.base64Traitee=null; state.enTraitement=false;
+  selState.historique=[]; selState.base=null;
+  cropHistory.length=0;
   document.getElementById('source-preview-inline').classList.add('hidden');
   document.getElementById('upload-icon').style.display='block';
   document.getElementById('file-name-label').classList.add('hidden');
@@ -1005,6 +1246,24 @@ async function envoyerMockupForge() {
   }
 }
 
+async function envoyerSelectionVersMockupForge() {
+  const curr = selState.historique[selState.historique.length - 1];
+  if (!curr) { afficherToast('Aucune image détourée disponible.', 'error'); return; }
+  const client = (state.nomClient || 'Clients').trim();
+  const nom    = (state.nomClient || 'selection').replace(/\s+/g, '_');
+  const entry  = { id: Date.now().toString(36), name: nom + '_detourage', src: curr, client, date: new Date().toLocaleDateString('fr-FR') };
+  try {
+    await PicWishDB.put(entry);
+    localStorage.setItem('mfw_client_name', client);
+    ajouterLog(`MockupForge v12 : image envoyée → Banque / Logos Clients "${client}"`, 'success');
+    afficherToast(`✓ Envoyé dans MockupForge v12 — Logos Clients`, 'success', 5000);
+    setTimeout(() => window.open('../apps/mockup-forge-v12.html', '_blank'), 700);
+  } catch(e) {
+    ajouterLog('MockupForge erreur : ' + e.message, 'error');
+    afficherToast('Erreur : ' + e.message, 'error');
+  }
+}
+
 /* Gmail mailto */
 function envoyerGmail() {
   const n=state.nomClient||'votre client';
@@ -1092,70 +1351,6 @@ function initSliderModal() {
   document.addEventListener('touchend',   ()  => { drag = false; });
 }
 
-/* ============================================================
-   ERP — SAUVEGARDE LOGO DANS LA TABLE "logos"
-   POST https://highcoffeeshirts.com/erp/api/logos
-   ============================================================ */
-const ERP_API_URL = 'https://highcoffeeshirts.com/erp/api';
-const ERP_API_KEY = 'hcs-erp-2026';
-const MOIS_ERP = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
-
-/* Sauvegarde le logo traité dans la table "logos" de l'ERP */
-async function sauvegarderLogoERP() {
-  if (!state.base64Traitee) return;
-  const client     = (state.nomClient || '').trim();
-  const clientSlug = client ? client.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-]/g, '') : 'client';
-  const nomFichier = `${clientSlug}_logo_traite.png`;
-  const mois       = MOIS_ERP[new Date().getMonth()];
-  const chemin     = `HCS/2026/CLIENTS/${mois}/${clientSlug}/logos/${nomFichier}`;
-  const payload = {
-    nom_fichier: nomFichier,
-    client_nom:  client || 'Inconnu',
-    format:      'PNG',
-    statut:      'detoure',
-    chemin:      chemin,
-    date:        new Date().toISOString().slice(0, 10)
-  };
-  const rep = await fetch(`${ERP_API_URL}/logos`, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': ERP_API_KEY },
-    body:    JSON.stringify(payload)
-  });
-  if (!rep.ok) throw new Error(`HTTP ${rep.status}`);
-  ajouterLog(`ERP : logo "${nomFichier}" sauvegardé pour "${client || 'Sans nom'}"`, 'success');
-  chargerLogosRecents(); /* Rafraîchir la liste */
-}
-
-/* Charge les 5 derniers logos depuis l'API ERP */
-async function chargerLogosRecents() {
-  const conteneur = document.getElementById('logos-recents-list');
-  if (!conteneur) return;
-  try {
-    const rep = await fetch(`${ERP_API_URL}/logos?sort=id&order=DESC&limit=5`, {
-      headers: { 'x-api-key': ERP_API_KEY }
-    });
-    if (!rep.ok) throw new Error(`HTTP ${rep.status}`);
-    const data  = await rep.json();
-    const logos = data.items || [];
-    if (logos.length === 0) {
-      conteneur.innerHTML = '<p style="color:#555;font-size:12px;text-align:center;padding:16px;">Aucun logo sauvegardé.</p>';
-      return;
-    }
-    conteneur.innerHTML = logos.map(l => `
-      <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #1a1a1a;">
-        <div style="width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;"></div>
-        <div style="flex:1;min-width:0;">
-          <p style="font-size:12px;color:#e5e5e5;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;">${escapeHtml(l.client_nom || '—')}</p>
-          <p style="font-size:10px;color:#555;margin:2px 0 0;">${escapeHtml(l.nom_fichier || '—')} · ${escapeHtml(l.date || '—')}</p>
-        </div>
-        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(74,222,128,0.1);color:#4ade80;border:1px solid rgba(74,222,128,0.2);flex-shrink:0;">${escapeHtml(l.statut || '—')}</span>
-      </div>
-    `).join('');
-  } catch(e) {
-    conteneur.innerHTML = `<p style="color:#f87171;font-size:12px;text-align:center;padding:16px;">Erreur chargement : ${escapeHtml(e.message)}</p>`;
-  }
-}
-
 // Afficher bouton zoom sur carte 2 quand done
 const _origAfficher = afficherPreviewEtape;
 afficherPreviewEtape = function(n, dataUrl) {
@@ -1226,6 +1421,8 @@ function activerCropManuel(imageDataUrl, cropSuggestion = null) {
 
   // Agrandir la carte pour mieux voir les bords
   document.getElementById('card-3').classList.add('expanded');
+  // Afficher le bouton plein écran
+  document.getElementById('btn-crop-fullscreen').style.display = 'inline-block';
   // Recalculer imgBounds après que la carte s'est agrandie
   requestAnimationFrame(() => { cropState.imgBounds = getImageBounds(); dessinCropRect(); });
 }
@@ -1350,15 +1547,21 @@ function appliquerCropManuel() {
   const img = document.getElementById('img-3');
   if (!img.src) return;
   const r = cropState.rect;
-  const b = cropState.imgBounds; // position image dans l'overlay
+  const b = cropState.imgBounds;
   const source = new Image();
   source.onload = () => {
+    // Sauvegarder l'état AVANT le recadrage pour pouvoir annuler
+    cropHistory.push({
+      src:  img.src,
+      dim:  document.getElementById('meta-dimensions').textContent,
+      size: document.getElementById('meta-size').textContent
+    });
+
     // Convertir coordonnées overlay → coordonnées image (0→1 relatif à l'image)
     const imgX = (r.x - b.ox) / b.sx;
     const imgY = (r.y - b.oy) / b.sy;
     const imgW = r.w / b.sx;
     const imgH = r.h / b.sy;
-    // Clamper à [0,1]
     const cx = Math.max(0, imgX);
     const cy = Math.max(0, imgY);
     const cw = Math.min(1 - cx, imgW);
@@ -1370,24 +1573,314 @@ function appliquerCropManuel() {
     const cv = document.createElement('canvas'); cv.width = wF; cv.height = hF;
     cv.getContext('2d').drawImage(source, xF, yF, wF, hF, 0, 0, wF, hF);
     const result = cv.toDataURL('image/png');
-    // Mettre à jour l'image et l'état
+
     img.src = result;
     state.base64Traitee = result;
     document.getElementById('cmp-after').src = result;
     document.getElementById('crop-overlay').classList.remove('active');
-    document.getElementById('crop-actions').style.display = 'none';
     document.getElementById('card-3').classList.remove('expanded');
     document.getElementById('badge-3').className = 'step-card-badge badge-done';
     document.getElementById('badge-3').textContent = '✓ OK';
     document.getElementById('card-3').classList.add('done');
-    // Mettre à jour les méta
     document.getElementById('meta-dimensions').textContent = `${wF} × ${hF}`;
     const s = Math.round((result.length * 3) / 4);
     document.getElementById('meta-size').textContent = s > 1024 ? `${(s/1024).toFixed(0)} Ko` : `${s} o`;
-    ajouterLog(`Recadrage manuel appliqué : ${wF}×${hF}px`, 'success');
-    afficherToast('Recadrage appliqué !', 'success');
+
+    // Basculer vers le mode "appliqué" dans la barre d'actions
+    document.getElementById('crop-mode-adjust').style.display  = 'none';
+    document.getElementById('crop-mode-applied').style.display = 'flex';
+    document.getElementById('crop-actions').classList.remove('hidden');
+    document.getElementById('crop-actions').style.display = 'block';
+
+    ajouterLog(`Recadrage appliqué : ${wF}×${hF}px`, 'success');
+    afficherToast('Recadrage appliqué ! Vous pouvez annuler ou ré-ajuster.', 'success', 5000);
   };
   source.src = img.src;
+}
+
+/* Annule le dernier recadrage appliqué */
+function annulerCrop() {
+  if (!cropHistory.length) return;
+  const prev = cropHistory.pop();
+  const img  = document.getElementById('img-3');
+  img.src = prev.src;
+  state.base64Traitee = prev.src;
+  document.getElementById('cmp-after').src = prev.src;
+  document.getElementById('meta-dimensions').textContent = prev.dim;
+  document.getElementById('meta-size').textContent       = prev.size;
+  // Réactiver le mode ajustement
+  activerCropManuel(prev.src, null);
+  document.getElementById('crop-mode-applied').style.display = 'none';
+  document.getElementById('crop-mode-adjust').style.display  = 'flex';
+  document.getElementById('badge-3').className = 'step-card-badge';
+  document.getElementById('badge-3').style.cssText = 'background:rgba(255,107,0,0.15);color:#FF6B00;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;';
+  document.getElementById('badge-3').textContent = '✎ Ajuster';
+  document.getElementById('card-3').classList.remove('done');
+  document.getElementById('card-3').classList.add('active');
+  ajouterLog('Recadrage annulé — image précédente restaurée.', 'info');
+  afficherToast('Recadrage annulé.', 'info');
+}
+
+/* Ré-ouvre le mode ajustement sur l'image déjà recadrée */
+function reajusterCrop() {
+  const img = document.getElementById('img-3');
+  if (!img.src) return;
+  activerCropManuel(img.src, null);
+  document.getElementById('crop-mode-applied').style.display = 'none';
+  document.getElementById('crop-mode-adjust').style.display  = 'flex';
+  document.getElementById('badge-3').className = 'step-card-badge';
+  document.getElementById('badge-3').style.cssText = 'background:rgba(255,107,0,0.15);color:#FF6B00;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;';
+  document.getElementById('badge-3').textContent = '✎ Ajuster';
+}
+
+/* ============================================================
+   RECADRAGE — PLEIN ÉCRAN pour précision sur les bords
+   ============================================================ */
+function toggleCropFullscreen() {
+  const card = document.getElementById('card-3');
+  const btn  = document.getElementById('btn-crop-fullscreen');
+  const isFS = card.classList.contains('crop-fullscreen');
+
+  if (isFS) {
+    // Quitter le plein écran
+    card.classList.remove('crop-fullscreen');
+    document.body.style.overflow = '';
+    btn.textContent = '⤢ Plein écran';
+    // Recalculer les bounds pour la taille normale
+    requestAnimationFrame(() => { cropState.imgBounds = getImageBounds(); dessinCropRect(); });
+  } else {
+    // Entrer en plein écran
+    card.classList.add('crop-fullscreen');
+    document.body.style.overflow = 'hidden';
+    btn.textContent = '✕ Quitter plein écran';
+    // Recalculer les bounds pour la grande taille
+    requestAnimationFrame(() => { cropState.imgBounds = getImageBounds(); dessinCropRect(); });
+  }
+}
+
+/* ============================================================
+   SÉLECTION COULEUR — canvas interactif avec BFS au clic
+   ============================================================ */
+
+/* Bascule entre les deux onglets détourage */
+function switchDetourageTab(tab) {
+  const isFond = tab === 'fond-uni';
+  document.getElementById('tab-fond-uni').classList.toggle('active-tab', isFond);
+  document.getElementById('tab-selection').classList.toggle('active-tab', !isFond);
+  document.getElementById('panel-fond-uni').style.display  = isFond ? '' : 'none';
+  document.getElementById('panel-selection').style.display = isFond ? 'none' : '';
+  if (!isFond && state.base64Source) initCanvasSelection(state.base64Source);
+}
+
+/* Initialise (ou rafraîchit) le canvas avec l'image courante */
+function initCanvasSelection(dataUrl) {
+  const img = new Image();
+  img.onload = () => {
+    const canvas  = document.getElementById('sel-canvas');
+    const zone    = document.getElementById('sel-zone');
+    const hint    = document.getElementById('sel-hint');
+    canvas.width  = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+    canvas.style.display = 'block';
+    hint.style.display   = 'none';
+    zone.classList.add('has-image');
+    document.getElementById('btn-sel-reset').disabled = false;
+    // Éviter les doublons d'écouteurs
+    canvas.removeEventListener('click', _onCanvasClick);
+    canvas.addEventListener('click', _onCanvasClick);
+  };
+  img.src = dataUrl;
+}
+
+/* Handler clic sur le canvas */
+function _onCanvasClick(e) {
+  const canvas = document.getElementById('sel-canvas');
+  const rect   = canvas.getBoundingClientRect();
+  const rx = (e.clientX - rect.left) / rect.width;
+  const ry = (e.clientY - rect.top)  / rect.height;
+  const tol = parseInt(document.getElementById('sel-tol-slider').value, 10);
+  const courant = selState.historique[selState.historique.length - 1];
+
+  // Feedback visuel
+  canvas.style.opacity = '0.55';
+  canvas.style.cursor  = 'wait';
+
+  supprimerParSelection(courant, rx, ry, tol)
+    .then(nouveau => {
+      selState.historique.push(nouveau);
+      // Rafraîchir canvas
+      const img2 = new Image();
+      img2.onload = () => {
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+        canvas.getContext('2d').drawImage(img2, 0, 0);
+        canvas.style.opacity = '1';
+        canvas.style.cursor  = 'crosshair';
+      };
+      img2.src = nouveau;
+      // Mettre à jour l'image source dans state (utilisée par le pipeline)
+      state.base64Source = nouveau;
+      document.getElementById('img-0').src = nouveau;
+      document.getElementById('source-preview-inline').src = nouveau;
+      // Activer Annuler
+      document.getElementById('btn-sel-undo').disabled = selState.historique.length <= 1;
+      // Ajouter couleur à la palette visuelle
+      _ajouterCouleurPalette(courant, rx, ry);
+      _mettreAJourBoutonsSel();
+      ajouterLog(`Sélection couleur : zone supprimée (tolérance ${tol})`, 'success');
+    })
+    .catch(err => {
+      canvas.style.opacity = '1';
+      canvas.style.cursor  = 'crosshair';
+      ajouterLog('Sélection couleur erreur : ' + err.message, 'error');
+    });
+}
+
+/* Affiche un point coloré dans la palette d'historique */
+function _ajouterCouleurPalette(dataUrl, rx, ry) {
+  const img = new Image();
+  img.onload = () => {
+    const cv = document.createElement('canvas');
+    cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+    cv.getContext('2d').drawImage(img, 0, 0);
+    const x = Math.round(rx * img.naturalWidth);
+    const y = Math.round(ry * img.naturalHeight);
+    const d = cv.getContext('2d').getImageData(x, y, 1, 1).data;
+    const col = `rgb(${d[0]},${d[1]},${d[2]})`;
+    const dot = document.createElement('div');
+    dot.style.cssText = `width:16px;height:16px;border-radius:3px;background:${col};border:1px solid #444;flex-shrink:0;cursor:default;`;
+    dot.title = col;
+    document.getElementById('sel-palette').appendChild(dot);
+  };
+  img.src = dataUrl;
+}
+
+/* Annule la dernière sélection */
+function annulerSelection() {
+  if (selState.historique.length <= 1) return;
+  selState.historique.pop();
+  const prev = selState.historique[selState.historique.length - 1];
+  state.base64Source = prev;
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.getElementById('sel-canvas');
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+    canvas.getContext('2d').drawImage(img, 0, 0);
+  };
+  img.src = prev;
+  document.getElementById('img-0').src = prev;
+  document.getElementById('source-preview-inline').src = prev;
+  document.getElementById('btn-sel-undo').disabled = selState.historique.length <= 1;
+  // Retirer le dernier point de la palette
+  const pal = document.getElementById('sel-palette');
+  if (pal.lastChild) pal.removeChild(pal.lastChild);
+  _mettreAJourBoutonsSel();
+  ajouterLog('Sélection couleur annulée.', 'info');
+}
+
+/* Remet l'image originale */
+function reinitialiserSelection() {
+  if (!selState.base) return;
+  selState.historique = [selState.base];
+  state.base64Source  = selState.base;
+  document.getElementById('img-0').src = selState.base;
+  document.getElementById('source-preview-inline').src = selState.base;
+  document.getElementById('sel-palette').innerHTML = '';
+  document.getElementById('btn-sel-undo').disabled = true;
+  _mettreAJourBoutonsSel();
+  initCanvasSelection(selState.base);
+  ajouterLog('Sélection couleur réinitialisée.', 'info');
+}
+
+/* Affiche/masque le bloc Recadrer+Télécharger selon l'état de l'historique */
+function _mettreAJourBoutonsSel() {
+  const el = document.getElementById('sel-actions-post');
+  if (el) el.style.display = selState.historique.length > 1 ? '' : 'none';
+}
+
+/* Ouvre le recadrage avec l'image actuelle de la sélection */
+function recadrerDepuisSelection() {
+  const curr = selState.historique[selState.historique.length - 1];
+  if (!curr) return;
+  activerCropManuel(curr, null);
+  ajouterLog('Recadrage ouvert depuis la sélection couleur.', 'info');
+}
+
+/* Télécharge l'image courante de la sélection en PNG */
+function telechargerSelectionCourante() {
+  const curr = selState.historique[selState.historique.length - 1];
+  if (!curr) return;
+  const a = document.createElement('a');
+  a.href = curr;
+  a.download = 'hcs-detourage-' + new Date().toISOString().slice(0,19).replace(/[T:]/g,'-') + '.png';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  ajouterLog('Image téléchargée (PNG transparent).', 'success');
+}
+
+/**
+ * BFS depuis un point (rx,ry) relatif → supprime la zone connexe de même couleur
+ * @param {string} imageDataUrl  data URL PNG
+ * @param {number} rx            0..1 horizontal
+ * @param {number} ry            0..1 vertical
+ * @param {number} tolerance     distance couleur max
+ * @returns {Promise<string>}    data URL PNG résultant
+ */
+function supprimerParSelection(imageDataUrl, rx, ry, tolerance) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const W = img.naturalWidth, H = img.naturalHeight;
+        const cv = document.createElement('canvas');
+        cv.width = W; cv.height = H;
+        const ctx = cv.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const imgData = ctx.getImageData(0, 0, W, H);
+        const pixels  = imgData.data;
+
+        const xi = Math.max(0, Math.min(W-1, Math.round(rx * W)));
+        const yi = Math.max(0, Math.min(H-1, Math.round(ry * H)));
+        const si = (yi * W + xi) * 4;
+
+        // Pixel déjà transparent → rien à faire
+        if (pixels[si+3] === 0) { resolve(imageDataUrl); return; }
+
+        const targetColor = [pixels[si], pixels[si+1], pixels[si+2]];
+
+        const visited = new Uint8Array(W * H);
+        const queue   = [];
+
+        const tenter = (x, y) => {
+          if (x < 0 || x >= W || y < 0 || y >= H) return;
+          const pos = y * W + x;
+          if (visited[pos]) return;
+          visited[pos] = 1;
+          const i = pos * 4;
+          if (pixels[i+3] === 0) return;
+          if (_colorDist([pixels[i], pixels[i+1], pixels[i+2]], targetColor) <= tolerance) {
+            queue.push(pos);
+          }
+        };
+
+        tenter(xi, yi);
+        let head = 0;
+        while (head < queue.length) {
+          const pos = queue[head++];
+          pixels[pos * 4 + 3] = 0;
+          const px = pos % W, py = Math.floor(pos / W);
+          tenter(px-1, py); tenter(px+1, py);
+          tenter(px, py-1); tenter(px, py+1);
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        resolve(cv.toDataURL('image/png'));
+      } catch(e) { reject(e); }
+    };
+    img.onerror = () => reject(new Error('Erreur suppression par sélection.'));
+    img.src = imageDataUrl;
+  });
 }
 </script>
 </body>

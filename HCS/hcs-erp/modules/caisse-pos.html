@@ -20,6 +20,9 @@
       --radius:     10px;
       --font:       'Segoe UI', system-ui, sans-serif;
     }
+    .btn-green { background:#00d4aa;color:#0f1117;border:none;border-radius:8px;
+      font-weight:700;cursor:pointer;transition:background .15s; }
+    .btn-green:hover { background:#00b899; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: var(--font);
@@ -415,8 +418,83 @@
     <div class="brand">⬡ HCS — Caisse</div>
     <div class="meta" id="pos-date"></div>
   </div>
+  <!-- Bandeau session caisse du jour -->
+  <div id="session-banner" style="display:flex;align-items:center;gap:10px;font-size:0.8em;
+    background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.25);
+    border-radius:8px;padding:6px 14px;flex:1;margin:0 16px;">
+    <span id="session-dot" style="width:8px;height:8px;border-radius:50%;
+      background:#666;display:inline-block;"></span>
+    <span id="session-label" style="color:var(--muted);">Chargement session…</span>
+    <span id="session-totaux" style="margin-left:auto;font-family:monospace;color:var(--green);"></span>
+    <button id="btn-ouvrir-session" onclick="ouvrirSession()"
+      class="btn btn-green" style="display:none;padding:4px 12px;font-size:0.85em;">
+      📂 Ouvrir caisse
+    </button>
+    <button id="btn-fermer-session" onclick="fermerSession()"
+      class="btn btn-ghost" style="display:none;padding:4px 12px;font-size:0.85em;">
+      🔒 Z de caisse
+    </button>
+  </div>
   <div class="actions">
     <button class="btn btn-ghost" onclick="window.print()">🖨️ Imprimer</button>
+  </div>
+</div>
+
+<!-- Modal ouverture session -->
+<div id="modal-ouverture" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);
+  z-index:500;align-items:center;justify-content:center;">
+  <div style="background:#1a1d27;border:1px solid #2a2d3e;border-radius:14px;
+    width:380px;padding:24px;">
+    <h3 style="margin-bottom:16px;font-size:1em;">📂 Ouverture de caisse</h3>
+    <label style="font-size:0.8em;color:var(--muted);display:block;margin-bottom:4px;">
+      Fonds initial (XPF)
+    </label>
+    <input id="input-fonds-initial" type="number" min="0" value="0"
+      style="width:100%;background:#0f1117;border:1px solid #2a2d3e;border-radius:6px;
+      padding:8px 12px;color:#e2e8f0;font-size:1em;margin-bottom:14px;">
+    <label style="font-size:0.8em;color:var(--muted);display:block;margin-bottom:4px;">
+      Opérateur
+    </label>
+    <input id="input-operateur" type="text" value="Grace WONG"
+      style="width:100%;background:#0f1117;border:1px solid #2a2d3e;border-radius:6px;
+      padding:8px 12px;color:#e2e8f0;font-size:1em;margin-bottom:18px;">
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="document.getElementById('modal-ouverture').style.display='none'"
+        class="btn btn-ghost" style="padding:7px 16px;">Annuler</button>
+      <button onclick="confirmerOuverture()"
+        class="btn btn-green" style="padding:7px 16px;">✓ Ouvrir</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal fermeture Z de caisse -->
+<div id="modal-fermeture" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);
+  z-index:500;align-items:center;justify-content:center;">
+  <div style="background:#1a1d27;border:1px solid #2a2d3e;border-radius:14px;
+    width:480px;padding:24px;max-height:90vh;overflow-y:auto;">
+    <h3 style="margin-bottom:16px;font-size:1em;">🔒 Z de caisse — Fermeture</h3>
+    <div id="fermeture-recap" style="background:#0f1117;border-radius:8px;
+      padding:14px;margin-bottom:14px;font-size:0.85em;"></div>
+    <label style="font-size:0.8em;color:var(--muted);display:block;margin-bottom:4px;">
+      Fonds en caisse compté (XPF espèces)
+    </label>
+    <input id="input-fonds-final" type="number" min="0" value="0"
+      style="width:100%;background:#0f1117;border:1px solid #2a2d3e;border-radius:6px;
+      padding:8px 12px;color:#e2e8f0;font-size:1em;margin-bottom:4px;"
+      oninput="updateEcart()">
+    <div id="ecart-display" style="font-size:0.8em;margin-bottom:14px;padding:4px 0;"></div>
+    <label style="font-size:0.8em;color:var(--muted);display:block;margin-bottom:4px;">Notes</label>
+    <textarea id="input-notes-fermeture" rows="2"
+      style="width:100%;background:#0f1117;border:1px solid #2a2d3e;border-radius:6px;
+      padding:8px 12px;color:#e2e8f0;font-size:0.9em;margin-bottom:18px;"
+      placeholder="Observations…"></textarea>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="document.getElementById('modal-fermeture').style.display='none'"
+        class="btn btn-ghost" style="padding:7px 16px;">Annuler</button>
+      <button onclick="confirmerFermeture()"
+        style="background:#ff6b6b;color:#fff;border:none;border-radius:8px;
+        padding:7px 16px;font-weight:700;cursor:pointer;">🔒 Clôturer</button>
+    </div>
   </div>
 </div>
 
@@ -743,12 +821,12 @@ function validerVente() {
   const now       = new Date();
   const dateStr   = now.toISOString().slice(0, 10);
 
-  /* Numéro de facture */
+  /* Numéro de facture — même format que l'ERP : FAC-YYYY-XXXXX */
   if (!db._meta) db._meta = { counters: {} };
   if (!db._meta.counters) db._meta.counters = {};
   db._meta.counters.factures = (db._meta.counters.factures || 0) + 1;
-  const num = String(db._meta.counters.factures).padStart(4, '0');
-  const ref = 'FAC-' + num;
+  const num = String(db._meta.counters.factures).padStart(5, '0');
+  const ref = `FAC-${now.getFullYear()}-${num}`;
 
   /* Lignes de facture */
   const lignes = cart.map(l => ({
@@ -809,10 +887,64 @@ function validerVente() {
   });
   if (db.auditLog.length > 500) db.auditLog = db.auditLog.slice(0, 500);
 
+  /* Écritures comptables — journal Caisse ou Banque */
+  _creerEcritures(facture, totaux);
+
+  /* Mouvements de stock — traçabilité sortie */
+  _creerMouvements(cart, ref, dateStr);
+
   saveDB();
+
+  /* Sync MySQL — ventes_caisse + mise à jour session caisse */
+  _pushVenteMySQL(facture, totaux);
 
   /* Afficher le ticket */
   showTicket(facture, totaux, contact);
+}
+
+/* ── Écritures comptables (3 lignes : trésorerie, ventes HT, TVA) ── */
+function _creerEcritures(facture, totaux) {
+  if (!db.ecritures) db.ecritures = [];
+  const isEspeces = facture.modePaiement === 'Espèces';
+  const compte    = isEspeces ? '530000' : '512000';
+  const journal   = isEspeces ? 'Caisse' : 'Banque';
+  const ts        = Date.now();
+
+  db.ecritures.push({
+    id: `ecr-${ts}-1`, date: facture.date,
+    libelle: `Vente ${facture.ref} — ${facture.modePaiement}`,
+    compte, debit: totaux.totalTTC, credit: 0, journal,
+    _createdAt: facture._createdAt
+  });
+  db.ecritures.push({
+    id: `ecr-${ts}-2`, date: facture.date,
+    libelle: `CA ventes — ${facture.ref}`,
+    compte: '706000', debit: 0, credit: totaux.totalHT, journal,
+    _createdAt: facture._createdAt
+  });
+  if (totaux.totalTVA > 0) {
+    db.ecritures.push({
+      id: `ecr-${ts}-3`, date: facture.date,
+      libelle: `TVA collectée — ${facture.ref}`,
+      compte: '445700', debit: 0, credit: totaux.totalTVA, journal,
+      _createdAt: facture._createdAt
+    });
+  }
+}
+
+/* ── Mouvements de stock (1 entrée par ligne de panier) ── */
+function _creerMouvements(lignes, ref, date) {
+  if (!db.mouvements) db.mouvements = [];
+  const now = new Date().toISOString();
+  lignes.forEach((l, i) => {
+    db.mouvements.push({
+      id: `mvt-${Date.now()}-${i}`,
+      date, produitId: l.produitId, produitNom: l.nom,
+      type: 'Sortie', quantite: l.qte,
+      motif: 'Vente caisse', reference: ref,
+      _createdAt: now
+    });
+  });
 }
 
 /* ── Ticket de caisse ── */
@@ -896,8 +1028,215 @@ function showToast(msg, type) {
   setTimeout(() => t.remove(), 2800);
 }
 
+/* ================================================================
+   MYSQL API — config
+   ================================================================ */
+const API_BASE = 'https://highcoffeeshirts.com/erp/api';
+const API_KEY  = localStorage.getItem('hcs_api_key') || 'hcs-erp-2026';
+
+async function apiCall(method, path, body) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  try {
+    const r = await fetch(`${API_BASE}/${path}`, opts);
+    if (!r.ok) return null;
+    if (r.status === 204) return true;
+    return r.json();
+  } catch(_) { return null; }
+}
+
+/* ================================================================
+   SESSION CAISSE — gestion ouverture / fermeture journalière
+   ================================================================ */
+let _sessionCaisse = null;   /* objet session MySQL en cours */
+let _sessionTotaux = { nb: 0, total: 0, especes: 0, carte: 0 };
+
+async function chargerSessionDuJour() {
+  const data = await apiCall('GET', 'sessions_caisse/today');
+  if (!data) {
+    /* API indisponible — mode hors-ligne */
+    _updateSessionBanner(null, true);
+    return;
+  }
+  _sessionCaisse = data.session;
+  _updateSessionBanner(_sessionCaisse, false);
+}
+
+function _updateSessionBanner(session, offline) {
+  const dot   = document.getElementById('session-dot');
+  const label = document.getElementById('session-label');
+  const tot   = document.getElementById('session-totaux');
+  const btnOuvrir  = document.getElementById('btn-ouvrir-session');
+  const btnFermer  = document.getElementById('btn-fermer-session');
+
+  if (offline) {
+    dot.style.background   = '#64748b';
+    label.textContent      = '⚠ Mode hors-ligne — sync MySQL indisponible';
+    label.style.color      = '#ffc857';
+    tot.textContent        = '';
+    btnOuvrir.style.display = 'none';
+    btnFermer.style.display = 'none';
+    return;
+  }
+
+  if (!session) {
+    dot.style.background    = '#ff6b6b';
+    label.textContent       = 'Aucune session ouverte aujourd\'hui';
+    label.style.color       = '#ff6b6b';
+    tot.textContent         = '';
+    btnOuvrir.style.display = 'inline-flex';
+    btnFermer.style.display = 'none';
+  } else {
+    const nbV  = session.nb_ventes  || 0;
+    const ttc  = session.total_ttc  || 0;
+    dot.style.background    = '#00d4aa';
+    label.textContent       = `Session ouverte · ${esc(session.operateur || 'Opérateur')}`;
+    label.style.color       = '#00d4aa';
+    tot.textContent         = `${nbV} vente(s) · ${fmt(ttc)} XPF`;
+    btnOuvrir.style.display = 'none';
+    btnFermer.style.display = 'inline-flex';
+  }
+}
+
+/* ── Ouverture de session ── */
+function ouvrirSession() {
+  document.getElementById('modal-ouverture').style.display = 'flex';
+}
+
+async function confirmerOuverture() {
+  const fonds    = parseFloat(document.getElementById('input-fonds-initial').value) || 0;
+  const operateur= document.getElementById('input-operateur').value.trim() || 'Opérateur';
+  document.getElementById('modal-ouverture').style.display = 'none';
+
+  const created = await apiCall('POST', 'sessions_caisse', {
+    date:          new Date().toISOString().slice(0, 10),
+    operateur,
+    fonds_initial: fonds,
+    statut:        'ouverte'
+  });
+
+  if (created && created.id) {
+    _sessionCaisse = created;
+    _updateSessionBanner(_sessionCaisse, false);
+    showToast('✔ Caisse ouverte — session créée');
+  } else {
+    /* Récupérer la session existante si déjà ouverte (conflit 409) */
+    await chargerSessionDuJour();
+    showToast('Session récupérée.', 'info');
+  }
+}
+
+/* ── Fermeture Z de caisse ── */
+function fermerSession() {
+  if (!_sessionCaisse) return;
+  /* Recap depuis la session en mémoire */
+  const r = document.getElementById('fermeture-recap');
+  const s = _sessionCaisse;
+  r.innerHTML = `
+    <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #2a2d3e;">
+      <span>Ventes</span><span style="font-family:monospace;">${s.nb_ventes || 0}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #2a2d3e;">
+      <span>💵 Espèces</span><span style="font-family:monospace;">${fmt(s.total_especes || 0)} XPF</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #2a2d3e;">
+      <span>💳 Carte</span><span style="font-family:monospace;">${fmt(s.total_carte || 0)} XPF</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #2a2d3e;">
+      <span>🏦 Virement</span><span style="font-family:monospace;">${fmt(s.total_virement || 0)} XPF</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;font-weight:700;">
+      <span>TOTAL TTC</span>
+      <span style="font-family:monospace;color:#00d4aa;">${fmt(s.total_ttc || 0)} XPF</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.9em;color:#64748b;">
+      <span>Fonds initial</span><span style="font-family:monospace;">${fmt(s.fonds_initial || 0)} XPF</span>
+    </div>`;
+
+  document.getElementById('input-fonds-final').value =
+    (parseFloat(s.fonds_initial || 0) + parseFloat(s.total_especes || 0)).toFixed(0);
+  updateEcart();
+  document.getElementById('modal-fermeture').style.display = 'flex';
+}
+
+function updateEcart() {
+  if (!_sessionCaisse) return;
+  const fondsFinal = parseFloat(document.getElementById('input-fonds-final').value) || 0;
+  const theorique  = (parseFloat(_sessionCaisse.fonds_initial || 0)
+                     + parseFloat(_sessionCaisse.total_especes || 0));
+  const ecart      = fondsFinal - theorique;
+  const el         = document.getElementById('ecart-display');
+  el.style.color   = Math.abs(ecart) < 100 ? '#00d4aa' : '#ff6b6b';
+  el.textContent   = `Écart : ${ecart >= 0 ? '+' : ''}${fmt(ecart)} XPF `
+                   + (Math.abs(ecart) < 100 ? '✓ OK' : '⚠ À vérifier');
+}
+
+async function confirmerFermeture() {
+  if (!_sessionCaisse) return;
+  const fondsFinal = parseFloat(document.getElementById('input-fonds-final').value) || 0;
+  const notes      = document.getElementById('input-notes-fermeture').value.trim();
+  document.getElementById('modal-fermeture').style.display = 'none';
+
+  const result = await apiCall('PUT', `sessions_caisse/${_sessionCaisse.id}/fermer`, {
+    fonds_final: fondsFinal,
+    notes
+  });
+
+  if (result) {
+    _sessionCaisse = null;
+    _updateSessionBanner(null, false);
+    showToast('✔ Caisse fermée. Z de caisse enregistré.');
+  } else {
+    showToast('Erreur lors de la fermeture — réessayez.', 'error');
+  }
+}
+
+/* ================================================================
+   SYNC VENTE → MYSQL après chaque encaissement
+   ================================================================ */
+async function _pushVenteMySQL(facture, totaux) {
+  const now = new Date();
+  const payload = {
+    ref:               facture.ref,
+    facture_store_id:  facture.id,
+    session_caisse_id: _sessionCaisse ? _sessionCaisse.id : null,
+    date:              facture.date,
+    heure:             now.toTimeString().slice(0, 8),
+    client_nom:        facture.client || 'Client anonyme',
+    client_id:         facture.contactId || null,
+    mode_paiement:     facture.modePaiement,
+    operateur:         _sessionCaisse ? _sessionCaisse.operateur : 'Caisse',
+    nb_lignes:         (facture.lignes || []).length,
+    total_ht:          totaux.totalHT,
+    total_tva:         totaux.totalTVA,
+    total_remise:      totaux.totalRemise || 0,
+    total_ttc:         totaux.totalTTC,
+    lignes:            JSON.stringify(facture.lignes || []),
+    annulee:           0
+  };
+
+  const created = await apiCall('POST', 'ventes_caisse', payload);
+
+  /* Mettre à jour le compteur de session localement */
+  if (created && _sessionCaisse) {
+    _sessionCaisse.nb_ventes   = (_sessionCaisse.nb_ventes   || 0) + 1;
+    _sessionCaisse.total_ttc   = (_sessionCaisse.total_ttc   || 0) + totaux.totalTTC;
+    if (facture.modePaiement === 'Espèces')
+      _sessionCaisse.total_especes = (_sessionCaisse.total_especes || 0) + totaux.totalTTC;
+    else if (facture.modePaiement === 'Carte bancaire')
+      _sessionCaisse.total_carte = (_sessionCaisse.total_carte || 0) + totaux.totalTTC;
+    _updateSessionBanner(_sessionCaisse, false);
+  }
+
+  return created;
+}
+
 /* ── Init ── */
 buildCatalog();
+chargerSessionDuJour();
 </script>
 </body>
 </html>

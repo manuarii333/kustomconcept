@@ -91,6 +91,15 @@
   gap: 2px;
 }
 
+.agent-prenom {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--agent-color, var(--caramel));
+  opacity: 0.9;
+}
+
 .agent-nom {
   font-weight: var(--font-semi);
   font-size: var(--text-base);
@@ -110,7 +119,29 @@
   color: var(--text-muted);
   margin: 0;
   line-height: 1.5;
-  flex: 1;
+}
+
+/* Pills compétences dans la carte */
+.agent-competences {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.agent-competence-pill {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.agent-competence-new {
+  background: rgba(240, 160, 48, 0.12);
+  color: var(--caramel, #c4813a);
+  border-color: rgba(240, 160, 48, 0.3);
 }
 
 .agent-card-footer {
@@ -430,4 +461,237 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ================================================================
+   PROMPTS / COMMANDES OPÉRATEURS
+   ================================================================ */
+.prompts-layout {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+.prompts-sidebar {
+  width: 210px;
+  min-width: 210px;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: var(--space-3) 0;
+}
+
+.prompts-sidebar-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0 var(--space-3) var(--space-2);
+}
+
+.prompt-agent-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background .12s;
+  position: relative;
+}
+
+.prompt-agent-btn::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 4px; bottom: 4px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--agent-color, #4a5fff);
+  opacity: 0;
+  transition: opacity .15s;
+}
+
+.prompt-agent-btn:hover   { background: rgba(255,255,255,0.04); }
+.prompt-agent-btn.active  { background: rgba(255,255,255,0.07); }
+.prompt-agent-btn.active::before { opacity: 1; }
+
+.prompt-agent-icon { font-size: 1.2rem; flex-shrink: 0; }
+
+.prompt-agent-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.prompt-agent-nom {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prompt-agent-count {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.prompts-main {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.prompt-section { margin-bottom: var(--space-5); }
+
+.prompt-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--caramel, #c4813a);
+  margin: 0 0 var(--space-3);
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--border);
+}
+
+.prompts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-3);
+}
+
+.prompt-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: box-shadow .15s;
+}
+
+.prompt-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+
+.prompt-card-header {
+  padding: var(--space-3) var(--space-3) var(--space-1);
+}
+
+.prompt-card-titre {
+  font-size: var(--text-sm);
+  color: var(--text-base);
+}
+
+.prompt-card-body {
+  flex: 1;
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-muted);
+  background: rgba(0,0,0,.15);
+  margin: 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 120px;
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.prompt-card-footer {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  justify-content: flex-end;
+}
+
+/* ================================================================
+   APPRENTISSAGES
+   ================================================================ */
+.apprentissages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: var(--space-4);
+}
+
+.apprentissage-agent-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.apprentissage-agent-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 3px solid var(--agent-color, #4a5fff);
+  background: rgba(255,255,255,0.03);
+}
+
+.apprentissage-item {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.apprentissage-item:last-child {
+  border-bottom: none;
+}
+
+.apprentissage-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2);
+}
+
+.apprentissage-index {
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--caramel, #c4813a);
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.apprentissage-titre {
+  font-size: var(--text-sm);
+  color: var(--text-base);
+  flex: 1;
+}
+
+.apprentissage-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.apprentissage-desc {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin: 0 0 var(--space-2);
+  line-height: 1.55;
+}
+
+.apprentissage-outils {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.apprentissage-outil-tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(74, 95, 255, 0.1);
+  color: #7b8fff;
+  border: 1px solid rgba(74, 95, 255, 0.2);
+  font-family: var(--font-mono, monospace);
 }

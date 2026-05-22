@@ -19,7 +19,7 @@ class MySQLAPI {
    */
   constructor(
     baseUrl = 'https://highcoffeeshirts.com/erp/api',
-    apiKey  = 'hcs-erp-2026'
+    apiKey  = (typeof localStorage !== 'undefined' && localStorage.getItem('hcs_api_key')) || 'hcs-erp-2026'
   ) {
     this.baseUrl = baseUrl.replace(/\/$/, '');
     this.apiKey  = apiKey;

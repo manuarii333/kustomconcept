@@ -92,8 +92,13 @@ function saveN8nUrl() {
   <div class="flex items-center gap-3 flex-wrap">
     <a href="ocr-scanner.html" class="nav-link">📄 Scanner OCR</a>
     <a href="rapport-pl.html" class="nav-link">📊 Rapport P&L</a>
+    <a href="sessions-comptables.html" class="nav-link">📅 Sessions</a>
     <a href="routine-dashboard.html" class="nav-link">✅ Routines</a>
     <button onclick="exportCSV()" class="btn-ghost text-sm">⬇ Exporter CSV</button>
+    <button id="_btn-pull" onclick="_MYSQL.pull()" class="btn-ghost text-sm" title="Charger depuis MySQL">☁↓ MySQL</button>
+    <button id="_btn-push" onclick="_MYSQL.pushAll()" class="btn-ghost text-sm" title="Pousser tout vers MySQL">☁↑ Push</button>
+    <button onclick="importerFacturesERP()" class="btn-ghost text-sm" title="Importer les factures payées depuis l'ERP">📥 Import ERP</button>
+    <span id="_sync-toast" style="font-size:11px;font-weight:500;opacity:0;transition:opacity 0.5s;min-width:180px;text-align:right;"></span>
     <button onclick="openAddRevenu()" class="btn-primary text-sm">+ Revenu</button>
     <button onclick="openAddCharge()" class="btn-ghost text-sm">+ Charge</button>
   </div>
@@ -283,6 +288,15 @@ function saveN8nUrl() {
         </select>
       </div>
       <div>
+        <label class="text-xs text-gray-500 mb-1 block">Type de revenu</label>
+        <select id="rev-type" class="text-sm">
+          <option value="vente">Vente produit</option>
+          <option value="prestation">Prestation service</option>
+          <option value="livraison">Frais livraison</option>
+          <option value="autre">Autre</option>
+        </select>
+      </div>
+      <div>
         <label class="text-xs text-gray-500 mb-1 block">Description</label>
         <input type="text" id="rev-desc" placeholder="Ex: 3 T-shirts DTF Mairie" class="text-sm">
       </div>
@@ -384,6 +398,124 @@ function getData(key) {
 function setData(key, val) {
   localStorage.setItem(key, JSON.stringify(val));
 }
+
+// ===== COUCHE SYNC MYSQL — Finance Dashboard =====
+const _MYSQL = (() => {
+  const _url = () => localStorage.getItem('hcs_api_url') || 'https://highcoffeeshirts.com/erp/api';
+  const _key = () => localStorage.getItem('hcs_api_key') || 'hcs-erp-2026';
+  const _h   = () => ({ 'Content-Type': 'application/json', 'x-api-key': _key() });
+
+  function _toast(msg, ok) {
+    const el = document.getElementById('_sync-toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = ok ? '#22c55e' : '#fbbf24';
+    el.style.opacity = '1';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.style.opacity = '0'; }, 3500);
+  }
+
+  // Crée (POST) ou met à jour (PUT) un enregistrement — retourne le nouvel id MySQL si création
+  async function upsert(table, record) {
+    const mid = record._mysql_id;
+    try {
+      const payload = Object.assign({}, record, { store_id: record.id });
+      delete payload._mysql_id;
+      const r = await fetch(
+        mid ? `${_url()}/${table}/${mid}` : `${_url()}/${table}`,
+        { method: mid ? 'PUT' : 'POST', headers: _h(), body: JSON.stringify(payload) }
+      );
+      if (!r.ok) { _toast('⚠ Erreur API ' + r.status, false); return null; }
+      if (!mid) { const j = await r.json(); _toast('☁ Sauvegardé MySQL ✓', true); return j.id || null; }
+      _toast('☁ Mis à jour MySQL ✓', true);
+    } catch(e) { _toast('⚠ Hors-ligne — données locales uniquement', false); }
+    return null;
+  }
+
+  // Supprime un enregistrement de MySQL
+  async function del(table, record) {
+    if (!record?._mysql_id) return;
+    try {
+      await fetch(`${_url()}/${table}/${record._mysql_id}`, {
+        method: 'DELETE', headers: { 'x-api-key': _key() }
+      });
+      _toast('🗑 Supprimé MySQL ✓', true);
+    } catch(e) {}
+  }
+
+  // Pull MySQL → localStorage (MySQL a la priorité, locaux non-synchros conservés)
+  async function pull() {
+    const btn = document.getElementById('_btn-pull');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+    try {
+      const [r1, r2] = await Promise.all([
+        fetch(`${_url()}/finance_transactions?limit=1000&sort=date&order=desc`, { headers: { 'x-api-key': _key() } }),
+        fetch(`${_url()}/finance_charges?limit=1000&sort=date&order=desc`,      { headers: { 'x-api-key': _key() } })
+      ]);
+      if (!r1.ok || !r2.ok) throw new Error('HTTP ' + r1.status);
+      const { items: txDB } = await r1.json();
+      const { items: chDB } = await r2.json();
+
+      const toTx = r => ({
+        id: r.store_id || String(r.id), _mysql_id: r.id,
+        date: r.date, canal: r.canal, type: r.type,
+        description: r.description, montant: +r.montant, nb: +(r.nb || 1)
+      });
+      const toCh = r => ({
+        id: r.store_id || String(r.id), _mysql_id: r.id,
+        date: r.date, fournisseur: r.fournisseur, categorie: r.categorie,
+        montant: +r.montant, numero: r.numero || '', statut: r.statut
+      });
+
+      // Conserver les entrées locales jamais synchronisées
+      const txIds = new Set(txDB.map(r => r.store_id).filter(Boolean));
+      const chIds = new Set(chDB.map(r => r.store_id).filter(Boolean));
+      const localTx = getData('hcs_transactions').filter(r => !txIds.has(r.id) && !r._mysql_id);
+      const localCh = getData('hcs_charges').filter(r => !chIds.has(r.id) && !r._mysql_id);
+
+      setData('hcs_transactions', [...txDB.map(toTx), ...localTx]);
+      setData('hcs_charges',      [...chDB.map(toCh), ...localCh]);
+      _toast(`☁ ${txDB.length} transactions + ${chDB.length} charges chargées`, true);
+      tout();
+    } catch(e) {
+      _toast('❌ Erreur API MySQL : ' + e.message, false);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '☁↓ MySQL'; }
+    }
+  }
+
+  // Push tout localStorage → MySQL (synchronisation complète)
+  async function pushAll() {
+    const btn = document.getElementById('_btn-push');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+    let count = 0;
+    try {
+      for (const rec of getData('hcs_transactions')) {
+        const mid = await upsert('finance_transactions', rec);
+        if (mid) {
+          const all = getData('hcs_transactions');
+          const i = all.findIndex(r => r.id === rec.id);
+          if (i >= 0) { all[i]._mysql_id = mid; setData('hcs_transactions', all); }
+        }
+        count++;
+      }
+      for (const rec of getData('hcs_charges')) {
+        const mid = await upsert('finance_charges', rec);
+        if (mid) {
+          const all = getData('hcs_charges');
+          const i = all.findIndex(r => r.id === rec.id);
+          if (i >= 0) { all[i]._mysql_id = mid; setData('hcs_charges', all); }
+        }
+        count++;
+      }
+      _toast(`☁↑ ${count} écritures synchronisées MySQL ✓`, true);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '☁↑ Push'; }
+    }
+  }
+
+  return { upsert, del, pull, pushAll };
+})();
 
 // ===== FORMAT MONÉTAIRE =====
 function fmtXPF(n) {
@@ -649,13 +781,22 @@ function sauvegarderConfig() {
 function ajouterRevenu() {
   const date = document.getElementById('rev-date').value || today();
   const canal = document.getElementById('rev-canal').value;
+  const type = document.getElementById('rev-type').value;
   const desc = document.getElementById('rev-desc').value;
   const montant = +document.getElementById('rev-montant').value;
   const nb = +document.getElementById('rev-nb').value || 1;
   if (!montant) { alert('Veuillez saisir un montant.'); return; }
+  const record = { id: Date.now().toString(), date, canal, type, description: desc, montant, nb };
   const transactions = getData('hcs_transactions');
-  transactions.push({ id: Date.now().toString(), date, canal, description: desc, montant, nb });
+  transactions.push(record);
   setData('hcs_transactions', transactions);
+  // Sync MySQL en arrière-plan
+  _MYSQL.upsert('finance_transactions', record).then(mid => {
+    if (!mid) return;
+    const all = getData('hcs_transactions');
+    const i = all.findIndex(r => r.id === record.id);
+    if (i >= 0) { all[i]._mysql_id = mid; setData('hcs_transactions', all); }
+  });
   fermerModal('modal-revenu');
   tout();
 }
@@ -669,9 +810,17 @@ function ajouterCharge() {
   const numero = document.getElementById('chg-facture').value;
   const statut = document.getElementById('chg-statut').value;
   if (!fournisseur || !montant) { alert('Veuillez remplir fournisseur et montant.'); return; }
+  const record = { id: Date.now().toString(), date, fournisseur, categorie, montant, numero, statut };
   const charges = getData('hcs_charges');
-  charges.push({ id: Date.now().toString(), date, fournisseur, categorie, montant, numero, statut });
+  charges.push(record);
   setData('hcs_charges', charges);
+  // Sync MySQL en arrière-plan
+  _MYSQL.upsert('finance_charges', record).then(mid => {
+    if (!mid) return;
+    const all = getData('hcs_charges');
+    const i = all.findIndex(r => r.id === record.id);
+    if (i >= 0) { all[i]._mysql_id = mid; setData('hcs_charges', all); }
+  });
   fermerModal('modal-charge');
   tout();
 }
@@ -679,12 +828,18 @@ function ajouterCharge() {
 // ===== SUPPRIMER =====
 function supprimerRevenu(id) {
   if (!confirm('Supprimer cette transaction ?')) return;
-  setData('hcs_transactions', getData('hcs_transactions').filter(r => r.id !== id));
+  const all = getData('hcs_transactions');
+  const rec = all.find(r => r.id === id);
+  setData('hcs_transactions', all.filter(r => r.id !== id));
+  _MYSQL.del('finance_transactions', rec);
   tout();
 }
 function supprimerCharge(id) {
   if (!confirm('Supprimer cette charge ?')) return;
-  setData('hcs_charges', getData('hcs_charges').filter(r => r.id !== id));
+  const all = getData('hcs_charges');
+  const rec = all.find(r => r.id === id);
+  setData('hcs_charges', all.filter(r => r.id !== id));
+  _MYSQL.del('finance_charges', rec);
   tout();
 }
 
@@ -818,6 +973,8 @@ function marquerChargePaye() {
   if (idx >= 0) {
     charges[idx].statut = 'paye';
     setData('hcs_charges', charges);
+    // Sync statut → MySQL
+    _MYSQL.upsert('finance_charges', charges[idx]);
   }
   fermerModal('modal-valider-charge');
   chargeEnValidation = null;
@@ -852,6 +1009,98 @@ function chargerDemo() {
   ];
   setData('hcs_transactions', demo_t);
   setData('hcs_charges', demo_c);
+}
+
+// ===== IMPORT HISTORIQUE FACTURES ERP =====
+// Lit les factures payées/partielles du Store ERP et les injecte dans hcs_transactions.
+// Utilise _pay_id pour éviter les doublons — safe à rappeler plusieurs fois.
+function importerFacturesERP() {
+  let erpDb;
+  try {
+    erpDb = JSON.parse(localStorage.getItem('hcs_erp_db') || 'null');
+  } catch { erpDb = null; }
+
+  if (!erpDb || !Array.isArray(erpDb.factures)) {
+    alert('⚠️ Aucune donnée ERP trouvée dans ce navigateur.\nOuvrez d\'abord l\'ERP (index.html) pour charger les factures.');
+    return;
+  }
+
+  const CANAL_MAP = {
+    'Espèces':        'cash',
+    'Carte bancaire': 'cash',
+    'Virement':       'odoo',
+    'Chèque':         'odoo',
+  };
+  const motsPrest = /dtf|vinyle|flex|flock|transfert|broderie|impression|serigraphie|gravure|sticker|covering/i;
+
+  const transactions = getData('hcs_transactions');
+  const payIdsExistants = new Set(transactions.map(t => t._pay_id).filter(Boolean));
+
+  let nbImportes = 0;
+  const nouvelles = [];
+
+  erpDb.factures.forEach(fac => {
+    if (!Array.isArray(fac.paiements) || !fac.paiements.length) return;
+    /* Uniquement factures avec au moins un paiement */
+    fac.paiements.forEach(pay => {
+      if (!pay.id || !pay.montant || payIdsExistants.has(pay.id)) return;
+
+      const canal = CANAL_MAP[pay.methode] || 'odoo';
+      const lignes = fac.lignes || [];
+      const typeRevenu = lignes.some(l =>
+        motsPrest.test(l.produit || l.description || l.technique || '')
+      ) ? 'prestation' : 'vente';
+
+      const typePaiement = pay.type || 'Paiement';
+      const record = {
+        id:           'erp-' + pay.id,
+        _pay_id:      pay.id,
+        _source:      'erp',
+        _facture_ref: fac.ref || '',
+        date:         pay.date,
+        canal,
+        type:         typeRevenu,
+        description:  `${typePaiement} — ${fac.ref || ''} — ${fac.client || ''}`.trim(),
+        montant:      pay.montant,
+        nb:           1,
+      };
+      nouvelles.push(record);
+      payIdsExistants.add(pay.id);
+      nbImportes++;
+    });
+  });
+
+  if (!nbImportes) {
+    alert('✅ Aucun nouveau paiement à importer. Tout est déjà synchronisé.');
+    return;
+  }
+
+  setData('hcs_transactions', [...transactions, ...nouvelles]);
+
+  /* Sync MySQL en arrière-plan */
+  const apiUrl = localStorage.getItem('hcs_api_url') || 'https://highcoffeeshirts.com/erp/api';
+  const apiKey = localStorage.getItem('hcs_api_key') || 'hcs-erp-2026';
+  nouvelles.forEach(rec => {
+    const payload = Object.assign({}, rec, { store_id: rec.id });
+    delete payload._pay_id; delete payload._source; delete payload._facture_ref;
+    fetch(`${apiUrl}/finance_transactions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
+      body: JSON.stringify(payload),
+    }).then(async r => {
+      if (r.ok) {
+        const j = await r.json();
+        if (j.id) {
+          const all = getData('hcs_transactions');
+          const idx = all.findIndex(t => t.id === rec.id);
+          if (idx >= 0) { all[idx]._mysql_id = j.id; setData('hcs_transactions', all); }
+        }
+      }
+    }).catch(() => {});
+  });
+
+  tout();
+  alert(`✅ ${nbImportes} paiement(s) ERP importé(s) dans le Finance Dashboard.`);
 }
 
 // Lancement

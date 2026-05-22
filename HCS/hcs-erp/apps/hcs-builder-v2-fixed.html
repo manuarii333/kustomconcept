@@ -303,6 +303,8 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.3)}
 .ai-thumb-overlay{position:absolute;inset:0;background:linear-gradient(transparent 50%,rgba(0,0,0,.8));display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;opacity:0;transition:opacity .15s}
 .ai-thumb-wrap:hover .ai-thumb-overlay{opacity:1}
 .ai-thumb-use{background:var(--green);color:#000;border:none;border-radius:4px;font-size:.55rem;font-weight:800;padding:3px 8px;cursor:pointer;text-transform:uppercase;letter-spacing:.3px}
+.ai-thumb-dl{background:rgba(0,0,0,.55);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:4px;font-size:.5rem;font-weight:700;padding:3px 7px;cursor:pointer;text-transform:uppercase;letter-spacing:.3px;margin-left:4px}
+.ai-thumb-dl:hover{background:var(--blue);border-color:var(--blue)}
 .ai-selected-wrap{display:none;border:2px solid #a78bfa;border-radius:var(--r);overflow:hidden;position:relative}
 .ai-selected-wrap.show{display:block}
 .ai-selected-wrap img{width:100%;display:block;max-height:160px;object-fit:cover}
@@ -426,6 +428,7 @@ input[type=color]{
     <button class="btn-tb ghost" onclick="resetState()" title="Effacer la sauvegarde et recommencer à zéro">↺ Reset</button>
     <button class="btn-tb ghost" onclick="copyConfig()">⎘ Config JSON</button>
     <button class="btn-tb ghost" onclick="exportElementor()" title="Copier le code pour Elementor HTML widget">⧉ Elementor</button>
+    <button class="btn-tb ghost" id="btn-save-lp" onclick="saveLandingPage()" title="Enregistrer dans HCS ERP sans télécharger" style="border-color:var(--green);color:var(--green)">💾 Enregistrer</button>
     <button class="btn-tb primary" onclick="exportHTML()">⬇ Exporter HTML</button>
     <button class="btn-tb ghost" onclick="openVideoModal()" style="border-color:#ec4899;color:#ec4899">🎬 Vidéo Promo</button>
   </div>
@@ -1495,7 +1498,7 @@ async function generateNanoBanana(){
       const b64=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(blob);});
       const th=document.getElementById('nb-th-'+i);
       if(th){
-        th.innerHTML=`<img src="${b64}" alt="Nano ${i+1}" style="width:100%;height:100%;object-fit:cover;display:block"><div class="ai-thumb-overlay"><button class="ai-thumb-use">Choisir</button></div>`;
+        th.innerHTML=`<img src="${b64}" alt="Nano ${i+1}" style="width:100%;height:100%;object-fit:cover;display:block"><div class="ai-thumb-overlay"><button class="ai-thumb-use">Choisir</button><button class="ai-thumb-dl" onclick="event.stopPropagation();downloadThumb(this.closest('.ai-thumb-wrap'))">⬇ PNG</button></div>`;
         th.dataset.b64=b64;
         th.onclick=()=>applyNanoBanana(b64,th);
       }
@@ -2027,7 +2030,7 @@ async function generateImages(ns){
       // imgUrl = URL temporaire OpenAI CDN (~1h) — affichage direct, conversion b64 à l'application
       const wrap=document.createElement('div');
       wrap.className='ai-thumb-wrap';
-      wrap.innerHTML=`<img src="${imgUrl}" alt="DALL-E 3" crossorigin="anonymous"><div class="ai-thumb-overlay"><button class="ai-thumb-use">Choisir</button></div><span style="position:absolute;bottom:3px;left:4px;font-size:8px;color:rgba(255,255,255,.7);background:rgba(0,0,0,.5);padding:1px 5px;border-radius:3px">DALL-E 3</span>`;
+      wrap.innerHTML=`<img src="${imgUrl}" alt="DALL-E 3" crossorigin="anonymous"><div class="ai-thumb-overlay"><button class="ai-thumb-use">Choisir</button><button class="ai-thumb-dl" onclick="event.stopPropagation();downloadThumb(this.closest('.ai-thumb-wrap'))">⬇ PNG</button></div><span style="position:absolute;bottom:3px;left:4px;font-size:8px;color:rgba(255,255,255,.7);background:rgba(0,0,0,.5);padding:1px 5px;border-radius:3px">DALL-E 3</span>`;
       wrap.querySelector('button').onclick=()=>selectAiImage(ns,'__url__'+imgUrl,wrap);
       grid?.appendChild(wrap);
       setAiStatus(ns,`✓ ${done}/${count} image${done>1?'s':''} — cliquez pour sélectionner`);
@@ -2696,7 +2699,7 @@ function makeFallbackThumb(ns, prompt, styleId, seed, grid){
   const b64=generateCanvasBg(prompt, styleId, seed);
   const wrap=document.createElement('div');
   wrap.className='ai-thumb-wrap';
-  wrap.innerHTML=`<img src="${b64}" alt="Fond généré"><div class="ai-thumb-overlay"><button class="ai-thumb-use">Choisir</button></div><span style="position:absolute;bottom:3px;left:4px;font-size:8px;color:rgba(255,255,255,.6);background:rgba(0,0,0,.4);padding:1px 4px;border-radius:3px">canvas</span>`;
+  wrap.innerHTML=`<img src="${b64}" alt="Fond généré"><div class="ai-thumb-overlay"><button class="ai-thumb-use">Choisir</button><button class="ai-thumb-dl" onclick="event.stopPropagation();downloadThumb(this.closest('.ai-thumb-wrap'))">⬇ PNG</button></div><span style="position:absolute;bottom:3px;left:4px;font-size:8px;color:rgba(255,255,255,.6);background:rgba(0,0,0,.4);padding:1px 4px;border-radius:3px">canvas</span>`;
   // Pour applyAiImage on stocke directement la base64
   wrap.querySelector('button').onclick=()=>{
     selectAiImage(ns, b64, wrap);
@@ -2954,6 +2957,27 @@ let _pt=null;
 function updatePreview(){clearTimeout(_pt);_pt=setTimeout(_render,160);saveState()}
 function _render(){$('preview').srcdoc=buildHTML()}
 
+/* ══ EXPORT VIGNETTE PNG ══════════════════════════════════════ */
+function downloadThumb(wrap){
+  const img=wrap.querySelector('img');if(!img)return;
+  const src=img.src;
+  const filename='hcs-fond-'+(Date.now())+'.png';
+  if(src.startsWith('data:')){
+    const a=document.createElement('a');a.href=src;a.download=filename;a.click();
+    showToast('⬇ Image téléchargée !');return;
+  }
+  // URL externe (DALL-E) → canvas pour contournement CORS
+  const tmp=new Image();tmp.crossOrigin='anonymous';
+  tmp.onload=()=>{
+    const c=document.createElement('canvas');c.width=tmp.naturalWidth;c.height=tmp.naturalHeight;
+    c.getContext('2d').drawImage(tmp,0,0);
+    const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download=filename;a.click();
+    showToast('⬇ Image téléchargée !');
+  };
+  tmp.onerror=()=>showToast('⚠ Téléchargement impossible (restriction CORS)','var(--red)');
+  tmp.src=src+'?t='+Date.now();
+}
+
 /* ══ EXPORT ══════════════════════════════════════════════════ */
 function exportHTML(){
   const html=buildHTML();
@@ -2968,6 +2992,16 @@ function exportHTML(){
 }
 
 /* ── Sauvegarde HCS API ─────────────────────────────────── */
+async function saveLandingPage(){
+  const btn=document.getElementById('btn-save-lp');
+  if(btn){btn.textContent='⏳ Enregistrement…';btn.disabled=true}
+  await hcsSaveLandingPage();
+  if(btn){
+    btn.textContent='✓ Enregistré';
+    setTimeout(()=>{btn.textContent='💾 Enregistrer';btn.disabled=false},2500);
+  }
+}
+
 async function hcsSaveLandingPage(){
   const titrePage = STATE.page?.title || STATE.hero?.line1 || 'Landing Page';
   const clientNom = null; // Pas de champ client dans le builder, valeur null gérée côté API

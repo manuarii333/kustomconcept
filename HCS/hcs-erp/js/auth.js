@@ -26,44 +26,44 @@ const ROLES = {
     description: 'Accès à tous les modules métier de l\'ERP',
     color:       '#6366F1',
     icon:        '🛡️',
-    modules:     ['dashboard','crm','ventes','stock','production',
-                  'comptabilite','rh','messagerie','caisse','outils','agents','parametres'],
+    modules:     ['dashboard','crm','ventes','achats','stock','production',
+                  'comptabilite','rh','messagerie','caisse','outils','parametres','fidelite'],
     peutGererUtilisateurs: true,
     peutCreerSuperAdmin:   false
   },
   comptable: {
     label:       'Comptable',
-    description: 'Comptabilité, ventes en lecture, rapports financiers et outils',
+    description: 'Comptabilité, ventes en lecture et rapports financiers',
     color:       '#0891B2',
     icon:        '💼',
-    modules:     ['dashboard','comptabilite','ventes','messagerie','outils'],
+    modules:     ['dashboard','comptabilite','ventes','achats','messagerie','fidelite'],
     peutGererUtilisateurs: false,
     peutCreerSuperAdmin:   false
   },
   commercial: {
     label:       'Commercial',
-    description: 'CRM, devis, commandes, factures, caisse et outils commerciaux',
+    description: 'CRM, devis, commandes, factures et caisse',
     color:       '#16A34A',
     icon:        '🤝',
-    modules:     ['dashboard','crm','ventes','caisse','messagerie','outils','agents'],
+    modules:     ['dashboard','crm','ventes','caisse','messagerie','fidelite'],
     peutGererUtilisateurs: false,
     peutCreerSuperAdmin:   false
   },
   magasinier: {
     label:       'Magasinier',
-    description: 'Stocks, production, outils atelier et DTF',
+    description: 'Stocks, achats fournisseurs et production',
     color:       '#D97706',
     icon:        '📦',
-    modules:     ['dashboard','stock','production','messagerie','outils'],
+    modules:     ['dashboard','stock','achats','production','messagerie'],
     peutGererUtilisateurs: false,
     peutCreerSuperAdmin:   false
   },
   vendeur: {
     label:       'Vendeur',
-    description: 'Saisie de devis, commandes, caisse et outils boutique',
+    description: 'Saisie de devis, commandes et point de caisse',
     color:       '#7C3AED',
     icon:        '🛒',
-    modules:     ['dashboard','crm','ventes','caisse','messagerie','outils'],
+    modules:     ['dashboard','crm','ventes','caisse','messagerie','fidelite'],
     peutGererUtilisateurs: false,
     peutCreerSuperAdmin:   false
   },
@@ -414,6 +414,33 @@ function toggleMdpVisibility() {
 }
 
 /* ================================================================
+   JETON API HMAC — récupéré silencieusement après connexion
+   Stocké dans sessionStorage (effacé à la fermeture du navigateur).
+   Si l'API est inaccessible, l'ERP continue en mode localStorage-only.
+
+   ⚠️  ROUTE NON IMPLÉMENTÉE côté PHP : api/token n'existe pas dans
+   allowedTables (index.php). La fonction retourne silencieusement sans
+   erreur. La clé statique 'hcs-erp-2026' (mysql-api.js) reste active.
+   À FAIRE : ajouter le contrôleur api/controllers/token.php et
+   enregistrer 'token' dans allowedTables de index.php.
+   ================================================================ */
+async function _fetchApiToken(login, mdpHash) {
+  try {
+    const res = await fetch('https://highcoffeeshirts.com/erp/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login, mdpHash })
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.token) {
+      sessionStorage.setItem('hcs_api_token', data.token);
+      if (window.MYSQL) window.MYSQL.apiKey = data.token;
+    }
+  } catch (_) { /* API inaccessible — mode localStorage-only */ }
+}
+
+/* ================================================================
    SOUMISSION DU FORMULAIRE DE CONNEXION
    ================================================================ */
 function handleLogin(event) {
@@ -447,6 +474,9 @@ function handleLogin(event) {
 
   /* Connexion réussie */
   Auth.setSession(user);
+  const mdpHash = _hashMdp(mdpVal);
+  sessionStorage.setItem('hcs_mdp_hash', mdpHash);
+  _fetchApiToken(loginVal, mdpHash); /* fire-and-forget */
   showApp();
 }
 
@@ -639,6 +669,8 @@ window._couleurAvatar     = _couleurAvatar;
 (function () {
   const session = Auth.getSession();
   if (session) {
+    /* Renouveler le jeton API si le hash est disponible en session */
+    _fetchApiToken(session.login, sessionStorage.getItem('hcs_mdp_hash') || '');
     showApp();
   } else {
     renderLoginScreen();

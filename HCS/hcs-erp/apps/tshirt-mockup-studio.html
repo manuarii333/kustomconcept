@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Bebas+Neue&family=Pacifico&family=Anton&family=Raleway:wght@700&family=Oswald:wght@700&family=Dancing+Script:wght@700&family=Roboto+Condensed:wght@700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <title>T-Shirt Mockup Studio — HCS</title>
 <style>
 :root {
@@ -157,6 +158,19 @@ canvas#export-canvas { display: none; }
 /* Indicateur masque actif sur cellule */
 .mock-mask-ind { position: absolute; top: 4px; left: 4px; z-index: 5; background: rgba(67,233,123,0.85); border-radius: 4px; font-size: 0.48rem; color: #0f0f1a; font-weight: 800; padding: 1px 4px; display: none; pointer-events: none; }
 .mock-cell.mask-on .mock-mask-ind { display: block; }
+
+/* ── Couche Texte ── */
+.mock-txt { position:absolute; z-index:3; pointer-events:none; white-space:pre; font-weight:700; text-shadow:0 1px 6px rgba(0,0,0,0.9); transform-origin:center; display:none; line-height:1; }
+.mock-txt.on { display:block; }
+.tl-field { width:100%; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--bg4); color:var(--text); font-size:0.72rem; outline:none; margin-bottom:6px; }
+.tl-field:focus { border-color:var(--accent2); }
+.tl-sel { width:100%; padding:4px 6px; border-radius:6px; border:1px solid var(--border); background:var(--bg4); color:var(--text); font-size:0.68rem; margin-bottom:6px; cursor:pointer; }
+.tl-crow { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+.tl-cpick { height:26px; width:50px; border-radius:6px; border:1px solid var(--border); cursor:pointer; padding:0 2px; background:none; }
+.tl-swatches { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px; }
+.tl-sw { width:18px; height:18px; border-radius:4px; cursor:pointer; border:2px solid transparent; flex-shrink:0; transition:transform .15s; }
+.tl-sw:hover { transform:scale(1.25); }
+.tl-sw.on { border-color:var(--accent)!important; }
 
 /* Badge sauvegarde HCS API */
 .tmk-save-badge { display:none; align-items:center; gap:5px; padding:4px 10px; border-radius:8px; font-size:0.65rem; font-weight:700; background:rgba(67,233,123,0.18); border:1px solid rgba(67,233,123,0.5); color:#43e97b; margin-left:8px; }
@@ -330,6 +344,63 @@ canvas#export-canvas { display: none; }
       <div style="font-size:0.58rem;color:var(--text2);margin-top:4px">Basculer entre P1/P2/P3 pour voir les mockups correspondants dans la grille</div>
     </div>
 
+    <!-- Texte -->
+    <div class="section" id="tl-panel">
+      <div class="section-lbl">③ Texte</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:0.6rem;color:var(--text2)">Activer</span>
+        <button class="mask-toggle-btn" id="tl-tog" onclick="tlToggle()">OFF</button>
+      </div>
+      <input type="text" class="tl-field" id="tl-txt" placeholder="Votre texte…" oninput="tlUpdate('text',this.value)">
+      <div style="font-size:0.6rem;color:var(--text2);margin-bottom:3px">Police</div>
+      <select class="tl-sel" id="tl-font" onchange="tlUpdate('font',this.value)">
+        <option value="'Montserrat',sans-serif" selected>Montserrat</option>
+        <option value="'Bebas Neue',cursive">Bebas Neue</option>
+        <option value="'Anton',sans-serif">Anton</option>
+        <option value="'Oswald',sans-serif">Oswald</option>
+        <option value="'Raleway',sans-serif">Raleway</option>
+        <option value="'Playfair Display',serif">Playfair Display</option>
+        <option value="'Dancing Script',cursive">Dancing Script</option>
+        <option value="'Pacifico',cursive">Pacifico</option>
+        <option value="'Roboto Condensed',sans-serif">Roboto Condensed</option>
+        <option value="Impact,sans-serif">Impact</option>
+        <option value="Arial,sans-serif">Arial</option>
+      </select>
+      <div class="tl-crow">
+        <span style="font-size:0.6rem;color:var(--text2)">Couleur</span>
+        <input type="color" class="tl-cpick" id="tl-col" value="#ffffff" oninput="tlUpdate('color',this.value)">
+        <span style="font-size:0.6rem;color:var(--text2);font-family:monospace" id="tl-col-lbl">#ffffff</span>
+      </div>
+      <div class="tl-swatches">
+        <div class="tl-sw on"  style="background:#ffffff"               onclick="tlColor('#ffffff')"  title="Blanc"></div>
+        <div class="tl-sw"     style="background:#000000;border-color:#444" onclick="tlColor('#000000')"  title="Noir"></div>
+        <div class="tl-sw"     style="background:#FFD700"               onclick="tlColor('#FFD700')"  title="Or"></div>
+        <div class="tl-sw"     style="background:#FF6584"               onclick="tlColor('#FF6584')"  title="Rose"></div>
+        <div class="tl-sw"     style="background:#4facfe"               onclick="tlColor('#4facfe')"  title="Bleu"></div>
+        <div class="tl-sw"     style="background:#43e97b"               onclick="tlColor('#43e97b')"  title="Vert"></div>
+        <div class="tl-sw"     style="background:#f7971e"               onclick="tlColor('#f7971e')"  title="Orange"></div>
+        <div class="tl-sw"     style="background:#a29bfe"               onclick="tlColor('#a29bfe')"  title="Mauve"></div>
+      </div>
+      <div class="zone-row">
+        <div class="zone-lbl-row"><span>X — position</span><span class="zval" id="tl-vx">50%</span></div>
+        <input type="range" class="zone-slider" id="tl-rx" min="0" max="100" value="50" oninput="tlUpdate('x',+this.value)">
+      </div>
+      <div class="zone-row">
+        <div class="zone-lbl-row"><span>Y — position</span><span class="zval" id="tl-vy">80%</span></div>
+        <input type="range" class="zone-slider" id="tl-ry" min="0" max="100" value="80" oninput="tlUpdate('y',+this.value)">
+      </div>
+      <div class="zone-row">
+        <div class="zone-lbl-row"><span>Taille</span><span class="zval" id="tl-vs">8%</span></div>
+        <input type="range" class="zone-slider" id="tl-rs" min="1" max="25" value="8" oninput="tlUpdate('size',+this.value)">
+      </div>
+      <div class="zone-row">
+        <div class="zone-lbl-row"><span>Rotation</span><span class="zval" id="tl-vr">0°</span></div>
+        <input type="range" class="zone-slider" id="tl-rr" min="-180" max="180" value="0" oninput="tlUpdate('rot',+this.value)">
+      </div>
+      <button class="zone-apply-all" onclick="tlApplyRow()">→ Appliquer à la rangée</button>
+      <button class="zone-apply-all" onclick="tlApplyAll()">↔ Appliquer à toutes les cellules</button>
+    </div>
+
   </div>
 
   <!-- CENTRE -->
@@ -416,6 +487,7 @@ canvas#export-canvas { display: none; }
       <div class="sel-preview" id="sel-preview">
         <div class="sel-preview-bg" id="sel-bg"></div>
         <div class="sel-preview-logo" id="sel-logo-wrap" style="display:none"><img id="sel-logo-img" src=""></div>
+        <div class="mock-txt" id="sel-txt"></div>
         <div class="sel-empty" id="sel-empty">Cliquer sur un mockup</div>
       </div>
       <div class="info-row"><span>Produit</span><span class="info-val" id="info-prod">—</span></div>
@@ -508,27 +580,43 @@ let cellConfig = {}; // cellConfig['row-col'] = { x, y, w, rotate, mask }
 const DEFAULT_ZONE = { x: 50, y: 47, w: 44, rotate: 0, mask: false };
 const STORAGE_KEY = 'hcs_mockup_v1';
 
-// ── Persistance localStorage ──────────────────────────────
-function saveState() {
-  try {
-    const rowLogos = {};
-    [1,2,3].forEach(r => {
-      const rslot = document.getElementById(`rowslot-${r}`);
-      if (rslot?.classList.contains('loaded')) rowLogos[r] = logos9[r]?.['a'] || null;
-    });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ shirtImgs, logos9, cellConfig, rowLogos, activeProd }));
-  } catch(e) { console.warn('saveState quota exceeded', e); }
+// ── Persistance ───────────────────────────────────────────
+// localStorage : configs légères (cellConfig, activeProd)
+// IndexedDB    : images (shirtImgs, logos9) — pas de limite quota
+
+function idbOpen() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('hcs_mockup_db', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('imgs');
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = rej;
+  });
 }
 
-function loadState() {
+async function saveImages() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const state = JSON.parse(raw);
+    const db = await idbOpen();
+    await new Promise((res, rej) => {
+      const tx = db.transaction('imgs', 'readwrite');
+      const st = tx.objectStore('imgs');
+      st.put(shirtImgs, 'shirtImgs');
+      st.put(logos9, 'logos9');
+      tx.oncomplete = res; tx.onerror = rej;
+    });
+  } catch(e) { console.warn('saveImages IDB erreur', e); }
+}
 
-    // Shirts
-    if (state.shirtImgs) {
-      Object.entries(state.shirtImgs).forEach(([pi, url]) => {
+async function loadImages() {
+  try {
+    const db = await idbOpen();
+    const idbGet = key => new Promise(res => {
+      const r = db.transaction('imgs').objectStore('imgs').get(key);
+      r.onsuccess = () => res(r.result); r.onerror = () => res(null);
+    });
+    const [shirts, logos] = await Promise.all([idbGet('shirtImgs'), idbGet('logos9')]);
+
+    if (shirts) {
+      Object.entries(shirts).forEach(([pi, url]) => {
         pi = +pi;
         shirtImgs[pi] = url;
         const slot = document.getElementById(`shirt-slot-${pi}`);
@@ -542,9 +630,8 @@ function loadState() {
       });
     }
 
-    // Logos 9
-    if (state.logos9) {
-      Object.entries(state.logos9).forEach(([row, cols]) => {
+    if (logos) {
+      Object.entries(logos).forEach(([row, cols]) => {
         row = +row;
         if (!logos9[row]) logos9[row] = {};
         Object.entries(cols).forEach(([col, url]) => {
@@ -557,29 +644,46 @@ function loadState() {
           img.src = url;
           slot.querySelectorAll('.logo-slot-lbl,.logo-slot-hint').forEach(el => el.style.display='none');
         });
+        // Slot rangée
+        const urlA = logos[row]?.['a'];
+        if (urlA) {
+          const rslot = document.getElementById(`rowslot-${row}`);
+          if (rslot) {
+            rslot.classList.add('loaded');
+            let img = rslot.querySelector('img');
+            if (!img) { img = document.createElement('img'); rslot.appendChild(img); }
+            img.src = urlA;
+            const hint = rslot.querySelector('.slot-hint');
+            if (hint) hint.style.display = 'none';
+          }
+        }
       });
     }
 
-    // Slots rangée (mode 3)
-    if (state.rowLogos) {
-      [1,2,3].forEach(row => {
-        const url = state.rowLogos[row];
-        if (!url) return;
-        const rslot = document.getElementById(`rowslot-${row}`);
-        if (!rslot) return;
-        rslot.classList.add('loaded');
-        let img = rslot.querySelector('img');
-        if (!img) { img = document.createElement('img'); rslot.appendChild(img); }
-        img.src = url;
-        const hint = rslot.querySelector('.slot-hint');
-        if (hint) hint.style.display = 'none';
-      });
-    }
+    if (shirts || logos) refreshGrid();
+  } catch(e) { console.warn('loadImages IDB erreur', e); }
+}
 
-    // CellConfig (zone & masque) — structuré par produit
+async function clearIDB() {
+  try {
+    const db = await idbOpen();
+    const tx = db.transaction('imgs', 'readwrite');
+    tx.objectStore('imgs').clear();
+  } catch(e) {}
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ cellConfig, activeProd }));
+  } catch(e) { console.warn('saveState erreur', e); }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const state = JSON.parse(raw);
     if (state.cellConfig) Object.assign(cellConfig, state.cellConfig);
-
-    // Produit actif
     if (state.activeProd != null) {
       activeProd = state.activeProd;
       document.querySelectorAll('.prod-tab').forEach((b, i) => b.classList.toggle('active', i === activeProd));
@@ -587,9 +691,7 @@ function loadState() {
       document.getElementById('active-prod-lbl').textContent = `Produit ${activeProd+1}`;
       document.getElementById('grid-prod-lbl').textContent = `Produit ${activeProd+1}`;
     }
-
-    refreshGrid();
-  } catch(e) { console.warn('loadState failed', e); }
+  } catch(e) { console.warn('loadState erreur', e); }
 }
 
 function getCellCfg(row, col, prodIdx) {
@@ -597,6 +699,7 @@ function getCellCfg(row, col, prodIdx) {
   if (!cellConfig[pi]) cellConfig[pi] = {};
   const k = `${row}-${col}`;
   if (!cellConfig[pi][k]) cellConfig[pi][k] = { ...DEFAULT_ZONE };
+  if (!cellConfig[pi][k].tl) cellConfig[pi][k].tl = { ...DEFAULT_TL };
   return cellConfig[pi][k];
 }
 
@@ -768,7 +871,7 @@ function loadRowLogo(e, row) {
     img.src = ev.target.result;
     rslot.querySelector('.slot-hint').style.display = 'none';
     refreshGrid();
-    saveState();
+    saveState(); saveImages();
   };
   reader.readAsDataURL(file);
 }
@@ -793,7 +896,7 @@ function clearRowLogo(row) {
   rslot.querySelector('.slot-hint').style.display = '';
   document.getElementById(`rowfile-${row}`).value = '';
   refreshGrid();
-  saveState();
+  saveState(); saveImages();
 }
 
 // ── Produit tabs ─────────────────────────────────────────
@@ -825,7 +928,7 @@ function loadShirt(e, prodIdx) {
     slot.querySelectorAll('.slot-lbl,.slot-hint').forEach(el => el.style.display='none');
     document.getElementById(`shirt-info-${prodIdx}`).textContent = file.name;
     refreshGrid();
-    saveState();
+    saveState(); saveImages();
   };
   reader.readAsDataURL(file);
 }
@@ -840,7 +943,7 @@ function clearShirt(prodIdx) {
   document.getElementById(`shirt-info-${prodIdx}`).textContent = 'Aucune photo';
   document.getElementById(`shirt-file-${prodIdx}`).value = '';
   refreshGrid();
-  saveState();
+  saveState(); saveImages();
 }
 
 // ── Chargement logo ───────────────────────────────────────
@@ -858,7 +961,7 @@ function loadLogo(e, row, col) {
     img.src = ev.target.result;
     slot.querySelectorAll('.logo-slot-lbl,.logo-slot-hint').forEach(el => el.style.display='none');
     refreshGrid();
-    saveState();
+    saveState(); saveImages();
   };
   reader.readAsDataURL(file);
 }
@@ -872,7 +975,7 @@ function clearLogo(row, col) {
   slot.querySelectorAll('.logo-slot-lbl,.logo-slot-hint').forEach(el => el.style.display='');
   document.getElementById(`lfile-${row}-${col}`).value = '';
   refreshGrid();
-  saveState();
+  saveState(); saveImages();
 }
 
 // ── Rafraîchir la grille ──────────────────────────────────
@@ -910,8 +1013,9 @@ function refreshGrid() {
         if (logoImg) logoImg.remove();
         if (lbl) lbl.style.display = '';
       }
-      // Appliquer config zone (position/masque)
+      // Appliquer config zone (position/masque) et texte
       applyZoneToCell(row, col);
+      tlRender(row, col);
     });
   });
 }
@@ -954,6 +1058,9 @@ function selectMockup(row, col) {
   document.getElementById('zone-panel').classList.add('visible');
   syncZonePanel(getCellCfg(row, col));
   syncSelPreviewZone();
+  // Sync panneau texte et aperçu avec la cellule cliquée
+  tlSyncPanel(getCellCfg(row, col).tl);
+  tlRenderPreview(getCellCfg(row, col).tl);
 }
 
 // ── Téléchargement PNG via Canvas ─────────────────────────
@@ -1021,6 +1128,24 @@ async function renderToCanvas(row, col, prodIdx, size) {
     }
 
     if (rot !== 0) ctx.restore();
+  }
+
+  // Rendu texte (cfg séparé car logoUrl peut être absent)
+  const tl = getCellCfg(row, col, prodIdx).tl;
+  if (tl && tl.on && tl.text) {
+    try { await document.fonts.load(`700 16px ${tl.font}`); } catch(e) {}
+    const fs = Math.round(h * (tl.size / 100));
+    ctx.save();
+    ctx.translate(w * (tl.x / 100), h * (tl.y / 100));
+    ctx.rotate((tl.rot || 0) * Math.PI / 180);
+    ctx.font = `700 ${fs}px ${tl.font}`;
+    ctx.fillStyle = tl.color || '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.9)';
+    ctx.shadowBlur = Math.max(2, Math.round(fs * 0.15));
+    ctx.fillText(tl.text, 0, 0);
+    ctx.restore();
   }
 
   return canvas;
@@ -1212,8 +1337,122 @@ function clearAll() {
   document.getElementById('info-prod').textContent = '—';
   document.getElementById('info-logo').textContent = '—';
   localStorage.removeItem(STORAGE_KEY);
+  clearIDB();
 }
-document.addEventListener('DOMContentLoaded', loadState);
+// ── Couche Texte ─────────────────────────────────────────────
+const DEFAULT_TL = { on: false, text: '', font: "'Montserrat',sans-serif", color: '#ffffff', x: 50, y: 80, size: 8, rot: 0 };
+
+function tlInitDivs() {
+  [1,2,3].forEach(r => ['a','b','c'].forEach(c => {
+    const cell = document.getElementById(`mock-${r}-${c}`);
+    if (!cell || document.getElementById(`mtxt-${r}-${c}`)) return;
+    const d = document.createElement('div');
+    d.className = 'mock-txt';
+    d.id = `mtxt-${r}-${c}`;
+    cell.appendChild(d);
+  }));
+}
+
+function tlGet(row, col, pi) { return getCellCfg(row, col, pi).tl; }
+
+function tlRender(row, col) {
+  const tl = tlGet(row, col);
+  const el = document.getElementById(`mtxt-${row}-${col}`);
+  if (!el) return;
+  if (!tl.on || !tl.text) { el.classList.remove('on'); el.textContent = ''; }
+  else {
+    const cell = document.getElementById(`mock-${row}-${col}`);
+    const fs = Math.round((cell ? cell.offsetHeight : 200) * (tl.size / 100));
+    el.textContent = tl.text;
+    el.style.cssText = `font-family:${tl.font};color:${tl.color};font-size:${fs}px;left:${tl.x}%;top:${tl.y}%;transform:translate(-50%,-50%) rotate(${tl.rot}deg)`;
+    el.classList.add('on');
+  }
+  // Sync aperçu sélection si c'est la cellule active
+  if (selected && selected.row === row && selected.col === col) tlRenderPreview(tl);
+}
+
+function tlRenderPreview(tl) {
+  const el = document.getElementById('sel-txt');
+  if (!el) return;
+  if (!tl || !tl.on || !tl.text) { el.classList.remove('on'); el.textContent = ''; return; }
+  const wrap = document.getElementById('sel-preview');
+  const fs = Math.round((wrap ? wrap.offsetHeight : 200) * (tl.size / 100));
+  el.textContent = tl.text;
+  el.style.cssText = `font-family:${tl.font};color:${tl.color};font-size:${fs}px;left:${tl.x}%;top:${tl.y}%;transform:translate(-50%,-50%) rotate(${tl.rot}deg)`;
+  el.classList.add('on');
+}
+
+function tlSyncPanel(tl) {
+  const btn = document.getElementById('tl-tog');
+  btn.textContent = tl.on ? 'ON' : 'OFF';
+  btn.classList.toggle('on', tl.on);
+  document.getElementById('tl-txt').value = tl.text || '';
+  const sel = document.getElementById('tl-font');
+  const opt = [...sel.options].find(o => o.value === tl.font);
+  if (opt) sel.value = opt.value;
+  document.getElementById('tl-col').value = tl.color || '#ffffff';
+  document.getElementById('tl-col-lbl').textContent = tl.color || '#ffffff';
+  document.getElementById('tl-rx').value = tl.x ?? 50;
+  document.getElementById('tl-ry').value = tl.y ?? 80;
+  document.getElementById('tl-rs').value = tl.size ?? 8;
+  document.getElementById('tl-rr').value = tl.rot ?? 0;
+  document.getElementById('tl-vx').textContent = (tl.x ?? 50) + '%';
+  document.getElementById('tl-vy').textContent = (tl.y ?? 80) + '%';
+  document.getElementById('tl-vs').textContent = (tl.size ?? 8) + '%';
+  document.getElementById('tl-vr').textContent = (tl.rot ?? 0) + '°';
+  const c = (tl.color || '#ffffff').toLowerCase();
+  document.querySelectorAll('.tl-sw').forEach(s => s.classList.toggle('on', s.style.background.replace(/\s/g,'').toLowerCase() === c));
+}
+
+function tlReadPanel() {
+  return {
+    on:    document.getElementById('tl-tog').classList.contains('on'),
+    text:  document.getElementById('tl-txt').value,
+    font:  document.getElementById('tl-font').value,
+    color: document.getElementById('tl-col').value,
+    x:    +document.getElementById('tl-rx').value,
+    y:    +document.getElementById('tl-ry').value,
+    size: +document.getElementById('tl-rs').value,
+    rot:  +document.getElementById('tl-rr').value
+  };
+}
+
+function tlToggle() {
+  const tl = tlReadPanel();
+  tl.on = !tl.on;
+  const btn = document.getElementById('tl-tog');
+  btn.textContent = tl.on ? 'ON' : 'OFF';
+  btn.classList.toggle('on', tl.on);
+  if (selected) { getCellCfg(selected.row, selected.col).tl = { ...tl }; tlRender(selected.row, selected.col); saveState(); }
+}
+
+function tlUpdate(key, val) {
+  const lblMap = { x:'tl-vx', y:'tl-vy', size:'tl-vs', rot:'tl-vr' };
+  const unitMap = { x:'%', y:'%', size:'%', rot:'°' };
+  if (lblMap[key]) document.getElementById(lblMap[key]).textContent = val + (unitMap[key] || '');
+  if (key === 'color') {
+    document.getElementById('tl-col-lbl').textContent = val;
+    document.querySelectorAll('.tl-sw').forEach(s => s.classList.toggle('on', s.style.background.replace(/\s/g,'').toLowerCase() === val.toLowerCase()));
+  }
+  if (selected) { getCellCfg(selected.row, selected.col).tl[key] = val; tlRender(selected.row, selected.col); saveState(); }
+}
+
+function tlColor(c) { document.getElementById('tl-col').value = c; tlUpdate('color', c); }
+
+function tlApplyRow() {
+  if (!selected) { alert('Cliquer d\'abord sur une cellule.'); return; }
+  const src = tlReadPanel();
+  ['a','b','c'].forEach(c => { getCellCfg(selected.row, c).tl = { ...src }; tlRender(selected.row, c); });
+  saveState();
+}
+
+function tlApplyAll() {
+  const src = tlReadPanel();
+  [1,2,3].forEach(r => ['a','b','c'].forEach(c => { getCellCfg(r, c).tl = { ...src }; tlRender(r, c); }));
+  saveState();
+}
+
+document.addEventListener('DOMContentLoaded', () => { tlInitDivs(); loadState(); loadImages(); });
 </script>
 </body>
 </html>

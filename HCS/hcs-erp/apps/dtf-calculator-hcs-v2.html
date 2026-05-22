@@ -74,6 +74,18 @@
       const [showHistory, setShowHistory] = useState(false);
       const lastSavedRef = useRef(null); // Empêche les sauvegardes en double
 
+      // Module calcul par format
+      const [formats, setFormats] = useState([
+        { id: 1, nom: 'Petit logo', largeur: 5, hauteur: 10 },
+        { id: 2, nom: 'Badge / étiquette', largeur: 10, hauteur: 10 },
+        { id: 3, nom: 'Logo poitrine', largeur: 10, hauteur: 15 },
+        { id: 4, nom: 'Logo dos (M)', largeur: 20, hauteur: 20 },
+        { id: 5, nom: 'Logo dos (L)', largeur: 24, hauteur: 24 },
+        { id: 6, nom: 'Manchette', largeur: 6, hauteur: 6 },
+        { id: 7, nom: 'Full front (XL)', largeur: 30, hauteur: 35 },
+      ]);
+      const [showFormats, setShowFormats] = useState(true);
+
       // Tarifs HTV4U éditables selon les paliers (basés sur l'image)
       const [htv4uPricing, setHtv4uPricing] = useState({
         sheet: [
@@ -370,6 +382,48 @@
         });
       }, [clientDesigns, designGap]);
 
+      // Coût au cm² dérivé du calcul total
+      const costPer100cm2 = useMemo(() => {
+        if (!calculateTotalCost || !calculateTotalArea || calculateTotalArea === 0) return null;
+        return (calculateTotalCost.totalXPF / calculateTotalArea) * 100;
+      }, [calculateTotalCost, calculateTotalArea]);
+
+      // Gestion des formats
+      const addFormat = () => {
+        const newId = Math.max(...formats.map(f => f.id), 0) + 1;
+        setFormats([...formats, { id: newId, nom: `Format ${newId}`, largeur: 10, hauteur: 10 }]);
+      };
+      const removeFormat = (id) => {
+        if (formats.length > 1) setFormats(formats.filter(f => f.id !== id));
+      };
+      const updateFormat = (id, field, value) => {
+        setFormats(formats.map(f => f.id === id ? { ...f, [field]: field === 'nom' ? value : Math.max(1, Number(value)) } : f));
+      };
+
+      // Export CSV des formats
+      const exportFormatsCSV = () => {
+        if (!costPer100cm2) return;
+        const date = new Date().toISOString().slice(0, 10);
+        const lignes = [
+          ['Format', 'Largeur (cm)', 'Hauteur (cm)', 'Surface (cm²)', 'Coût unitaire (F)', '×10 (F)', '×20 (F)', '×50 (F)', 'Prix vente suggéré ×2.5 (F)'],
+          ...formats.map(f => {
+            const surface = f.largeur * f.hauteur;
+            const coutUnit = Math.round(surface * costPer100cm2 / 100);
+            return [f.nom, f.largeur, f.hauteur, surface, coutUnit, coutUnit * 10, coutUnit * 20, coutUnit * 50, Math.round(coutUnit * 2.5)];
+          }),
+          [],
+          [`Coût/100cm²: ${Math.round(costPer100cm2)} F`, `Surface totale: ${(calculateTotalArea / 100).toFixed(0)} cm²`, `Date: ${date}`]
+        ];
+        const csv = lignes.map(row => row.join(';')).join('\n');
+        const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `formats-dtf-${date}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
       // Déterminer le palier actif
       const getCurrentTier = (qty) => {
         if (qty >= 20) return '20+';
@@ -401,6 +455,11 @@
         lastSavedRef.current = dedupKey;
 
         const formatUsed = clientDesigns.map(d => d.name).join(', ');
+        const formatsDetail = costPer100cm2 ? formats.map(f => {
+          const surface = f.largeur * f.hauteur;
+          const coutUnit = Math.round(surface * costPer100cm2 / 100);
+          return { nom: f.nom, largeur_cm: f.largeur, hauteur_cm: f.hauteur, cout_unitaire_xpf: coutUnit, prix_vente_suggere_xpf: Math.round(coutUnit * 2.5) };
+        }) : null;
         const donnees = {
           type: 'dtf',
           quantite: totalDesigns,
@@ -408,7 +467,10 @@
           prix_total: totalXPF,
           client_nom: '',
           format: formatUsed,
-          date: new Date().toISOString().slice(0, 10)
+          date: new Date().toISOString().slice(0, 10),
+          cout_par_cm2: costPer100cm2 ? parseFloat((costPer100cm2 / 100).toFixed(6)) : null,
+          surface_totale_cm2: Math.round(calculateTotalArea),
+          formats_detail: formatsDetail ? JSON.stringify(formatsDetail) : null
         };
 
         if (typeof HCSApi !== 'undefined') {
@@ -913,6 +975,115 @@
                 </table>
               </div>
             </div>
+
+            {/* Module Calcul par Format */}
+            {costPer100cm2 !== null && (
+              <div className="bg-gray-800/50 glass rounded-xl mb-6 border border-green-700/50 overflow-hidden">
+                <div className="flex justify-between items-center px-4 py-3 bg-gradient-to-r from-green-900/60 to-teal-900/60">
+                  <h2 className="text-lg font-bold text-green-400">📐 CALCUL PAR FORMAT</h2>
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    <span className="bg-green-900/80 text-green-300 px-3 py-1 rounded-full text-sm font-bold border border-green-700">
+                      Coût / 100 cm² : {Math.round(costPer100cm2).toLocaleString()} F
+                    </span>
+                    <button
+                      onClick={exportFormatsCSV}
+                      className="bg-amber-600 hover:bg-amber-500 px-4 py-1.5 rounded-lg text-sm font-bold transition-colors flex items-center gap-1 shadow"
+                    >
+                      ⬇️ Exporter CSV
+                    </button>
+                    <button
+                      onClick={() => setShowFormats(!showFormats)}
+                      className="text-gray-400 hover:text-white text-xl w-8 text-center"
+                    >
+                      {showFormats ? '▲' : '▼'}
+                    </button>
+                  </div>
+                </div>
+
+                {showFormats && (
+                  <div className="p-4">
+                    <div className="overflow-x-auto mb-4">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-900/70">
+                          <tr>
+                            <th className="p-2 text-left text-gray-400">Nom du format</th>
+                            <th className="p-2 text-center text-gray-400">L (cm)</th>
+                            <th className="p-2 text-center text-gray-400">H (cm)</th>
+                            <th className="p-2 text-center text-gray-400">Surface</th>
+                            <th className="p-2 text-center text-gray-400">1 pièce</th>
+                            <th className="p-2 text-center text-gray-400">× 10</th>
+                            <th className="p-2 text-center text-gray-400">× 20</th>
+                            <th className="p-2 text-center text-gray-400">× 50</th>
+                            <th className="p-2 text-center text-amber-400">Vente ×2.5</th>
+                            <th className="p-2"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {formats.map((f, idx) => {
+                            const surface = f.largeur * f.hauteur;
+                            const coutUnit = Math.round(surface * costPer100cm2 / 100);
+                            return (
+                              <tr key={f.id} className={idx % 2 === 0 ? 'bg-gray-800/30' : 'bg-gray-800/10'}>
+                                <td className="p-2">
+                                  <input
+                                    type="text"
+                                    value={f.nom}
+                                    onChange={(e) => updateFormat(f.id, 'nom', e.target.value)}
+                                    className="bg-gray-700/50 rounded px-2 py-1 text-white text-xs border border-gray-600 w-36 focus:border-green-500"
+                                  />
+                                </td>
+                                <td className="p-2 text-center">
+                                  <input
+                                    type="number"
+                                    value={f.largeur}
+                                    onChange={(e) => updateFormat(f.id, 'largeur', e.target.value)}
+                                    className="bg-gray-700/50 rounded px-2 py-1 text-white text-xs border border-gray-600 w-14 text-center focus:border-green-500"
+                                    min="1"
+                                  />
+                                </td>
+                                <td className="p-2 text-center">
+                                  <input
+                                    type="number"
+                                    value={f.hauteur}
+                                    onChange={(e) => updateFormat(f.id, 'hauteur', e.target.value)}
+                                    className="bg-gray-700/50 rounded px-2 py-1 text-white text-xs border border-gray-600 w-14 text-center focus:border-green-500"
+                                    min="1"
+                                  />
+                                </td>
+                                <td className="p-2 text-center text-gray-300">{surface} cm²</td>
+                                <td className="p-2 text-center font-bold text-green-400">{coutUnit.toLocaleString()} F</td>
+                                <td className="p-2 text-center text-teal-300">{(coutUnit * 10).toLocaleString()} F</td>
+                                <td className="p-2 text-center text-teal-300">{(coutUnit * 20).toLocaleString()} F</td>
+                                <td className="p-2 text-center text-teal-300">{(coutUnit * 50).toLocaleString()} F</td>
+                                <td className="p-2 text-center font-bold text-amber-400">{Math.round(coutUnit * 2.5).toLocaleString()} F</td>
+                                <td className="p-2 text-center">
+                                  <button
+                                    onClick={() => removeFormat(f.id)}
+                                    className="text-red-400 hover:text-red-300 text-xs px-1.5 py-1 rounded hover:bg-red-900/30 transition-colors disabled:opacity-30"
+                                    disabled={formats.length <= 1}
+                                  >✕</button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <button
+                        onClick={addFormat}
+                        className="bg-green-800/50 hover:bg-green-700/70 border border-green-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        + Ajouter un format
+                      </button>
+                      <p className="text-xs text-gray-500 text-right">
+                        Base de calcul : {Math.round(costPer100cm2).toLocaleString()} F / 100 cm² • Surface totale : {(calculateTotalArea / 100).toFixed(0)} cm²
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Badge de sauvegarde + Historique */}
             <div className="mb-4">

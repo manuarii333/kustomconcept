@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guide ERP — High Coffee Shirt</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --espresso:      #1a0e07;
+      --brown-deep:    #2a1508;
+      --brown-mid:     #3b1f0e;
+      --caramel:       #c4813a;
+      --caramel-light: #e09a4f;
+      --cream:         #f5ede0;
+      --cream-dim:     #c8b89a;
+      --amber:         #f0a030;
+      --green:         #00d4aa;
+      --blue:          #4a5fff;
+      --violet:        #b07bff;
+      --red:           #ff6b6b;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--espresso);
+      color: var(--cream);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      background-image:
+        linear-gradient(rgba(196,129,58,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(196,129,58,.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(26,14,7,.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(196,129,58,.2);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .topbar-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--caramel);
+      letter-spacing: -.3px;
+    }
+    .topbar-logo span { color: var(--cream-dim); font-weight: 600; }
+    .topbar-search {
+      margin-left: auto;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(196,129,58,.2);
+      border-radius: 8px;
+      padding: 6px 14px;
+      color: var(--cream);
+      font-size: 13px;
+      width: 260px;
+      outline: none;
+    }
+    .topbar-search::placeholder { color: var(--cream-dim); }
+    .topbar-search:focus { border-color: var(--caramel); }
+
+    /* ── LAYOUT ── */
+    .layout { display: flex; min-height: calc(100vh - 56px); }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 240px;
+      flex-shrink: 0;
+      background: var(--brown-deep);
+      border-right: 1px solid rgba(196,129,58,.12);
+      padding: 20px 0;
+      position: sticky;
+      top: 56px;
+      height: calc(100vh - 56px);
+      overflow-y: auto;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(196,129,58,.3); border-radius: 2px; }
+
+    .sidebar-section { margin-bottom: 8px; }
+    .sidebar-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--cream-dim);
+      padding: 8px 20px 4px;
+    }
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 20px;
+      color: var(--cream-dim);
+      text-decoration: none;
+      font-size: 13px;
+      border-left: 2px solid transparent;
+      transition: all .15s;
+      cursor: pointer;
+    }
+    .sidebar-link:hover, .sidebar-link.active {
+      color: var(--caramel-light);
+      background: rgba(196,129,58,.08);
+      border-left-color: var(--caramel);
+    }
+    .sidebar-link .icon { font-size: 14px; width: 18px; text-align: center; }
+
+    /* ── CONTENU ── */
+    .content {
+      flex: 1;
+      padding: 32px 40px;
+      max-width: 900px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, var(--brown-mid), var(--brown-deep));
+      border: 1px solid rgba(196,129,58,.2);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 40px;
+    }
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 28px;
+      color: var(--caramel);
+      margin-bottom: 8px;
+    }
+    .hero p { color: var(--cream-dim); font-size: 14px; max-width: 560px; }
+    .hero-badges { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+    .badge {
+      background: rgba(196,129,58,.15);
+      border: 1px solid rgba(196,129,58,.3);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      color: var(--caramel-light);
+    }
+
+    /* ── SECTION ── */
+    .section { margin-bottom: 48px; scroll-margin-top: 72px; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(196,129,58,.15);
+    }
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+    }
+    .section-subtitle { font-size: 12px; color: var(--cream-dim); margin-top: 2px; }
+
+    /* ── CARDS ── */
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+    .card {
+      background: var(--brown-mid);
+      border: 1px solid rgba(196,129,58,.12);
+      border-radius: 12px;
+      padding: 18px;
+      transition: border-color .2s, transform .15s;
+    }
+    .card:hover { border-color: rgba(196,129,58,.35); transform: translateY(-1px); }
+    .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .card-icon { font-size: 18px; }
+    .card-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--caramel-light);
+    }
+    .card-url {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: rgba(196,129,58,.6);
+      margin-bottom: 8px;
+    }
+    .card-desc { font-size: 12px; color: var(--cream-dim); line-height: 1.5; }
+    .card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .tag {
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(255,255,255,.05);
+      color: var(--cream-dim);
+      border: 1px solid rgba(255,255,255,.07);
+    }
+    .tag.green { background: rgba(0,212,170,.08); color: #00d4aa; border-color: rgba(0,212,170,.2); }
+    .tag.blue  { background: rgba(74,95,255,.08);  color: #7b96ff; border-color: rgba(74,95,255,.2); }
+    .tag.amber { background: rgba(240,160,48,.08); color: var(--amber); border-color: rgba(240,160,48,.2); }
+    .tag.red   { background: rgba(255,107,107,.08); color: #ff6b6b; border-color: rgba(255,107,107,.2); }
+    .tag.violet{ background: rgba(176,123,255,.08); color: #c4a0ff; border-color: rgba(176,123,255,.2); }
+
+    /* ── ASTUCE BOX ── */
+    .tip {
+      background: rgba(0,212,170,.06);
+      border: 1px solid rgba(0,212,170,.2);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--cream-dim);
+    }
+    .tip strong { color: #00d4aa; }
+    .tip-warn {
+      background: rgba(240,160,48,.06);
+      border-color: rgba(240,160,48,.2);
+    }
+    .tip-warn strong { color: var(--amber); }
+
+    /* ── FLUX TABLE ── */
+    .flow {
+      background: var(--brown-mid);
+      border: 1px solid rgba(196,129,58,.12);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 16px;
+    }
+    .flow-title { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--caramel); margin-bottom: 14px; text-transform: uppercase; letter-spacing: .8px; }
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+    .flow-step:last-child { margin-bottom: 0; }
+    .flow-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(196,129,58,.2);
+      border: 1px solid rgba(196,129,58,.4);
+      color: var(--caramel);
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .flow-text { font-size: 12px; color: var(--cream-dim); line-height: 1.5; }
+    .flow-text strong { color: var(--cream); }
+    .flow-arrow { color: rgba(196,129,58,.4); font-size: 16px; margin: 0 4px; }
+
+    /* ── SHORTCUTS ── */
+    .shortcuts { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 12px; }
+    .shortcut {
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .shortcut kbd {
+      background: rgba(196,129,58,.15);
+      border: 1px solid rgba(196,129,58,.3);
+      border-radius: 5px;
+      padding: 2px 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--caramel-light);
+      white-space: nowrap;
+    }
+    .shortcut span { font-size: 12px; color: var(--cream-dim); }
+
+    /* ── LIEN EXTERNE ── */
+    .ext-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(196,129,58,.1);
+      border: 1px solid rgba(196,129,58,.25);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      color: var(--caramel-light);
+      text-decoration: none;
+      margin-top: 10px;
+    }
+    .ext-link:hover { background: rgba(196,129,58,.18); }
+
+    /* ── RÉSULTAT SEARCH ── */
+    .search-hidden { display: none !important; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .content { padding: 20px 16px; }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">HCS ERP <span>— Guide utilisateur</span></div>
+  <input class="topbar-search" type="search" id="search" placeholder="🔍  Rechercher une page, une fonction…" oninput="filterGuide(this.value)">
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Navigation</div>
+      <a class="sidebar-link active" onclick="scrollTo('intro')"><span class="icon">🏠</span> Introduction</a>
+      <a class="sidebar-link" onclick="scrollTo('nav')"><span class="icon">🗺</span> Navigation</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Modules ERP</div>
+      <a class="sidebar-link" onclick="scrollTo('dashboard')"><span class="icon">📊</span> Dashboard</a>
+      <a class="sidebar-link" onclick="scrollTo('crm')"><span class="icon">👥</span> CRM Clients</a>
+      <a class="sidebar-link" onclick="scrollTo('ventes')"><span class="icon">🛒</span> Ventes</a>
+      <a class="sidebar-link" onclick="scrollTo('production')"><span class="icon">⚙️</span> Production</a>
+      <a class="sidebar-link" onclick="scrollTo('stock')"><span class="icon">📦</span> Stock</a>
+      <a class="sidebar-link" onclick="scrollTo('caisse')"><span class="icon">💳</span> Caisse POS</a>
+      <a class="sidebar-link" onclick="scrollTo('comptabilite')"><span class="icon">💰</span> Comptabilité</a>
+      <a class="sidebar-link" onclick="scrollTo('agents')"><span class="icon">🤖</span> Agents IA</a>
+      <a class="sidebar-link" onclick="scrollTo('rh')"><span class="icon">👤</span> RH</a>
+      <a class="sidebar-link" onclick="scrollTo('messagerie')"><span class="icon">💬</span> Messagerie</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Outils HCS</div>
+      <a class="sidebar-link" onclick="scrollTo('outils-ope')"><span class="icon">🛠</span> Opérations</a>
+      <a class="sidebar-link" onclick="scrollTo('outils-prod')"><span class="icon">🖨</span> Atelier DTF</a>
+      <a class="sidebar-link" onclick="scrollTo('outils-visuel')"><span class="icon">🎨</span> Visuel</a>
+      <a class="sidebar-link" onclick="scrollTo('outils-gestion')"><span class="icon">📈</span> Gestion</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Référence</div>
+      <a class="sidebar-link" onclick="scrollTo('flux')"><span class="icon">🔗</span> Liens inter-modules</a>
+      <a class="sidebar-link" onclick="scrollTo('raccourcis')"><span class="icon">⌨</span> Raccourcis</a>
+    </div>
+  </nav>
+
+  <!-- CONTENU -->
+  <main class="content" id="main-content">
+
+    <!-- HERO -->
+    <div class="hero" id="intro">
+      <h1>📖 Guide ERP — High Coffee Shirt</h1>
+      <p>Mode d'emploi complet de l'ERP HCS. Retrouvez ici toutes les pages, leurs fonctions et comment les utiliser au quotidien pour gérer vos ventes, production, stock et finances.</p>
+      <div class="hero-badges">
+        <span class="badge">12 modules</span>
+        <span class="badge">50+ pages</span>
+        <span class="badge">Monnaie XPF</span>
+        <span class="badge">Sync MySQL</span>
+        <span class="badge">Agents IA</span>
+      </div>
+    </div>
+
+    <!-- NAVIGATION -->
+    <div class="section" id="nav">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(74,95,255,.12)">🗺</div>
+        <div>
+          <div class="section-title" style="color:#7b96ff">Navigation dans l'ERP</div>
+          <div class="section-subtitle">Comment se repérer et accéder rapidement aux pages</div>
+        </div>
+      </div>
+
+      <div class="flow">
+        <div class="flow-title">Comment accéder à une page</div>
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <div class="flow-text"><strong>Sidebar gauche</strong> — cliquez sur le module voulu (icône + nom). Chaque module s'ouvre avec ses sous-onglets en haut de page.</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">2</div>
+          <div class="flow-text"><strong>URL directe</strong> — chaque vue a une URL permanente : <code style="color:var(--caramel);font-size:11px">index.html#module/vue</code> — peut être mise en favori.</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <div class="flow-text"><strong>Topbar raccourcis</strong> — boutons rapides <strong>Devis</strong>, <strong>Factures</strong> et <strong>+</strong> pour créer un devis directement depuis n'importe où.</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">4</div>
+          <div class="flow-text"><strong>Outils HCS</strong> — applications standalone accessibles via le module Outils (icône 🔧) ou via URL directe <code style="color:var(--caramel);font-size:11px">modules/nom-outil.html</code>.</div>
+        </div>
+      </div>
+
+      <div class="tip">
+        <strong>💡 Astuce URL :</strong> Partagez une vue en copiant l'URL du navigateur. Ex : <code style="color:var(--green)">index.html#ventes/quotes</code> ouvre directement la liste des devis.
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="section" id="dashboard">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(74,95,255,.15)">📊</div>
+        <div>
+          <div class="section-title" style="color:#7b96ff">Dashboard — Accueil</div>
+          <div class="section-subtitle">Vue d'ensemble de l'activité HCS en temps réel</div>
+        </div>
+      </div>
+      <div class="cards">
+        <div class="card searchable" data-keywords="dashboard accueil vue ensemble kpi chiffre affaire résumé">
+          <div class="card-header"><span class="card-icon">📊</span><span class="card-name">Vue d'ensemble</span></div>
+          <div class="card-url">#dashboard/overview</div>
+          <div class="card-desc">Tableau de bord principal : KPIs du jour (CA, commandes, devis en cours), graphiques de performance et alertes actives.</div>
+          <div class="card-tags"><span class="tag blue">Lecture seule</span><span class="tag">Temps réel</span></div>
+        </div>
+        <div class="card searchable" data-keywords="activité récente historique actions log">
+          <div class="card-header"><span class="card-icon">🕐</span><span class="card-name">Activité récente</span></div>
+          <div class="card-url">#dashboard/activity</div>
+          <div class="card-desc">Fil chronologique de toutes les actions effectuées dans l'ERP : créations, modifications, paiements, changements de statut.</div>
+          <div class="card-tags"><span class="tag blue">Lecture seule</span><span class="tag">Journal</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CRM -->
+    <div class="section" id="crm">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(176,123,255,.15)">👥</div>
+        <div>
+          <div class="section-title" style="color:#c4a0ff">CRM — Clients & Prospects</div>
+          <div class="section-subtitle">Gestion de la relation client et du pipeline commercial</div>
+        </div>
+      </div>
+      <div class="cards">
+        <div class="card searchable" data-keywords="contacts clients annuaire coordonnées téléphone email adresse">
+          <div class="card-header"><span class="card-icon">📋</span><span class="card-name">Contacts</span></div>
+          <div class="card-url">#crm/contacts</div>
+          <div class="card-desc">Annuaire complet de tous vos clients et prospects. Chaque contact contient : nom, téléphone, email, adresse, historique de commandes et notes.</div>
+          <div class="card-tags"><span class="tag violet">CRM</span><span class="tag">Clients B2B/B2C</span></div>
+        </div>
+        <div class="card searchable" data-keywords="pipeline opportunités prospects devis kanban commercial">
+          <div class="card-header"><span class="card-icon">📈</span><span class="card-name">Pipeline</span></div>
+          <div class="card-url">#crm/pipeline</div>
+          <div class="card-desc">Vue Kanban du pipeline commercial. Faites glisser les opportunités entre les colonnes : Prospect → Devis envoyé → Négociation → Gagné / Perdu.</div>
+          <div class="card-tags"><span class="tag violet">Kanban</span><span class="tag">Commercial</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VENTES -->
+    <div class="section" id="ventes">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(0,212,170,.12)">🛒</div>
+        <div>
+          <div class="section-title" style="color:#00d4aa">Ventes — Devis, Commandes & Factures</div>
+          <div class="section-subtitle">Le cœur commercial de l'ERP — de la demande au paiement</div>
+        </div>
+      </div>
+      <div class="cards">
+
+        <div class="card searchable" data-keywords="devis créer client produit ligne montant xpf envoyer pdf confirmer">
+          <div class="card-header"><span class="card-icon">📝</span><span class="card-name">Devis</span></div>
+          <div class="card-url">#ventes/quotes</div>
+          <div class="card-desc">Création et gestion des devis. Ajoutez les lignes produits, calculez les totaux HT/TTC en XPF, sélectionnez le règlement et convertissez en commande ou facture. Génère automatiquement une carte de planning.</div>
+          <div class="card-tags"><span class="tag green">Flux principal</span><span class="tag amber">XPF</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="commandes bons commande suivi statut">
+          <div class="card-header"><span class="card-icon">📦</span><span class="card-name">Commandes</span></div>
+          <div class="card-url">#ventes/orders</div>
+          <div class="card-desc">Suivi des commandes confirmées. Une commande est créée depuis un devis validé. Permet de suivre l'avancement avant facturation.</div>
+          <div class="card-tags"><span class="tag green">Flux</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="factures paiement encaissement régler acompte solde payé lettrage">
+          <div class="card-header"><span class="card-icon">🧾</span><span class="card-name">Factures</span></div>
+          <div class="card-url">#ventes/invoices</div>
+          <div class="card-desc">Gestion complète des factures. Enregistrez les paiements (acompte, solde), suivez le lettrage visuel (barres colorées), générez les écritures comptables automatiquement et exportez en PDF.</div>
+          <div class="card-tags"><span class="tag green">Flux principal</span><span class="tag amber">Paiements</span><span class="tag violet">Comptabilité auto</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="livraison bon livraison expédition réception">
+          <div class="card-header"><span class="card-icon">🚚</span><span class="card-name">Bons de livraison</span></div>
+          <div class="card-url">#ventes/receipts</div>
+          <div class="card-desc">Création et suivi des bons de livraison associés aux commandes. Traçabilité des envois et remises en main propre.</div>
+          <div class="card-tags"><span class="tag">Logistique</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="rapport ventes statistiques analyse performance canal">
+          <div class="card-header"><span class="card-icon">📊</span><span class="card-name">Rapport ventes</span></div>
+          <div class="card-url">#ventes/sales-report</div>
+          <div class="card-desc">Synthèse des ventes par période, par canal (WooCommerce, Odoo, boutique) et par produit. Suivi du CA, des marges et des tendances.</div>
+          <div class="card-tags"><span class="tag blue">Rapports</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="analyseur marges devis rentabilité coût prix vente analyse">
+          <div class="card-header"><span class="card-icon">🔍</span><span class="card-name">Analyseur de marges</span></div>
+          <div class="card-url">#ventes/devis-analyser</div>
+          <div class="card-desc">Outil d'analyse de la rentabilité des devis. Compare le coût de revient (matières + main d'œuvre) avec le prix de vente pour afficher la marge réelle par ligne.</div>
+          <div class="card-tags"><span class="tag amber">Marges</span><span class="tag blue">Analyse</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="mise en forme document logo adresse conditions mentions">
+          <div class="card-header"><span class="card-icon">⚙️</span><span class="card-name">Mise en forme documents</span></div>
+          <div class="card-url">#ventes/doc-params</div>
+          <div class="card-desc">Personnalisez l'apparence de vos devis et factures PDF : logo HCS, adresse boutique, mentions légales, conditions de règlement, pied de page.</div>
+          <div class="card-tags"><span class="tag">Paramètres</span></div>
+        </div>
+
+      </div>
+
+      <div class="flow" style="margin-top:20px">
+        <div class="flow-title">Flux de vente standard HCS</div>
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <div class="flow-text"><strong>Créer un devis</strong> — sélectionnez le client, ajoutez les lignes produits/prestations, définissez le règlement.</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">2</div>
+          <div class="flow-text"><strong>Confirmer</strong> — cliquez "Confirmer" ou enregistrez avec le statut Confirmé → une carte de planning est créée automatiquement dans Production.</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <div class="flow-text"><strong>Convertir en facture</strong> — quand la commande est prête, transformez en facture d'un clic.</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">4</div>
+          <div class="flow-text"><strong>Encaisser</strong> — dans la facture, enregistrez le(s) paiement(s). Le statut passe à "Payé partiel" puis "Payé". Les écritures comptables sont générées automatiquement et le Finance Dashboard est mis à jour.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCTION -->
+    <div class="section" id="production">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(255,107,107,.12)">⚙️</div>
+        <div>
+          <div class="section-title" style="color:#ff6b6b">Production — Atelier</div>
+          <div class="section-subtitle">Planification et suivi des ordres de fabrication</div>
+        </div>
+      </div>
+      <div class="cards">
+
+        <div class="card searchable" data-keywords="planning atelier kanban cartes production dtf vinyle sticker tâches">
+          <div class="card-header"><span class="card-icon">🗓</span><span class="card-name">Planning Production</span></div>
+          <div class="card-url">#production/planning</div>
+          <div class="card-desc">Tableau Kanban de l'atelier. Les cartes arrivent automatiquement depuis les devis confirmés. Colonnes : En attente → En cours → Contrôle qualité → Prêt. Affiche les mockups et les détails techniques par carte.</div>
+          <div class="card-tags"><span class="tag red">Atelier</span><span class="tag">Kanban</span><span class="tag green">Auto depuis devis</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="designer hcs créateur visuel graphisme design logo">
+          <div class="card-header"><span class="card-icon">⬡</span><span class="card-name">HCS Designer</span></div>
+          <div class="card-url">#production/hcs-designer</div>
+          <div class="card-desc">Outil de création visuelle intégré à l'atelier. Permet de concevoir les visuels, placer les zones d'impression et préparer les fichiers pour la presse DTF ou le plotter.</div>
+          <div class="card-tags"><span class="tag red">Atelier</span><span class="tag">Graphisme</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="ordres fabrication production suivi">
+          <div class="card-header"><span class="card-icon">📋</span><span class="card-name">Ordres de fabrication</span></div>
+          <div class="card-url">#production/mo</div>
+          <div class="card-desc">Liste de tous les ordres de fabrication (OF) avec leur statut. Chaque OF est lié à un devis ou une commande et détaille les opérations à réaliser.</div>
+          <div class="card-tags"><span class="tag red">Atelier</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="nomenclature composants matières produits recette">
+          <div class="card-header"><span class="card-icon">🧩</span><span class="card-name">Nomenclatures</span></div>
+          <div class="card-url">#production/bom</div>
+          <div class="card-desc">Définition des nomenclatures (BOM — Bill of Materials) : liste des matières premières et composants nécessaires pour chaque produit fini. Calcul automatique des coûts.</div>
+          <div class="card-tags"><span class="tag">Paramètres</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="postes travail centres presse dtf plotter imprimante">
+          <div class="card-header"><span class="card-icon">🏭</span><span class="card-name">Postes de travail</span></div>
+          <div class="card-url">#production/work-centers</div>
+          <div class="card-desc">Configuration des postes de l'atelier : presse thermique, imprimante DTF BN20, plotter vinyle, etc. Capacité horaire et coût d'utilisation par poste.</div>
+          <div class="card-tags"><span class="tag">Paramètres</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- STOCK -->
+    <div class="section" id="stock">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(74,95,255,.15)">📦</div>
+        <div>
+          <div class="section-title" style="color:#7b96ff">Stock — Catalogue & Achats</div>
+          <div class="section-subtitle">Gestion du catalogue produits, des stocks et des approvisionnements</div>
+        </div>
+      </div>
+      <div class="cards">
+
+        <div class="card searchable" data-keywords="produits catalogue taille couleur variante SKU prix stock image">
+          <div class="card-header"><span class="card-icon">👕</span><span class="card-name">Produits</span></div>
+          <div class="card-url">#stock/products</div>
+          <div class="card-desc">Catalogue complet. Chaque produit peut avoir des variantes (taille S/M/L/XL, couleur, coupe) avec des prix individuels. Gestion des photos, du stock par variante et des codes produits.</div>
+          <div class="card-tags"><span class="tag blue">Catalogue</span><span class="tag">Variantes</span><span class="tag">Photos</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="catégories classification familles produits">
+          <div class="card-header"><span class="card-icon">🗂</span><span class="card-name">Catégories</span></div>
+          <div class="card-url">#stock/categories</div>
+          <div class="card-desc">Organisation du catalogue en catégories : T-shirts, Casquettes, Stickers, Transferts DTF, Vinyle, etc. Chaque catégorie peut avoir une image et une description.</div>
+          <div class="card-tags"><span class="tag blue">Catalogue</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="mouvements stock entrée sortie inventaire traçabilité">
+          <div class="card-header"><span class="card-icon">🔄</span><span class="card-name">Mouvements de stock</span></div>
+          <div class="card-url">#stock/stock-moves</div>
+          <div class="card-desc">Historique de tous les mouvements : entrées (achats, réceptions), sorties (ventes, production) et ajustements manuels. Traçabilité complète avec dates et références.</div>
+          <div class="card-tags"><span class="tag blue">Stock</span><span class="tag">Traçabilité</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="fournisseurs contacts achats approvisionnement">
+          <div class="card-header"><span class="card-icon">🏢</span><span class="card-name">Fournisseurs</span></div>
+          <div class="card-url">#stock/suppliers</div>
+          <div class="card-desc">Annuaire des fournisseurs HCS : HTV4U (transferts DTF), fournisseurs vinyle, textiles en blanc, fournitures atelier. Contacts, délais et conditions tarifaires.</div>
+          <div class="card-tags"><span class="tag">Approvisionnement</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="commandes achat fournisseur bon commande réception">
+          <div class="card-header"><span class="card-icon">📬</span><span class="card-name">Commandes achat</span></div>
+          <div class="card-url">#stock/po</div>
+          <div class="card-desc">Gestion des commandes passées aux fournisseurs (Purchase Orders). Suivi du statut : Brouillon → Confirmé → Reçu → Facturé. Calcul automatique du coût landed (import + TVA).</div>
+          <div class="card-tags"><span class="tag">Approvisionnement</span><span class="tag amber">XPF</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="rapport achats statistiques fournisseurs dépenses">
+          <div class="card-header"><span class="card-icon">📊</span><span class="card-name">Rapport achats</span></div>
+          <div class="card-url">#stock/purchase-report</div>
+          <div class="card-desc">Synthèse des achats par fournisseur et par période. Analyse des dépenses, des délais de livraison et des prix moyens d'achat.</div>
+          <div class="card-tags"><span class="tag blue">Rapports</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CAISSE -->
+    <div class="section" id="caisse">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(245,158,11,.12)">💳</div>
+        <div>
+          <div class="section-title" style="color:#F59E0B">Caisse — Point de vente</div>
+          <div class="section-subtitle">Encaissement boutique physique en XPF</div>
+        </div>
+      </div>
+      <div class="cards">
+        <div class="card searchable" data-keywords="caisse pos point vente vente rapide encaissement especes carte">
+          <div class="card-header"><span class="card-icon">🖥</span><span class="card-name">Point de vente (POS)</span></div>
+          <div class="card-url">#caisse/caisse-pos</div>
+          <div class="card-desc">Interface caisse tactile pour la boutique. Sélectionnez les produits depuis le catalogue, créez le ticket, encaissez en espèces, carte bancaire ou mobile. Imprime le ticket et met à jour le stock automatiquement.</div>
+          <div class="card-tags"><span class="tag amber">Boutique</span><span class="tag amber">XPF</span><span class="tag green">Stock auto</span></div>
+        </div>
+      </div>
+      <div class="tip tip-warn">
+        <strong>⚠️ Rappel :</strong> La caisse travaille uniquement en XPF (franc CFP). Les montants sont arrondis à l'unité. Le code devise PayZen est 953.
+      </div>
+    </div>
+
+    <!-- COMPTABILITE -->
+    <div class="section" id="comptabilite">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(0,212,170,.1)">💰</div>
+        <div>
+          <div class="section-title" style="color:#00d4aa">Comptabilité</div>
+          <div class="section-subtitle">Plan comptable, journaux, rapports fiscaux et P&L</div>
+        </div>
+      </div>
+      <div class="cards">
+
+        <div class="card searchable" data-keywords="tableau bord comptabilité solde trésorerie résumé financier">
+          <div class="card-header"><span class="card-icon">📊</span><span class="card-name">Tableau de bord</span></div>
+          <div class="card-url">#comptabilite/tableau-de-bord</div>
+          <div class="card-desc">Vue synthétique de la santé financière : solde bancaire, chiffre d'affaires du mois, résultat net, TVA collectée/déductible et alertes de trésorerie.</div>
+          <div class="card-tags"><span class="tag green">Vue globale</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="copilote conseiller IA financier analyse recommandation">
+          <div class="card-header"><span class="card-icon">✨</span><span class="card-name">Copilote financier</span></div>
+          <div class="card-url">#comptabilite/conseiller</div>
+          <div class="card-desc">Agent IA spécialisé en comptabilité. Pose-lui vos questions en français : analyse de marge, optimisation fiscale, rapprochement bancaire. Génère des rapports à la demande.</div>
+          <div class="card-tags"><span class="tag violet">IA</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="journal comptabilité écritures saisie débit crédit">
+          <div class="card-header"><span class="card-icon">📔</span><span class="card-name">Journal</span></div>
+          <div class="card-url">#comptabilite/journal</div>
+          <div class="card-desc">Journal comptable avec toutes les écritures dans l'ordre chronologique. Les paiements de factures génèrent des écritures automatiques (compte 512000 Banque ou 530000 Caisse).</div>
+          <div class="card-tags"><span class="tag">Saisie</span><span class="tag green">Auto depuis factures</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="grand livre comptes détail mouvements solde">
+          <div class="card-header"><span class="card-icon">📖</span><span class="card-name">Grand Livre</span></div>
+          <div class="card-url">#comptabilite/grand-livre</div>
+          <div class="card-desc">Détail de tous les mouvements par compte comptable. Filtrez par compte, par période ou par journal pour retrouver n'importe quelle écriture.</div>
+          <div class="card-tags"><span class="tag">Saisie</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="plan comptable numéros comptes classes">
+          <div class="card-header"><span class="card-icon">🗂</span><span class="card-name">Plan comptable</span></div>
+          <div class="card-url">#comptabilite/accounts</div>
+          <div class="card-desc">Liste de tous les comptes comptables utilisés (classe 1 à 7). Adapté au plan comptable Polynésie française. Ajoutez des sous-comptes personnalisés si besoin.</div>
+          <div class="card-tags"><span class="tag">Paramètres</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="compte résultat P&L produits charges résultat exploitation">
+          <div class="card-header"><span class="card-icon">📈</span><span class="card-name">Compte de résultat</span></div>
+          <div class="card-url">#comptabilite/pl-report</div>
+          <div class="card-desc">Compte de résultat mensuel/annuel : Produits (CA, autres revenus) − Charges (matières, salaires, loyer, etc.) = Résultat net. Exportable en PDF.</div>
+          <div class="card-tags"><span class="tag blue">Rapport</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="TVA rapport taxe déclaration collectée déductible">
+          <div class="card-header"><span class="card-icon">📋</span><span class="card-name">Rapport TVA</span></div>
+          <div class="card-url">#comptabilite/tax-report</div>
+          <div class="card-desc">Synthèse de la TVA par période : TVA collectée sur les ventes, TVA déductible sur les achats, TVA nette à payer à la DRI. Prêt pour la déclaration mensuelle.</div>
+          <div class="card-tags"><span class="tag blue">Rapport</span><span class="tag red">DRI</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="bilan actif passif patrimoine état financier annuel">
+          <div class="card-header"><span class="card-icon">⚖️</span><span class="card-name">Bilan</span></div>
+          <div class="card-url">#comptabilite/bilan</div>
+          <div class="card-desc">Bilan comptable (Actif / Passif). Photographie du patrimoine de HCS à une date donnée : trésorerie, stocks, créances clients, dettes fournisseurs, capitaux propres.</div>
+          <div class="card-tags"><span class="tag blue">Rapport</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- AGENTS IA -->
+    <div class="section" id="agents">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(0,212,170,.1)">🤖</div>
+        <div>
+          <div class="section-title" style="color:#00d4aa">Agents IA</div>
+          <div class="section-subtitle">Les 8 agents Claude spécialisés HCS — disponibles 24h/24</div>
+        </div>
+      </div>
+      <div class="cards">
+
+        <div class="card searchable" data-keywords="agents tableau bord statut tokens performance">
+          <div class="card-header"><span class="card-icon">📊</span><span class="card-name">Tableau de bord agents</span></div>
+          <div class="card-url">#agents/dashboard</div>
+          <div class="card-desc">Vue d'ensemble de tous les agents actifs : statut (en ligne / en pause), tokens consommés ce mois, coût estimé et dernières activités. Démarrez ou mettez en pause un agent depuis ici.</div>
+          <div class="card-tags"><span class="tag green">Monitoring</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="chat discuter agent IA question réponse conseiller commercial atelier">
+          <div class="card-header"><span class="card-icon">💬</span><span class="card-name">Chat agents</span></div>
+          <div class="card-url">#agents/chat</div>
+          <div class="card-desc">Interface de conversation avec les 8 agents HCS. Choisissez votre agent selon la tâche : HCS-Commercial pour les devis, HCS-Atelier pour la production, HCS-Finance pour la comptabilité…</div>
+          <div class="card-tags"><span class="tag violet">IA</span><span class="tag">8 agents</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="prompts instructions système configuration agents">
+          <div class="card-header"><span class="card-icon">📝</span><span class="card-name">Prompts</span></div>
+          <div class="card-url">#agents/prompts</div>
+          <div class="card-desc">Bibliothèque de prompts enregistrés pour chaque agent. Réutilisez et modifiez les instructions fréquentes : créer un devis, analyser les marges, rédiger un message client…</div>
+          <div class="card-tags"><span class="tag violet">IA</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="historique sessions conversations passées archive">
+          <div class="card-header"><span class="card-icon">🕐</span><span class="card-name">Historique sessions</span></div>
+          <div class="card-url">#agents/sessions</div>
+          <div class="card-desc">Archive de toutes les conversations avec les agents. Retrouvez et relancez n'importe quelle session passée. Utile pour auditer ou reproduire une action.</div>
+          <div class="card-tags"><span class="tag">Historique</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="apprentissages retours amélioration feedback agents">
+          <div class="card-header"><span class="card-icon">🧠</span><span class="card-name">Apprentissages</span></div>
+          <div class="card-url">#agents/apprentissages</div>
+          <div class="card-desc">Feedbacks et apprentissages enregistrés pour chaque agent. Un agent peut mémoriser vos préférences et s'améliorer au fil du temps (ex : format de devis préféré, ton de communication client).</div>
+          <div class="card-tags"><span class="tag violet">IA</span><span class="tag">Mémoire</span></div>
+        </div>
+
+      </div>
+
+      <div class="tip">
+        <strong>💡 Les 8 agents HCS :</strong> Orchestrateur (coordination), Atelier (DTF/vinyle), Commercial (devis/WooCommerce), Marketing (réseaux sociaux), Support (SAV), Finance (facturation), Logistique (stocks/Dropbox), Music (Reo Tahiti).
+      </div>
+    </div>
+
+    <!-- RH -->
+    <div class="section" id="rh">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(176,123,255,.12)">👤</div>
+        <div>
+          <div class="section-title" style="color:#c4a0ff">RH — Ressources Humaines</div>
+          <div class="section-subtitle">Gestion de l'équipe HCS</div>
+        </div>
+      </div>
+      <div class="cards">
+        <div class="card searchable" data-keywords="employés équipe fiche salaire poste contrat">
+          <div class="card-header"><span class="card-icon">👥</span><span class="card-name">Employés</span></div>
+          <div class="card-url">#rh/employes</div>
+          <div class="card-desc">Fiches employés : poste, contrat, coordonnées, date d'entrée. Base de données de l'équipe HCS.</div>
+          <div class="card-tags"><span class="tag violet">RH</span></div>
+        </div>
+        <div class="card searchable" data-keywords="congés absences vacances demande validation">
+          <div class="card-header"><span class="card-icon">🏖</span><span class="card-name">Congés</span></div>
+          <div class="card-url">#rh/conges</div>
+          <div class="card-desc">Gestion des demandes de congés et absences. Visualisez le planning de l'équipe et validez les demandes.</div>
+          <div class="card-tags"><span class="tag violet">RH</span></div>
+        </div>
+        <div class="card searchable" data-keywords="planning RH semaine équipe horaires affectation">
+          <div class="card-header"><span class="card-icon">📅</span><span class="card-name">Planning RH</span></div>
+          <div class="card-url">#rh/planning-rh</div>
+          <div class="card-desc">Planning hebdomadaire de l'équipe. Affectation des collaborateurs aux postes de l'atelier ou de la boutique selon les besoins de production.</div>
+          <div class="card-tags"><span class="tag violet">RH</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MESSAGERIE -->
+    <div class="section" id="messagerie">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(74,95,255,.12)">💬</div>
+        <div>
+          <div class="section-title" style="color:#7b96ff">Messagerie interne</div>
+          <div class="section-subtitle">Communication d'équipe en temps réel</div>
+        </div>
+      </div>
+      <div class="cards">
+        <div class="card searchable" data-keywords="messages boite reception notifications">
+          <div class="card-header"><span class="card-icon">📥</span><span class="card-name">Boîte de réception</span></div>
+          <div class="card-url">#messagerie/inbox</div>
+          <div class="card-desc">Messages directs et mentions non lus. Toutes vos notifications en un seul endroit.</div>
+          <div class="card-tags"><span class="tag blue">Messagerie</span></div>
+        </div>
+        <div class="card searchable" data-keywords="général canal équipe discussion commune">
+          <div class="card-header"><span class="card-icon">💬</span><span class="card-name">Canaux</span></div>
+          <div class="card-url">#messagerie/general</div>
+          <div class="card-desc">Canaux thématiques : #général, #production, #ventes. Communiquez par équipe sans mélanger les sujets.</div>
+          <div class="card-tags"><span class="tag blue">Messagerie</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OUTILS OPÉRATIONS -->
+    <div class="section" id="outils-ope">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(196,129,58,.12)">🛠</div>
+        <div>
+          <div class="section-title" style="color:var(--caramel-light)">Outils HCS — Opérations</div>
+          <div class="section-subtitle">Applications opérationnelles dédiées au quotidien de HCS</div>
+        </div>
+      </div>
+      <div class="cards">
+
+        <div class="card searchable" data-keywords="triage réception commandes entrées arrivées trier">
+          <div class="card-header"><span class="card-icon">📬</span><span class="card-name">Triage & Réception</span></div>
+          <div class="card-url">modules/triage-dashboard.html</div>
+          <div class="card-desc">Tableau de bord pour trier les nouvelles commandes entrantes (WhatsApp, Messenger, boutique, WooCommerce) et les dispatcher vers l'atelier ou les commerciaux.</div>
+          <div class="card-tags"><span class="tag amber">Opérations</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="commercial devis rapide création client">
+          <div class="card-header"><span class="card-icon">💼</span><span class="card-name">Commercial & Devis</span></div>
+          <div class="card-url">modules/commercial-dashboard.html</div>
+          <div class="card-desc">Interface simplifiée pour les commerciaux : création rapide de devis, suivi des opportunités en cours et accès aux prix catalogue sans passer par le module Ventes complet.</div>
+          <div class="card-tags"><span class="tag amber">Opérations</span><span class="tag green">Devis rapide</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="boutique assistant vendeur produits prix questions">
+          <div class="card-header"><span class="card-icon">🛍</span><span class="card-name">Boutique Assistant</span></div>
+          <div class="card-url">modules/boutique-assistant.html</div>
+          <div class="card-desc">Assistant IA pour les vendeurs en boutique. Répond aux questions produits, calcule les prix DTF à la volée et aide à conseiller les clients sur les options de personnalisation.</div>
+          <div class="card-tags"><span class="tag amber">Boutique</span><span class="tag violet">IA</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="OCR scanner document facturation photo reconnaissance texte">
+          <div class="card-header"><span class="card-icon">📷</span><span class="card-name">Scanner OCR</span></div>
+          <div class="card-url">modules/ocr-scanner.html</div>
+          <div class="card-desc">Scan de documents par photo ou upload. La reconnaissance optique (OCR) extrait le texte des factures fournisseurs, bons de livraison et documents papier pour les intégrer dans l'ERP.</div>
+          <div class="card-tags"><span class="tag amber">Opérations</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- OUTILS ATELIER DTF -->
+    <div class="section" id="outils-prod">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(255,107,107,.1)">🖨</div>
+        <div>
+          <div class="section-title" style="color:#ff6b6b">Outils HCS — Atelier DTF & Impression</div>
+          <div class="section-subtitle">Calculateurs, fiches techniques et guides de production</div>
+        </div>
+      </div>
+      <div class="cards">
+
+        <div class="card searchable" data-keywords="planning atelier production tableau bord">
+          <div class="card-header"><span class="card-icon">🗓</span><span class="card-name">Planning Dashboard</span></div>
+          <div class="card-url">modules/planning-dashboard.html</div>
+          <div class="card-desc">Version standalone du planning atelier. Même Kanban que Production/Planning mais accessible directement sans passer par l'ERP. Idéal sur une tablette à l'atelier.</div>
+          <div class="card-tags"><span class="tag red">Atelier</span><span class="tag">Standalone</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="atelier production DTF BN20 Yannick fiche technique">
+          <div class="card-header"><span class="card-icon">🖨</span><span class="card-name">DTF Atelier BN20 — Yannick</span></div>
+          <div class="card-url">modules/dtf-atelier-bn20-yannick.html</div>
+          <div class="card-desc">Fiche technique interactive pour la presse DTF BN20. Réglages de température, pression, temps de pressage par type de textile. Guide pas-à-pas adapté au poste de Yannick.</div>
+          <div class="card-tags"><span class="tag red">DTF</span><span class="tag">BN20</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="DTF USA atelier presse fiche technique américaine">
+          <div class="card-header"><span class="card-icon">🇺🇸</span><span class="card-name">DTF Atelier USA</span></div>
+          <div class="card-url">modules/dtf-atelier-usa.html</div>
+          <div class="card-desc">Paramètres de pressage pour les transferts DTF commandés aux USA (HTV4U). Températures en Fahrenheit converties, délais et spécificités des transferts américains.</div>
+          <div class="card-tags"><span class="tag red">DTF</span><span class="tag">Import USA</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="plaques transfert DTF gang sheet 22 pouces disposition">
+          <div class="card-header"><span class="card-icon">📐</span><span class="card-name">DTF Plaques Transfert</span></div>
+          <div class="card-url">modules/dtf-plaques-transfert.html</div>
+          <div class="card-desc">Outil de disposition des visuels sur gang sheet 22 pouces. Optimise le placement pour minimiser les pertes et calcule le coût de revient par transfert.</div>
+          <div class="card-tags"><span class="tag red">DTF</span><span class="tag amber">Gang sheet</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="signmaster guide vinyle plotter découpe instructions">
+          <div class="card-header"><span class="card-icon">✂️</span><span class="card-name">SignMaster Guide</span></div>
+          <div class="card-url">modules/signmaster-guide.html</div>
+          <div class="card-desc">Guide d'utilisation de SignMaster (logiciel plotter vinyle). Procédures de découpe, réglages par type de vinyle (Oracal 651, flex, flock) et résolution des problèmes courants.</div>
+          <div class="card-tags"><span class="tag red">Vinyle</span><span class="tag">Plotter</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- OUTILS VISUEL -->
+    <div class="section" id="outils-visuel">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(176,123,255,.1)">🎨</div>
+        <div>
+          <div class="section-title" style="color:#c4a0ff">Outils HCS — Visuel & Contenu</div>
+          <div class="section-subtitle">Création de mockups, détourage, design et génération de contenu</div>
+        </div>
+      </div>
+      <div class="cards">
+
+        <div class="card searchable" data-keywords="mockup forge collections vignettes t-shirt casquette rendu visuel devis">
+          <div class="card-header"><span class="card-icon">👕</span><span class="card-name">MockupForge v12</span></div>
+          <div class="card-url">modules/mockup-forge-v12.html</div>
+          <div class="card-desc">Studio de mockup principal. Placez vos visuels sur des t-shirts et casquettes, organisez en collections, zoomez avec la molette, archivez dans Dropbox (mai 2026/{client}/Mock Up/) et attachez directement à un devis ERP.</div>
+          <div class="card-tags"><span class="tag violet">Mockup</span><span class="tag green">→ Devis</span><span class="tag">Dropbox</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="picwish détourage logo image fond transparent">
+          <div class="card-header"><span class="card-icon">🖼</span><span class="card-name">PicWish Pipeline</span></div>
+          <div class="card-url">modules/picwish-pipeline.html</div>
+          <div class="card-desc">Détourage automatique des logos clients via l'API PicWish. Uploadez une image, obtenez le fond transparent en quelques secondes. Sauvegarde automatique en MySQL (table logos).</div>
+          <div class="card-tags"><span class="tag violet">IA</span><span class="tag">Détourage</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="photos produits images galerie upload catalogue">
+          <div class="card-header"><span class="card-icon">📸</span><span class="card-name">Admin Photos Produits</span></div>
+          <div class="card-url">modules/admin-photos-produits.html</div>
+          <div class="card-desc">Interface dédiée à la gestion des photos du catalogue produits. Uploadez plusieurs photos par produit, associez-les aux variantes (couleur/taille) et définissez l'image principale.</div>
+          <div class="card-tags"><span class="tag violet">Catalogue</span><span class="tag">Photos</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="content generator contenu marketing réseaux sociaux légende instagram">
+          <div class="card-header"><span class="card-icon">✍️</span><span class="card-name">Content Generator</span></div>
+          <div class="card-url">modules/content-generator.html</div>
+          <div class="card-desc">Génération de contenu marketing par IA. Crée des légendes Instagram/Facebook, des descriptions produits et des messages promotionnels en français polynésien adapté à MANAWEAR.</div>
+          <div class="card-tags"><span class="tag violet">IA</span><span class="tag">Marketing</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- OUTILS GESTION -->
+    <div class="section" id="outils-gestion">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(0,212,170,.08)">📈</div>
+        <div>
+          <div class="section-title" style="color:#00d4aa">Outils HCS — Gestion & Finance</div>
+          <div class="section-subtitle">Tableaux de bord financiers, stock et supervision</div>
+        </div>
+      </div>
+      <div class="cards">
+
+        <div class="card searchable" data-keywords="finance dashboard revenus charges solde marge budget transactions">
+          <div class="card-header"><span class="card-icon">💵</span><span class="card-name">Finance Dashboard</span></div>
+          <div class="card-url">modules/finance-dashboard.html</div>
+          <div class="card-desc">Tableau de bord financier de HCS. Suit les revenus (automatiquement alimentés par les paiements de factures), les charges, le solde net et la marge brute mensuelle. Bouton 📥 Import ERP pour synchroniser l'historique.</div>
+          <div class="card-tags"><span class="tag green">Finances</span><span class="tag green">Auto depuis factures</span><span class="tag">MySQL</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="rapport P&L compte résultat mensuel annuel produits charges">
+          <div class="card-header"><span class="card-icon">📊</span><span class="card-name">Rapport P&L</span></div>
+          <div class="card-url">modules/rapport-pl.html</div>
+          <div class="card-desc">Compte de résultat mensuel détaillé. Lignes personnalisables, calcul automatique du résultat net, export PDF. Snapshots MySQL pour comparer les mois entre eux.</div>
+          <div class="card-tags"><span class="tag green">Finances</span><span class="tag blue">Rapport</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="stock dashboard inventaire niveaux alertes rupture">
+          <div class="card-header"><span class="card-icon">📦</span><span class="card-name">Stock Dashboard</span></div>
+          <div class="card-url">modules/stock-dashboard.html</div>
+          <div class="card-desc">Vue synthétique du stock : niveaux par produit et variante, alertes de rupture, valeur totale du stock et mouvements récents. Idéal pour le suivi quotidien sans ouvrir l'ERP complet.</div>
+          <div class="card-tags"><span class="tag">Stock</span></div>
+        </div>
+
+        <div class="card searchable" data-keywords="supervision tableau bord général vue ensemble KPI tout">
+          <div class="card-header"><span class="card-icon">🖥</span><span class="card-name">Supervision Dashboard</span></div>
+          <div class="card-url">modules/supervision-dashboard.html</div>
+          <div class="card-desc">Vue de supervision générale pour le dirigeant. Consolide en une page les KPIs de tous les modules : ventes du jour, état de l'atelier, trésorerie et alertes actives.</div>
+          <div class="card-tags"><span class="tag">Direction</span><span class="tag green">KPIs</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- FLUX INTER-MODULES -->
+    <div class="section" id="flux">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(196,129,58,.12)">🔗</div>
+        <div>
+          <div class="section-title" style="color:var(--caramel-light)">Liens entre les modules</div>
+          <div class="section-subtitle">Comment les données circulent automatiquement dans l'ERP</div>
+        </div>
+      </div>
+
+      <div class="flow">
+        <div class="flow-title">Flux Devis → Planning → Facturation → Finance</div>
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <div class="flow-text"><strong>Devis créé</strong> dans Ventes → <strong>Confirmé</strong> → carte de planning créée automatiquement dans Production/Planning</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">2</div>
+          <div class="flow-text"><strong>Devis → Facture</strong> : conversion en un clic, toutes les lignes et le client sont copiés</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <div class="flow-text"><strong>Facture payée</strong> → écritures comptables générées automatiquement (Banque ou Caisse) + transaction créée dans Finance Dashboard</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">4</div>
+          <div class="flow-text"><strong>MockupForge → Devis</strong> : les mockups créés pour un client apparaissent dans le sélecteur de devis pour les attacher directement</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">5</div>
+          <div class="flow-text"><strong>DTF Studio → Devis</strong> : le bouton "📎 Devis" dans DTF Studio attache l'export directement au devis ERP (même origine)</div>
+        </div>
+      </div>
+
+      <div class="tip tip-warn">
+        <strong>⚠️ Sync MySQL :</strong> Le bouton <strong>☁↓ MySQL</strong> dans la topbar de l'ERP télécharge toutes les données du serveur dans votre navigateur. Utilisez-le à l'ouverture si vous êtes sur un nouvel appareil ou après une longue absence.
+      </div>
+    </div>
+
+    <!-- RACCOURCIS -->
+    <div class="section" id="raccourcis">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(196,129,58,.12)">⌨</div>
+        <div>
+          <div class="section-title" style="color:var(--caramel-light)">Raccourcis & URLs directes</div>
+          <div class="section-subtitle">Accès rapide aux pages les plus utilisées</div>
+        </div>
+      </div>
+
+      <div class="shortcuts">
+        <div class="shortcut"><kbd>#ventes/quotes</kbd><span>Liste des devis</span></div>
+        <div class="shortcut"><kbd>#ventes/invoices</kbd><span>Factures</span></div>
+        <div class="shortcut"><kbd>#stock/products</kbd><span>Catalogue produits</span></div>
+        <div class="shortcut"><kbd>#production/planning</kbd><span>Planning atelier</span></div>
+        <div class="shortcut"><kbd>#comptabilite/journal</kbd><span>Journal comptable</span></div>
+        <div class="shortcut"><kbd>#agents/chat</kbd><span>Chat agents IA</span></div>
+        <div class="shortcut"><kbd>#dashboard/overview</kbd><span>Dashboard accueil</span></div>
+        <div class="shortcut"><kbd>#crm/pipeline</kbd><span>Pipeline commercial</span></div>
+        <div class="shortcut"><kbd>#caisse/caisse-pos</kbd><span>Caisse POS</span></div>
+        <div class="shortcut"><kbd>#comptabilite/tax-report</kbd><span>Rapport TVA</span></div>
+      </div>
+
+      <div class="tip" style="margin-top:20px">
+        <strong>💡 Favori navigateur :</strong> Ajoutez les URLs avec hash en favori dans votre navigateur. Ex : <code style="color:var(--green)">https://highcoffeeshirts.com/erp/index.html#ventes/quotes</code> pour accéder aux devis en un clic.
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  /* ── Scroll vers section ── */
+  function scrollTo(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+  }
+
+  /* ── Recherche ── */
+  function filterGuide(q) {
+    const term = q.trim().toLowerCase();
+    const cards = document.querySelectorAll('.searchable');
+    if (!term) {
+      cards.forEach(c => c.classList.remove('search-hidden'));
+      document.querySelectorAll('.section').forEach(s => s.style.display = '');
+      return;
+    }
+    cards.forEach(card => {
+      const kw = (card.dataset.keywords || '') + ' ' + (card.querySelector('.card-name')?.textContent || '') + ' ' + (card.querySelector('.card-desc')?.textContent || '');
+      card.classList.toggle('search-hidden', !kw.toLowerCase().includes(term));
+    });
+    /* Masque les sections entièrement vides */
+    document.querySelectorAll('.section').forEach(section => {
+      const visible = section.querySelectorAll('.searchable:not(.search-hidden)');
+      section.style.display = visible.length === 0 && section.querySelector('.searchable') ? 'none' : '';
+    });
+  }
+
+  /* ── Active sidebar au scroll ── */
+  const sections = document.querySelectorAll('.section[id]');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        document.querySelectorAll('.sidebar-link').forEach(l => {
+          l.classList.toggle('active', l.getAttribute('onclick')?.includes(`'${id}'`));
+        });
+      }
+    });
+  }, { rootMargin: '-56px 0px -60% 0px', threshold: 0 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

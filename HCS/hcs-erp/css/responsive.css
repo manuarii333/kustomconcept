@@ -480,6 +480,10 @@ input[type="date"].filter-date:focus {
   transition: width 0.22s ease, min-width 0.22s ease;
 }
 
+/* Scrollbar dans sidebar */
+#sidebar::-webkit-scrollbar { width: 3px; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
 /* Focus visible accessible */
 button:focus-visible,
 a:focus-visible,
