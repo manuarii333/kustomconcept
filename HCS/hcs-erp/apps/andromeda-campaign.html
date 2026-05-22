@@ -3075,11 +3075,12 @@ function flConfirm() {
   ckStep = 1;
   document.getElementById('ck-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+  const _fab=document.getElementById('vdec-fab');if(_fab)_fab.style.display='none';
   ckRender();
 }
 
 // ── Checkout ─────────────────────────────────────────────
-function closeCk() { document.getElementById('ck-overlay').classList.remove('open'); document.body.style.overflow=''; }
+function closeCk() { document.getElementById('ck-overlay').classList.remove('open'); document.body.style.overflow=''; const _fab=document.getElementById('vdec-fab');if(_fab)_fab.style.display=''; }
 function ckRender() {
   const titles = {1:'👤 Vos coordonnées',2:'🚚 Livraison',3:'💳 Paiement sécurisé'};
   document.getElementById('ck-title').textContent = titles[ckStep];
@@ -3506,12 +3507,14 @@ function openCheckout() {
   ckStep = 1;
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+  const _fab=document.getElementById('vdec-fab');if(_fab)_fab.style.display='none';
   renderCkStep();
 }
 
 function closeCheckout() {
   document.getElementById('modal-overlay').classList.remove('open');
   document.body.style.overflow = '';
+  const _fab=document.getElementById('vdec-fab');if(_fab)_fab.style.display='';
 }
 
 // ── Step UI ──────────────────────────────────────────────
@@ -4611,12 +4614,14 @@ function openCheckout() {
   ckStep = 1;
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+  const _fab=document.getElementById('vdec-fab');if(_fab)_fab.style.display='none';
   renderCkStep();
 }
 
 function closeCheckout() {
   document.getElementById('modal-overlay').classList.remove('open');
   document.body.style.overflow = '';
+  const _fab=document.getElementById('vdec-fab');if(_fab)_fab.style.display='';
 }
 
 function setStepUI(n) {
@@ -10082,7 +10087,9 @@ async function openVDecAdmin() {
   vdecAdmRender();
 }
 function closeVDecAdmin() {
-  document.getElementById('vdec-admin-modal').classList.remove('open');
+  const modal = document.getElementById('vdec-admin-modal');
+  modal.classList.remove('open');
+  modal.style.cssText = '';
 }
 function vdecAdmSaveAndClose() {
   /* Sauvegarde l'onglet actif avant de fermer */
@@ -10158,6 +10165,22 @@ function vdecAdmRenderCats() {
           </div>
         `).join('')}
       </div>
+      <div style="margin-top:10px;padding:10px 12px;background:rgba(108,99,255,.07);border:1px solid rgba(108,99,255,.18);border-radius:8px">
+        <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:rgba(108,99,255,.8);margin-bottom:8px">Ordre d'affichage des vues actives</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          ${(cat.enabledViews||['left','front','back','right']).map((vk,vi,arr) => {
+            const vdef = VDEC_VIEWS_DEF.find(v=>v.key===vk);
+            if (!vdef) return '';
+            return `<div style="display:inline-flex;align-items:center;gap:3px;background:rgba(108,99,255,.18);border:1px solid rgba(108,99,255,.45);border-radius:20px;padding:3px 8px 3px 6px;font-size:.65rem;font-weight:600">
+              <span style="background:#6c63ff;color:#fff;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800;flex-shrink:0">${vi+1}</span>
+              <span style="color:#d0cfff">${vdef.label}</span>
+              ${vi>0?`<button onclick="vdecAdmMoveView(${ci},'${vk}',-1)" title="Déplacer avant" style="background:none;border:none;color:rgba(255,255,255,.55);cursor:pointer;padding:0 1px;font-size:.75rem;line-height:1" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">◀</button>`:'<span style="width:14px"></span>'}
+              ${vi<arr.length-1?`<button onclick="vdecAdmMoveView(${ci},'${vk}',1)" title="Déplacer après" style="background:none;border:none;color:rgba(255,255,255,.55);cursor:pointer;padding:0 1px;font-size:.75rem;line-height:1" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">▶</button>`:'<span style="width:14px"></span>'}
+            </div>`;
+          }).join('')}
+          ${(cat.enabledViews||[]).length === 0 ? '<span style="font-size:.68rem;color:rgba(255,255,255,.3);font-style:italic">Aucune vue active</span>' : ''}
+        </div>
+      </div>
     </div>
   `).join('');
 }
@@ -10175,6 +10198,20 @@ function vdecAdmToggleView(ci, viewKey, enabled) {
   vdecSaveCfg(cfg);
   vdecAdmRenderCats();
 }
+function vdecAdmMoveView(ci, viewKey, dir) {
+  const cfg = vdecLoadCfg();
+  const arr = cfg.cats[ci].enabledViews || ['left','front','back','right'];
+  const idx = arr.indexOf(viewKey);
+  if (idx < 0) return;
+  const to = idx + dir;
+  if (to < 0 || to >= arr.length) return;
+  arr.splice(idx, 1);
+  arr.splice(to, 0, viewKey);
+  cfg.cats[ci].enabledViews = arr;
+  vdecSaveCfg(cfg);
+  vdecAdmRenderCats();
+}
+
 function vdecAdmPickImg(ci, viewKey) {
   const inp = document.createElement('input'); inp.type='file'; inp.accept='image/*';
   inp.onchange = async e => {
