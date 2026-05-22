@@ -5061,7 +5061,7 @@ function goToCheckout(campId) {
 let CART = [];
 let CK_STEP = 1;
 const WORKER_URL = 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
-const WORKER_SECRET_VAL = 'richesse';
+const WORKER_SECRET_VAL = 'hcs-payzen-2026';
 const WORKER_MODE = 'TEST';
 
 // ── Panier ──────────────────────────────────────────────
@@ -5452,9 +5452,9 @@ async function loadOrders(archived=false) {
 
 function renderOrdersView(orders, archived=false) {
   const ws = document.getElementById('workspace');
-  const statuses = ['all','pending','paid','processing','delivered','cancelled'];
-  const statusLabels = {all:'Toutes',pending:'En attente',paid:'Payées',processing:'En cours',delivered:'Livrées',cancelled:'Annulées'};
-  const statusIcons = {pending:'⏳',paid:'✅',processing:'🔄',delivered:'📦',cancelled:'❌',archived:'🗃️'};
+  const statuses = ['all','pending','paid','processing','ready','delivered','cancelled'];
+  const statusLabels = {all:'Toutes',pending:'En attente',paid:'Payées',processing:'En production',ready:'Prêtes',delivered:'Livrées',cancelled:'Annulées'};
+  const statusIcons = {pending:'⏳',paid:'💳',processing:'🎨',ready:'✅',delivered:'📦',cancelled:'❌',archived:'🗃️'};
 
   const visible = ordersFilter==='all' ? orders : orders.filter(o=>o.status===ordersFilter);
 
@@ -5507,11 +5507,12 @@ function renderOrdersView(orders, archived=false) {
                 <td style="display:flex;flex-direction:column;gap:5px;align-items:flex-start">
                   <select class="status-select" onchange="updateOrderStatus('${o.orderId}',this.value)">
                     <option value="">— Statut</option>
-                    <option value="pending">⏳ En attente</option>
-                    <option value="paid">✅ Payée</option>
-                    <option value="processing">🔄 En cours</option>
-                    <option value="delivered">📦 Livrée</option>
-                    <option value="cancelled">❌ Annulée</option>
+                    <option value="pending"   ${o.status==='pending'   ?'selected':''}>⏳ En attente</option>
+                    <option value="paid"      ${o.status==='paid'      ?'selected':''}>💳 Payée</option>
+                    <option value="processing"${o.status==='processing'?'selected':''}>🎨 En production</option>
+                    <option value="ready"     ${o.status==='ready'     ?'selected':''}>✅ Prête / À remettre</option>
+                    <option value="delivered" ${o.status==='delivered' ?'selected':''}>📦 Livrée / Remise</option>
+                    <option value="cancelled" ${o.status==='cancelled' ?'selected':''}>❌ Annulée</option>
                     <option value="archived">🗃️ Archiver</option>
                   </select>
                   <button class="po-planning-btn" onclick="showPlanning()">📅 Voir Planning</button>
@@ -6149,8 +6150,8 @@ function renderPlanning(orders) {
     return new Date(a) - new Date(b);
   });
 
-  const statusIcons = {pending:'⏳',paid:'✅',processing:'🔄',delivered:'📦',cancelled:'❌'};
-  const statusLabels = {pending:'En attente',paid:'Payée',processing:'En cours',delivered:'Livrée',cancelled:'Annulée'};
+  const statusIcons = {pending:'⏳',paid:'💳',processing:'🎨',ready:'✅',delivered:'📦',cancelled:'❌'};
+  const statusLabels = {pending:'En attente',paid:'Payée',processing:'En production',ready:'Prête / À remettre',delivered:'Livrée / Remise',cancelled:'Annulée'};
 
   const daysHtml = sortedDates.map(dateKey => {
     const dayOrders = byDate[dateKey];
@@ -6177,14 +6178,21 @@ function renderPlanning(orders) {
       </div>
       <div class="planning-day-body">
         ${dayOrders.map(o => {
-          const stepMap = {pending:0, paid:1, processing:2, delivered:3};
+          const isVdec = (o.campaignName||'').toLowerCase().includes('véhicule') || (o.product||'').includes('🚗');
+          const isPickup = o.delivery?.type === 'pickup';
+          const stepMap = {pending:0, paid:1, processing:2, ready:3, delivered:4};
           const cur = o.status === 'cancelled' ? -1 : (stepMap[o.status] ?? 0);
           const steps = [
             {icon:'📋', label:'Reçue'},
             {icon:'💳', label:'Payée'},
-            {icon:'🔄', label:'Production'},
-            {icon:'📦', label:'Livré'}
+            {icon: isVdec ? '🔪' : '🎨', label: isVdec ? 'Découpe' : 'Production'},
+            {icon:'✅', label:'Prêt'},
+            {icon: isPickup ? '🏪' : '🚚', label: isPickup ? 'Retrait' : 'Livraison'}
           ];
+          const islandLabels = {'tahiti':'Tahiti','moorea':'Moorea','huahine':'Huahine','bora-bora':'Bora Bora','raiatea':'Raiatea','rangiroa':'Rangiroa','tubuai':'Tubuai','hiva-oa':'Hiva Oa','nuku-hiva':'Nuku Hiva'};
+          const deliveryInfo = isPickup
+            ? `🏪 Retrait${o.delivery.pickupDate ? ' · <b>' + new Date(o.delivery.pickupDate+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}) + '</b>' : ''}${o.delivery.slot ? ' · '+(o.delivery.slot==='08-12'?'08h–12h':'13h–17h') : ''}`
+            : `🚚 ${islandLabels[o.delivery?.island]||o.delivery?.island||'Tahiti'}`;
           const progressBar = cur === -1
             ? `<div style="font-size:0.72rem;color:#ff6b6b;margin-top:9px;padding-top:9px;border-top:1px solid rgba(42,42,74,0.4)">❌ Commande annulée</div>`
             : `<div class="po-progress">${steps.map((step,i) => {
@@ -6195,26 +6203,28 @@ function renderPlanning(orders) {
                   <div class="po-step-label${done?' done':active?' current':''}">${step.label}</div>
                 </div>`;
               }).join('')}</div>`;
-          const deliveryInfo = o.delivery?.type === 'pickup'
-            ? `🏪 Retrait${o.delivery.pickupDate ? ' · <b>' + new Date(o.delivery.pickupDate+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}) + '</b>' : ''}${o.delivery.slot ? ' · '+(o.delivery.slot==='08-12'?'08h–12h':'13h–17h') : ''}`
-            : `🚚 Livraison · ${({'tahiti':'Tahiti','moorea':'Moorea','huahine':'Huahine','bora-bora':'Bora Bora','raiatea':'Raiatea'}[o.delivery?.island]||o.delivery?.island||'Tahiti')}`;
+          const noteHtml = o.note
+            ? `<div style="font-size:0.65rem;color:var(--text-secondary);margin-top:2px;opacity:.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${o.note.replace(/"/g,'&quot;')}">📝 ${o.note}</div>`
+            : '';
           return `<div class="planning-order-row" style="flex-direction:column;align-items:stretch;gap:6px">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
               <span class="po-ref">${o.orderId}</span>
-              <span class="po-client">${o.client?.name||'—'}</span>
-              <span class="po-product">${o.product||'—'}</span>
+              <span class="po-client">${o.client?.name||o.customerName||'—'}</span>
+              <span class="po-product">${o.product||o.campaignName||'—'}</span>
               <span class="po-amount">${(o.amount||0).toLocaleString('fr-FR')} XPF</span>
               <span style="font-size:0.68rem;color:var(--text-secondary);flex-shrink:0">${deliveryInfo}</span>
               <select class="status-select" style="font-size:0.68rem;margin-left:auto" onchange="updateOrderStatusPlanning('${o.orderId}',this.value)">
-                <option value="">Changer statut</option>
-                <option value="pending">⏳ En attente</option>
-                <option value="paid">💳 Payée</option>
-                <option value="processing">🔄 En production</option>
-                <option value="delivered">📦 Livré/Remis</option>
-                <option value="cancelled">❌ Annuler</option>
+                <option value="">— Avancement</option>
+                <option value="pending"   ${o.status==='pending'   ?'selected':''}>⏳ En attente paiement</option>
+                <option value="paid"      ${o.status==='paid'      ?'selected':''}>💳 Payée — lancer production</option>
+                <option value="processing"${o.status==='processing'?'selected':''}>🎨 En production</option>
+                <option value="ready"     ${o.status==='ready'     ?'selected':''}>✅ Prête / À remettre</option>
+                <option value="delivered" ${o.status==='delivered' ?'selected':''}>📦 Livrée / Remise</option>
+                <option value="cancelled" ${o.status==='cancelled' ?'selected':''}>❌ Annuler</option>
                 <option value="archived">🗃️ Archiver</option>
               </select>
             </div>
+            ${noteHtml}
             ${progressBar}
           </div>`;
         }).join('')}
@@ -7382,11 +7392,13 @@ let stkCl = { campId: 0, prodIdx: 0 };
 
 function stkOpenClientFlow(campId, prodIdx) {
   stkCl = { campId, prodIdx };
+  const _fab=document.getElementById('vdec-fab');if(_fab)_fab.style.display='none';
   document.getElementById('stk-client-modal').classList.add('open');
   stkRenderClientModal();
 }
 function stkCloseClientFlow() {
   document.getElementById('stk-client-modal').classList.remove('open');
+  const _fab=document.getElementById('vdec-fab');if(_fab)_fab.style.display='';
 }
 
 function stkRenderClientModal() {
@@ -7582,14 +7594,15 @@ let tshBuy = { campId:null, step:1, prodIdx:0, clientLogoUrl:null, clientLogoNam
 
 function tshOpenBuyFlow(campId) {
   const _pcfg0 = tshGetParcours(campId);
-  // Si taille obligatoire : pas de pré-sélection (force le choix explicite)
   const _initSize = _pcfg0.requireSize ? null : 'M';
   tshBuy = { campId, step:1, prodIdx: _selectedProd[campId] ?? 0, clientLogoUrl:null, clientLogoName:'', clientLogoDpi:0, logoBackUrl:null, logoBackName:'', logoBackDpi:0, logoFrontPos:null, logoBackPos:null, logoPos:null, faceSubstep:'front', size:_initSize, qty:1 };
+  const _fab=document.getElementById('vdec-fab');if(_fab)_fab.style.display='none';
   document.getElementById('tsh-buy-modal').classList.add('open');
   tshBuyRender();
 }
 function tshCloseBuyFlow() {
   document.getElementById('tsh-buy-modal').classList.remove('open');
+  const _fab=document.getElementById('vdec-fab');if(_fab)_fab.style.display='';
 }
 
 function tshBuyRender() {
@@ -8362,10 +8375,11 @@ function openGenericFlow(campId, prodIdx) {
   document.getElementById('gen-head-title').textContent = camp.name;
   document.getElementById('gen-recap-icon').textContent = camp.products[prodIdx].e;
   document.getElementById('gen-recap-name').textContent = camp.products[prodIdx].n;
+  const _fab=document.getElementById('vdec-fab');if(_fab)_fab.style.display='none';
   document.getElementById('gen-flow-modal').classList.add('open');
   genRender();
 }
-function closeGenericFlow() { document.getElementById('gen-flow-modal').classList.remove('open'); }
+function closeGenericFlow() { document.getElementById('gen-flow-modal').classList.remove('open'); const _fab=document.getElementById('vdec-fab');if(_fab)_fab.style.display=''; }
 
 function genStepLabels(campId) {
   const cfg = getParcoursCfg(campId);
@@ -8911,6 +8925,7 @@ function genSubmitOrder() {
 .vdec-resize-h{position:absolute;bottom:-8px;right:-8px;width:16px;height:16px;background:#ff9966;border-radius:50%;cursor:nwse-resize;border:2px solid white;touch-action:none}
 .vdec-txt-el{position:absolute;cursor:grab;white-space:nowrap;font-weight:700;text-shadow:0 2px 6px rgba(0,0,0,.8);touch-action:none}
 .vdec-txt-el.dragging{cursor:grabbing}
+.vdec-logo-el.vdec-selected,.vdec-txt-el.vdec-selected{outline:2px solid #ff9966;outline-offset:3px;border-radius:4px}
 
 /* Right panel */
 .vdec-panel{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow-y:auto;display:flex;flex-direction:column}
@@ -9112,6 +9127,28 @@ function genSubmitOrder() {
             </div>
             <button class="vdec-add-txt-btn" onclick="vdecAddText()">✚ Ajouter ce texte</button>
           </div>
+          <!-- Objet sélectionné -->
+          <div class="vdec-ps" id="vdec-sel-panel" style="display:none">
+            <div class="vdec-ph" style="display:flex;align-items:center;gap:6px;margin-bottom:9px">
+              <span id="vdec-sel-icon">🖼️</span>
+              <span id="vdec-sel-label" style="flex:1;font-size:.62rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgba(255,255,255,.8)">—</span>
+            </div>
+            <div class="vdec-tf-row">
+              <div class="vdec-tf-lbl">Taille</div>
+              <input type="range" min="5" max="80" value="35" id="vdec-sel-size" oninput="vdecSelChange('size',this.value)">
+              <div class="vdec-tf-val" id="vdec-sel-size-v">35%</div>
+            </div>
+            <div class="vdec-tf-row">
+              <div class="vdec-tf-lbl">Rotation</div>
+              <input type="range" min="-180" max="180" value="0" id="vdec-sel-rot" oninput="vdecSelChange('rot',this.value)">
+              <div class="vdec-tf-val" id="vdec-sel-rot-v">0°</div>
+            </div>
+            <div class="vdec-tf-row" id="vdec-sel-op-row">
+              <div class="vdec-tf-lbl">Opacité</div>
+              <input type="range" min="10" max="100" value="100" id="vdec-sel-op" oninput="vdecSelChange('op',this.value)">
+              <div class="vdec-tf-val" id="vdec-sel-op-v">100%</div>
+            </div>
+          </div>
           <!-- Liste textes -->
           <div class="vdec-ps">
             <div class="vdec-ph" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
@@ -9280,6 +9317,7 @@ let _vdec = {
   texts:[], txtColor:'#ffffff', txtFont:'Impact', txtSize:40, txtRot:0,
   viewsValidated:{ left:false, front:false, back:false, right:false },
   totalPrice:0,
+  selectedObj: null,
   contact:{ name:'', email:'', phone:'', note:'' },
   delivery:{ type:'pickup', island:'tahiti', address:'', pickupDate:'', slot:'08-12', shippingFee:0 },
   orderId:''
@@ -9290,7 +9328,7 @@ function vdecOpenFlow(campId, prodIdx) {
   _vdec = { step:1, catIdx:null, viewKey:'left', campId, prodIdx,
     logos:[], texts:[],
     viewsValidated:{ left:false, front:false, back:false, right:false },
-    totalPrice:0,
+    totalPrice:0, selectedObj:null,
     txtColor:'#ffffff', txtFont:'Impact', txtSize:40, txtRot:0,
     contact: saved ? { name:saved.name||'', email:saved.email||'', phone:saved.phone||'', note:'' } : { name:'', email:'', phone:'', note:'' },
     delivery:{ type:'pickup', island:'tahiti', address:'', pickupDate:'', slot:'08-12', shippingFee:0 },
@@ -9431,13 +9469,14 @@ function vdecRenderCanvas(cat) {
     wrap.appendChild(el);
     vdecInitTxtDrag(el, wrap, i);
   });
+  vdecRestoreSelection();
 }
 
 function vdecCreateLogoEl(logo, idx) {
-  const { x, y, w, op } = logo;
+  const { x, y, w, op, rot = 0 } = logo;
   const d = document.createElement('div');
   d.id = 'vdec-logo-el-' + idx; d.className = 'vdec-logo-el';
-  d.style.cssText = `left:${x}%;top:${y}%;width:${w}%;transform:translate(-50%,-50%);opacity:${op/100};position:absolute`;
+  d.style.cssText = `left:${x}%;top:${y}%;width:${w}%;transform:translate(-50%,-50%) rotate(${rot}deg);opacity:${op/100};position:absolute`;
   const img = document.createElement('img');
   img.src = logo.url;
   img.style.cssText = 'width:100%;height:auto;pointer-events:none;display:block;';
@@ -9481,6 +9520,7 @@ function vdecInitLogoDrag(el, wrap, idx) {
     const rect = wrap.getBoundingClientRect();
     _vdecLdrag = { type, cx, cy, ox:_vdec.logos[idx].x, oy:_vdec.logos[idx].y, ow:_vdec.logos[idx].w, rw:rect.width, rh:rect.height, idx };
     el.classList.add('dragging');
+    vdecSelectObj('logo', idx);
   }
   function move(cx, cy) {
     if (!_vdecLdrag || _vdecLdrag.idx !== idx) return;
@@ -9520,6 +9560,7 @@ function vdecInitTxtDrag(el, wrap, idx) {
     const rect = wrap.getBoundingClientRect();
     drag = { cx:e.clientX, cy:e.clientY, ox:_vdec.texts[idx].x||50, oy:_vdec.texts[idx].y||55, rw:rect.width, rh:rect.height };
     el.classList.add('dragging');
+    vdecSelectObj('text', idx);
   });
   document.addEventListener('mousemove', e => {
     if (!drag) return;
@@ -9534,18 +9575,23 @@ function vdecInitTxtDrag(el, wrap, idx) {
 /* ── Multi-logo helpers ───────────────────────────────── */
 function vdecAddLogo(url) {
   if (_vdec.logos.length >= 3) return;
-  _vdec.logos.push({ url, x:50, y:50, w:35, op:100, w_cm:'', h_cm:'' });
+  _vdec.logos.push({ url, x:50, y:50, w:35, op:100, rot:0, w_cm:'', h_cm:'' });
+  const newIdx = _vdec.logos.length - 1;
   const cfg = vdecLoadCfg();
   vdecRenderCanvas(cfg.cats[_vdec.catIdx]);
   vdecRenderLogoList();
   vdecRenderLogoGrid(cfg);
+  vdecSelectObj('logo', newIdx);
 }
 function vdecRemoveLogo(idx) {
   _vdec.logos.splice(idx, 1);
+  if (_vdec.selectedObj?.type === 'logo' && _vdec.selectedObj.idx === idx) _vdec.selectedObj = null;
   const cfg = vdecLoadCfg();
   vdecRenderCanvas(cfg.cats[_vdec.catIdx]);
   vdecRenderLogoList();
   vdecRenderLogoGrid(cfg);
+  const panel = document.getElementById('vdec-sel-panel');
+  if (panel && !_vdec.selectedObj) panel.style.display = 'none';
 }
 function vdecRenderLogoList() {
   const list = document.getElementById('vdec-logo-list-active');
@@ -9576,6 +9622,110 @@ function vdecRenderLogoList() {
       </div>
     </div>`;
   }).join('');
+}
+
+/* ── Sélection & contrôles objet ─────────────────────────────────── */
+function vdecSelectObj(type, idx) {
+  _vdec.selectedObj = { type, idx };
+  document.querySelectorAll('.vdec-logo-el,.vdec-txt-el').forEach(e => e.classList.remove('vdec-selected'));
+  if (type === 'logo') {
+    const el = document.getElementById('vdec-logo-el-' + idx);
+    if (el) el.classList.add('vdec-selected');
+  } else if (type === 'text') {
+    const els = document.querySelectorAll('.vdec-txt-el');
+    if (els[idx]) els[idx].classList.add('vdec-selected');
+  }
+  vdecRenderSelectedPanel();
+}
+
+function vdecRestoreSelection() {
+  if (!_vdec.selectedObj) return;
+  const { type, idx } = _vdec.selectedObj;
+  if (type === 'logo') {
+    const el = document.getElementById('vdec-logo-el-' + idx);
+    if (el) el.classList.add('vdec-selected');
+  } else if (type === 'text') {
+    const els = document.querySelectorAll('.vdec-txt-el');
+    if (els[idx]) els[idx].classList.add('vdec-selected');
+  }
+  vdecRenderSelectedPanel();
+}
+
+function vdecRenderSelectedPanel() {
+  const panel = document.getElementById('vdec-sel-panel');
+  if (!panel) return;
+  const sel = _vdec.selectedObj;
+  if (!sel) { panel.style.display = 'none'; return; }
+
+  if (sel.type === 'logo') {
+    const lo = _vdec.logos[sel.idx];
+    if (!lo) { panel.style.display = 'none'; return; }
+    panel.style.display = '';
+    document.getElementById('vdec-sel-icon').textContent = '🖼️';
+    document.getElementById('vdec-sel-label').textContent = 'Logo ' + (sel.idx + 1);
+    const ss = document.getElementById('vdec-sel-size');
+    ss.min = 5; ss.max = 80; ss.value = Math.round(lo.w);
+    document.getElementById('vdec-sel-size-v').textContent = Math.round(lo.w) + '%';
+    const sr = document.getElementById('vdec-sel-rot');
+    sr.value = lo.rot || 0;
+    document.getElementById('vdec-sel-rot-v').textContent = (lo.rot || 0) + '°';
+    const so = document.getElementById('vdec-sel-op');
+    so.value = lo.op || 100;
+    document.getElementById('vdec-sel-op-v').textContent = Math.round(lo.op || 100) + '%';
+    document.getElementById('vdec-sel-op-row').style.display = '';
+  } else if (sel.type === 'text') {
+    const t = _vdec.texts[sel.idx];
+    if (!t) { panel.style.display = 'none'; return; }
+    panel.style.display = '';
+    document.getElementById('vdec-sel-icon').textContent = '✍️';
+    document.getElementById('vdec-sel-label').textContent = '"' + t.text + '"';
+    const ss = document.getElementById('vdec-sel-size');
+    ss.min = 12; ss.max = 120; ss.value = t.size || 40;
+    document.getElementById('vdec-sel-size-v').textContent = (t.size || 40) + 'px';
+    const sr = document.getElementById('vdec-sel-rot');
+    sr.value = t.rot || 0;
+    document.getElementById('vdec-sel-rot-v').textContent = (t.rot || 0) + '°';
+    document.getElementById('vdec-sel-op-row').style.display = 'none';
+  }
+}
+
+function vdecSelChange(prop, val) {
+  const sel = _vdec.selectedObj;
+  if (!sel) return;
+  const v = parseFloat(val);
+
+  if (sel.type === 'logo') {
+    const lo = _vdec.logos[sel.idx];
+    if (!lo) return;
+    const el = document.getElementById('vdec-logo-el-' + sel.idx);
+    if (prop === 'size') {
+      lo.w = v;
+      document.getElementById('vdec-sel-size-v').textContent = Math.round(v) + '%';
+      if (el) el.style.width = v + '%';
+    } else if (prop === 'rot') {
+      lo.rot = v;
+      document.getElementById('vdec-sel-rot-v').textContent = v + '°';
+      if (el) el.style.transform = `translate(-50%,-50%) rotate(${v}deg)`;
+    } else if (prop === 'op') {
+      lo.op = v;
+      document.getElementById('vdec-sel-op-v').textContent = Math.round(v) + '%';
+      if (el) el.style.opacity = v / 100;
+    }
+  } else if (sel.type === 'text') {
+    const t = _vdec.texts[sel.idx];
+    if (!t) return;
+    const els = document.querySelectorAll('.vdec-txt-el');
+    const txtEl = els[sel.idx];
+    if (prop === 'size') {
+      t.size = v;
+      document.getElementById('vdec-sel-size-v').textContent = Math.round(v) + 'px';
+      if (txtEl) txtEl.style.fontSize = v + 'px';
+    } else if (prop === 'rot') {
+      t.rot = v;
+      document.getElementById('vdec-sel-rot-v').textContent = v + '°';
+      if (txtEl) txtEl.style.transform = `translate(-50%,-50%) rotate(${v}deg)`;
+    }
+  }
 }
 
 async function vdecHandleLogoUpload(input) {
@@ -9679,8 +9829,11 @@ function vdecAddText() {
 }
 function vdecDeleteText(idx) {
   _vdec.texts.splice(idx, 1);
+  if (_vdec.selectedObj?.type === 'text' && _vdec.selectedObj.idx === idx) _vdec.selectedObj = null;
   vdecRenderCanvas(vdecLoadCfg().cats[_vdec.catIdx]);
   vdecRenderTxtList();
+  const panel = document.getElementById('vdec-sel-panel');
+  if (panel && !_vdec.selectedObj) panel.style.display = 'none';
 }
 function vdecRenderTxtList() {
   const list = document.getElementById('vdec-txt-list');
@@ -9935,11 +10088,14 @@ async function vdecInitPZ(total) {
   }
 
   btnDiv.innerHTML = '<div style="text-align:center;padding:18px;color:rgba(255,255,255,.35);font-size:.78rem">🔒 Connexion sécurisée OSB…</div>';
+  const _vdecWUrl = document.getElementById(`pz-worker-${_vdec.campId}`)?.value?.trim() || WORKER_URL;
+  const _vdecWSec = document.getElementById(`pz-secret-${_vdec.campId}`)?.value?.trim() || WORKER_SECRET_VAL;
+  const _vdecWMode = document.getElementById(`pz-mode-${_vdec.campId}`)?.value || WORKER_MODE;
   try {
-    const res = await fetch(WORKER_URL, {
+    const res = await fetch(_vdecWUrl, {
       method:'POST',
-      headers:{ 'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET_VAL },
-      body:JSON.stringify({ amount:total*100, currency:'953', mode:WORKER_MODE, orderId:_vdec.orderId,
+      headers:{ 'Content-Type':'application/json','X-Worker-Secret':_vdecWSec },
+      body:JSON.stringify({ amount:total*100, currency:'953', mode:_vdecWMode, orderId:_vdec.orderId,
         customer:{ email:_vdec.contact.email||'client@hcs.pf', name:_vdec.contact.name||'Client HCS' } })
     });
     if (!res.ok) throw new Error('Erreur Worker (' + res.status + ')');
@@ -10067,6 +10223,33 @@ async function vdecArchiveOrder(total) {
       body: JSON.stringify(order)
     });
   } catch(e) { console.warn('[vdec] commande MySQL err:', e); }
+  /* Enregistrement Worker KV → apparaît dans Planning Andromeda */
+  try {
+    const viewLabels = { left:'Gauche', front:'Avant', back:'Arrière', right:'Droite' };
+    await fetch('https://payzen-hcs.highcoffeeshirt.workers.dev/order/save', {
+      method: 'POST', keepalive: true,
+      headers: { 'Content-Type': 'application/json', 'X-Worker-Secret': WORKER_SECRET_VAL },
+      body: JSON.stringify({
+        orderId: order.order_id,
+        status: total > 0 ? 'paid' : 'pending',
+        amount: total, currency: 'XPF',
+        campaignName: 'Déco Véhicule',
+        product: `${cat?.icon || '🚗'} ${cat?.name || 'Véhicule'} — ${cat?.model || ''}`,
+        lpSlug: 'sticker-auto',
+        client: _vdec.contact,
+        delivery: _vdec.delivery,
+        note: [
+          `Véhicule: ${cat?.name} (${cat?.model})`,
+          `Vues: ${Object.keys(_vdec.viewsValidated).filter(k => _vdec.viewsValidated[k]).map(k => viewLabels[k] || k).join(', ')}`,
+          _vdec.logos.length ? `${_vdec.logos.length} logo(s) vinyle` : '',
+          _vdec.texts.length ? `${_vdec.texts.length} texte(s) vinyle` : '',
+          _vdec.delivery.type === 'pickup' && _vdec.delivery.pickupDate
+            ? `Retrait: ${_vdec.delivery.pickupDate}${_vdec.delivery.slot ? ' · ' + _vdec.delivery.slot : ''}`
+            : (_vdec.delivery.island ? `Livraison: ${_vdec.delivery.island}` : '')
+        ].filter(Boolean).join(' | ')
+      })
+    });
+  } catch(e) { console.warn('[vdec] Worker KV save err:', e); }
   /* Webhook n8n → emails client + admin */
   try {
     await fetch(VDEC_N8N_WEBHOOK, {
