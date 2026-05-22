@@ -9776,7 +9776,8 @@ function vdecRenderViewTabs() {
   const cfg = vdecLoadCfg();
   const cat = cfg.cats[_vdec.catIdx];
   const enabled = cat?.enabledViews?.length ? cat.enabledViews : ['left','front','back','right'];
-  el.innerHTML = VDEC_VIEWS_DEF.filter(v => enabled.includes(v.key)).map(v => {
+  // Respecter l'ordre configuré dans enabledViews (pas l'ordre fixe de VDEC_VIEWS_DEF)
+  el.innerHTML = enabled.map(k => VDEC_VIEWS_DEF.find(v => v.key === k)).filter(Boolean).map(v => {
     const validated = _vdec.viewsValidated[v.key];
     return `<button class="vdec-vtab ${v.key === _vdec.viewKey ? 'active' : ''} ${validated ? 'vdec-vtab-validated' : ''}" onclick="vdecSetView('${v.key}')">${v.label}${validated ? ' ✓' : ''}</button>`;
   }).join('');
@@ -9918,7 +9919,21 @@ function vdecRenderS4() {
 
 async function vdecInitPZ(total) {
   const btnDiv = document.getElementById('vdec-pz-btn');
-  if (!btnDiv || !total) return;
+  if (!btnDiv) return;
+
+  // Demande de devis sans paiement (aucun tarif configuré → total=0)
+  if (!total) {
+    btnDiv.innerHTML = '<div style="text-align:center;padding:18px;color:rgba(255,255,255,.35);font-size:.78rem">📋 Envoi de votre demande de devis…</div>';
+    try {
+      await vdecArchiveOrder(0);
+      btnDiv.style.display = 'none';
+      document.getElementById('vdec-pz-ok').style.display = 'block';
+    } catch(e) {
+      btnDiv.innerHTML = `<div style="color:#ff6b6b;text-align:center;padding:14px;font-size:.78rem">❌ ${e.message}</div><button onclick="vdecRenderS4()" style="display:block;margin:8px auto;padding:8px 16px;background:rgba(255,255,255,.1);border:none;border-radius:8px;color:white;cursor:pointer;font-size:.74rem">Réessayer</button>`;
+    }
+    return;
+  }
+
   btnDiv.innerHTML = '<div style="text-align:center;padding:18px;color:rgba(255,255,255,.35);font-size:.78rem">🔒 Connexion sécurisée OSB…</div>';
   try {
     const res = await fetch(WORKER_URL, {
