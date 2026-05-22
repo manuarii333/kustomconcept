@@ -6108,14 +6108,78 @@ function showPlanning() {
   loadPlanning();
 }
 
+let _planningOrders = []; // cache pour updateOrderStatusPlanning
+
+const _STATUS_FR = { pending:'en_attente', paid:'payee', processing:'en_cours', ready:'pret', delivered:'livree', cancelled:'annulee' };
+const _STATUS_EN = { en_attente:'pending', payee:'paid', en_cours:'processing', pret:'ready', livree:'delivered', annulee:'cancelled' };
+
 async function loadPlanning() {
   const ws = document.getElementById('workspace');
-  ws.innerHTML = `<div class="planning-view"><div style="color:var(--text-secondary);font-size:0.85rem;padding:40px;text-align:center">Chargement du planning…</div></div>`;
+  ws.innerHTML = `<div class="planning-view"><div style="color:var(--text-secondary);font-size:0.85rem;padding:40px;text-align:center">⏳ Synchronisation de toutes les sources…</div></div>`;
   try {
-    const res = await fetch(`${WORKER_BASE}/admin/db/orders?archived=0`, { headers:{'X-Admin-Secret':adminSecret} });
-    if (!res.ok) { adminSecret=''; sessionStorage.removeItem('hcs_admin_secret'); showOrders(); return; }
-    const { orders } = await res.json();
-    renderPlanning(orders);
+    // Fetch Worker KV + MySQL lp_commandes + MySQL vdec_commandes en parallèle
+    const [resKV, resLP, resVdec] = await Promise.allSettled([
+      fetch(`${WORKER_BASE}/admin/db/orders?archived=0`, { headers:{'X-Admin-Secret':adminSecret} }),
+      fetch(`${HCS_API_BASE}/lp_commandes?sort=id&order=DESC&limit=500`, { headers:{'x-api-key':HCS_API_KEY} }),
+      fetch(`${HCS_API_BASE}/vdec_commandes?sort=id&order=DESC&limit=200`, { headers:{'x-api-key':HCS_API_KEY} })
+    ]);
+
+    if (resKV.status === 'fulfilled' && !resKV.value.ok) {
+      adminSecret = ''; sessionStorage.removeItem('hcs_admin_secret'); showOrders(); return;
+    }
+
+    // Worker KV orders
+    let kvOrders = [];
+    if (resKV.status === 'fulfilled' && resKV.value.ok) {
+      const d = await resKV.value.json();
+      kvOrders = (d.orders || []).map(o => ({ ...o, _src:'kv' }));
+    }
+
+    // MySQL lp_commandes → normalisation format Worker
+    let lpOrders = [];
+    if (resLP.status === 'fulfilled' && resLP.value.ok) {
+      const d = await resLP.value.json();
+      lpOrders = (d.items || []).map(o => ({
+        orderId: o.order_id || `lp-${o.id}`,
+        status: _STATUS_EN[o.status] || 'pending',
+        amount: parseFloat(o.amount) || 0, currency: 'XPF',
+        campaignName: o.campaign_name || '—',
+        product: [o.product, o.size ? 'Taille ' + o.size : ''].filter(Boolean).join(' · '),
+        client: { name: o.customer_name||'', email: o.customer_email||'', phone: o.customer_phone||'' },
+        delivery: { type: o.delivery_type||'pickup', pickupDate: o.pickup_date||'', slot: o.slot||'', island: o.island||'', address: o.address||'', shippingFee: parseFloat(o.shipping_fee)||0 },
+        note: o.note || '',
+        createdAt: o.created_at || '',
+        _src: 'mysql_lp', _mysqlId: o.id, _mysqlTable: 'lp_commandes'
+      }));
+    }
+
+    // MySQL vdec_commandes → normalisation
+    let vdecOrders = [];
+    if (resVdec.status === 'fulfilled' && resVdec.value.ok) {
+      const d = await resVdec.value.json();
+      vdecOrders = (d.items || []).map(o => ({
+        orderId: o.order_id || `vdec-${o.id}`,
+        status: _STATUS_EN[o.status] || (o.total_xpf > 0 ? 'paid' : 'pending'),
+        amount: parseFloat(o.total_xpf) || 0, currency: 'XPF',
+        campaignName: 'Déco Véhicule',
+        product: `🚗 ${o.cat_name||'Véhicule'}${o.cat_model ? ' — ' + o.cat_model : ''}`,
+        client: typeof o.contact === 'string' ? JSON.parse(o.contact||'{}') : (o.contact || {}),
+        delivery: typeof o.delivery === 'string' ? JSON.parse(o.delivery||'{}') : (o.delivery || { type:'pickup' }),
+        note: o.note || '',
+        createdAt: o.created_at || '',
+        _src: 'mysql_vdec', _mysqlId: o.id, _mysqlTable: 'vdec_commandes'
+      }));
+    }
+
+    // Fusion + déduplique par orderId (KV prioritaire)
+    const kvIds = new Set(kvOrders.map(o => o.orderId));
+    const lpUniq = lpOrders.filter(o => !kvIds.has(o.orderId));
+    const vdecIds = new Set([...kvOrders, ...lpOrders].map(o => o.orderId));
+    const vdecUniq = vdecOrders.filter(o => !vdecIds.has(o.orderId));
+
+    const all = [...kvOrders, ...lpUniq, ...vdecUniq].filter(o => o.status !== 'archived');
+    _planningOrders = all;
+    renderPlanning(all);
   } catch(e) {
     ws.innerHTML = `<div class="planning-view"><div style="color:#ff6b6b;padding:40px;text-align:center">Erreur : ${e.message}</div></div>`;
   }
@@ -6133,7 +6197,7 @@ function renderPlanning(orders) {
     const d = o.delivery?.pickupDate || o.createdAt?.slice(0,10);
     return d === todayStr;
   });
-  const pending = orders.filter(o => ['paid','pending','processing'].includes(o.status));
+  const pending = orders.filter(o => ['pending','paid','processing','ready'].includes(o.status));
 
   // Grouper par date (pickupDate ou date de commande)
   const byDate = {};
@@ -6206,9 +6270,13 @@ function renderPlanning(orders) {
           const noteHtml = o.note
             ? `<div style="font-size:0.65rem;color:var(--text-secondary);margin-top:2px;opacity:.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${o.note.replace(/"/g,'&quot;')}">📝 ${o.note}</div>`
             : '';
+          const srcBadge = o._src==='mysql_lp' ? `<span style="font-size:.55rem;padding:1px 5px;border-radius:8px;background:rgba(67,233,123,.15);color:#43e97b;border:1px solid rgba(67,233,123,.3);flex-shrink:0">MySQL LP</span>`
+            : o._src==='mysql_vdec' ? `<span style="font-size:.55rem;padding:1px 5px;border-radius:8px;background:rgba(255,101,132,.15);color:#ff6584;border:1px solid rgba(255,101,132,.3);flex-shrink:0">Déco Véhicule</span>`
+            : `<span style="font-size:.55rem;padding:1px 5px;border-radius:8px;background:rgba(79,172,254,.12);color:var(--accent);border:1px solid rgba(79,172,254,.25);flex-shrink:0">KV</span>`;
           return `<div class="planning-order-row" style="flex-direction:column;align-items:stretch;gap:6px">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
               <span class="po-ref">${o.orderId}</span>
+              ${srcBadge}
               <span class="po-client">${o.client?.name||o.customerName||'—'}</span>
               <span class="po-product">${o.product||o.campaignName||'—'}</span>
               <span class="po-amount">${(o.amount||0).toLocaleString('fr-FR')} XPF</span>
@@ -6240,8 +6308,9 @@ function renderPlanning(orders) {
           <div style="font-size:0.7rem;color:var(--text-secondary);margin-top:2px">Organisé par date de retrait / livraison</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-outline" style="font-size:0.72rem" onclick="loadPlanning()">🔄 Rafraîchir</button>
-          <button class="btn btn-outline" style="font-size:0.72rem;background:rgba(79,172,254,.1);border-color:rgba(79,172,254,.4);color:var(--accent)" onclick="showOrders()">📋 Toutes les commandes</button>
+          <button class="btn btn-outline" style="font-size:0.72rem" onclick="loadPlanning()">🔄 Sync toutes sources</button>
+          <button class="btn btn-outline" style="font-size:0.72rem;background:rgba(79,172,254,.1);border-color:rgba(79,172,254,.4);color:var(--accent)" onclick="showOrders()">📋 Commandes Worker</button>
+          <button class="btn btn-outline" style="font-size:0.72rem;background:rgba(67,233,123,.1);border-color:rgba(67,233,123,.4);color:#43e97b" onclick="showMysqlOrders()">📊 ERP MySQL</button>
         </div>
       </div>
       <div class="planning-stats">
@@ -6258,21 +6327,29 @@ function renderPlanning(orders) {
 
 async function updateOrderStatusPlanning(orderId, status) {
   if (!status) return;
+  const order = _planningOrders.find(o => o.orderId === orderId);
   try {
+    // 1. Mise à jour Worker KV (toujours, pour les KV natives + sync)
     if (status === 'archived') {
       await fetch(`${WORKER_BASE}/admin/db/archive`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json','X-Admin-Secret':adminSecret},
+        method:'POST', headers:{'Content-Type':'application/json','X-Admin-Secret':adminSecret},
         body:JSON.stringify({ orderId })
       });
     } else {
       await fetch(`${WORKER_BASE}/admin/db/order`, {
-        method:'PATCH',
-        headers:{'Content-Type':'application/json','X-Admin-Secret':adminSecret},
+        method:'PATCH', headers:{'Content-Type':'application/json','X-Admin-Secret':adminSecret},
         body:JSON.stringify({ orderId, status })
       });
     }
-    showToast(`✅ Commande ${orderId} → ${status}`);
+    // 2. Mise à jour MySQL si commande d'origine MySQL
+    if (order?._mysqlId && order?._mysqlTable) {
+      const frStatus = _STATUS_FR[status] || status;
+      fetch(`${HCS_API_BASE}/${order._mysqlTable}/${order._mysqlId}`, {
+        method:'PUT', headers:{'Content-Type':'application/json','x-api-key':HCS_API_KEY},
+        body: JSON.stringify({ status: frStatus })
+      }).catch(e => console.warn('[planning] MySQL sync err:', e));
+    }
+    showToast(`✅ ${orderId} → ${status}`);
     await loadPlanning();
   } catch(e) { showToast('❌ ' + e.message, true); }
 }
