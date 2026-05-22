@@ -293,8 +293,9 @@ window.SalesOrders = (() => {
       };
 
       if (isNew) {
-        Store.create('commandes', record);
-        toast('Commande créée.', 'success');
+        Store.create('commandes', record); // record.id est assigné par Store
+        C()._pushPlanningCard(record, record.ref);
+        toast('Commande créée + carte ajoutée au planning.', 'success');
       } else {
         Store.update('commandes', doc.id, record);
         toast('Commande sauvegardée.', 'success');
@@ -389,6 +390,7 @@ window.SalesOrders = (() => {
     const ofs = Store.getAll('ordresFab');
     const ofExistant = ofs.find(o =>
       o.commandeId === cmd.id ||
+      o.devisOrigineId === cmd.id ||
       (cmd.quoteId && o.devisOrigineId === cmd.quoteId)
     );
 
@@ -411,6 +413,13 @@ window.SalesOrders = (() => {
 
       /* Passer la commande en production */
       Store.update('commandes', cmd.id, { statut: 'En production' });
+
+      /* Déplacer la carte planning → colonne "prod" */
+      try {
+        const pl = JSON.parse(localStorage.getItem('hcs_planning') || '[]');
+        const pi = pl.findIndex(p => p.ref === cmd.ref || p.ref === (ofExistant?.devisOrigineRef || ''));
+        if (pi >= 0) { pl[pi].col = 'prod'; localStorage.setItem('hcs_planning', JSON.stringify(pl)); }
+      } catch(e) {}
 
       const ofRef = ofExistant?.reference || '';
       toast(`✔ Commande "${cmd.ref}" lancée en production${ofRef ? ` — OF ${ofRef}` : ''}.`, 'success');
