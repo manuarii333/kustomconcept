@@ -9453,9 +9453,16 @@ function vdecRender() {
   const next = document.getElementById('vdec-btn-next');
   if (prev) prev.style.display = _vdec.step > 1 ? 'block' : 'none';
   if (next) {
-    next.textContent = _vdec.step === 4 ? '💳 Payer' : 'Suivant →';
-    next.className = 'vdec-btn ' + (_vdec.step === 4 ? 'vdec-btn-pay' : 'vdec-btn-next');
-    next.style.display = _vdec.step === 4 ? 'none' : 'block';
+    if (_vdec.step === 4) {
+      const _gTotal = (_vdec.totalPrice || 0) + (_vdec.delivery?.shippingFee || 0);
+      next.textContent = _gTotal > 0 ? `💳 Payer ${_gTotal.toLocaleString('fr-FR')} XPF` : '📋 Envoyer la demande';
+      next.className = 'vdec-btn vdec-btn-pay';
+      next.style.display = 'block';
+    } else {
+      next.textContent = 'Suivant →';
+      next.className = 'vdec-btn vdec-btn-next';
+      next.style.display = 'block';
+    }
   }
 
   if (_vdec.step === 1) vdecRenderS1();
@@ -10085,7 +10092,10 @@ function vdecSetIsland(island) {
 function vdecRenderS4() {
   const cfg = vdecLoadCfg();
   const cat = cfg.cats[_vdec.catIdx];
-  const stickerTotal = _vdec.totalPrice || 0;
+  const stickerTotal = [..._vdec.logos, ..._vdec.texts]
+    .map(item => vdecCalcItemPrice(item.w_cm, item.h_cm, cfg))
+    .reduce((s, p) => s + p, 0);
+  _vdec.totalPrice = stickerTotal;
   const shipping = _vdec.delivery.shippingFee || 0;
   const grandTotal = stickerTotal + shipping;
 
@@ -10172,7 +10182,8 @@ async function vdecInitPZ(total) {
     const res = await fetch(_vdecWUrl, {
       method:'POST',
       headers:{ 'Content-Type':'application/json','X-Worker-Secret':_vdecWSec },
-      body:JSON.stringify({ amount:total*100, currency:'953', mode:_vdecWMode, orderId:_vdec.orderId,
+      body:JSON.stringify({ amount:total, currency:'XPF', mode:_vdecWMode, orderId:_vdec.orderId,
+        customerEmail:_vdec.contact.email||'client@hcs.pf',
         customer:{ email:_vdec.contact.email||'client@hcs.pf', name:_vdec.contact.name||'Client HCS' } })
     });
     if (!res.ok) throw new Error('Erreur Worker (' + res.status + ')');
@@ -10185,6 +10196,8 @@ async function vdecInitPZ(total) {
     const formEl = document.getElementById('vdec-pz-form');
     formEl.style.display = 'block';
     formEl.innerHTML = '<div class="kr-embedded" style="max-width:420px;margin:0 auto"></div>';
+    /* Retirer les kr-embedded parasites (LP editor, autres modaux) */
+    document.querySelectorAll('.kr-embedded').forEach(el => { if (!formEl.contains(el)) el.remove(); });
 
     // CSS OSB
     ['pz-vdec-css1','pz-vdec-css2'].forEach((id, i) => {
@@ -10264,6 +10277,10 @@ function vdecNext() {
       _vdec.delivery.pickupDate = document.getElementById('vdec-pickdate')?.value || '';
     }
     _vdec.step = 4;
+  } else if (_vdec.step === 4) {
+    const _gTotal = (_vdec.totalPrice || 0) + (_vdec.delivery?.shippingFee || 0);
+    vdecInitPZ(_gTotal);
+    return;
   }
   vdecRender();
 }
@@ -10426,7 +10443,7 @@ function vdecAdmRenderCats() {
         ${VDEC_VIEWS_DEF.map(v => `
           <div class="vdec-view-cell">
             <div class="vdec-view-lbl">${v.label}</div>
-            <div class="vdec-view-img" onclick="vdecAdmPickImg(${ci},'${v.key}')">
+            <div id="vdec-view-${ci}-${v.key}" class="vdec-view-img" onclick="vdecAdmPickImg(${ci},'${v.key}')">
               ${cat.views[v.key]
                 ? `<img src="${cat.views[v.key]}" alt="${v.key}"><button class="vdec-view-del" onclick="event.stopPropagation();vdecAdmDelImg(${ci},'${v.key}')">✕</button>`
                 : '📤'}
@@ -10494,10 +10511,9 @@ function vdecAdmPickImg(ci, viewKey) {
     /* Affichage temporaire base64 pendant l'upload */
     const reader = new FileReader();
     reader.onload = ev => {
-      const cfg = vdecLoadCfg();
-      cfg.cats[ci].views[viewKey] = ev.target.result;
-      localStorage.setItem(VDEC_KEY, JSON.stringify(cfg));
-      vdecAdmRenderCats();
+      /* Aperçu immédiat en mémoire sans stocker le base64 dans localStorage (quota) */
+      const div = document.getElementById(`vdec-view-${ci}-${viewKey}`);
+      if (div) div.innerHTML = `<img src="${ev.target.result}" alt="${viewKey}"><button class="vdec-view-del" onclick="event.stopPropagation();vdecAdmDelImg(${ci},'${viewKey}')">✕</button>`;
     };
     reader.readAsDataURL(file);
     /* Upload réel vers le serveur */
