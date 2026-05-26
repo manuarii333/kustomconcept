@@ -10155,6 +10155,13 @@ function vdecRenderS4() {
       <button onclick="vdecClose()" style="margin-top:16px;padding:10px 22px;background:rgba(255,255,255,.1);border:none;border-radius:8px;color:white;cursor:pointer;font-size:.8rem">Fermer</button>
     </div>
   `;
+  /* Synchroniser le bouton footer avec le montant exact calculé ici */
+  const _footerBtn = document.getElementById('vdec-btn-next');
+  if (_footerBtn) {
+    _footerBtn.textContent = grandTotal > 0
+      ? `💳 Payer ${grandTotal.toLocaleString('fr-FR')} XPF`
+      : '📋 Envoyer la demande';
+  }
 }
 
 async function vdecInitPZ(total) {
