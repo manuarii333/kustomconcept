@@ -4243,7 +4243,7 @@ function gfStep3HTML() {
 }
 
 async function gfInitKrypton(amount) {
-  if(location.protocol==='file:') {
+  if(location.protocol!=='https:') {
     document.getElementById('gf-pz-loading').style.display='none';
     var _tb=document.createElement('button');
     _tb.style.cssText='width:100%;padding:12px;background:linear-gradient(135deg,'+PRIMARY+',#ff6584);color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;margin-top:8px';
@@ -4375,132 +4375,63 @@ function gfFileLoad(e) {
 document.getElementById('fl-overlay').addEventListener('click',function(e){if(e.target===e.currentTarget)closeFlow();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeFlow();});
 
-/* ═══════ GANG SHEET BUILDER (camp 4 step 2) ═══════ */
-var B_SCALE=5; // px per cm
-function bldSheetDims() {
-  var h=_s.format==='1yard'?91:(_s.format==='halfyard'?46:30);
-  var w=56;
-  return{w:w,h:h};
-}
+/* ═══════ GANG SHEET BUILDER — ouvre l'outil DTF (camp 4 step 2) ═══════ */
+var _gangWin = null;
+
 function gfStepBuilderHTML() {
-  var d=bldSheetDims();
-  var cvW=d.w*B_SCALE; var cvH=d.h*B_SCALE;
-  var fmtLabel=_s.format==='1yard'?'1 Yard \xd7 22" (91\xd756 cm)':_s.format==='halfyard'?'\xbd Yard \xd7 22" (46\xd756 cm)':(_s.format||'');
-  var html='<div style="margin-bottom:10px">'
-    +'<div style="font-size:.68rem;color:rgba(255,255,255,.45);margin-bottom:8px">Format : <strong style="color:rgba(255,255,255,.75)">'+fmtLabel+'</strong></div>'
-    +'<label style="display:block;margin-bottom:8px">'
-    +'<div class="fl-upload-zone" id="bld-uzone" style="padding:10px 14px;text-align:center;cursor:pointer">'
-    +'<div style="font-size:1.2rem">📎</div>'
-    +'<div style="font-size:.72rem;color:rgba(255,255,255,.45);margin-top:3px">Uploader vos logos (PNG\xb7JPG) — plusieurs fichiers</div>'
-    +'</div>'
-    +'<input type="file" accept="image/*" multiple style="display:none" onchange="bldLoadLogos(event)">'
-    +'</label>'
-    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
-    +'<span style="font-size:.65rem;color:rgba(255,255,255,.45)">Taille logo (cm) :</span>'
-    +'<button onclick="bldChgSize(-1)" style="width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#f5ede0;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center">-</button>'
-    +'<span id="bld-sz" style="font-size:.82rem;font-weight:700;min-width:28px;text-align:center">8</span>'
-    +'<button onclick="bldChgSize(1)" style="width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#f5ede0;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'
-    +'<button onclick="bldAutoFill()" style="margin-left:auto;padding:5px 12px;border-radius:20px;background:rgba(108,99,255,.18);border:1px solid rgba(108,99,255,.45);color:#a78bfa;font-size:.72rem;font-weight:700;cursor:pointer">⚡ Remplir</button>'
-    +'</div>'
-    +'<div id="bld-stats" style="font-size:.65rem;color:rgba(255,255,255,.4);margin-bottom:8px;min-height:16px"></div>'
-    +'<div style="overflow:auto;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:#1a1a1a">'
-    +'<canvas id="bld-cv" width="'+cvW+'" height="'+cvH+'" style="display:block;background:#f5f0e8;margin:0 auto;max-width:100%;image-rendering:auto"></canvas>'
-    +'</div>'
-    +'</div>';
+  var fmtLabel = _s.format==='1yard'?'1 Yard \xd7 22″ (91\xd756 cm)':'\xbd Yard \xd7 22″ (46\xd756 cm)';
+  var html = '<div>';
+  if (_s.plateB64) {
+    html += '<div style="margin-bottom:14px">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
+      +'<span style="font-size:1.4rem">&#x2705;</span>'
+      +'<div><div style="font-size:.85rem;font-weight:800;color:#43e97b">Planche valid\xe9e !</div>'
+      +'<div style="font-size:.65rem;color:rgba(255,255,255,.5)">'+(_s.plateLogos||0)+' logos plac\xe9s sur la feuille</div></div>'
+      +'</div>'
+      +'<img src="'+_s.plateB64+'" style="max-width:100%;max-height:180px;border-radius:8px;'
+      +'border:1px solid rgba(67,233,123,.3);object-fit:contain;display:block;margin-bottom:10px">'
+      +'</div>'
+      +'<button onclick="openDtfTool()" style="width:100%;padding:9px;border-radius:8px;'
+      +'background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);'
+      +'color:rgba(255,255,255,.6);font-size:.75rem;cursor:pointer">'
+      +'🔄 Modifier la planche</button>';
+  } else {
+    html += '<div style="text-align:center;padding:22px 10px">'
+      +'<div style="font-size:.68rem;color:rgba(255,255,255,.4);margin-bottom:16px">'
+      +'Format s\xe9lectionn\xe9 : <strong style="color:rgba(255,255,255,.8)">'+fmtLabel+'</strong></div>'
+      +'<div style="font-size:2.8rem;margin-bottom:12px">🎨</div>'
+      +'<div style="font-size:.88rem;font-weight:800;margin-bottom:8px">Composez votre planche de transfert</div>'
+      +'<div style="font-size:.7rem;color:rgba(255,255,255,.42);margin-bottom:22px;line-height:1.7">'
+      +'Uploadez vos logos • Placez-les sur la feuille DTF<br>'
+      +'Validez l\'aper\xe7u pour commander</div>'
+      +'<button onclick="openDtfTool()" style="padding:14px 30px;border-radius:50px;'
+      +'background:linear-gradient(135deg,#6c63ff,#a78bfa);color:#fff;border:none;'
+      +'font-size:.9rem;font-weight:800;cursor:pointer;'
+      +'box-shadow:0 4px 22px rgba(108,99,255,.45);letter-spacing:.5px">'
+      +'🛠 Ouvrir l\'outil de placement →</button>'
+      +'<div style="margin-top:14px;font-size:.62rem;color:rgba(255,255,255,.28)">'
+      +'S\'ouvre dans une nouvelle fen\xeatre — revenez ici apr\xe8s validation</div>'
+      +'</div>';
+  }
+  html += '</div>';
   return html;
 }
-var _bldSize=8;
-function initBuilder() {
-  _b.cv=document.getElementById('bld-cv');
-  if(!_b.cv) return;
-  _b.ctx=_b.cv.getContext('2d');
-  bldDrawSheet();
-  if(_b.logos.length) bldAutoFill();
-  var szEl=document.getElementById('bld-sz'); if(szEl) szEl.textContent=_bldSize;
+
+function openDtfTool() {
+  var fmt = _s.format || '1yard';
+  var toolUrl = 'https://highcoffeeshirts.com/erp/apps/dtf-plaques-transfert.html?gang='+fmt;
+  _gangWin = window.open(toolUrl, 'dtf-gang', 'width=1280,height=860,scrollbars=yes,resizable=yes');
 }
-function bldChgSize(d) {
-  _bldSize=Math.min(30,Math.max(2,_bldSize+d));
-  var szEl=document.getElementById('bld-sz'); if(szEl) szEl.textContent=_bldSize;
-  if(_b.logos.length) bldAutoFill();
-}
-function bldDrawSheet() {
-  var cv=_b.cv,ctx=_b.ctx;
-  if(!cv||!ctx) return;
-  ctx.clearRect(0,0,cv.width,cv.height);
-  ctx.fillStyle='#f5f0e8';
-  ctx.fillRect(0,0,cv.width,cv.height);
-  ctx.strokeStyle='rgba(0,0,0,.07)';ctx.lineWidth=0.5;
-  for(var x=0;x<=cv.width;x+=B_SCALE*10){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,cv.height);ctx.stroke();}
-  for(var y=0;y<=cv.height;y+=B_SCALE*10){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(cv.width,y);ctx.stroke();}
-  var d=bldSheetDims();
-  ctx.fillStyle='rgba(0,0,0,.18)';ctx.font='bold 9px monospace';
-  ctx.fillText(d.w+'cm \xd7 '+d.h+'cm',4,cv.height-4);
-}
-function bldLoadLogos(e) {
-  var files=Array.from(e.target.files);
-  if(!files.length) return;
-  _b.logos=[];
-  var loaded=0;
-  files.forEach(function(f){
-    var rd=new FileReader();
-    rd.onload=function(ev){
-      var img=new Image();
-      img.onload=function(){
-        img._name=f.name;
-        _b.logos.push(img);
-        loaded++;
-        if(loaded===files.length){
-          var zone=document.getElementById('bld-uzone');
-          if(zone){zone.classList.add('has-file');zone.innerHTML='<div style="font-size:.72rem;color:rgba(255,255,255,.7)">'+files.length+' logo'+(files.length>1?'s':'')+' charg\xe9'+(files.length>1?'s':'')+' ✔</div>';}
-          bldAutoFill();
-        }
-      };
-      img.src=ev.target.result;
-    };
-    rd.readAsDataURL(f);
-  });
-}
-function bldAutoFill() {
-  if(!_b.logos.length||!_b.cv) return;
-  var d=bldSheetDims();
-  var esp=0.5*B_SCALE;
-  var lSzPx=_bldSize*B_SCALE;
-  _b.placed=[];
-  var n=_b.logos.length,idx=0;
-  var y=esp;
-  while(y+lSzPx<=_b.cv.height-esp){
-    var x=esp;
-    while(x+lSzPx<=_b.cv.width-esp){
-      var img=_b.logos[idx%n];
-      var ar=img.naturalWidth/img.naturalHeight;
-      var pw=lSzPx,ph=lSzPx;
-      if(ar>1){ph=lSzPx/ar;}else{pw=lSzPx*ar;}
-      var ox=(lSzPx-pw)/2,oy=(lSzPx-ph)/2;
-      _b.placed.push({img:img,x:x+ox,y:y+oy,w:pw,h:ph});
-      idx++;
-      x+=lSzPx+esp;
-    }
-    y+=lSzPx+esp;
-  }
-  bldRedraw();
-}
-function bldRedraw() {
-  var cv=_b.cv,ctx=_b.ctx;
-  if(!cv||!ctx) return;
-  bldDrawSheet();
-  _b.placed.forEach(function(p){
-    ctx.drawImage(p.img,p.x,p.y,p.w,p.h);
-    ctx.strokeStyle='rgba(0,0,0,.1)';ctx.lineWidth=0.5;
-    ctx.strokeRect(p.x,p.y,p.w,p.h);
-  });
-  _s.plateB64=cv.toDataURL('image/jpeg',0.82);
-  _s.plateLogos=_b.placed.length;
-  _s.plateName=(_s.format||'sheet')+'-'+_b.placed.length+'logos';
-  var statsEl=document.getElementById('bld-stats');
-  if(statsEl) statsEl.textContent=_b.placed.length+' logos plac\xe9s — '
-    +Math.round(_b.placed.length*(_bldSize*_bldSize)/(bldSheetDims().w*bldSheetDims().h)*100)+'% de la feuille';
+
+window.addEventListener('message', function(e) {
+  if (!e.data || e.data.type !== 'plateReady') return;
+  _s.plateB64   = e.data.plateB64   || null;
+  _s.plateLogos = e.data.logosCount || 0;
+  _s.plateName  = (_s.format||'sheet')+'-'+_s.plateLogos+'logos';
+  try { if(_gangWin) _gangWin.close(); } catch(x){}
+  gfRender();
   gfUpdateRecap();
-}
+});
 <\/script>
 </body>
 </html>`;
