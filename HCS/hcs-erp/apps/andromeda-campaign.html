@@ -990,10 +990,7 @@ function render(id) {
                 <div class="fb-domain" id="dm-${id}">${c.domain}</div>
                 <div class="fb-linktitle" id="lt-${id}">${c.linktitle}</div>
               </div>
-              <div style="display:flex;gap:6px;align-items:center">
-                ${c.url?`<a href="${c.url}" target="_blank" style="padding:7px 12px;background:linear-gradient(135deg,#43e97b,#38f9d7);color:#0f0f1a;border-radius:8px;font-size:0.72rem;font-weight:800;text-decoration:none;cursor:pointer">🌐 Ouvrir</a>`:''}
-                <button class="fb-cta-btn" id="ct-${id}">${c.cta}</button>
-              </div>
+              <button class="fb-cta-btn" id="ct-${id}">${c.cta}</button>
             </div>
           </div>
           <div class="fb-react"><span>👍 J'aime</span><span>💬 Commenter</span><span>↗️ Partager</span></div>
@@ -4089,7 +4086,7 @@ function gfRender() {
   document.getElementById('fl-step-bar').innerHTML = barHtml;
   var bodyEl = document.getElementById('fl-body');
   if (step===1) bodyEl.innerHTML=gfStep1HTML();
-  else if (step===2 && CAMP_ID===4) { bodyEl.innerHTML=gfStepBuilderHTML(); setTimeout(initBuilder,50); }
+  else if (step===2 && CAMP_ID===4) { bodyEl.innerHTML=gfStepBuilderHTML(); }
   else if (step===2 || (CAMP_ID===4 && step===3)) bodyEl.innerHTML=gfStep2HTML();
   else { bodyEl.innerHTML=gfStep3HTML(); setTimeout(function(){ gfInitKrypton(gfGetPrice()); },80); }
   var prevBtn=document.getElementById('fl-btn-prev');
@@ -4236,9 +4233,6 @@ function gfStep2HTML() {
 function gfStep3HTML() {
   var prod=PRODS[_s.prodIdx]||{};
   var price=gfGetPrice();
-  if (location.protocol!=='https:') {
-    return '<div class="fl-https-warn"><div style="font-size:1.2rem;margin-bottom:6px">⚠️</div><strong>HTTPS requis pour le paiement.</strong><br>Cette page doit être servie en HTTPS pour activer le paiement sécurisé OSB.<br><span style="font-size:.65rem;opacity:.7">Publiez via le Worker pour obtenir l\\'URL sécurisée.</span></div>';
-  }
   return '<div class="fl-pz-price"><div class="fl-pz-price-val">'+price.toLocaleString('fr-FR')+' XPF</div><div class="fl-pz-price-lbl">'+prod.n+' — paiement sécurisé OSB</div></div>'
     +'<div class="fl-pz-badges"><div style="padding:4px 9px;border-radius:5px;background:#1A1F71"><span style="color:#fff;font-weight:900;font-size:.7rem;letter-spacing:1px">VISA</span></div>'
     +'<div style="position:relative;width:34px;height:22px"><div style="width:20px;height:20px;border-radius:50%;background:#EB001B;position:absolute;left:0;top:1px"></div><div style="width:20px;height:20px;border-radius:50%;background:#F79E1B;position:absolute;right:0;top:1px;opacity:.9"></div></div>'
@@ -4249,6 +4243,22 @@ function gfStep3HTML() {
 }
 
 async function gfInitKrypton(amount) {
+  if(location.protocol==='file:') {
+    document.getElementById('gf-pz-loading').style.display='none';
+    var _tb=document.createElement('button');
+    _tb.style.cssText='width:100%;padding:12px;background:linear-gradient(135deg,'+PRIMARY+',#ff6584);color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;margin-top:8px';
+    _tb.textContent='✅ Confirmer la réservation (TEST)';
+    _tb.onclick=function(){
+      _tb.style.display='none';
+      var kf=document.getElementById('gf-pz-kr-form');
+      kf.style.display='block';
+      kf.innerHTML='<div style="text-align:center;padding:24px"><div style="font-size:2.5rem;margin-bottom:8px">✅</div><div style="font-size:1rem;font-weight:800;color:#43e97b">Paiement confirmé !</div><div style="font-size:.72rem;color:rgba(255,255,255,.5);margin-top:6px">Merci '+(_s.name?_s.name.split(' ')[0]:'')+(', votre commande est enregistrée (mode test).')+'</div></div>';
+      setTimeout(closeFlow,2800);
+    };
+    var ld=document.getElementById('gf-pz-loading');
+    ld.parentNode.insertBefore(_tb,ld.nextSibling);
+    return;
+  }
   try {
     var resp = await fetch(WORKER_URL, {
       method:'POST',
@@ -4295,7 +4305,7 @@ async function gfInitKrypton(amount) {
           })
         }).catch(function(e){console.warn('Ordre non sauvegardé:',e);});
         document.getElementById('gf-pz-kr-form').innerHTML='<div style="text-align:center;padding:24px"><div style="font-size:2.5rem;margin-bottom:8px">✅</div><div style="font-size:1rem;font-weight:800;color:#43e97b">Paiement confirmé !</div><div style="font-size:.72rem;color:rgba(255,255,255,.5);margin-top:6px">Merci '+(_s.name?_s.name.split(' ')[0]:'')+(', votre commande est enregistrée.')+'</div></div>';
-        _enrichConfirmation(orderId, total, {name:_s.name||'', email:_s.email||'', phone:_s.phone||''}, {type:'pickup', pickupDate:_s.date||''}, prod.n||'');
+        try{_enrichConfirmation(orderId,total,{name:_s.name||'',email:_s.email||'',phone:_s.phone||''},{type:'pickup',pickupDate:_s.date||''},prod.n||'');}catch(e){}
         setTimeout(closeFlow,2800);
       }
       return true;
