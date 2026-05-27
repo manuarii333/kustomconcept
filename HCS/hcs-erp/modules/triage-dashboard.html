@@ -79,7 +79,10 @@
   .result-conf{color:#666688;font-size:11px}
 
   /* Connexions */
-  .conn-list{display:flex;flex-direction:column;gap:8px}
+  .conn-list{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;padding-right:4px}
+  .conn-list::-webkit-scrollbar{width:4px}
+  .conn-list::-webkit-scrollbar-track{background:#0d0d20}
+  .conn-list::-webkit-scrollbar-thumb{background:#1e1e3a;border-radius:4px}
   .conn-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#0d0d20;border-radius:8px;font-size:12px}
   .conn-name{color:#a0a0c0;display:flex;align-items:center;gap:8px}
   .conn-status{font-size:11px;padding:2px 10px;border-radius:12px}
