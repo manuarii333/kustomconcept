@@ -829,16 +829,17 @@ const CAMPS = [
   },
   {
     id:5, icon:'🎓', iconBg:'linear-gradient(135deg,#f093fb,#f5576c)',
-    name:'Formation Textile', tag:'Programme pro DTF', active:false,
-    tags:['Formation','Pro','DTF'],
+    name:'Formation DTF — 3H en Boutique', tag:'38 000 XPF tout inclus', active:true,
+    tags:['Formation','DTF','Atelier'],
     colors:{primary:'#f093fb',badge:'#f5576c',overlay:'rgba(20,5,25,0.6)'},
     gradients:['linear-gradient(135deg,#f093fb,#f5576c)','linear-gradient(135deg,#1a1a2e,#f093fb)','linear-gradient(135deg,#2d1b69,#f5576c)'],
-    headline:'FORMATION TEXTILE DTF PRO',
-    subline:'Maîtrise l\'impression textile — Deviens expert DTF',
-    badge:'🎓 PROGRAMME PRO',
-    cta:'S\'inscrire maintenant', domain:'hcs-tahiti.com', linktitle:'Formation Textile DTF — Programme Pro',
-    features:[{i:'📚',t:'Modules complets'},{i:'🛠️',t:'Pratique en atelier'},{i:'🏆',t:'Certification HCS'}],
-    products:[{e:'📗',n:'Module Débutant',p:'15 000 XPF'},{e:'📘',n:'Module Avancé',p:'25 000 XPF'},{e:'🏆',n:'Formation Complète',p:'35 000 XPF'}],
+    headline:'FORMATION DTF — 3H EN BOUTIQUE',
+    subline:'Apprenez à créer et presser vos t-shirts — Repartez équipé',
+    badge:'🎓 38 000 XPF TOUT INCLUS',
+    cta:'S\'inscrire maintenant', domain:'highcoffeeshirts.com', linktitle:'Formation DTF 3H en Boutique — HCS Papeete',
+    url:'https://highcoffeeshirts.com/hcs-formation-dtf-3h.html',
+    features:[{i:'👕',t:'2 t-shirts inclus'},{i:'🎨',t:'1 planche DTF'},{i:'📱',t:'Accès apps 30j'}],
+    products:[{e:'✅',n:'Formation seule',p:'38 000 XPF'},{e:'🔥',n:'Pack Passion',p:'400 000 XPF'},{e:'⚡',n:'Pack Pro',p:'500 000 XPF'}],
     ltype:'training', heroGrad:'linear-gradient(135deg,#1a1a2e,#f093fb 50%,#f5576c)'
   },
   {
@@ -989,7 +990,10 @@ function render(id) {
                 <div class="fb-domain" id="dm-${id}">${c.domain}</div>
                 <div class="fb-linktitle" id="lt-${id}">${c.linktitle}</div>
               </div>
-              <button class="fb-cta-btn" id="ct-${id}">${c.cta}</button>
+              <div style="display:flex;gap:6px;align-items:center">
+                ${c.url?`<a href="${c.url}" target="_blank" style="padding:7px 12px;background:linear-gradient(135deg,#43e97b,#38f9d7);color:#0f0f1a;border-radius:8px;font-size:0.72rem;font-weight:800;text-decoration:none;cursor:pointer">🌐 Ouvrir</a>`:''}
+                <button class="fb-cta-btn" id="ct-${id}">${c.cta}</button>
+              </div>
             </div>
           </div>
           <div class="fb-react"><span>👍 J'aime</span><span>💬 Commenter</span><span>↗️ Partager</span></div>
@@ -1455,17 +1459,19 @@ function render(id) {
         </div>
         ` : c.id === 4 ? `
         <div class="ep-section">
-          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Grille DTF 3×3</div>
+          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Gang Sheet Builder (4 étapes)</div>
           <div class="pcfg-section">
             <div class="pcfg-title">📐 Formats gang sheet proposés</div>
             <div class="pcfg-body">
               <div class="pcfg-checks">
                 ${[
-                  {val:'22x30cm',label:'22" × 30 cm',def:true},
-                  {val:'22x60cm',label:'22" × 60 cm',def:true},
-                  {val:'22x90cm',label:'22" × 90 cm',def:false},
-                  {val:'A3',    label:'A3 (30 × 42 cm)',def:false},
-                  {val:'A2',    label:'A2 (42 × 60 cm)',def:false}
+                  {val:'1yard',   label:'1 Yard × 22" (91 × 56 cm) — 15 000 XPF',def:true},
+                  {val:'halfyard',label:'½ Yard × 22" (46 × 56 cm) — 8 500 XPF', def:true},
+                  {val:'22x30cm', label:'22" × 30 cm',def:false},
+                  {val:'22x60cm', label:'22" × 60 cm',def:false},
+                  {val:'22x90cm', label:'22" × 90 cm',def:false},
+                  {val:'A3',      label:'A3 (30 × 42 cm)',def:false},
+                  {val:'A2',      label:'A2 (42 × 60 cm)',def:false}
                 ].map(f=>`
                 <label class="pcfg-chk">
                   <input type="checkbox" ${f.def?'checked':''}
@@ -1527,9 +1533,10 @@ function render(id) {
               <div class="frow"><label class="flabel">Étape 1</label>
                 <input class="finput" value="Choisir le format" oninput="setParcoursCfg(${id},'label1',this.value)"></div>
               <div class="frow"><label class="flabel">Étape 2</label>
-                <input class="finput" value="Uploader le fichier" oninput="setParcoursCfg(${id},'label2',this.value)"></div>
+                <input class="finput" value="Composer la planche" oninput="setParcoursCfg(${id},'label2',this.value)"></div>
               <div class="frow"><label class="flabel">Étape 3</label>
-                <input class="finput" value="Quantité &amp; Commander" oninput="setParcoursCfg(${id},'label3',this.value)"></div>
+                <input class="finput" value="Coordonnées" oninput="setParcoursCfg(${id},'label3',this.value)"></div>
+              <div style="font-size:.62rem;color:rgba(255,255,255,.3);margin-top:4px">Étape 4 (Payer) est fixe.</div>
             </div>
           </div>
         </div>
@@ -1764,7 +1771,7 @@ function render(id) {
           <div class="frow"><label class="flabel">Titre du lien</label>
             <input class="finput" value="${c.linktitle}" oninput="CAMPS[${id}].linktitle=this.value; upd('lt-${id}',this.value); debounceSaveCamps(${id})"></div>
           <div class="frow"><label class="flabel">URL de destination</label>
-            <input class="finput" placeholder="https://hcs-tahiti.com/..." id="url-${id}"></div>
+            <input class="finput" placeholder="https://hcs-tahiti.com/..." id="url-${id}" value="${c.url||''}" oninput="CAMPS[${id}].url=this.value; debounceSaveCamps(${id})"></div>
         </div>
 
         <div class="ep-section">
@@ -4021,7 +4028,9 @@ var CAMP_ICON  = '${c.icon||''}';
 var _s = { prodIdx:0, step:1, color:null, size:null, qty:1, format:null,
   fileB64:null, fileName:null, date:null, sessFmt:null, module:null,
   plan:null, duree:'mensuel', service:null, description:'',
-  name:'', email:'', phone:'', note:'' };
+  name:'', email:'', phone:'', note:'',
+  plateB64:null, plateName:null, plateLogos:0 };
+var _b = { logos:[], placed:[] };
 ${_normalizePhoneBlock()}
 (function initProds() {
   var grid = document.getElementById('prod-grid');
@@ -4052,7 +4061,9 @@ function openFlow(idx) {
   _s = { prodIdx:idx, step:1, color:null, size:null, qty:1, format:null,
     fileB64:null, fileName:null, date:null, sessFmt:null, module:null,
     plan:null, duree:'mensuel', service:null, description:'',
-    name:'', email:'', phone:'', note:'' };
+    name:'', email:'', phone:'', note:'',
+    plateB64:null, plateName:null, plateLogos:0 };
+  _b = { logos:[], placed:[] };
   document.getElementById('fl-overlay').classList.add('open');
   gfRender();
 }
@@ -4060,6 +4071,7 @@ function openFlow(idx) {
 function closeFlow() { document.getElementById('fl-overlay').classList.remove('open'); }
 
 function gfStepLabels() {
+  if (CAMP_ID===4) return [CFG.label1||'Format', CFG.label2||'Composer', CFG.label3||'Contact', 'Payer'];
   return [CFG.label1||'Options', CFG.label2||'Coordonnées', CFG.label3||'Paiement'];
 }
 
@@ -4077,7 +4089,8 @@ function gfRender() {
   document.getElementById('fl-step-bar').innerHTML = barHtml;
   var bodyEl = document.getElementById('fl-body');
   if (step===1) bodyEl.innerHTML=gfStep1HTML();
-  else if (step===2) bodyEl.innerHTML=gfStep2HTML();
+  else if (step===2 && CAMP_ID===4) { bodyEl.innerHTML=gfStepBuilderHTML(); setTimeout(initBuilder,50); }
+  else if (step===2 || (CAMP_ID===4 && step===3)) bodyEl.innerHTML=gfStep2HTML();
   else { bodyEl.innerHTML=gfStep3HTML(); setTimeout(function(){ gfInitKrypton(gfGetPrice()); },80); }
   var prevBtn=document.getElementById('fl-btn-prev');
   var nextBtn=document.getElementById('fl-btn-next');
@@ -4104,7 +4117,11 @@ function gfValidate() {
     if (CAMP_ID===6&&!_s.plan)    msg='Veuillez choisir un plan.';
     if (CAMP_ID===7&&!_s.service) msg='Veuillez choisir un service.';
   }
-  if (_s.step===2) {
+  if (_s.step===2 && CAMP_ID===4) {
+    if (!_s.plateLogos) msg='Veuillez uploader vos logos et valider la planche.';
+  }
+  var isContactStep = (_s.step===2 && CAMP_ID!==4) || (_s.step===3 && CAMP_ID===4);
+  if (isContactStep) {
     var n=document.getElementById('gf-name')?document.getElementById('gf-name').value.trim():'';
     var e=document.getElementById('gf-email')?document.getElementById('gf-email').value.trim():'';
     if (!n||!e) msg='Prénom / Nom et email sont obligatoires.';
@@ -4137,14 +4154,21 @@ function gfStep1HTML() {
     return prodLine+gallery+lbl('Couleur du T-shirt')+'<div class="fl-color-grid">'+sw+'</div>'+lbl('Taille')+'<div class="fl-fmt-grid">'+sz+'</div>';
   }
   if (CAMP_ID===4) {
-    var fmtMap={'22x30cm':'22&Prime; × 30 cm','22x60cm':'22&Prime; × 60 cm','22x90cm':'22&Prime; × 90 cm','A3':'A3 (30×42 cm)','A2':'A2 (42×60 cm)'};
-    var fmtP={'22x30cm':8500,'22x60cm':12000,'22x90cm':15000,'A3':9000,'A2':14000};
-    var formats=CFG.formats||['22x30cm','22x60cm'];
-    var fb=formats.map(function(f){return '<div class="fl-fmt-btn'+(_s.format===f?' selected':'')+'" onclick="gfSetFormat(\''+f+'\')">'+( fmtMap[f]||f)+'</div>';}).join('');
-    var pb=_s.format?'<div style="display:flex;justify-content:space-between;padding:8px 0"><span style="font-size:.7rem;color:rgba(255,255,255,.45)">Prix estimé</span><span class="fl-price-row" id="fl-price-row">'+((fmtP[_s.format]||0)*(_s.qty||1)).toLocaleString('fr-FR')+' XPF</span></div>':'';
-    var hint=CFG.uploadHint||'PNG ou PDF 300 DPI, fond transparent';
-    var hasF=!!_s.fileB64;
-    return prodLine+lbl('Format gang sheet')+'<div class="fl-fmt-grid">'+fb+'</div>'+pb+lbl('Fichier print-ready')+'<label><div class="fl-upload-zone'+(hasF?' has-file':'')+'" id="gf-uzone">'+(hasF?'<img src="'+_s.fileB64+'" alt="">':'<div style="color:rgba(255,255,255,.4);font-size:.72rem;padding:8px">📎 '+hint+'</div>')+'</div><input type="file" accept="image/*,.pdf,.ai,.psd" style="display:none" onchange="gfFileLoad(event)"></label>';
+    var fmtMap={'1yard':'1 Yard \xd7 22"','halfyard':'\xbd Yard \xd7 22"','22x30cm':'22" \xd7 30 cm','22x60cm':'22" \xd7 60 cm','22x90cm':'22" \xd7 90 cm','A3':'A3 (30\xd742 cm)','A2':'A2 (42\xd760 cm)'};
+    var fmtDim={'1yard':'91\xd756 cm','halfyard':'46\xd756 cm','22x30cm':'30\xd722 cm','22x60cm':'60\xd722 cm','22x90cm':'90\xd722 cm','A3':'42\xd730 cm','A2':'60\xd742 cm'};
+    var fmtP={'1yard':15000,'halfyard':8500,'22x30cm':8500,'22x60cm':12000,'22x90cm':15000,'A3':9000,'A2':14000};
+    var formats=CFG.formats||['1yard','halfyard'];
+    var fb=formats.map(function(f){
+      var sel=_s.format===f;
+      return '<div class="fl-fmt-btn'+(sel?' selected':'')+'" onclick="gfSetFormat(\''+f+'\')" style="text-align:left;padding:11px 13px">'
+        +'<div style="font-size:.82rem;font-weight:800">'+(fmtMap[f]||f)+'</div>'
+        +'<div style="font-size:.62rem;color:rgba(255,255,255,'+(sel?'.65':'.38)+')'+'">'+( fmtDim[f]||'')+'&nbsp;&mdash;&nbsp;'+(fmtP[f]||0).toLocaleString('fr-FR')+' XPF</div>'
+        +'</div>';
+    }).join('');
+    var pb=_s.format?'<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 2px;margin-top:2px"><span style="font-size:.68rem;color:rgba(255,255,255,.4)">Prix</span><span class="fl-price-row" id="fl-price-row">'+((fmtP[_s.format]||0)*(_s.qty||1)).toLocaleString('fr-FR')+' XPF</span></div>':'';
+    return prodLine+lbl('Choisir votre format gang sheet')+'<div class="fl-fmt-grid" style="flex-direction:column;gap:8px">'+fb+'</div>'+pb
+      +'<div style="margin-top:12px;padding:9px 12px;background:rgba(255,255,255,.04);border-radius:8px;border-left:3px solid rgba(108,99,255,.5);font-size:.67rem;color:rgba(255,255,255,.5);line-height:1.5">'
+      +'A l\'étape suivante vous uploadez vos logos, ils seront plac\xe9s automatiquement sur la planche pour la remplir au maximum.</div>';
   }
   if (CAMP_ID===5) {
     var mods=CFG.modules||['debutant','avance','complet'];
@@ -4174,9 +4198,10 @@ function gfStep2HTML() {
     extra='<div style="margin-bottom:14px">'+lbl('Quantité')+'<div class="fl-qty-row"><button class="fl-qty-btn" onclick="gfChgQty(-1)">−</button><span class="fl-qty-val" id="gf-qty-val">'+_s.qty+'</span><button class="fl-qty-btn" onclick="gfChgQty(1)">+</button></div></div>';
   }
   if (CAMP_ID===4) {
-    var fP={'22x30cm':8500,'22x60cm':12000,'22x90cm':15000,'A3':9000,'A2':14000};
+    var fP={'1yard':15000,'halfyard':8500,'22x30cm':8500,'22x60cm':12000,'22x90cm':15000,'A3':9000,'A2':14000};
     var base=fP[_s.format]||8500;
-    extra='<div style="margin-bottom:14px">'+lbl('Quantité de feuilles')+'<div class="fl-qty-row"><button class="fl-qty-btn" onclick="gfChgQty(-1)">−</button><span class="fl-qty-val" id="gf-qty-val">'+_s.qty+'</span><button class="fl-qty-btn" onclick="gfChgQty(1)">+</button><span class="fl-price-row" id="fl-price-row">'+(base*_s.qty).toLocaleString('fr-FR')+' XPF</span></div></div>';
+    var thumbHtml=_s.plateB64?'<div style="margin-bottom:12px"><div style="font-size:.62rem;color:rgba(255,255,255,.4);margin-bottom:5px">Votre planche — '+(_s.plateLogos||0)+' logos plac\xe9s</div><img src="'+_s.plateB64+'" style="max-width:100%;max-height:120px;border-radius:6px;border:1px solid rgba(255,255,255,.12);object-fit:contain"></div>':'';
+    extra=thumbHtml+'<div style="margin-bottom:14px">'+lbl('Nombre de planches')+'<div class="fl-qty-row"><button class="fl-qty-btn" onclick="gfChgQty(-1)">−</button><span class="fl-qty-val" id="gf-qty-val">'+_s.qty+'</span><button class="fl-qty-btn" onclick="gfChgQty(1)">+</button><span class="fl-price-row" id="fl-price-row">'+(base*_s.qty).toLocaleString('fr-FR')+' XPF</span></div></div>';
   }
   if (CAMP_ID===5) {
     var dates=(CFG.dates||'').split('\\n').filter(function(d){return d.trim();});
@@ -4284,7 +4309,7 @@ async function gfInitKrypton(amount) {
 function gfGetPrice() {
   var prod=PRODS[_s.prodIdx]||{};
   var base=parseInt((prod.p||'0').replace(/[^0-9]/g,''))||0;
-  if (CAMP_ID===4){var F={'22x30cm':8500,'22x60cm':12000,'22x90cm':15000,'A3':9000,'A2':14000};return(F[_s.format]||base)*(_s.qty||1);}
+  if (CAMP_ID===4){var F={'1yard':15000,'halfyard':8500,'22x30cm':8500,'22x60cm':12000,'22x90cm':15000,'A3':9000,'A2':14000};return(F[_s.format]||base)*(_s.qty||1);}
   if (CAMP_ID===5){var M={debutant:+(CFG.price_debutant||15000),avance:+(CFG.price_avance||25000),complet:+(CFG.price_complet||35000)};return M[_s.module]||base;}
   if (CAMP_ID===6){var PL={starter:{priceM:1800,priceA:18000},pro:{priceM:3500,priceA:35000},premium:{priceM:5500,priceA:55000}};var inf=PL[_s.plan]||{priceM:base,priceA:base*10};if(_s.duree==='annuel')return inf.priceA;if(_s.duree==='trimestriel')return Math.round(inf.priceM*3*.95);return inf.priceM;}
   if (CAMP_ID===7){var SV={vecto:2500,detour:1500,logo:8000,pack:8000};return SV[_s.service]||base;}
@@ -4296,7 +4321,8 @@ function gfUpdateRecap() {
   var opts=[];
   if(_s.color) opts.push(_s.color);
   if(_s.size) opts.push(_s.size);
-  if(_s.format) opts.push(_s.format.replace('x','×'));
+  if(_s.format) opts.push({'1yard':'1 Yard \xd722"','halfyard':'\xbd Yard \xd722"'}[_s.format]||_s.format.replace('x','\xd7'));
+  if(_s.plateLogos) opts.push(_s.plateLogos+' logos');
   if(_s.module) opts.push({debutant:'Débutant',avance:'Avancé',complet:'Complet'}[_s.module]||_s.module);
   if(_s.plan) opts.push({starter:'Starter',pro:'Pro',premium:'Premium'}[_s.plan]||_s.plan);
   if(_s.duree&&_s.duree!=='mensuel') opts.push(_s.duree);
@@ -4338,6 +4364,133 @@ function gfFileLoad(e) {
 }
 document.getElementById('fl-overlay').addEventListener('click',function(e){if(e.target===e.currentTarget)closeFlow();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeFlow();});
+
+/* ═══════ GANG SHEET BUILDER (camp 4 step 2) ═══════ */
+var B_SCALE=5; // px per cm
+function bldSheetDims() {
+  var h=_s.format==='1yard'?91:(_s.format==='halfyard'?46:30);
+  var w=56;
+  return{w:w,h:h};
+}
+function gfStepBuilderHTML() {
+  var d=bldSheetDims();
+  var cvW=d.w*B_SCALE; var cvH=d.h*B_SCALE;
+  var fmtLabel=_s.format==='1yard'?'1 Yard \xd7 22" (91\xd756 cm)':_s.format==='halfyard'?'\xbd Yard \xd7 22" (46\xd756 cm)':(_s.format||'');
+  var html='<div style="margin-bottom:10px">'
+    +'<div style="font-size:.68rem;color:rgba(255,255,255,.45);margin-bottom:8px">Format : <strong style="color:rgba(255,255,255,.75)">'+fmtLabel+'</strong></div>'
+    +'<label style="display:block;margin-bottom:8px">'
+    +'<div class="fl-upload-zone" id="bld-uzone" style="padding:10px 14px;text-align:center;cursor:pointer">'
+    +'<div style="font-size:1.2rem">📎</div>'
+    +'<div style="font-size:.72rem;color:rgba(255,255,255,.45);margin-top:3px">Uploader vos logos (PNG\xb7JPG) — plusieurs fichiers</div>'
+    +'</div>'
+    +'<input type="file" accept="image/*" multiple style="display:none" onchange="bldLoadLogos(event)">'
+    +'</label>'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+    +'<span style="font-size:.65rem;color:rgba(255,255,255,.45)">Taille logo (cm) :</span>'
+    +'<button onclick="bldChgSize(-1)" style="width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#f5ede0;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center">-</button>'
+    +'<span id="bld-sz" style="font-size:.82rem;font-weight:700;min-width:28px;text-align:center">8</span>'
+    +'<button onclick="bldChgSize(1)" style="width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:#f5ede0;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'
+    +'<button onclick="bldAutoFill()" style="margin-left:auto;padding:5px 12px;border-radius:20px;background:rgba(108,99,255,.18);border:1px solid rgba(108,99,255,.45);color:#a78bfa;font-size:.72rem;font-weight:700;cursor:pointer">⚡ Remplir</button>'
+    +'</div>'
+    +'<div id="bld-stats" style="font-size:.65rem;color:rgba(255,255,255,.4);margin-bottom:8px;min-height:16px"></div>'
+    +'<div style="overflow:auto;border:1px solid rgba(255,255,255,.1);border-radius:6px;background:#1a1a1a">'
+    +'<canvas id="bld-cv" width="'+cvW+'" height="'+cvH+'" style="display:block;background:#f5f0e8;margin:0 auto;max-width:100%;image-rendering:auto"></canvas>'
+    +'</div>'
+    +'</div>';
+  return html;
+}
+var _bldSize=8;
+function initBuilder() {
+  _b.cv=document.getElementById('bld-cv');
+  if(!_b.cv) return;
+  _b.ctx=_b.cv.getContext('2d');
+  bldDrawSheet();
+  if(_b.logos.length) bldAutoFill();
+  var szEl=document.getElementById('bld-sz'); if(szEl) szEl.textContent=_bldSize;
+}
+function bldChgSize(d) {
+  _bldSize=Math.min(30,Math.max(2,_bldSize+d));
+  var szEl=document.getElementById('bld-sz'); if(szEl) szEl.textContent=_bldSize;
+  if(_b.logos.length) bldAutoFill();
+}
+function bldDrawSheet() {
+  var cv=_b.cv,ctx=_b.ctx;
+  if(!cv||!ctx) return;
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.fillStyle='#f5f0e8';
+  ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle='rgba(0,0,0,.07)';ctx.lineWidth=0.5;
+  for(var x=0;x<=cv.width;x+=B_SCALE*10){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,cv.height);ctx.stroke();}
+  for(var y=0;y<=cv.height;y+=B_SCALE*10){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(cv.width,y);ctx.stroke();}
+  var d=bldSheetDims();
+  ctx.fillStyle='rgba(0,0,0,.18)';ctx.font='bold 9px monospace';
+  ctx.fillText(d.w+'cm \xd7 '+d.h+'cm',4,cv.height-4);
+}
+function bldLoadLogos(e) {
+  var files=Array.from(e.target.files);
+  if(!files.length) return;
+  _b.logos=[];
+  var loaded=0;
+  files.forEach(function(f){
+    var rd=new FileReader();
+    rd.onload=function(ev){
+      var img=new Image();
+      img.onload=function(){
+        img._name=f.name;
+        _b.logos.push(img);
+        loaded++;
+        if(loaded===files.length){
+          var zone=document.getElementById('bld-uzone');
+          if(zone){zone.classList.add('has-file');zone.innerHTML='<div style="font-size:.72rem;color:rgba(255,255,255,.7)">'+files.length+' logo'+(files.length>1?'s':'')+' charg\xe9'+(files.length>1?'s':'')+' ✔</div>';}
+          bldAutoFill();
+        }
+      };
+      img.src=ev.target.result;
+    };
+    rd.readAsDataURL(f);
+  });
+}
+function bldAutoFill() {
+  if(!_b.logos.length||!_b.cv) return;
+  var d=bldSheetDims();
+  var esp=0.5*B_SCALE;
+  var lSzPx=_bldSize*B_SCALE;
+  _b.placed=[];
+  var n=_b.logos.length,idx=0;
+  var y=esp;
+  while(y+lSzPx<=_b.cv.height-esp){
+    var x=esp;
+    while(x+lSzPx<=_b.cv.width-esp){
+      var img=_b.logos[idx%n];
+      var ar=img.naturalWidth/img.naturalHeight;
+      var pw=lSzPx,ph=lSzPx;
+      if(ar>1){ph=lSzPx/ar;}else{pw=lSzPx*ar;}
+      var ox=(lSzPx-pw)/2,oy=(lSzPx-ph)/2;
+      _b.placed.push({img:img,x:x+ox,y:y+oy,w:pw,h:ph});
+      idx++;
+      x+=lSzPx+esp;
+    }
+    y+=lSzPx+esp;
+  }
+  bldRedraw();
+}
+function bldRedraw() {
+  var cv=_b.cv,ctx=_b.ctx;
+  if(!cv||!ctx) return;
+  bldDrawSheet();
+  _b.placed.forEach(function(p){
+    ctx.drawImage(p.img,p.x,p.y,p.w,p.h);
+    ctx.strokeStyle='rgba(0,0,0,.1)';ctx.lineWidth=0.5;
+    ctx.strokeRect(p.x,p.y,p.w,p.h);
+  });
+  _s.plateB64=cv.toDataURL('image/jpeg',0.82);
+  _s.plateLogos=_b.placed.length;
+  _s.plateName=(_s.format||'sheet')+'-'+_b.placed.length+'logos';
+  var statsEl=document.getElementById('bld-stats');
+  if(statsEl) statsEl.textContent=_b.placed.length+' logos plac\xe9s — '
+    +Math.round(_b.placed.length*(_bldSize*_bldSize)/(bldSheetDims().w*bldSheetDims().h)*100)+'% de la feuille';
+  gfUpdateRecap();
+}
 <\/script>
 </body>
 </html>`;
