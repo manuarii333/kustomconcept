@@ -88,7 +88,7 @@ if (!is_dir($uploadDir)) {
 /* ── Nom de fichier unique ────────────────────────────────── */
 $extMap   = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/gif' => 'gif'];
 $ext      = $extMap[$mime];
-$filename = 'img_' . uniqid('', true) . '.' . $ext;
+$filename = 'img_' . str_replace('.', '_', uniqid('', true)) . '.' . $ext;
 $destPath = $uploadDir . $filename;
 
 if (!move_uploaded_file($file['tmp_name'], $destPath)) {

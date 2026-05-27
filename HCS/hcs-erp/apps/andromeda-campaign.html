@@ -9533,6 +9533,13 @@ function vdecRenderCanvas(cat) {
     const img = document.createElement('img');
     img.src = imgSrc; img.className = 'vdec-veh-img';
     img.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;pointer-events:none;';
+    img.onerror = () => {
+      img.remove();
+      const msg = document.createElement('div');
+      msg.className = 'vdec-no-img-msg';
+      msg.innerHTML = '🚗<br>Image non disponible<br><span style="font-size:.62rem;opacity:.5">Ré-uploader via Admin → Déco Véhicule</span>';
+      wrap.appendChild(msg);
+    };
     wrap.appendChild(img);
   } else {
     const msg = document.createElement('div');
@@ -10452,7 +10459,7 @@ function vdecAdmRenderCats() {
             <div class="vdec-view-lbl">${v.label}</div>
             <div id="vdec-view-${ci}-${v.key}" class="vdec-view-img" onclick="vdecAdmPickImg(${ci},'${v.key}')">
               ${cat.views[v.key]
-                ? `<img src="${cat.views[v.key]}" alt="${v.key}"><button class="vdec-view-del" onclick="event.stopPropagation();vdecAdmDelImg(${ci},'${v.key}')">✕</button>`
+                ? `<img src="${cat.views[v.key]}" alt="${v.key}" onerror="this.replaceWith(document.createTextNode('⚠️'))"><button class="vdec-view-del" onclick="event.stopPropagation();vdecAdmDelImg(${ci},'${v.key}')">✕</button>`
                 : '📤'}
             </div>
             <label style="display:flex;align-items:center;gap:4px;font-size:.58rem;margin-top:5px;cursor:pointer;color:${(cat.enabledViews||['left','front','back','right']).includes(v.key)?'rgba(108,99,255,1)':'rgba(255,255,255,.35)'}">

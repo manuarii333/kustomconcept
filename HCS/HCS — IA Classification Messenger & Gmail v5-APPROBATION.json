@@ -954,7 +954,7 @@
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({ expediteur: ($json.clientName || $json.senderId || 'inconnu').substring(0,150), canal: $json.source || 'messenger', source_id: ($json.senderId || '').substring(0,150), message: ($json.text || '').substring(0,500), categorie: ($json.action || $json.category || 'INFO_SERVICES').substring(0,30), action: ($json.reponse || '').substring(0,100), statut: 'traite' }) }}",
+        "body": "={{ JSON.stringify({\n  expediteur: ($json.ligneHistorique?.clientName || $json.ligneHistorique?.email || $json.senderId || 'inconnu').substring(0,150),\n  canal:       $json.ligneHistorique?.source || $json.source || 'messenger',\n  source_id:   ($json.ligneHistorique?.senderId || $json.senderId || '').substring(0,150),\n  message:     ($json.ligneHistorique?.message || '').substring(0,500),\n  categorie:   ($json.ligneHistorique?.category || $json.action || 'INFO_SERVICES').substring(0,30),\n  action:      ($json.ligneHistorique?.reponse || $json.reponse || '').substring(0,500),\n  type_message: ($json.ligneHistorique?.type || 'conversation').substring(0,50),\n  client_key:  ($json.ligneHistorique?.client_key || '').substring(0,200),\n  dropbox_path:($json.ligneHistorique?.dropbox_path || '').substring(0,500),\n  filename:    ($json.ligneHistorique?.filename || '').substring(0,255),\n  statut:      'traite'\n}) }}",
         "options": {
           "timeout": 10000
         }
