@@ -1,0 +1,1881 @@
+{
+  "name": "HCS — IA Classification Messenger & Gmail v5-APPROBATION",
+  "description": "v5 : boucle approbation admin pour les devis (Wait node 24h), réponses IA auto pour autres catégories, log MySQL triage_messages",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "return { senderId: $json.senderId, pageId: $json.pageId, reponse: 'Merci pour votre message ! Notre equipe vous repondra tres prochainement. ☕', quickReplies: [] };"
+      },
+      "id": "e23cf0ae-6215-4e98-8fe5-c04b4a54e5fc",
+      "name": "Générer Réponse",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2896,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const message = $json.quickReplies && $json.quickReplies.length > 0 ? { text: $json.reponse, quick_replies: $json.quickReplies } : { text: $json.reponse };\nreturn { recipient: { id: $json.senderId }, message, senderId: $json.senderId, pageId: $json.pageId };"
+      },
+      "id": "3d1ad270-c90e-4074-83da-6a9669f13fa5",
+      "name": "Préparer Payload API",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2752,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "={{ $credentials.pageAccessToken }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "recipient",
+              "value": "={{ JSON.stringify($json.recipient) }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ JSON.stringify($json.message) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8b3304aa-ecf6-485b-bcd6-f5c94775e404",
+      "name": "Envoyer Réponse Messenger",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2512,
+        1040
+      ],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "CREDENTIAL_ID_FACEBOOK",
+          "name": "Facebook Page Token (HCS)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const id = $json.senderId || $json.clientEmail || '';\nconst name = $json.clientName || '';\nreturn [{ json: { ...$json, mem_search_key: id || name } }];"
+      },
+      "id": "cbe650d9-1d8f-4e2f-a1d6-3dcaba7c5fbe",
+      "name": "MEM-READ-1 Préparer Clé",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1840,
+        1920
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1AezDOlw5S7vJDXfQHIo5w-WnfR-VigMRadbxhl05-i0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 716235068,
+          "mode": "list",
+          "cachedResultName": "Historique"
+        },
+        "options": {}
+      },
+      "id": "bf553745-dc58-48a9-bfa2-b2438d00fecf",
+      "name": "MEM-READ-2 Lire Sheets Client",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        -1632,
+        1920
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CREDENTIAL_ID_SHEETS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all();\nconst prev = $('MEM-READ-1 Préparer Clé').first().json;\nlet ficheClient = null;\nlet historiqueTexts = [];\nlet logosDropbox = [];\nfor (const row of rows) {\n  const r = row.json;\n  if (!ficheClient && (r.senderId === prev.senderId || r.email === prev.clientEmail)) ficheClient = r;\n  if (r.client_key === prev.mem_search_key || r.senderId === prev.senderId) {\n    if (r.type === 'conversation') historiqueTexts.push('[' + (r.date||'') + '] ' + (r.category||'') + ': ' + (r.summary||r.message||''));\n    if (r.type === 'image' || r.type === 'logo') logosDropbox.push({ path: r.dropbox_path, filename: r.filename, date: r.date });\n  }\n}\nconst memoire = { client_connu: ficheClient !== null, prenom: ficheClient?.prenom||ficheClient?.clientName||'', email: ficheClient?.email||prev.clientEmail||'', nb_commandes: ficheClient?.nb_commandes||0, derniere_commande: ficheClient?.derniere_commande||'', preferences: ficheClient?.preferences||'', historique: historiqueTexts.slice(-5), logos_stockes: logosDropbox };\nlet contexte_memoire = '';\nif (memoire.client_connu) {\n  contexte_memoire += 'CLIENT CONNU : ' + memoire.prenom + ' | ' + memoire.nb_commandes + ' commande(s)';\n  if (memoire.derniere_commande) contexte_memoire += ' | Derniere commande : ' + memoire.derniere_commande;\n  if (memoire.preferences) contexte_memoire += '\\nPreferences : ' + memoire.preferences;\n}\nif (memoire.historique.length > 0) contexte_memoire += '\\n\\nHISTORIQUE RECENT :\\n' + memoire.historique.join('\\n');\nif (memoire.logos_stockes.length > 0) {\n  const logoList = memoire.logos_stockes.map(l => '- ' + l.filename + ' (' + l.date + ')').join('\\n');\n  contexte_memoire += '\\n\\nLOGOS DEJA RECUS :\\n' + logoList;\n}\nreturn [{ json: { ...prev, memoire, contexte_memoire: contexte_memoire || 'Nouveau client.' }}];"
+      },
+      "id": "f1dda50c-263a-4446-b446-4160906f2294",
+      "name": "MEM-READ-3 Injecter Mémoire",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1472,
+        1904
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gmail/FB send nodes replace $json with API response — recover original data via node ref\nconst hasSrc = $json.senderId || $json.clientEmail || $json.text;\nconst fmtData = $('T5 Formater Réponse1').first().json;\nconst src = hasSrc ? $json : ((fmtData && (fmtData.senderId || fmtData.clientEmail || fmtData.reponse)) ? fmtData : $json);\nconst now = new Date().toISOString().substring(0,16).replace('T',' ');\nconst clientKey = src.senderId || src.clientEmail || 'inconnu';\nconst ligneHistorique = { date: now, client_key: clientKey, senderId: src.senderId||'', email: src.clientEmail||'', clientName: src.clientName||'', source: src.source||'messenger', category: src.action||src.category||'', message: (src.text||'').substring(0,300), reponse: (src.reponse||'').substring(0,500), type: 'conversation', dropbox_path: src.dropbox_path||'', filename: src.filename||'' };\nif (src.action === 'TRAITEMENT_IMAGE' && src.dropbox_path) { ligneHistorique.type = 'logo'; ligneHistorique.filename = src.filename||'logo'; }\nconst ligneClient = { date_maj: now, senderId: src.senderId||'', email: src.clientEmail||'', prenom: src.clientName||'', source: src.source||'', derniere_categorie: src.action||'', derniere_commande: src.action==='DEVIS'?now:'', logos_count: src.action==='TRAITEMENT_IMAGE'?1:0 };\nreturn [{ json: { ligneHistorique, ligneClient, ...src } }];"
+      },
+      "id": "2ec594eb-492e-45b2-a56f-9f691a44ecc9",
+      "name": "MEM-WRITE-1 Préparer Lignes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        2368
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1AezDOlw5S7vJDXfQHIo5w-WnfR-VigMRadbxhl05-i0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 716235068,
+          "mode": "list",
+          "cachedResultName": "Historique"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ $json.ligneHistorique.date }}",
+            "client_key": "={{ $json.ligneHistorique.client_key }}",
+            "senderId": "={{ $json.ligneHistorique.senderId }}",
+            "email": "={{ $json.ligneHistorique.email }}",
+            "clientName": "={{ $json.ligneHistorique.clientName }}",
+            "source": "={{ $json.ligneHistorique.source }}",
+            "category": "={{ $json.ligneHistorique.category }}",
+            "message": "={{ $json.ligneHistorique.message }}",
+            "reponse": "={{ $json.ligneHistorique.reponse }}",
+            "type": "={{ $json.ligneHistorique.type }}",
+            "dropbox_path": "={{ $json.ligneHistorique.dropbox_path }}",
+            "filename": "={{ $json.ligneHistorique.filename }}"
+          },
+          "matchingColumns": [
+            "date",
+            "senderId"
+          ],
+          "schema": [
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "client_key",
+              "displayName": "client_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "senderId",
+              "displayName": "senderId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "clientName",
+              "displayName": "clientName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reponse",
+              "displayName": "reponse",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "dropbox_path",
+              "displayName": "dropbox_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "filename",
+              "displayName": "filename",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "04d72938-45a1-4573-9d8e-87f7381fdc5a",
+      "name": "MEM-WRITE-2a Historique Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        768,
+        2176
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CREDENTIAL_ID_SHEETS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1AezDOlw5S7vJDXfQHIo5w-WnfR-VigMRadbxhl05-i0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 0,
+          "mode": "list",
+          "cachedResultName": "Clients"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "senderId": "={{ $json.ligneClient.senderId }}",
+            "email": "={{ $json.ligneClient.email }}",
+            "prenom": "={{ $json.ligneClient.prenom }}",
+            "source": "={{ $json.ligneClient.source }}",
+            "date_maj": "={{ $json.ligneClient.date_maj }}",
+            "derniere_categorie": "={{ $json.ligneClient.derniere_categorie }}"
+          },
+          "matchingColumns": [
+            "senderId"
+          ]
+        },
+        "options": {}
+      },
+      "id": "e1ea4ed6-4a1f-41b7-ad4a-a5fc81515fb4",
+      "name": "MEM-WRITE-2b Fiche Client Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        768,
+        2400
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CREDENTIAL_ID_SHEETS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "if (!$json.dropbox_path || $json.action !== 'TRAITEMENT_IMAGE') return [{ json: $json }];\nreturn [{ json: { ...$json, log_image: { date: new Date().toISOString().substring(0,10), client_key: $json.senderId||$json.clientEmail, clientName: $json.clientName||'', dropbox_path: $json.dropbox_path, filename: $json.filename||'logo', type: 'logo', source: $json.source||'messenger' } }}];"
+      },
+      "id": "f5da502b-9dd8-4578-af54-0fca02a81104",
+      "name": "MEM-WRITE-3 Log Image",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        2592
+      ]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "labelIds": [
+            "INBOX"
+          ],
+          "readStatus": "unread"
+        },
+        "options": {
+          "downloadAttachments": false
+        }
+      },
+      "id": "f3dcf6b9-babe-43e9-9542-00857fe323ed",
+      "name": "T1 Gmail Trigger1",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2448,
+        2048
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "CREDENTIAL_ID_GMAIL",
+          "name": "Gmail account (HCS)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const source = .body ? 'messenger' : 'gmail';\n\n// ── Anti-boucle : adresse du compte HCS lui-même ──────────────\nconst OWN_EMAIL = 'highcoffeeshirt@gmail.com';\n\nlet text = '', senderId = '', clientEmail = '', clientName = '',\n    attachments = [], hasAttachments = false;\n\nif (source === 'messenger') {\n  const entry  = (.body?.entry || [])[0];\n  const event  = (entry?.messaging || [])[0];\n  if (!event || !event.message || event.message.is_echo) return [];\n  text          = event.message.text || '';\n  senderId      = event.sender.id;\n  clientName    = senderId;\n  attachments   = event.message.attachments || [];\n  hasAttachments = attachments.length > 0;\n\n} else {\n  const from  = (.from?.value || [])[0] || {};\n  clientEmail = (from.address || '').toLowerCase();\n  clientName  = from.name || clientEmail;\n  senderId    = '';\n\n  if (clientEmail === OWN_EMAIL) return [];\n\n  const autoSubmitted = (.headers?.['auto-submitted'] || '').toLowerCase();\n  if (autoSubmitted && autoSubmitted !== 'no') return [];\n\n  const skipPatterns = [\n    'no-reply', 'noreply', 'no_reply', 'mailer-daemon',\n    'postmaster', 'notifications@', 'accounts.google',\n    'security@', 'support@google', 'bounce', 'donotreply',\n    'do-not-reply', 'auto-reply', 'automaticreply',\n    'unsubscribe', 'newsletter', 'automailer',\n    'mail.klaviyo', 'klaviyomail', 'stickerbros'\n  ];\n  if (skipPatterns.some(p => clientEmail.includes(p))) return [];\n\n  text = .text || .snippet || '';\n  if (!text || text.trim().length < 5) return [];\n}\n\ntext       = text.replace(/[\"\n\r\t]/g, ' ').trim();\nclientName = String(clientName).replace(/[\"\n\r\t]/g, ' ').trim();\n\nreturn [{ json: { source, text, senderId, clientEmail, clientName, attachments, hasAttachments } }];"
+      },
+      "id": "87275572-8875-4fcc-aecb-c9e73d2cd2ab",
+      "name": "T1 Normaliser Message1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2000,
+        1920
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.apiKey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "{\"model\": \"gpt-4o-mini\", \"messages\": [{\"role\": \"system\", \"content\": \"Classifie le message client de High Coffee Shirt (Tahiti, personnalisation textile).\\n\\nCategories :\\n- DEVIS : demande de chiffrage avec quantite OU mentionne une commande precise\\n- INFO_SERVICES : questions sur DTF, broderie, vinyle, delais, horaires, adresse\\n- INFO_PRODUITS : questions sur t-shirts, polos, hoodies, casquettes, prix articles\\n- MOCKUP : demande de maquette visuelle, apercu, BAT, simulation rendu\\n- TRAITEMENT_IMAGE : envoie un logo ou une image (piece jointe detectee)\\n\\nReponds UNIQUEMENT en JSON : {\\\"category\\\":\\\"...\\\",\\\"confidence\\\":0.95,\\\"reason\\\":\\\"...\\\"}\"}, {\"role\": \"user\", \"content\": \"={{ $json.text }}\"}], \"max_tokens\": 80, \"temperature\": 0.1, \"response_format\": {\"type\": \"json_object\"}}",
+        "options": {}
+      },
+      "id": "d359108d-2eda-411f-803f-d65f6d12a875",
+      "name": "T2 OpenAI Classifier1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -752,
+        1920
+      ],
+      "credentials": {
+        "openaiApi": {
+          "id": "CREDENTIAL_ID_OPENAI",
+          "name": "OpenAI API Key (HCS)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json?.choices?.[0]?.message?.content || '{}';\nconst prev = $('T1 Normaliser Message1').first().json;\nlet cat = 'INFO_SERVICES', confidence = 0.5, reason = '';\nif (prev.hasAttachments) return [{ json: { ...prev, category: 'TRAITEMENT_IMAGE', confidence: '100%', reason: 'Pieces jointes detectees' } }];\ntry {\n  const p = JSON.parse(raw);\n  const valid = ['DEVIS','INFO_SERVICES','INFO_PRODUITS','MOCKUP','TRAITEMENT_IMAGE'];\n  cat = valid.includes(p.category) ? p.category : 'INFO_SERVICES';\n  confidence = p.confidence || 0.5;\n  reason = p.reason || '';\n} catch(e) {}\nreturn [{ json: { ...prev, category: cat, confidence: Math.round(confidence*100)+'%', reason } }];"
+      },
+      "id": "19e1f1d5-4f1a-459d-9338-adf70da22d72",
+      "name": "T2 Parser Catégorie1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        1936
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.category }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "DEVIS"
+            },
+            {
+              "value2": "INFO_SERVICES"
+            },
+            {
+              "value2": "INFO_PRODUITS"
+            },
+            {
+              "value2": "MOCKUP"
+            },
+            {
+              "value2": "TRAITEMENT_IMAGE"
+            }
+          ]
+        },
+        "fallbackOutput": 1
+      },
+      "id": "78407116-3010-4047-b74c-382893bf569f",
+      "name": "T3 Switch Catégorie1",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        1920
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { ...($json), action: 'DEVIS', odoo_note: 'Demande de devis reçue via ' + $json.source + '. Client: ' + $json.clientName + ' Message: ' + $json.text } }];"
+      },
+      "id": "0944dac0-8b7c-44eb-8a7b-50e95b2effe5",
+      "name": "T3A Branche Devis1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = ($json.text || '').toLowerCase();\nlet info = '';\nif (text.includes('dtf') || text.includes('impression')) info = 'DTF recto : des 1500 XPF | recto-verso : des 2200 XPF | delai 2-3j';\nelse if (text.includes('broderie')) info = 'Broderie logo : des 2000 XPF | delai 3-5j | rendu premium';\nelse if (text.includes('vinyle') || text.includes('vinyl')) info = 'Vinyle thermocollant : des 800 XPF/piece | delai 1-2j';\nelse if (text.includes('delai') || text.includes('livraison')) info = 'Delais : DTF 2-3j | Broderie 3-5j | Grande serie 7-10j | Livraison Tahiti + iles';\nelse info = 'DTF des 1500 XPF | Broderie des 2000 XPF | Vinyle des 800 XPF — tarifs degressifs des 10 pieces';\nreturn [{ json: { ...($json), action:'INFO_SERVICES', contexte_reponse: info } }];"
+      },
+      "id": "1818f487-3bbb-4d77-983d-148f26fb1eca",
+      "name": "T3B Info Services1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        1712
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = ($json.text || '').toLowerCase();\nlet info = '';\nif (text.includes('polo')) info = 'Polo coton pique : 1800-2500 XPF | Polo technique : 2200-3000 XPF';\nelse if (text.includes('hoodie') || text.includes('sweat')) info = 'Hoodie : 3500-5000 XPF | Sweat col rond : 2800-4000 XPF';\nelse if (text.includes('casquette') || text.includes('cap')) info = 'Casquette 5 panneaux : 1500-2000 XPF | Snapback : 1800-2500 XPF';\nelse if (text.includes('lycra') || text.includes('rashguard')) info = 'Rashguard manches longues : 4500-6000 XPF | Lycra : sur devis';\nelse info = 'T-shirt : des 600 XPF | Polo : des 1800 XPF | Hoodie : des 3500 XPF | Casquette : des 1500 XPF';\nreturn [{ json: { ...($json), action:'INFO_PRODUITS', contexte_reponse: info } }];"
+      },
+      "id": "bdc40cf7-19bd-42b7-8d59-1c498d287709",
+      "name": "T3C Info Produits1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        1888
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { ...($json), action: 'MOCKUP', contexte_reponse: 'Demande de maquette. Besoin : logo client, type vetement, couleur, emplacement.', dropbox_folder: '/Clients/' + $json.clientName.replace(/[^a-zA-Z0-9_ -]/g,'').replace(/ +/g,'_').trim() + '/Mockups', reponse_draft: 'Maquette en cours ! Envoyez votre logo (PNG/PDF fond transparent) + type vetement + couleur. Delai : 24-48h.' }}];"
+      },
+      "id": "7353cc32-5f8a-4fdc-873b-f9c7dcc9a457",
+      "name": "T3D Branche Mockup1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        2064
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const attachments = $json.attachments || [];\nconst imageUrl = attachments.length > 0 ? (attachments[0].payload?.url || '') : '';\nreturn [{ json: { ...($json), action: 'TRAITEMENT_IMAGE', image_url: imageUrl, picwish_ready: imageUrl.length > 0, dropbox_folder: '/Clients/' + $json.clientName.replace(/[^a-zA-Z0-9_ -]/g,'').replace(/ +/g,'_').trim() + '/Logos', contexte_reponse: imageUrl ? 'Image recue, detourage en cours via PicWish.' : 'Aucune image trouvee.' }}];"
+      },
+      "id": "affa2210-9187-49a1-819c-b23b1fb4f2b4",
+      "name": "T3E Traitement Image PicWish1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        2240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const cat = $json.action || $json.category;\nconst clientSlug = ($json.clientName || 'Client_inconnu').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-zA-Z0-9_ -]/g,'').replace(/ +/g,'_').trim();\nconst ts = new Date().toISOString().substring(0,10);\nconst source = $json.source || 'inconnu';\nconst baseFolder = source === 'gmail' ? '/HCS/2026/CLIENTS/' + new Date().toLocaleString('fr-FR',{month:'long'}) + '/' + clientSlug : '/HCS/2026/CLIENTS/Messenger/' + clientSlug;\nlet folder = baseFolder;\nlet filename = cat + '_' + ts + '.txt';\nlet content = JSON.stringify($json, null, 2);\nif (cat === 'TRAITEMENT_IMAGE') {\n  const picwishUrl = $json.image_url || $json.url || '';\n  filename = 'logo_' + ts + '.png';\n  folder = baseFolder + '/logos';\n  content = picwishUrl;\n  return [{ json: { ...$json, dropbox_path: folder + '/' + filename, dropbox_content: content, picwish_url: picwishUrl } }];\n}\nif (cat === 'MOCKUP') folder = baseFolder + '/mockups';\nif (cat === 'DEVIS') folder = baseFolder + '/devis';\nreturn [{ json: { ...$json, dropbox_path: folder + '/' + filename, dropbox_content: content } }];"
+      },
+      "id": "09519363-a206-4283-b8d9-2708ee2c8f20",
+      "name": "T4 Préparer Dropbox1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        1920
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "path": "={{ $json.dropbox_path }}",
+        "fileContent": "={{ $json.dropbox_content }}"
+      },
+      "id": "1fe30239-cb34-4e98-a417-588c43db5288",
+      "name": "T4 Upload Dropbox1",
+      "type": "n8n-nodes-base.dropbox",
+      "typeVersion": 1,
+      "position": [
+        464,
+        1920
+      ],
+      "credentials": {
+        "dropboxOAuth2Api": {
+          "id": "CREDENTIAL_ID_DROPBOX",
+          "name": "Dropbox account (HCS)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.apiKey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "{\"model\": \"gpt-4o-mini\", \"messages\": [{\"role\": \"system\", \"content\": \"Tu es l'assistant virtuel de HIGH COFFEE SHIRT, boutique de personnalisation textile a Tahiti. Tu reponds DIRECTEMENT et PRECISEMENT a la question posee.\"}, {\"role\": \"user\", \"content\": \"Categorie : {{ $json.action }}\\nMessage du client : \\\"{{ $json.text }}\\\"\\nContexte : {{ $json.contexte_reponse || '' }}\\n\\nMEMOIRE CLIENT :\\n{{ $json.contexte_memoire }}\\n\\nReponds directement.\"}], \"max_tokens\": 400, \"temperature\": 0.4}",
+        "options": {}
+      },
+      "id": "41f73eda-9639-4109-99a7-c8929e3ec802",
+      "name": "T5 OpenAI Rédige Réponse1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        704,
+        1920
+      ],
+      "credentials": {
+        "openaiApi": {
+          "id": "CREDENTIAL_ID_OPENAI",
+          "name": "OpenAI API Key (HCS)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json?.choices?.[0]?.message?.content || '';\nconst prev = $('T4 Préparer Dropbox1').first().json || {};\nconst effectiveSource = prev.source || (prev.senderId ? 'messenger' : 'gmail');\nreturn [{ json: { senderId: prev.senderId||'', pageId: prev.pageId||'', clientEmail: prev.clientEmail||'', source: effectiveSource, action: prev.action||prev.category||'', reponse: raw, quickReplies: [{ content_type:'text', title:'Devis', payload:'DEVIS' }, { content_type:'text', title:'Tarifs', payload:'TARIFS' }, { content_type:'text', title:'Mockup', payload:'MOCKUP' }] }}];"
+      },
+      "id": "58b79829-bed0-4a17-b153-316b3a02a84f",
+      "name": "T5 Formater Réponse1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        1920
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.clientEmail }}",
+        "subject": "={{ 'Réponse High Coffee Shirt — ' + ($json.action || 'Votre demande') }}",
+        "message": "={{ $json.reponse }}",
+        "options": {}
+      },
+      "id": "947a68db-a9b2-447d-a792-913a4b08a323",
+      "name": "T5 Envoyer Gmail1",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1424,
+        1760
+      ],
+      "webhookId": "8305f4f6-d800-4fe2-905d-e56d98ec7675",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "CREDENTIAL_ID_GMAIL",
+          "name": "Gmail account (HCS)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/me/messages",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "={{ $credentials.pageAccessToken }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ recipient: { id: $json.senderId }, message: { text: ($json.reponse || '').substring(0, 640), quick_replies: $json.quickReplies || [] } }) }}",
+        "options": {}
+      },
+      "id": "3f6366dc-fe94-4558-8d27-68fa789d59fc",
+      "name": "T5 Envoyer Facebook1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1424,
+        2080
+      ],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "CREDENTIAL_ID_FACEBOOK",
+          "name": "Facebook Page Token (HCS)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nif (!body || !body.entry) return [];\nconst messages = [];\nfor (const entry of body.entry) {\n  if (!entry.messaging) continue;\n  for (const event of entry.messaging) {\n    if (event.message && !event.message.is_echo) {\n      messages.push({ senderId: event.sender.id, recipientId: event.recipient.id, timestamp: event.timestamp, messageId: event.message.mid, text: event.message.text || '', attachments: event.message.attachments || [], pageId: entry.id });\n    } else if (event.postback) {\n      messages.push({ senderId: event.sender.id, recipientId: event.recipient.id, timestamp: event.timestamp, messageId: 'postback_' + Date.now(), text: event.postback.title + ' [POSTBACK: ' + event.postback.payload + ']', attachments: [], pageId: entry.id, isPostback: true, payload: event.postback.payload });\n    }\n  }\n}\nreturn messages;"
+      },
+      "id": "4e73db61-577c-4740-a042-784c39004178",
+      "name": "Extraire Messages1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2224,
+        1680
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"status\": \"ok\"}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "933b58c5-041f-45a3-9b07-1c2b05b062c8",
+      "name": "Accusé Réception1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -2064,
+        1680
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query[\"hub.challenge\"] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -2016,
+        1440
+      ],
+      "id": "f9bd0dbc-7002-45f9-810a-ddb29b648919",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "151adcb6-d12f-4c15-9c02-e080379090b9",
+              "leftValue": "={{ $json.query[\"hub.mode\"] }}",
+              "rightValue": "subscribe",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "c8919fbe-0b99-4c99-8f5d-a4e4d694ad84",
+              "leftValue": "={{ $json.query[\"hub.verify_token\"] }}",
+              "rightValue": "HCS_TAHITI_SECURE_WEBHOOK_2026",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2288,
+        1488
+      ],
+      "id": "aaf92c9a-a4d9-4b9a-b2f9-ac190d84da61",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "path": "bbc05e70-805b-4083-89ca-4de8b0124a42",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2464,
+        1824
+      ],
+      "id": "7e7cc89f-4ea6-4510-82a1-fdbe161ba152",
+      "name": "Webhook messenger1",
+      "webhookId": "bbc05e70-805b-4083-89ca-4de8b0124a42"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1AezDOlw5S7vJDXfQHIo5w-WnfR-VigMRadbxhl05-i0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1886730405,
+          "mode": "list",
+          "cachedResultName": "Catalogue"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1264,
+        1904
+      ],
+      "id": "547a6c6d-b34c-4a7a-9483-47e213259050",
+      "name": "MEM-READ-4a Google Sheets Lire Catalogue",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CREDENTIAL_ID_SHEETS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all();\nconst prev = $('MEM-READ-3 Injecter Mémoire').first().json;\nlet services = [], produits = [];\nfor (const row of rows) {\n  const r = row.json;\n  if (!r || !r.nom) continue;\n  let ligne = r.nom;\n  if (r.prix_min && r.prix_max) ligne += ' : ' + r.prix_min + '-' + r.prix_max + ' ' + (r.unite||'XPF');\n  else if (r.prix_min) ligne += ' : des ' + r.prix_min + ' ' + (r.unite||'XPF');\n  if (r.delai) ligne += ' | delai ' + r.delai;\n  if (r.description) ligne += ' - ' + r.description;\n  const cat = (r.categorie||'').toUpperCase().trim();\n  if (cat === 'SERVICE') services.push(ligne);\n  else if (cat === 'PRODUIT') produits.push(ligne);\n}\nlet catalogue_texte = '';\nif (services.length > 0) catalogue_texte += 'SERVICES & TARIFS :\\n' + services.map(s => '- ' + s).join('\\n');\nif (produits.length > 0) catalogue_texte += '\\n\\nPRODUITS :\\n' + produits.map(p => '- ' + p).join('\\n');\nif (!catalogue_texte.trim()) catalogue_texte = 'DTF recto 1500-3000 XPF/piece | Broderie 2000-3500 XPF | Vinyle 800-2500 XPF';\nreturn [{ json: { ...prev, catalogue_texte, catalogue_charge: rows.length > 0 }}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1024,
+        1920
+      ],
+      "id": "97372222-b27a-4730-a005-254c550d3e10",
+      "name": "MEM-READ-4b Code — Formater Catalogue"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "canal-filter-1",
+              "leftValue": "={{ $json.source }}",
+              "rightValue": "gmail",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "canal-filter-2",
+              "leftValue": "={{ $json.senderId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "fix-canal-filter-node",
+      "name": "Filtrer Canal Envoi",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1184,
+        1920
+      ],
+      "_comment": "true=Gmail (source==gmail OR senderId vide), false=Facebook (messenger avec senderId)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hcstahiti.app.n8n.cloud/webhook/picwish-pipeline",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.apiKey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify({ nom_client: $json.clientName, image_base64: $json.image_url }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "fix-picwish-http-node",
+      "name": "T3E Appel PicWish Pipeline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        80,
+        2240
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CREDENTIAL_ID_PICWISH",
+          "name": "PicWish API Token (HCS)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://highcoffeeshirts.com/erp/api/triage_messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "hcs-erp-2026"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ expediteur: ($json.clientName || $json.senderId || 'inconnu').substring(0,150), canal: $json.source || 'messenger', source_id: ($json.senderId || '').substring(0,150), message: ($json.text || '').substring(0,500), categorie: ($json.action || $json.category || 'INFO_SERVICES').substring(0,30), action: ($json.reponse || '').substring(0,100), statut: 'traite' }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "t6-log-mysql-triage-hcs",
+      "name": "T6 Log MySQL Triage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        496,
+        2800
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const clean = s => String(s||'').replace(/[\"\\n\\r\\t\\\\]/g,' ');\nconst text = clean($json.text).substring(0,600);\nconst memoire = clean($json.contexte_memoire||'Nouveau client.').substring(0,400);\nconst catalogue = clean($json.catalogue_texte||'').substring(0,500);\nconst clientName = clean($json.clientName||$json.senderId||'Client').substring(0,80);\nreturn [{ json: { ...$json, _dv_text: text, _dv_mem: memoire, _dv_cat: catalogue, _dv_client: clientName } }];"
+      },
+      "id": "devis-1-v5",
+      "name": "DEVIS-1 Préparer Extraction",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.apiKey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "{\"model\": \"gpt-4o-mini\", \"messages\": [{\"role\": \"system\", \"content\": \"Tu es commercial chez High Coffee Shirt, Tahiti (personnalisation textile DTF/broderie/vinyle). Genere un devis structure a partir du message client.\\n\\nTARIFS (XPF) :\\n- T-shirt DTF recto : 1500 | recto-verso : 2200\\n- Polo broderie : 2500 | Hoodie DTF : 3500 | Casquette broderie : 2200\\n- Remises : -10% a 10 pieces, -15% a 20 pieces, -20% a 50 pieces\\n\\nReponds UNIQUEMENT en JSON valide :\\n{\\\"article\\\":\\\"string\\\",\\\"quantite\\\":0,\\\"technique\\\":\\\"DTF|broderie|vinyle\\\",\\\"prix_unitaire\\\":0,\\\"remise_pct\\\":0,\\\"prix_total\\\":0,\\\"delai\\\":\\\"3-5 jours\\\",\\\"message_client\\\":\\\"Bonjour [Client], [devis complet pro 4-6 lignes en francais]\\\",\\\"notes\\\":\\\"string\\\"}\"}, {\"role\": \"user\", \"content\": \"Client: ={{ $json._dv_client }}\\nMessage: ={{ $json._dv_text }}\\nCatalogue: ={{ $json._dv_cat }}\\nMemoire client: ={{ $json._dv_mem }}\"}], \"max_tokens\": 600, \"temperature\": 0.3, \"response_format\": {\"type\": \"json_object\"}}",
+        "options": {}
+      },
+      "id": "devis-2-v5",
+      "name": "DEVIS-2 OpenAI Extraire+Rédiger",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        320,
+        1100
+      ],
+      "credentials": {
+        "openaiApi": {
+          "id": "CREDENTIAL_ID_OPENAI",
+          "name": "OpenAI API Key (HCS)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = ($input.first().json?.choices?.[0]?.message?.content) || '{}';\nconst prev = $('DEVIS-1 Préparer Extraction').first().json;\nlet d = {};\ntry { d = JSON.parse(raw); } catch(e) {}\nconst ref = 'DEV-' + Date.now();\nconst now = new Date().toISOString().substring(0,16).replace('T',' ');\nconst qte = d.quantite || 1;\nconst pu = d.prix_unitaire || 1500;\nconst remise = d.remise_pct || 0;\nconst total = d.prix_total || Math.round(pu * qte * (1 - remise/100));\nconst lignes = [{ article: d.article || 'Personnalisation textile', qte, pu, technique: d.technique || 'DTF', remise }];\nreturn [{ json: {\n  ...prev,\n  devis_ref: ref,\n  devis_article: d.article || 'Personnalisation textile',\n  devis_qte: qte,\n  devis_technique: d.technique || 'DTF',\n  devis_pu: pu,\n  devis_remise: remise,\n  devis_total: total,\n  devis_delai: d.delai || '3-5 jours',\n  message_client: d.message_client || 'Votre devis est pret. Contactez-nous pour confirmer.',\n  devis_notes: d.notes || '',\n  devis_lignes: JSON.stringify(lignes),\n  devis_created_at: now\n}}];"
+      },
+      "id": "devis-3-v5",
+      "name": "DEVIS-3 Parser Devis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://highcoffeeshirts.com/erp/api/devis",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "hcs-erp-2026"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ ref: $json.devis_ref, client_nom: ($json.clientName || $json.senderId || 'Client inconnu').substring(0,100), notes: ($json.message_client || '').substring(0,1000), lignes: $json.devis_lignes, statut: 'En attente' }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "devis-4-v5",
+      "name": "DEVIS-4 Créer Devis MySQL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const apiResp = $input.first().json;\nconst ctx = $('DEVIS-3 Parser Devis').first().json;\nconst devisId = String(apiResp.id || apiResp.data?.id || apiResp.item?.id || '');\nconst execId = $execution.id;\nconst baseUrl = 'https://hcstahiti.app.n8n.cloud/webhook-waiting/' + execId;\nconst approveUrl = baseUrl + '?approved=1&devis_id=' + devisId;\nconst rejectUrl  = baseUrl + '?approved=0&devis_id=' + devisId;\nconst erpUrl     = 'https://highcoffeeshirts.com/erp/#devis';\nconst emailHtml =\n  '<h2 style=\"color:#1e40af;font-family:sans-serif\">Devis a approuver — High Coffee Shirt</h2>' +\n  '<table style=\"font-family:sans-serif;font-size:14px;border-collapse:collapse\" border=\"1\" cellpadding=\"8\">' +\n  '<tr><td><b>Client</b></td><td>' + (ctx.clientName || ctx.senderId || 'N/A') + '</td></tr>' +\n  '<tr><td><b>Canal</b></td><td>' + (ctx.source || 'N/A') + '</td></tr>' +\n  '<tr><td><b>Reference</b></td><td>' + ctx.devis_ref + '</td></tr>' +\n  '<tr><td><b>Article</b></td><td>' + ctx.devis_article + ' x' + ctx.devis_qte + ' (' + ctx.devis_technique + ')</td></tr>' +\n  '<tr><td><b>Prix unitaire</b></td><td>' + ctx.devis_pu + ' XPF (-' + ctx.devis_remise + '%)</td></tr>' +\n  '<tr><td><b>Total</b></td><td><b>' + ctx.devis_total + ' XPF</b></td></tr>' +\n  '<tr><td><b>Delai</b></td><td>' + ctx.devis_delai + '</td></tr>' +\n  '</table>' +\n  '<h3 style=\"font-family:sans-serif\">Message original du client :</h3>' +\n  '<p style=\"font-family:sans-serif;background:#f3f4f6;padding:10px;border-radius:4px\">' + (ctx.text || '').substring(0, 500) + '</p>' +\n  '<h3 style=\"font-family:sans-serif\">Devis redige par IA :</h3>' +\n  '<p style=\"font-family:sans-serif;background:#eff6ff;padding:10px;border-radius:4px\">' + (ctx.message_client || '').replace(/\\n/g, '<br>') + '</p>' +\n  '<hr>' +\n  '<h3 style=\"font-family:sans-serif\">Actions :</h3>' +\n  '<p><a href=\"' + approveUrl + '\" style=\"display:inline-block;background:#16a34a;color:white;padding:12px 28px;border-radius:6px;text-decoration:none;font-family:sans-serif;font-size:16px;margin:4px\">Approuver et envoyer</a></p>' +\n  '<p><a href=\"' + erpUrl + '\" style=\"display:inline-block;background:#2563eb;color:white;padding:12px 28px;border-radius:6px;text-decoration:none;font-family:sans-serif;font-size:16px;margin:4px\">Modifier dans ERP puis approuver</a></p>' +\n  '<p><a href=\"' + rejectUrl + '\" style=\"display:inline-block;background:#dc2626;color:white;padding:12px 28px;border-radius:6px;text-decoration:none;font-family:sans-serif;font-size:16px;margin:4px\">Rejeter</a></p>' +\n  '<p style=\"font-family:sans-serif;color:#888;font-size:11px\">ID MySQL: ' + devisId + ' | Expiration: 24h | ExecID: ' + execId + '</p>';\nreturn [{ json: { ...ctx, devis_mysql_id: devisId, admin_email_html: emailHtml, approve_url: approveUrl, reject_url: rejectUrl } }];"
+      },
+      "id": "devis-5-v5",
+      "name": "DEVIS-5 Préparer Email Admin",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "highcoffeeshirt@gmail.com",
+        "subject": "={{ '[DEVIS A APPROUVER] ' + $json.devis_ref + ' — ' + ($json.clientName || $json.senderId || 'Client') }}",
+        "emailType": "html",
+        "message": "={{ $json.admin_email_html }}",
+        "options": {}
+      },
+      "id": "devis-6-v5",
+      "name": "DEVIS-6 Gmail Admin Approbation",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1280,
+        1100
+      ],
+      "webhookId": "devis-admin-gmail-webhook-v5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "CREDENTIAL_ID_GMAIL",
+          "name": "Gmail account (HCS)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {}
+      },
+      "id": "devis-7-v5",
+      "name": "DEVIS-7 Attendre Approbation",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        1100
+      ],
+      "webhookId": "devis-wait-webhook-v5"
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = ($json.query) || ($json.body) || {};\nconst approved = String(query.approved) === '1';\nconst devisId = String(query.devis_id || query.devisId || '');\nconst ctx = $('DEVIS-5 Préparer Email Admin').first().json;\nreturn [{ json: { ...ctx, approved, devis_mysql_id: devisId || ctx.devis_mysql_id || '', wait_query: query } }];"
+      },
+      "id": "devis-8-v5",
+      "name": "DEVIS-8 Restaurer Contexte",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "check-approved-devis",
+              "leftValue": "={{ $json.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "devis-9-v5",
+      "name": "DEVIS-9 Check Approuvé",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2000,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://highcoffeeshirts.com/erp/api/devis/{{ $json.devis_mysql_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "hcs-erp-2026"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "devis-10-v5",
+      "name": "DEVIS-10 Fetch Devis MySQL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2240,
+        900
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const apiResp = $input.first().json;\nconst ctx = $('DEVIS-8 Restaurer Contexte').first().json;\nconst devis = apiResp.item || apiResp.data || apiResp || {};\nconst notes = (devis.notes || ctx.message_client || 'Votre devis est disponible.');\nconst ref = devis.ref || ctx.devis_ref || '';\nconst reponse =\n  'Votre devis High Coffee Shirt\\n\\n' +\n  'Reference : ' + ref + '\\n\\n' +\n  notes + '\\n\\n' +\n  'Ce devis a ete valide par notre equipe.\\n' +\n  'Pour confirmer votre commande, repondez a ce message ou ecrivez a : highcoffeeshirt@gmail.com\\n' +\n  'High Coffee Shirt — Personnalisation textile Tahiti';\nconst reponse_messenger =\n  '✅ Devis valide — ' + ref + '\\n\\n' +\n  notes.substring(0, 380) + '\\n\\n' +\n  'Pour confirmer : highcoffeeshirt@gmail.com ☕';\nreturn [{ json: { ...ctx, reponse, reponse_messenger, quickReplies: [{ content_type:'text', title:'Confirmer commande', payload:'CONFIRMER' }, { content_type:'text', title:'Questions', payload:'QUESTIONS' }], devis_statut: 'approuve', action: 'DEVIS' } }];"
+      },
+      "id": "devis-11-v5",
+      "name": "DEVIS-11 Format Réponse Approuvée",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2480,
+        900
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('DEVIS-8 Restaurer Contexte').first().json;\nconst reponse =\n  'Bonjour ' + (ctx.clientName || '') + ',\\n\\n' +\n  'Apres examen de votre demande, notre equipe ne peut pas etablir ce devis dans les conditions demandees.\\n\\n' +\n  'Nous vous invitons a nous recontacter pour reformuler votre demande :\\n' +\n  'Email : highcoffeeshirt@gmail.com\\n' +\n  'Nous restons disponibles pour vous aider.\\n\\n' +\n  'High Coffee Shirt — Tahiti';\nconst reponse_messenger =\n  '⚠️ Bonjour,\\n\\n' +\n  'Nous ne pouvons pas traiter ce devis actuellement.\\n\\n' +\n  'Recontactez-nous : highcoffeeshirt@gmail.com\\n' +\n  'High Coffee Shirt Tahiti ☕';\nreturn [{ json: { ...ctx, reponse, reponse_messenger, quickReplies: [{ content_type:'text', title:'Nouveau devis', payload:'DEVIS' }, { content_type:'text', title:'Nous contacter', payload:'CONTACT' }], devis_statut: 'rejete', action: 'DEVIS' } }];"
+      },
+      "id": "devis-12-v5",
+      "name": "DEVIS-12 Format Rejet",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        1300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "devis-canal-filter",
+              "leftValue": "={{ $json.source }}",
+              "rightValue": "gmail",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "devis-13-v5",
+      "name": "DEVIS-13 Canal Filter Devis",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2720,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.clientEmail }}",
+        "subject": "={{ 'Votre devis High Coffee Shirt — ' + ($json.devis_ref || $json.devis_article || 'Personnalisation') }}",
+        "message": "={{ $json.reponse }}",
+        "options": {}
+      },
+      "id": "devis-14-v5",
+      "name": "DEVIS-14 Envoyer Gmail Devis",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2960,
+        900
+      ],
+      "webhookId": "devis-gmail-client-webhook-v5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "CREDENTIAL_ID_GMAIL",
+          "name": "Gmail account (HCS)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/me/messages",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "={{ $credentials.pageAccessToken }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ recipient: { id: $json.senderId }, message: { text: ($json.reponse_messenger || $json.reponse || '').substring(0, 630), quick_replies: ($json.quickReplies || []).slice(0,3) } }) }}",
+        "options": {}
+      },
+      "id": "devis-15-v5",
+      "name": "DEVIS-15 Envoyer Facebook Devis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2960,
+        1300
+      ],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "CREDENTIAL_ID_FACEBOOK",
+          "name": "Facebook Page Token (HCS)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('DEVIS-8 Restaurer Contexte').first().json;\nconst approved = $('DEVIS-11 Format Réponse Approuvée').first().json;\nconst rejected = $('DEVIS-12 Format Rejet').first().json;\nconst sent = (approved && approved.devis_statut) ? approved : (rejected && rejected.devis_statut) ? rejected : {};\nreturn [{ json: { ...ctx, reponse: sent.reponse||'', reponse_messenger: sent.reponse_messenger||'', devis_statut: sent.devis_statut||'traite', action: 'DEVIS' } }];"
+      },
+      "id": "devis-16-v5",
+      "name": "DEVIS-16 MEM-WRITE Préparer Devis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3200,
+        1100
+      ]
+    }
+  ],
+  "connections": {
+    "T1 Gmail Trigger1": {
+      "main": [
+        [
+          {
+            "node": "T1 Normaliser Message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "T1 Normaliser Message1": {
+      "main": [
+        [
+          {
+            "node": "MEM-READ-1 Préparer Clé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MEM-READ-1 Préparer Clé": {
+      "main": [
+        [
+          {
+            "node": "MEM-READ-2 Lire Sheets Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MEM-READ-2 Lire Sheets Client": {
+      "main": [
+        [
+          {
+            "node": "MEM-READ-3 Injecter Mémoire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MEM-READ-3 Injecter Mémoire": {
+      "main": [
+        [
+          {
+            "node": "MEM-READ-4a Google Sheets Lire Catalogue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MEM-READ-4a Google Sheets Lire Catalogue": {
+      "main": [
+        [
+          {
+            "node": "MEM-READ-4b Code — Formater Catalogue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MEM-READ-4b Code — Formater Catalogue": {
+      "main": [
+        [
+          {
+            "node": "T2 OpenAI Classifier1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "T2 OpenAI Classifier1": {
+      "main": [
+        [
+          {
+            "node": "T2 Parser Catégorie1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "T2 Parser Catégorie1": {
+      "main": [
+        [
+          {
+            "node": "T3 Switch Catégorie1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "T3 Switch Catégorie1": {
+      "main": [
+        [
+          {
+            "node": "T3A Branche Devis1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "T3B Info Services1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "T3C Info Produits1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "T3D Branche Mockup1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "T3E Traitement Image PicWish1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "T3A Branche Devis1": {
+      "main": [
+        [
+          {
+            "node": "DEVIS-1 Préparer Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "T3B Info Services1": {
+      "main": [
+        [
+          {
+            "node": "T4 Préparer Dropbox1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "T3C Info Produits1": {
+      "main": [
+        [
+          {
+            "node": "T4 Préparer Dropbox1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "T3D Branche Mockup1": {
+      "main": [
+        [
+          {
+            "node": "T4 Préparer Dropbox1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "T3E Traitement Image PicWish1": {
+      "main": [
+        [
+          {
+            "node": "T3E Appel PicWish Pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "T3E Appel PicWish Pipeline": {
+      "main": [
+        [
+          {
+            "node": "T4 Préparer Dropbox1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "T4 Préparer Dropbox1": {
+      "main": [
+        [
+          {
+            "node": "T4 Upload Dropbox1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "T4 Upload Dropbox1": {
+      "main": [
+        [
+          {
+            "node": "T5 OpenAI Rédige Réponse1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "T5 OpenAI Rédige Réponse1": {
+      "main": [
+        [
+          {
+            "node": "T5 Formater Réponse1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "T5 Formater Réponse1": {
+      "main": [
+        [
+          {
+            "node": "Filtrer Canal Envoi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrer Canal Envoi": {
+      "main": [
+        [
+          {
+            "node": "T5 Envoyer Gmail1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "T5 Envoyer Facebook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "T5 Envoyer Gmail1": {
+      "main": [
+        [
+          {
+            "node": "MEM-WRITE-1 Préparer Lignes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "T5 Envoyer Facebook1": {
+      "main": [
+        [
+          {
+            "node": "MEM-WRITE-1 Préparer Lignes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MEM-WRITE-1 Préparer Lignes": {
+      "main": [
+        [
+          {
+            "node": "MEM-WRITE-2a Historique Sheets",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "MEM-WRITE-2b Fiche Client Sheets",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "MEM-WRITE-3 Log Image",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "T6 Log MySQL Triage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook messenger1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extraire Messages1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "T1 Normaliser Message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraire Messages1": {
+      "main": [
+        [
+          {
+            "node": "Accusé Réception1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVIS-1 Préparer Extraction": {
+      "main": [
+        [
+          {
+            "node": "DEVIS-2 OpenAI Extraire+Rédiger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVIS-2 OpenAI Extraire+Rédiger": {
+      "main": [
+        [
+          {
+            "node": "DEVIS-3 Parser Devis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVIS-3 Parser Devis": {
+      "main": [
+        [
+          {
+            "node": "DEVIS-4 Créer Devis MySQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVIS-4 Créer Devis MySQL": {
+      "main": [
+        [
+          {
+            "node": "DEVIS-5 Préparer Email Admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVIS-5 Préparer Email Admin": {
+      "main": [
+        [
+          {
+            "node": "DEVIS-6 Gmail Admin Approbation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVIS-6 Gmail Admin Approbation": {
+      "main": [
+        [
+          {
+            "node": "DEVIS-7 Attendre Approbation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVIS-7 Attendre Approbation": {
+      "main": [
+        [
+          {
+            "node": "DEVIS-8 Restaurer Contexte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVIS-8 Restaurer Contexte": {
+      "main": [
+        [
+          {
+            "node": "DEVIS-9 Check Approuvé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVIS-9 Check Approuvé": {
+      "main": [
+        [
+          {
+            "node": "DEVIS-10 Fetch Devis MySQL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DEVIS-12 Format Rejet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVIS-10 Fetch Devis MySQL": {
+      "main": [
+        [
+          {
+            "node": "DEVIS-11 Format Réponse Approuvée",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVIS-11 Format Réponse Approuvée": {
+      "main": [
+        [
+          {
+            "node": "DEVIS-13 Canal Filter Devis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVIS-12 Format Rejet": {
+      "main": [
+        [
+          {
+            "node": "DEVIS-13 Canal Filter Devis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVIS-13 Canal Filter Devis": {
+      "main": [
+        [
+          {
+            "node": "DEVIS-14 Envoyer Gmail Devis",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DEVIS-15 Envoyer Facebook Devis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVIS-14 Envoyer Gmail Devis": {
+      "main": [
+        [
+          {
+            "node": "DEVIS-16 MEM-WRITE Préparer Devis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVIS-15 Envoyer Facebook Devis": {
+      "main": [
+        [
+          {
+            "node": "DEVIS-16 MEM-WRITE Préparer Devis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DEVIS-16 MEM-WRITE Préparer Devis": {
+      "main": [
+        [
+          {
+            "node": "MEM-WRITE-1 Préparer Lignes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "saveExecutionProgress": true
+  }
+}
