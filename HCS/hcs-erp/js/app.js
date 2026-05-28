@@ -62,11 +62,12 @@ const APPS = [
     color: '#ff6b6b',
     pinned: true,
     views: [
-      { id: 'planning',     label: 'Planning',       icon: '📅', section: 'Atelier'    },
-      { id: 'hcs-designer', label: '⬡ HCS Designer', icon: '🎨', section: 'Atelier'    },
-      { id: 'mo',           label: 'Ordres de fab.', icon: '🔧', section: 'Atelier'    },
-      { id: 'bom',          label: 'Nomenclatures',  icon: '📐', section: 'Paramètres' },
-      { id: 'work-centers', label: 'Postes',         icon: '🏭', section: 'Paramètres' }
+      { id: 'planning',           label: 'Planning',             icon: '📅', section: 'Atelier'    },
+      { id: 'hcs-designer',       label: '⬡ HCS Designer',        icon: '🎨', section: 'Atelier'    },
+      { id: 'mo',                 label: 'Ordres de fab.',         icon: '🔧', section: 'Atelier'    },
+      { id: 'bom',                label: 'Nomenclatures',          icon: '📐', section: 'Paramètres' },
+      { id: 'work-centers',       label: 'Postes',                 icon: '🏭', section: 'Paramètres' },
+      { id: 'andromeda-campaign', label: '📡 Andromeda Builder',   icon: '📡', section: 'Campagnes'  }
     ]
   },
   {
@@ -584,8 +585,9 @@ function renderView() {
       if (view === 'planning') {
         renderIframe('modules/planning-dashboard.html', container);
       } else if (view === 'hcs-designer') {
-        // Agent HCS Designer : DTF Studio + Lecture Devis + Envoi Atelier
         renderIframe('modules/hcs-designer.html', container);
+      } else if (view === 'andromeda-campaign') {
+        renderIframe('apps/andromeda-campaign.html', container);
       } else if (typeof Manufacturing !== 'undefined') {
         Manufacturing.init(document.getElementById('toolbar-actions'), container, view);
       }
@@ -651,7 +653,7 @@ function renderView() {
         const viewDef   = outilsApp ? outilsApp.views.find(v => v.id === view) : null;
         if (viewDef && viewDef.external && viewDef.url) {
           /* Apps intégrées dans l'ERP via iframe — HCS Builder, Hub, Pass, Cockpit */
-          const IFRAME_APPS = ['ext-hcs-builder', 'ext-hub', 'ext-pass-hcs', 'ext-cockpit'];
+          const IFRAME_APPS = ['ext-hcs-builder', 'ext-hub', 'ext-pass-hcs', 'ext-cockpit', 'ext-andromeda'];
           if (IFRAME_APPS.includes(view)) {
             renderIframe(viewDef.url, container);
           } else {
