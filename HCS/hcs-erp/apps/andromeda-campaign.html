@@ -522,36 +522,53 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-prim
 
 /* PLANNING VIEW */
 .planning-view { padding: 16px; }
-.planning-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 18px; }
-.pstat { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; }
+.planning-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 14px; }
+.pstat { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; position: relative; overflow: hidden; }
+.pstat::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background: currentColor; opacity:0.35; }
 .pstat-val { font-size: 1.4rem; font-weight: 900; }
 .pstat-label { font-size: 0.62rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
-.planning-day { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
-.planning-day-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; cursor: pointer; }
+/* Filtres */
+.po-filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.po-filter-pill { padding: 5px 14px; border-radius: 20px; font-size: 0.68rem; font-weight: 700; border: 1px solid var(--border); background: var(--bg-panel); color: var(--text-secondary); cursor: pointer; transition: all 0.18s; }
+.po-filter-pill:hover { border-color: var(--accent); color: var(--accent); }
+.po-filter-pill.active { background: var(--accent); border-color: var(--accent); color: #0a0a1a; }
+/* Groupes par date */
+.planning-day { margin-bottom: 14px; }
+.planning-day-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; cursor: pointer; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border); transition: background 0.18s; user-select: none; }
 .planning-day-head:hover { background: var(--bg-panel); }
+.planning-day-head.today-head { border-left: 3px solid var(--accent); }
+.planning-day-head.overdue-head { border-left: 3px solid var(--accent-2); }
 .planning-day-date { font-weight: 800; font-size: 0.88rem; }
 .planning-day-date.today { color: var(--accent); }
 .planning-day-date.overdue { color: var(--accent-2); }
 .planning-day-meta { display: flex; gap: 10px; align-items: center; font-size: 0.72rem; color: var(--text-secondary); }
-.planning-day-body { border-top: 1px solid var(--border); }
-.planning-order-row { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid rgba(42,42,74,0.4); font-size: 0.76rem; flex-wrap: wrap; }
-.planning-order-row:last-child { border-bottom: none; }
-.planning-order-row .po-ref { color: var(--accent); font-family: monospace; font-size: 0.7rem; flex-shrink: 0; }
-.planning-order-row .po-client { font-weight: 600; flex: 1; min-width: 80px; }
-.planning-order-row .po-product { color: var(--text-secondary); flex: 2; min-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.planning-order-row .po-amount { color: var(--accent-3); font-weight: 700; flex-shrink: 0; }
-.planning-day-empty { padding: 20px; text-align: center; color: var(--text-secondary); font-size: 0.78rem; }
-
-/* Planning — barre d'évolution commande */
-.po-progress { width: 100%; display: flex; align-items: flex-start; gap: 0; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(42,42,74,0.4); }
-.po-step { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
-.po-step-icon { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--border); background: var(--bg-panel); display: flex; align-items: center; justify-content: center; font-size: 0.78rem; transition: all 0.3s; }
+.planning-day-body { padding: 10px 0 2px; }
+/* Grille de cartes */
+.po-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.po-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; transition: box-shadow 0.2s, transform 0.2s; display: flex; flex-direction: column; }
+.po-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.4); transform: translateY(-2px); }
+.po-card-strip { height: 4px; width: 100%; flex-shrink: 0; }
+.po-card-top { padding: 10px 12px 6px; display: flex; align-items: flex-start; gap: 8px; }
+.po-card-info { flex: 1; min-width: 0; }
+.po-card-ref { font-family: monospace; font-size: 0.65rem; color: var(--accent); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.po-card-client { font-size: 0.92rem; font-weight: 800; color: var(--text); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.po-card-product { font-size: 0.7rem; color: var(--text-secondary); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.po-card-amount { font-size: 0.98rem; font-weight: 900; color: var(--accent-3); white-space: nowrap; padding-top: 2px; text-align: right; line-height: 1.2; }
+.po-card-mid { padding: 2px 12px 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.po-card-delivery { font-size: 0.67rem; color: var(--text-secondary); }
+.po-card-note { font-size: 0.64rem; color: var(--text-secondary); opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.po-card-bottom { padding: 8px 12px 10px; border-top: 1px solid rgba(42,42,74,0.4); margin-top: auto; }
+.po-card-select { width: 100%; font-size: 0.72rem; padding: 5px 8px; border-radius: 6px; background: var(--bg-panel); border: 1px solid var(--border); color: var(--text); cursor: pointer; }
+/* Stepper progression */
+.po-progress { width: 100%; display: flex; align-items: flex-start; gap: 0; margin-bottom: 8px; }
+.po-step { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
+.po-step-icon { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); background: var(--bg-panel); display: flex; align-items: center; justify-content: center; font-size: 0.72rem; transition: all 0.3s; }
 .po-step-icon.done { border-color: var(--accent); background: rgba(79,172,254,0.15); }
-.po-step-icon.current { border-color: #f6d365; background: rgba(246,211,101,0.15); box-shadow: 0 0 8px rgba(246,211,101,0.5); }
-.po-step-label { font-size: 0.58rem; color: var(--text-secondary); text-align: center; white-space: nowrap; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.po-step-icon.current { border-color: #f6d365; background: rgba(246,211,101,0.15); box-shadow: 0 0 8px rgba(246,211,101,0.4); }
+.po-step-label { font-size: 0.54rem; color: var(--text-secondary); text-align: center; white-space: nowrap; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
 .po-step-label.done { color: var(--accent); }
 .po-step-label.current { color: #f6d365; }
-.po-step-line { flex: 1; height: 2px; background: var(--border); margin-top: 13px; min-width: 24px; transition: background 0.3s; }
+.po-step-line { flex: 1; height: 2px; background: var(--border); margin-top: 11px; min-width: 16px; transition: background 0.3s; }
 .po-step-line.done { background: var(--accent); }
 .po-planning-btn { font-size: 0.65rem; padding: 3px 9px; background: rgba(79,172,254,0.1); border: 1px solid rgba(79,172,254,0.3); color: var(--accent); border-radius: 6px; cursor: pointer; white-space: nowrap; transition: all 0.2s; text-align: center; }
 .po-planning-btn:hover { background: rgba(79,172,254,0.25); }
@@ -688,6 +705,67 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-prim
 /* Bouton "Visualiser véhicule" dans le footer sticker */
 .stk-cl-btn-vms { width:100%; padding:10px; margin-bottom:8px; background:rgba(196,129,58,0.12); border:1px solid rgba(196,129,58,0.4); border-radius:10px; color:#e09a4f; font-size:0.78rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s; }
 .stk-cl-btn-vms:hover { background:rgba(196,129,58,0.22); border-color:#c4813a; }
+
+/* ── Workspace tabs ── */
+.ws-tabs-bar{display:flex;gap:0;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.ws-tab{padding:7px 18px;border-radius:8px 8px 0 0;border:none;background:transparent;color:var(--text-secondary);font-size:.75rem;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;margin-bottom:-1px}
+.ws-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(108,99,255,.07)}
+.ws-tab:hover:not(.active){color:var(--text-primary);background:rgba(255,255,255,.04)}
+/* ── Parcours panel ── */
+.prc-section-tag{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:14px;font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.prc-tag-b{background:rgba(108,99,255,.12);border:1px solid rgba(108,99,255,.25);color:#a78bfa}
+.prc-tag-a{background:rgba(67,233,123,.08);border:1px solid rgba(67,233,123,.2);color:#43e97b}
+.prc-flow{display:flex;align-items:flex-start;overflow-x:auto;padding-bottom:8px;margin-bottom:16px;gap:0}
+.prc-step{flex:1;min-width:120px;position:relative}
+.prc-step:not(:last-child)::after{content:'›';position:absolute;top:18px;right:-8px;color:var(--text-secondary);font-size:1rem;z-index:1}
+.prc-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:11px;margin:0 5px;height:100%;transition:border-color .15s,background .15s;cursor:pointer}
+.prc-card:hover{border-color:rgba(108,99,255,.5);background:rgba(108,99,255,.05)}
+.prc-card.prc-active{border-color:var(--prc-color,var(--accent));background:rgba(108,99,255,.08)}
+.prc-num{width:20px;height:20px;border-radius:50%;background:var(--prc-color,var(--accent));color:#fff;font-size:.58rem;font-weight:900;display:flex;align-items:center;justify-content:center;margin-bottom:5px}
+.prc-icon{font-size:1.1rem;margin-bottom:3px}
+.prc-name{font-size:.72rem;font-weight:800;margin-bottom:2px}
+.prc-desc{font-size:.6rem;color:var(--text-secondary);line-height:1.35;margin-bottom:5px}
+.prc-time{font-size:.56rem;color:var(--text-secondary)}
+.prc-tag{display:inline-block;padding:2px 5px;border-radius:3px;font-size:.52rem;font-weight:700;margin:1px}
+.prc-tag-req{background:rgba(255,90,90,.1);border:1px solid rgba(255,90,90,.2);color:#ff7070}
+.prc-tag-opt{background:rgba(255,200,60,.07);border:1px solid rgba(255,200,60,.18);color:#ffd23f}
+.prc-tag-auto{background:rgba(67,233,123,.07);border:1px solid rgba(67,233,123,.18);color:#43e97b}
+.prc-metrics{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.prc-metric{flex:1;min-width:90px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.prc-metric-val{font-size:1rem;font-weight:900}
+.prc-metric-lbl{font-size:.58rem;color:var(--text-secondary);margin-top:2px}
+.prc-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.prc-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.prc-panel-title{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-bottom:8px}
+.prc-funnel-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.prc-funnel-lbl{font-size:.65rem;width:110px;flex-shrink:0;font-weight:600}
+.prc-funnel-wrap{flex:1;height:16px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden}
+.prc-funnel-bar{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:5px;font-size:.55rem;font-weight:800;color:rgba(255,255,255,.65)}
+.prc-funnel-pct{font-size:.62rem;color:var(--text-secondary);width:32px;text-align:right;flex-shrink:0}
+.prc-cfg-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.prc-cfg-row:last-child{border-bottom:none}
+.prc-cfg-key{font-size:.68rem;color:var(--text-secondary);flex:1}
+.prc-cfg-val{font-size:.65rem;font-weight:700}
+.prc-cfg-dot{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.52rem;flex-shrink:0}
+.prc-cfg-ok{background:rgba(67,233,123,.15);color:#43e97b}
+.prc-cfg-warn{background:rgba(255,200,60,.12);color:#ffd23f}
+.prc-tip{background:rgba(108,99,255,.05);border:1px solid rgba(108,99,255,.12);border-radius:7px;padding:9px 11px;display:flex;gap:8px;margin-bottom:7px;font-size:.67rem;color:var(--text-secondary);line-height:1.4}
+.prc-tip strong{color:var(--text-primary)}
+/* client bar preview */
+.prc-modal-wrap{background:linear-gradient(160deg,#1a1a2e,#12122a);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px;max-width:400px}
+.prc-bar{display:flex;align-items:center;margin-bottom:10px}
+.prc-bdot{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);font-size:.6rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.prc-bdot.done{background:var(--prc-color,var(--accent));border-color:var(--prc-color,var(--accent));color:#fff}
+.prc-bdot.cur{border-color:var(--prc-color,var(--accent));color:var(--prc-color,var(--accent));background:rgba(108,99,255,.1)}
+.prc-bdot.idle{color:var(--text-secondary)}
+.prc-bconn{flex:1;height:2px;background:var(--border);max-width:20px}
+.prc-bconn.done{background:var(--prc-color,var(--accent))}
+.prc-illus{display:flex;gap:6px;margin-top:6px}
+.prc-illus-step{flex:1;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:7px;padding:7px 5px;text-align:center;cursor:pointer;transition:all .15s}
+.prc-illus-step:hover,.prc-illus-step.prc-illus-active{background:rgba(108,99,255,.08);border-color:var(--prc-color,rgba(108,99,255,.4))}
+.prc-illus-icon{font-size:1rem;margin-bottom:2px}
+.prc-illus-name{font-size:.56rem;font-weight:700;margin-bottom:1px}
+.prc-illus-detail{font-size:.5rem;color:var(--text-secondary);line-height:1.3}
 </style>
 <script src="hcs-api-shared.js"></script>
 </head>
@@ -931,10 +1009,287 @@ function select(id) {
   restoreState(id);
 }
 
+// ═══════════════════════════════════════════════════════
+// PARCOURS CLIENT — données et rendu
+// ═══════════════════════════════════════════════════════
+const PARCOURS_CFG = {
+  3:{ color:'#ff6b6b', label:'DTF Originals', priceRange:'2 500 – 6 500 XPF',
+    steps:[
+      { n:1, icon:'🎨', name:'Design & Couleur', label:'Options', desc:'Choix couleur (6 coloris) + taille (XS→4XL) + visuel', time:'~45s',
+        req:['Couleur T-shirt','Taille'], opt:['Visuel galerie'], funnel:100 },
+      { n:2, icon:'📦', name:'Quantité & Contact', label:'Coordonnées', desc:'Nb d\'exemplaires + nom, email, tél, note', time:'~90s',
+        req:['Nom complet','Email'], opt:['Téléphone','Note'], funnel:82 },
+      { n:3, icon:'💳', name:'Paiement OSB', label:'Paiement', desc:'Tunnel Krypton SDK — CB Visa/MC/CB locale', time:'~60s',
+        req:['Carte bancaire'], opt:[], funnel:61 }
+    ],
+    cfg:[
+      { k:'Worker URL', v:'payzen-hcs.workers.dev', ok:true },
+      { k:'Coloris', v:'6 coloris', ok:true },
+      { k:'Tailles', v:'XS → 4XL', ok:true },
+      { k:'Visuels face/dos', v:'Optionnel', ok:false },
+      { k:'Quantité min/max', v:'1 – 99', ok:true },
+    ],
+    tips:[
+      { i:'💡', t:'<strong>Galerie logos</strong> — renseignez les visuels face/dos dans la config pour que le client visualise le rendu avant achat.' },
+      { i:'📊', t:'<strong>Tailles populaires</strong> — M et L représentent ~60% des ventes. Affichez-les en premier dans le picker.' },
+      { i:'🚀', t:'<strong>Upsell</strong> — proposez un "Pack famille ×3" à prix dégressif pour augmenter le panier moyen.' },
+    ]
+  },
+  4:{ color:'#6c63ff', label:'Pack Collector DTF', priceRange:'12 000 – 20 000 XPF',
+    steps:[
+      { n:1, icon:'📐', name:'Format gang sheet', label:'Options', desc:'1 Yard × 22" (55×91 cm) ou ½ Yard × 22" (55×46 cm)', time:'~20s',
+        req:['Format (1yard / ½yard)'], opt:[], funnel:100 },
+      { n:2, icon:'🖼', name:'Placer logos (canvas)', label:'Options', desc:'Upload logos, glisser-déposer sur la planche, validation', time:'~3 min',
+        req:['1 logo min','Validation planche'], opt:['Logos supplémentaires'], funnel:78 },
+      { n:3, icon:'👤', name:'Coordonnées', label:'Coordonnées', desc:'Quantité de feuilles + nom, email, tél', time:'~60s',
+        req:['Nom complet','Email'], opt:['Téléphone','Note'], funnel:64 },
+      { n:4, icon:'💳', name:'Paiement OSB', label:'Paiement', desc:'Tunnel Krypton SDK — paiement sécurisé XPF', time:'~60s',
+        req:['Carte bancaire'], opt:[], funnel:49 }
+    ],
+    cfg:[
+      { k:'Worker URL', v:'payzen-hcs.workers.dev', ok:true },
+      { k:'Format 1 yard', v:'20 000 XPF', ok:true },
+      { k:'Format ½ yard', v:'12 000 XPF', ok:true },
+      { k:'Canvas placement', v:'Inline (genDtf*)', ok:true },
+      { k:'Tuto placement client', v:'À ajouter LP', ok:false },
+    ],
+    tips:[
+      { i:'🎯', t:'<strong>Drop-off étape 2</strong> — le canvas peut dérouter les nouveaux clients. Ajoutez une vidéo tuto 15 s sur la LP.' },
+      { i:'📏', t:'<strong>Guide dimensions</strong> — affichez un repère cm/cm pour que le client visualise la taille réelle de sa planche.' },
+      { i:'⚡', t:'<strong>Futur</strong> — permettre de pré-charger les logos depuis l\'historique client réduirait le temps étape 2 de 3 min → 40 s.' },
+    ]
+  },
+  5:{ color:'#43e97b', label:'Formation Textile', priceRange:'15 000 – 35 000 XPF',
+    steps:[
+      { n:1, icon:'📗', name:'Choisir module', label:'Options', desc:'Débutant / Avancé / Complet', time:'~30s',
+        req:['Module'], opt:[], funnel:100 },
+      { n:2, icon:'📅', name:'Date & Contact', label:'Coordonnées', desc:'Date de session + nom, email, tél', time:'~90s',
+        req:['Date session','Nom complet','Email'], opt:['Téléphone','Message'], funnel:74 },
+      { n:3, icon:'💳', name:'Paiement OSB', label:'Paiement', desc:'Acompte ou paiement intégral via Krypton', time:'~60s',
+        req:['Carte bancaire'], opt:[], funnel:56 }
+    ],
+    cfg:[
+      { k:'Module Débutant', v:'15 000 XPF', ok:true },
+      { k:'Module Avancé', v:'25 000 XPF', ok:true },
+      { k:'Module Complet', v:'35 000 XPF', ok:true },
+      { k:'Dates sessions', v:'À configurer', ok:false },
+      { k:'Places restantes', v:'Non implémenté', ok:false },
+    ],
+    tips:[
+      { i:'📅', t:'<strong>Dates dynamiques</strong> — configurez les prochaines sessions dans Andromeda. Les dates épuisées disparaissent automatiquement.' },
+      { i:'💡', t:'<strong>Social proof</strong> — "12 participants formés ce mois" sur la LP augmente la conversion module Complet.' },
+      { i:'🎯', t:'<strong>Upsell post-formation</strong> — proposer Avancé à -20% après Débutant via email n8n automatique.' },
+    ]
+  },
+  6:{ color:'#f6d365', label:'Abonnements HCS', priceRange:'1 800 – 5 500 XPF/mois',
+    steps:[
+      { n:1, icon:'💎', name:'Choisir plan', label:'Options', desc:'Starter / Pro / Premium — mensuel ou annuel', time:'~45s',
+        req:['Plan'], opt:['Durée mensuel/annuel'], funnel:100 },
+      { n:2, icon:'👤', name:'Coordonnées', label:'Coordonnées', desc:'Informations client pour activation compte fidélité', time:'~60s',
+        req:['Nom complet','Email'], opt:['Téléphone'], funnel:69 },
+      { n:3, icon:'💳', name:'Paiement OSB', label:'Paiement', desc:'Paiement sécurisé — activation immédiate du plan', time:'~60s',
+        req:['Carte bancaire'], opt:[], funnel:52 }
+    ],
+    cfg:[
+      { k:'Plan Starter', v:'1 800 XPF/mois', ok:true },
+      { k:'Plan Pro', v:'3 500 XPF/mois', ok:true },
+      { k:'Plan Premium', v:'5 500 XPF/mois', ok:true },
+      { k:'Durée annuelle', v:'Remise ~14%', ok:true },
+      { k:'Activation CRM n8n', v:'À connecter', ok:false },
+    ],
+    tips:[
+      { i:'🌟', t:'<strong>Ancrage annuel</strong> — afficher "économisez X XPF" plutôt que le taux de remise est plus concret.' },
+      { i:'💡', t:'<strong>Comparatif</strong> — le tableau avantages côte-à-côte est le format qui convertit le mieux pour les abonnements.' },
+      { i:'🔗', t:'<strong>Post-paiement</strong> — connecter n8n pour créer la fiche fidélité ERP + envoyer welcome email automatique.' },
+    ]
+  },
+  7:{ color:'#30cfd0', label:'Graphiques / Vecto IA', priceRange:'1 500 – 8 000 XPF',
+    steps:[
+      { n:1, icon:'🎯', name:'Choisir service', label:'Options', desc:'Vectorisation / Détourage IA / Logo / Pack graphique', time:'~30s',
+        req:['Service'], opt:[], funnel:100 },
+      { n:2, icon:'📁', name:'Fichier & Contact', label:'Coordonnées', desc:'Upload fichier source (PNG/JPG/AI) + coordonnées', time:'~90s',
+        req:['Nom complet','Email'], opt:['Fichier source','Brief'], funnel:71 },
+      { n:3, icon:'💳', name:'Paiement OSB', label:'Paiement', desc:'Paiement avant traitement — livraison email 24h', time:'~60s',
+        req:['Carte bancaire'], opt:[], funnel:58 }
+    ],
+    cfg:[
+      { k:'Vectorisation', v:'2 500 XPF', ok:true },
+      { k:'Détourage IA', v:'1 500 XPF', ok:true },
+      { k:'Création logo', v:'8 000 XPF', ok:true },
+      { k:'Pack graphique', v:'8 000 XPF', ok:true },
+      { k:'Notif. livraison n8n', v:'À configurer', ok:false },
+    ],
+    tips:[
+      { i:'📁', t:'<strong>Upload optionnel</strong> — le client peut envoyer le fichier par email après paiement, pas d\'obligation au checkout.' },
+      { i:'💡', t:'<strong>Délai affiché</strong> — "livraison 24h ouvrées" réduit l\'anxiété client et augmente la conversion du pack.' },
+      { i:'🔗', t:'<strong>Automatisation</strong> — connecter la réception commande à un ticket PicWish Pipeline pour traitement automatique.' },
+    ]
+  }
+};
+
+var _prcActiveStep = {};
+
+function switchWorkspaceTab(tab, id) {
+  var bPane = document.getElementById('ws-builder-pane-'+id);
+  var pPane = document.getElementById('ws-parcours-pane-'+id);
+  var bTab  = document.getElementById('wst-builder-'+id);
+  var pTab  = document.getElementById('wst-parcours-'+id);
+  if (!bPane || !pPane) return;
+  if (tab === 'builder') {
+    bPane.style.display = ''; pPane.style.display = 'none';
+    bTab.classList.add('active'); pTab.classList.remove('active');
+  } else {
+    bPane.style.display = 'none'; pPane.style.display = '';
+    bTab.classList.remove('active'); pTab.classList.add('active');
+    if (!pPane.dataset.rendered) { pPane.dataset.rendered = '1'; renderParcoursFn(id, pPane); }
+  }
+}
+
+function renderParcoursFn(id, container) {
+  var cfg = PARCOURS_CFG[id];
+  if (!cfg) { container.innerHTML = '<div style="padding:20px;color:var(--text-secondary);font-size:.8rem">Pas de données parcours pour cette verticale.</div>'; return; }
+  var activeStep = _prcActiveStep[id] || 1;
+  var color = cfg.color;
+
+  // ── Helpers
+  function tag(label, type) {
+    var cls = type === 'req' ? 'prc-tag-req' : type === 'auto' ? 'prc-tag-auto' : 'prc-tag-opt';
+    return '<span class="prc-tag '+cls+'">'+(type==='req'?'Requis':type==='auto'?'Auto':'Optionnel')+' · '+label+'</span>';
+  }
+
+  // ── Camp header
+  var campEl = CAMPS[id] || {};
+  var headerHtml = '<div style="background:linear-gradient(135deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">'
+    +'<div style="font-size:1.6rem;width:44px;height:44px;background:rgba(255,255,255,.05);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+(campEl.icon||'🎯')+'</div>'
+    +'<div><div style="font-size:.95rem;font-weight:800">'+cfg.label+'</div>'
+    +'<div style="font-size:.68rem;color:var(--text-secondary);margin-top:2px">'+cfg.priceRange+' · '+cfg.steps.length+' étapes tunnel</div></div>'
+    +'<div style="margin-left:auto;font-size:.72rem;font-weight:900;color:'+color+'">'+cfg.steps[cfg.steps.length-1].funnel+'% conv.</div></div>';
+
+  // ── Option B — Flow opérateur
+  var flowHtml = '<div class="prc-section-tag prc-tag-b">B · Vue opérateur</div>'
+    +'<div style="font-size:.62rem;color:var(--text-secondary);margin-bottom:10px">Cliquez une étape pour afficher le détail et la prévisualisation client</div>'
+    +'<div class="prc-flow" style="--prc-color:'+color+'">';
+  cfg.steps.forEach(function(s) {
+    var isActive = s.n === activeStep;
+    var tagsHtml = s.req.map(function(r){ return tag(r,'req'); }).join('') + s.opt.map(function(o){ return tag(o,'opt'); }).join('');
+    flowHtml += '<div class="prc-step"><div class="prc-card'+(isActive?' prc-active':'')+'" onclick="prcSetStep('+id+','+s.n+')" style="--prc-color:'+color+'">'
+      +'<div class="prc-num" style="background:'+color+'">'+s.n+'</div>'
+      +'<div class="prc-icon">'+s.icon+'</div>'
+      +'<div class="prc-name">'+s.name+'</div>'
+      +'<div class="prc-desc">'+s.desc+'</div>'
+      +'<div class="prc-time">⏱ '+s.time+'</div>'
+      +'<div style="margin-top:6px">'+tagsHtml+'</div>'
+      +'</div></div>';
+  });
+  flowHtml += '</div>';
+
+  // ── Metrics
+  var convFinal = cfg.steps[cfg.steps.length-1].funnel;
+  var metricsHtml = '<div class="prc-metrics">'
+    +'<div class="prc-metric"><div class="prc-metric-val" style="color:'+color+'">'+cfg.steps.length+'</div><div class="prc-metric-lbl">Étapes tunnel</div></div>'
+    +'<div class="prc-metric"><div class="prc-metric-val" style="color:'+color+'">'+convFinal+'%</div><div class="prc-metric-lbl">Conv. estimée</div></div>'
+    +'<div class="prc-metric"><div class="prc-metric-val" style="color:'+color+'">XPF</div><div class="prc-metric-lbl">OSB Krypton</div></div>'
+    +'<div class="prc-metric"><div class="prc-metric-val" style="color:'+color+'">'+(cfg.steps.filter(function(s){return s.req.length>0;}).length)+'</div><div class="prc-metric-lbl">Champs requis</div></div>'
+    +'</div>';
+
+  // ── Funnel + Config 2 cols
+  var funnelRows = cfg.steps.map(function(s){
+    return '<div class="prc-funnel-row"><div class="prc-funnel-lbl">'+s.icon+' '+s.name+'</div>'
+      +'<div class="prc-funnel-wrap"><div class="prc-funnel-bar" style="width:'+s.funnel+'%;background:linear-gradient(90deg,'+color+','+color+'88)">'+s.funnel+'%</div></div>'
+      +'<div class="prc-funnel-pct">'+s.funnel+'%</div></div>';
+  }).join('');
+  var cfgRows = cfg.cfg.map(function(c){
+    return '<div class="prc-cfg-row"><div class="prc-cfg-key">'+c.k+'</div><div class="prc-cfg-val">'+c.v+'</div>'
+      +'<div class="prc-cfg-dot '+(c.ok?'prc-cfg-ok':'prc-cfg-warn')+'">'+(c.ok?'✓':'!')+'</div></div>';
+  }).join('');
+  var twoColHtml = '<div class="prc-2col">'
+    +'<div class="prc-panel"><div class="prc-panel-title">📉 Taux de rétention par étape</div>'+funnelRows+'</div>'
+    +'<div class="prc-panel"><div class="prc-panel-title">⚙️ Configuration requise</div>'+cfgRows+'</div>'
+    +'</div>';
+
+  // ── Tips
+  var tipsHtml = cfg.tips.map(function(t){
+    return '<div class="prc-tip"><span style="flex-shrink:0">'+t.i+'</span><span>'+t.t+'</span></div>';
+  }).join('');
+
+  // ── Option A — Preview modal client
+  var stepData = cfg.steps.find(function(s){ return s.n === activeStep; }) || cfg.steps[0];
+  var barHtml = '';
+  cfg.steps.forEach(function(s, i) {
+    var dotCls = s.n < activeStep ? 'done' : s.n === activeStep ? 'cur' : 'idle';
+    var connCls = s.n < activeStep ? 'done' : '';
+    barHtml += '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">'
+      +'<div class="prc-bdot '+dotCls+'" style="'+(dotCls==='done'?'background:'+color+';border-color:'+color:dotCls==='cur'?'border-color:'+color+';color:'+color:'')+'">'+(s.n < activeStep ? '✓' : s.n)+'</div>'
+      +'<div style="font-size:.52rem;color:'+(s.n===activeStep?'var(--text-primary)':'var(--text-secondary)')+';text-align:center;max-width:50px">'+s.label+'</div>'
+      +'</div>';
+    if (i < cfg.steps.length - 1) barHtml += '<div class="prc-bconn'+(s.n < activeStep ? ' done' : '')+'" style="'+(s.n < activeStep?'background:'+color:'')+';margin-bottom:18px"></div>';
+  });
+
+  var illusHtml = cfg.steps.map(function(s){
+    var isAct = s.n === activeStep;
+    return '<div class="prc-illus-step'+(isAct?' prc-illus-active':'')+'" onclick="prcSetStep('+id+','+s.n+')" style="'+(isAct?'--prc-color:'+color:'')+'">'
+      +'<div class="prc-illus-icon">'+s.icon+'</div>'
+      +'<div class="prc-illus-name">'+s.name+'</div>'
+      +'<div class="prc-illus-detail">'+s.req.slice(0,2).join(' · ')+'</div>'
+      +'</div>';
+  }).join('');
+
+  var prevBtn = activeStep > 1
+    ? '<button onclick="prcSetStep('+id+','+(activeStep-1)+')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text-secondary);font-size:.68rem;cursor:pointer">← Retour</button>'
+    : '<span></span>';
+  var nextBtn = activeStep < cfg.steps.length
+    ? '<button onclick="prcSetStep('+id+','+(activeStep+1)+')" style="padding:6px 12px;border-radius:6px;background:'+color+';border:none;color:'+(color==='#f6d365'?'#111':'#fff')+';font-size:.68rem;font-weight:800;cursor:pointer">'+(activeStep===cfg.steps.length-1?'💳 Payer':'Suivant →')+'</button>'
+    : '<button style="padding:6px 12px;border-radius:6px;background:linear-gradient(135deg,#43e97b,#38f9d7);border:none;color:#0f0f1a;font-size:.68rem;font-weight:800">✅ Commande validée</button>';
+
+  var detailHtml = '<div style="flex:1;min-width:180px">'
+    +'<div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-bottom:8px">'+stepData.icon+' '+stepData.name+' — champs</div>'
+    +stepData.req.map(function(r){
+      return '<div style="display:flex;align-items:center;gap:7px;padding:7px 9px;background:var(--bg-card);border:1px solid var(--border);border-radius:7px;margin-bottom:5px">'
+        +'<span style="color:'+color+';font-size:.75rem">◆</span>'
+        +'<span style="font-size:.68rem;font-weight:700">'+r+'</span>'
+        +'<span class="prc-tag prc-tag-req" style="margin-left:auto">Requis</span></div>';
+    }).join('')
+    +(stepData.opt||[]).map(function(o){
+      return '<div style="display:flex;align-items:center;gap:7px;padding:7px 9px;background:var(--bg-card);border:1px solid var(--border);border-radius:7px;margin-bottom:5px">'
+        +'<span style="color:var(--text-secondary);font-size:.75rem">◇</span>'
+        +'<span style="font-size:.68rem;color:var(--text-secondary)">'+o+'</span>'
+        +'<span class="prc-tag prc-tag-opt" style="margin-left:auto">Optionnel</span></div>';
+    }).join('')
+    +'<div style="margin-top:8px;padding:7px 9px;background:rgba(255,255,255,.03);border-radius:7px;font-size:.6rem;color:var(--text-secondary)">⏱ Durée estimée : <strong style="color:var(--text-primary)">'+stepData.time+'</strong></div>'
+    +'</div>';
+
+  var clientPreviewHtml = '<div class="prc-section-tag prc-tag-a" style="margin-top:20px">A · Vue client</div>'
+    +'<div style="font-size:.62rem;color:var(--text-secondary);margin-bottom:10px">Aperçu du modal Andromeda tel que le voit le client · Cliquez une étape pour simuler</div>'
+    +'<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">'
+    +'<div class="prc-modal-wrap" style="--prc-color:'+color+';min-width:220px">'
+    +'<div style="font-size:.75rem;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:7px">'+(campEl.icon||'🎯')+' '+cfg.label+' <span style="margin-left:auto;font-size:.55rem;color:var(--text-secondary);background:rgba(255,255,255,.05);padding:2px 6px;border-radius:8px">modal client</span></div>'
+    +'<div class="prc-bar">'+barHtml+'</div>'
+    +'<div style="font-size:.65rem;color:var(--text-secondary);margin-bottom:8px;padding:7px 9px;background:rgba(255,255,255,.04);border-radius:7px">'
+    +'<strong style="color:'+color+'">'+stepData.icon+' Étape '+activeStep+' — '+stepData.name+'</strong><br>'
+    +'<span style="font-size:.6rem">'+stepData.desc+'</span></div>'
+    +'<div class="prc-illus">'+illusHtml+'</div>'
+    +'<div style="margin-top:10px;display:flex;justify-content:space-between">'+prevBtn+nextBtn+'</div>'
+    +'</div>'
+    +detailHtml+'</div>';
+
+  container.innerHTML = headerHtml + flowHtml + metricsHtml + twoColHtml + tipsHtml + clientPreviewHtml;
+}
+
+function prcSetStep(id, step) {
+  _prcActiveStep[id] = step;
+  var pane = document.getElementById('ws-parcours-pane-'+id);
+  if (pane) { pane.dataset.rendered = '1'; renderParcoursFn(id, pane); }
+}
+
 function render(id) {
   const c = CAMPS[id];
   const ws = document.getElementById('workspace');
   ws.innerHTML = `
+  <div class="ws-tabs-bar">
+    <button class="ws-tab active" id="wst-builder-${id}" onclick="switchWorkspaceTab('builder',${id})">🔧 Builder</button>
+    <button class="ws-tab" id="wst-parcours-${id}" onclick="switchWorkspaceTab('parcours',${id})">🗺️ Parcours client</button>
+  </div>
+  <div id="ws-builder-pane-${id}">
     <div class="camp-bar">
       <div>
         <div class="camp-title">${c.icon} ${c.name}</div>
@@ -1826,6 +2181,8 @@ function render(id) {
       </div>
       <div class="lp-body">${renderLP(c)}</div>
     </div>
+  </div>
+  <div id="ws-parcours-pane-${id}" style="display:none"></div>
   `;
 
   // Drag & drop
@@ -6297,6 +6654,7 @@ function showPlanning() {
 }
 
 let _planningOrders = []; // cache pour updateOrderStatusPlanning
+let _planningFilter = 'all';
 
 const _STATUS_FR = { pending:'en_attente', paid:'payee', processing:'en_cours', ready:'pret', delivered:'livree', cancelled:'annulee' };
 const _STATUS_EN = { en_attente:'pending', payee:'paid', en_cours:'processing', pret:'ready', livree:'delivered', annulee:'cancelled' };
@@ -6378,7 +6736,7 @@ function renderPlanning(orders) {
   const today = new Date(); today.setHours(0,0,0,0);
   const todayStr = today.toISOString().slice(0,10);
 
-  // Stats globales
+  // Stats globales (toujours sur toutes les commandes)
   const total = orders.length;
   const totalAmt = orders.reduce((s,o) => s+(o.amount||0), 0);
   const todayOrders = orders.filter(o => {
@@ -6387,106 +6745,138 @@ function renderPlanning(orders) {
   });
   const pending = orders.filter(o => ['pending','paid','processing','ready'].includes(o.status));
 
-  // Grouper par date (pickupDate ou date de commande)
+  // Counts par statut pour badges filtres
+  const cbs = {};
+  orders.forEach(o => { cbs[o.status] = (cbs[o.status]||0)+1; });
+
+  // Filtre actif
+  const af = _planningFilter || 'all';
+  const filtered = af === 'all' ? orders : orders.filter(o => o.status === af);
+
+  // Grouper les commandes filtrées par date
   const byDate = {};
-  orders.forEach(o => {
+  filtered.forEach(o => {
     const key = o.delivery?.pickupDate || o.createdAt?.slice(0,10) || 'Sans date';
     if (!byDate[key]) byDate[key] = [];
     byDate[key].push(o);
   });
 
-  // Trier les dates
   const sortedDates = Object.keys(byDate).sort((a,b) => {
     if (a === 'Sans date') return 1;
     if (b === 'Sans date') return -1;
     return new Date(a) - new Date(b);
   });
 
-  const statusIcons = {pending:'⏳',paid:'💳',processing:'🎨',ready:'✅',delivered:'📦',cancelled:'❌'};
-  const statusLabels = {pending:'En attente',paid:'Payée',processing:'En production',ready:'Prête / À remettre',delivered:'Livrée / Remise',cancelled:'Annulée'};
+  const statusColors = {pending:'#f0a030',paid:'#43e97b',processing:'#4facfe',ready:'#a78bfa',delivered:'#6c808d',cancelled:'#ff6b6b'};
+  const islandLabels = {'tahiti':'Tahiti','moorea':'Moorea','huahine':'Huahine','bora-bora':'Bora Bora','raiatea':'Raiatea','rangiroa':'Rangiroa','tubuai':'Tubuai','hiva-oa':'Hiva Oa','nuku-hiva':'Nuku Hiva'};
 
   const daysHtml = sortedDates.map(dateKey => {
     const dayOrders = byDate[dateKey];
-    let dateLabel = dateKey;
-    let dateClass = '';
+    let dateLabel = dateKey, dateClass = '', headClass = '';
     if (dateKey !== 'Sans date') {
       const d = new Date(dateKey + 'T00:00:00');
-      if (dateKey === todayStr) { dateLabel = "Aujourd'hui · " + d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}); dateClass = 'today'; }
-      else if (d < today) { dateLabel = '⚠️ ' + d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); dateClass = 'overdue'; }
-      else dateLabel = d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+      if (dateKey === todayStr) {
+        dateLabel = "Aujourd'hui · " + d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+        dateClass = 'today'; headClass = 'today-head';
+      } else if (d < today) {
+        dateLabel = '⚠️ ' + d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+        dateClass = 'overdue'; headClass = 'overdue-head';
+      } else {
+        dateLabel = d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+      }
     }
     const dayTotal = dayOrders.reduce((s,o) => s+(o.amount||0), 0);
     const doneCount = dayOrders.filter(o => o.status==='delivered').length;
 
+    const cardsHtml = dayOrders.map(o => {
+      const isVdec = (o.campaignName||'').toLowerCase().includes('véhicule') || (o.product||'').includes('🚗');
+      const isPickup = o.delivery?.type === 'pickup';
+      const stepMap = {pending:0,paid:1,processing:2,ready:3,delivered:4};
+      const cur = o.status === 'cancelled' ? -1 : (stepMap[o.status] ?? 0);
+      const steps = [
+        {icon:'📋',label:'Reçue'},{icon:'💳',label:'Payée'},
+        {icon:isVdec?'🔪':'🎨',label:isVdec?'Découpe':'Prod.'},
+        {icon:'✅',label:'Prêt'},{icon:isPickup?'🏪':'🚚',label:isPickup?'Retrait':'Livraison'}
+      ];
+      const deliveryInfo = isPickup
+        ? `🏪 Retrait${o.delivery.pickupDate?' · <b>'+new Date(o.delivery.pickupDate+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})+'</b>':''}${o.delivery.slot?' · '+(o.delivery.slot==='08-12'?'08h–12h':'13h–17h'):''}`
+        : `🚚 ${islandLabels[o.delivery?.island]||o.delivery?.island||'Tahiti'}`;
+      const progressBar = cur === -1
+        ? `<div style="font-size:0.72rem;color:#ff6b6b;margin-bottom:8px">❌ Commande annulée</div>`
+        : `<div class="po-progress">${steps.map((step,i) => {
+            const done = i<cur, active = i===cur;
+            const line = i>0?`<div class="po-step-line${done?' done':''}"></div>`:'';
+            return line+`<div class="po-step"><div class="po-step-icon${done?' done':active?' current':''}">${step.icon}</div><div class="po-step-label${done?' done':active?' current':''}">${step.label}</div></div>`;
+          }).join('')}</div>`;
+      const srcBadge = o._src==='mysql_lp'
+        ? `<span style="font-size:.55rem;padding:1px 5px;border-radius:8px;background:rgba(67,233,123,.15);color:#43e97b;border:1px solid rgba(67,233,123,.3)">MySQL LP</span>`
+        : o._src==='mysql_vdec'
+        ? `<span style="font-size:.55rem;padding:1px 5px;border-radius:8px;background:rgba(255,101,132,.15);color:#ff6584;border:1px solid rgba(255,101,132,.3)">Déco Véh.</span>`
+        : `<span style="font-size:.55rem;padding:1px 5px;border-radius:8px;background:rgba(79,172,254,.12);color:var(--accent);border:1px solid rgba(79,172,254,.25)">KV</span>`;
+      const noteHtml = o.note ? `<span class="po-card-note" title="${o.note.replace(/"/g,'&quot;')}">📝 ${o.note}</span>` : '';
+      const strip = statusColors[o.status] || '#4a4a6a';
+
+      return `<div class="po-card">
+        <div class="po-card-strip" style="background:${strip}"></div>
+        <div class="po-card-top">
+          <div class="po-card-info">
+            <div class="po-card-ref">${o.orderId} ${srcBadge}</div>
+            <div class="po-card-client">${o.client?.name||o.customerName||'—'}</div>
+            <div class="po-card-product">${o.product||o.campaignName||'—'}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            <div class="po-card-amount">${(o.amount||0).toLocaleString('fr-FR')} <span style="font-size:0.62rem">XPF</span></div>
+            <button onclick="deleteOrderPlanning('${o.orderId}')" title="Supprimer" style="background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.3);color:#ff6b6b;border-radius:6px;padding:2px 7px;font-size:0.62rem;cursor:pointer;transition:all .18s" onmouseover="this.style.background='rgba(255,107,107,.25)'" onmouseout="this.style.background='rgba(255,107,107,.12)'">🗑 Suppr.</button>
+          </div>
+        </div>
+        <div class="po-card-mid">
+          <span class="po-card-delivery">${deliveryInfo}</span>
+          ${noteHtml}
+        </div>
+        <div class="po-card-bottom">
+          ${progressBar}
+          <select class="po-card-select" onchange="updateOrderStatusPlanning('${o.orderId}',this.value)">
+            <option value="">— Changer le statut</option>
+            <option value="pending"    ${o.status==='pending'   ?'selected':''}>⏳ En attente paiement</option>
+            <option value="paid"       ${o.status==='paid'      ?'selected':''}>💳 Payée — lancer production</option>
+            <option value="processing" ${o.status==='processing'?'selected':''}>🎨 En production</option>
+            <option value="ready"      ${o.status==='ready'     ?'selected':''}>✅ Prête / À remettre</option>
+            <option value="delivered"  ${o.status==='delivered' ?'selected':''}>📦 Livrée / Remise</option>
+            <option value="cancelled"  ${o.status==='cancelled' ?'selected':''}>❌ Annuler</option>
+            <option value="archived">🗃️ Archiver</option>
+          </select>
+        </div>
+      </div>`;
+    }).join('');
+
     return `<div class="planning-day">
-      <div class="planning-day-head" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+      <div class="planning-day-head ${headClass}" onclick="togglePlanningDay(this)">
         <div class="planning-day-date ${dateClass}">${dateLabel}</div>
         <div class="planning-day-meta">
           <span>${dayOrders.length} commande${dayOrders.length>1?'s':''}</span>
           <span style="color:var(--accent-3)">${dayTotal.toLocaleString('fr-FR')} XPF</span>
-          <span>${doneCount}/${dayOrders.length} livrées</span>
-          <span style="color:var(--text-secondary);font-size:0.7rem">▼</span>
+          <span style="color:#43e97b">${doneCount}/${dayOrders.length} ✓</span>
+          <span class="pdh-chevron" style="opacity:0.5;transition:transform .2s">▼</span>
         </div>
       </div>
       <div class="planning-day-body">
-        ${dayOrders.map(o => {
-          const isVdec = (o.campaignName||'').toLowerCase().includes('véhicule') || (o.product||'').includes('🚗');
-          const isPickup = o.delivery?.type === 'pickup';
-          const stepMap = {pending:0, paid:1, processing:2, ready:3, delivered:4};
-          const cur = o.status === 'cancelled' ? -1 : (stepMap[o.status] ?? 0);
-          const steps = [
-            {icon:'📋', label:'Reçue'},
-            {icon:'💳', label:'Payée'},
-            {icon: isVdec ? '🔪' : '🎨', label: isVdec ? 'Découpe' : 'Production'},
-            {icon:'✅', label:'Prêt'},
-            {icon: isPickup ? '🏪' : '🚚', label: isPickup ? 'Retrait' : 'Livraison'}
-          ];
-          const islandLabels = {'tahiti':'Tahiti','moorea':'Moorea','huahine':'Huahine','bora-bora':'Bora Bora','raiatea':'Raiatea','rangiroa':'Rangiroa','tubuai':'Tubuai','hiva-oa':'Hiva Oa','nuku-hiva':'Nuku Hiva'};
-          const deliveryInfo = isPickup
-            ? `🏪 Retrait${o.delivery.pickupDate ? ' · <b>' + new Date(o.delivery.pickupDate+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}) + '</b>' : ''}${o.delivery.slot ? ' · '+(o.delivery.slot==='08-12'?'08h–12h':'13h–17h') : ''}`
-            : `🚚 ${islandLabels[o.delivery?.island]||o.delivery?.island||'Tahiti'}`;
-          const progressBar = cur === -1
-            ? `<div style="font-size:0.72rem;color:#ff6b6b;margin-top:9px;padding-top:9px;border-top:1px solid rgba(42,42,74,0.4)">❌ Commande annulée</div>`
-            : `<div class="po-progress">${steps.map((step,i) => {
-                const done = i < cur, active = i === cur;
-                const line = i > 0 ? `<div class="po-step-line${done?' done':''}"></div>` : '';
-                return line + `<div class="po-step">
-                  <div class="po-step-icon${done?' done':active?' current':''}">${step.icon}</div>
-                  <div class="po-step-label${done?' done':active?' current':''}">${step.label}</div>
-                </div>`;
-              }).join('')}</div>`;
-          const noteHtml = o.note
-            ? `<div style="font-size:0.65rem;color:var(--text-secondary);margin-top:2px;opacity:.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${o.note.replace(/"/g,'&quot;')}">📝 ${o.note}</div>`
-            : '';
-          const srcBadge = o._src==='mysql_lp' ? `<span style="font-size:.55rem;padding:1px 5px;border-radius:8px;background:rgba(67,233,123,.15);color:#43e97b;border:1px solid rgba(67,233,123,.3);flex-shrink:0">MySQL LP</span>`
-            : o._src==='mysql_vdec' ? `<span style="font-size:.55rem;padding:1px 5px;border-radius:8px;background:rgba(255,101,132,.15);color:#ff6584;border:1px solid rgba(255,101,132,.3);flex-shrink:0">Déco Véhicule</span>`
-            : `<span style="font-size:.55rem;padding:1px 5px;border-radius:8px;background:rgba(79,172,254,.12);color:var(--accent);border:1px solid rgba(79,172,254,.25);flex-shrink:0">KV</span>`;
-          return `<div class="planning-order-row" style="flex-direction:column;align-items:stretch;gap:6px">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-              <span class="po-ref">${o.orderId}</span>
-              ${srcBadge}
-              <span class="po-client">${o.client?.name||o.customerName||'—'}</span>
-              <span class="po-product">${o.product||o.campaignName||'—'}</span>
-              <span class="po-amount">${(o.amount||0).toLocaleString('fr-FR')} XPF</span>
-              <span style="font-size:0.68rem;color:var(--text-secondary);flex-shrink:0">${deliveryInfo}</span>
-              <select class="status-select" style="font-size:0.68rem;margin-left:auto" onchange="updateOrderStatusPlanning('${o.orderId}',this.value)">
-                <option value="">— Avancement</option>
-                <option value="pending"   ${o.status==='pending'   ?'selected':''}>⏳ En attente paiement</option>
-                <option value="paid"      ${o.status==='paid'      ?'selected':''}>💳 Payée — lancer production</option>
-                <option value="processing"${o.status==='processing'?'selected':''}>🎨 En production</option>
-                <option value="ready"     ${o.status==='ready'     ?'selected':''}>✅ Prête / À remettre</option>
-                <option value="delivered" ${o.status==='delivered' ?'selected':''}>📦 Livrée / Remise</option>
-                <option value="cancelled" ${o.status==='cancelled' ?'selected':''}>❌ Annuler</option>
-                <option value="archived">🗃️ Archiver</option>
-              </select>
-            </div>
-            ${noteHtml}
-            ${progressBar}
-          </div>`;
-        }).join('')}
+        <div class="po-cards-grid">${cardsHtml}</div>
       </div>
     </div>`;
   }).join('');
+
+  // Filtres pills
+  const filters = [
+    {key:'all',label:'Tout',count:total},
+    {key:'pending',label:'⏳ Attente',count:cbs.pending||0},
+    {key:'paid',label:'💳 Payées',count:cbs.paid||0},
+    {key:'processing',label:'🎨 Production',count:cbs.processing||0},
+    {key:'ready',label:'✅ Prêtes',count:cbs.ready||0},
+    {key:'delivered',label:'📦 Livrées',count:cbs.delivered||0},
+  ];
+  const pillsHtml = filters.map(p =>
+    `<span class="po-filter-pill${af===p.key?' active':''}" onclick="filterPlanning('${p.key}')">${p.label}${p.count?' <b style="opacity:.8">(${p.count})</b>':''}</span>`
+  ).join('');
 
   ws.innerHTML = `
     <div class="planning-view">
@@ -6507,10 +6897,24 @@ function renderPlanning(orders) {
         <div class="pstat"><div class="pstat-val" style="color:#f6d365">${pending.length}</div><div class="pstat-label">À traiter</div></div>
         <div class="pstat"><div class="pstat-val" style="color:#4facfe">${todayOrders.length}</div><div class="pstat-label">Aujourd'hui</div></div>
       </div>
-      ${sortedDates.length === 0
-        ? `<div style="text-align:center;color:var(--text-secondary);padding:60px;font-size:0.85rem">Aucune commande active.</div>`
+      <div class="po-filter-bar">${pillsHtml}</div>
+      ${filtered.length === 0
+        ? `<div style="text-align:center;color:var(--text-secondary);padding:60px;font-size:0.85rem">Aucune commande${af!=='all'?' pour ce filtre':''}.</div>`
         : daysHtml}
     </div>`;
+}
+
+function filterPlanning(status) {
+  _planningFilter = status;
+  renderPlanning(_planningOrders);
+}
+
+function togglePlanningDay(head) {
+  const body = head.nextElementSibling;
+  const chevron = head.querySelector('.pdh-chevron');
+  const hidden = body.style.display === 'none';
+  body.style.display = hidden ? 'block' : 'none';
+  if (chevron) chevron.style.transform = hidden ? '' : 'rotate(-90deg)';
 }
 
 async function updateOrderStatusPlanning(orderId, status) {
@@ -6538,6 +6942,25 @@ async function updateOrderStatusPlanning(orderId, status) {
       }).catch(e => console.warn('[planning] MySQL sync err:', e));
     }
     showToast(`✅ ${orderId} → ${status}`);
+    await loadPlanning();
+  } catch(e) { showToast('❌ ' + e.message, true); }
+}
+
+async function deleteOrderPlanning(orderId) {
+  if (!confirm(`Supprimer définitivement la commande ${orderId} ?\n\nCette action est irréversible.`)) return;
+  const order = _planningOrders.find(o => o.orderId === orderId);
+  try {
+    // Suppression Worker KV
+    await fetch(`${WORKER_BASE}/admin/db/order/${encodeURIComponent(orderId)}`, {
+      method:'DELETE', headers:{'X-Admin-Secret':adminSecret}
+    });
+    // Suppression MySQL si origine MySQL
+    if (order?._mysqlId && order?._mysqlTable) {
+      fetch(`${HCS_API_BASE}/${order._mysqlTable}/${order._mysqlId}`, {
+        method:'DELETE', headers:{'x-api-key':HCS_API_KEY}
+      }).catch(e => console.warn('[planning] MySQL delete err:', e));
+    }
+    showToast(`🗑 ${orderId} supprimée`);
     await loadPlanning();
   } catch(e) { showToast('❌ ' + e.message, true); }
 }
