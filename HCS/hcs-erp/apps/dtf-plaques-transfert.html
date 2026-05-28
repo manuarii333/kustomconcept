@@ -2444,15 +2444,74 @@ window.pkPrev=function(){PK.prev();};
 window.pkSelFmt=function(f){PK.selFmt(f);};
 window.pkQty=function(d){PK.updQty(d);};
 window.pkSetTool=function(t){PK.setTool(t);};
-window.pkDelSel=function(){PK.delSel();};
-window.pkRotSel=function(){PK.rotSel();};
-window.pkClearAll=function(){PK.clearAll();};
+window.pkDelSel=function(){PK.delSel();pkUpdSelPanel();};
+window.pkRotSel=function(){PK.rotSel();pkUpdSelPanel();};
+window.pkClearAll=function(){PK.clearAll();pkUpdSelPanel();};
 window.pkZoom=function(d){PK.doZoom(d);};
 window.pkOnFile=function(e){PK.onFile(e);};
 window.pkOnDrop=function(e){PK.onDrop(e);};
-window.pkCvDown=function(e){PK.cvDown(e);};
+window.pkCvDown=function(e){PK.cvDown(e);pkUpdSelPanel();};
 window.pkCvMove=function(e){PK.cvMove(e);};
 window.pkCvUp=function(){PK.cvUp();};
+
+/* ─── DIMENSIONS CM — Panneau sélection Pack Collector ─── */
+var pkLocked=false;
+
+window.pkUpdSelPanel=function(){
+  var panel=document.getElementById('pk-dim-panel');
+  if(!panel) return;
+  if(PK.selItem<0||!PK.placed[PK.selItem]){
+    panel.style.display='none'; return;
+  }
+  panel.style.display='flex';
+  var lg=PK.placed[PK.selItem], S=PK.S;
+  var hCm=Math.round(lg.h/S*10)/10;
+  var lCm=Math.round(lg.w/S*10)/10;
+  var iH=document.getElementById('pk-dim-h');
+  var iL=document.getElementById('pk-dim-l');
+  if(iH) iH.value=hCm;
+  if(iL) iL.value=lCm;
+  var info=document.getElementById('pk-dim-info');
+  if(info) info.textContent=lCm+' × '+hCm+' cm = '+Math.round(lCm*hCm*10)/10+' cm²';
+};
+
+window.pkToggleLock=function(){
+  pkLocked=!pkLocked;
+  var btn=document.getElementById('pk-dim-lock');
+  if(btn){
+    btn.textContent=pkLocked?'🔒':'🔓';
+    btn.style.borderColor=pkLocked?'var(--gold)':'rgba(255,255,255,.15)';
+    btn.style.color=pkLocked?'var(--gold)':'#888';
+  }
+};
+
+window.pkResizeSel=function(changed){
+  if(PK.selItem<0||!PK.placed[PK.selItem]) return;
+  var lg=PK.placed[PK.selItem], S=PK.S;
+  var iH=document.getElementById('pk-dim-h');
+  var iL=document.getElementById('pk-dim-l');
+  if(!iH||!iL) return;
+  var newHcm=Math.max(0.5,Math.min(PK.CH/S, parseFloat(iH.value)||lg.h/S));
+  var newLcm=Math.max(0.5,Math.min(PK.CW/S, parseFloat(iL.value)||lg.w/S));
+  if(pkLocked&&lg.h>0&&lg.w>0){
+    var ratio=lg.w/lg.h;
+    if(changed==='H'){
+      newLcm=Math.max(0.5,Math.min(PK.CW/S,Math.round(newHcm*ratio*10)/10));
+      iL.value=newLcm;
+    } else {
+      newHcm=Math.max(0.5,Math.min(PK.CH/S,Math.round(newLcm/ratio*10)/10));
+      iH.value=newHcm;
+    }
+  }
+  var newWpx=newLcm*S, newHpx=newHcm*S;
+  var hw=newWpx/2, hh=newHpx/2;
+  lg.w=newWpx; lg.h=newHpx;
+  lg.x=Math.max(hw,Math.min(PK.CW-hw,lg.x));
+  lg.y=Math.max(hh,Math.min(PK.CH-hh,lg.y));
+  var info=document.getElementById('pk-dim-info');
+  if(info) info.textContent=newLcm+' × '+newHcm+' cm = '+Math.round(newLcm*newHcm*10)/10+' cm²';
+  PK.render(); PK.updateStats();
+};
 window.pkInitPayment=function(){PK.initPayment();};
 })();
 </script>
@@ -2589,6 +2648,28 @@ window.pkInitPayment=function(){PK.initPayment();};
                 <button class="pk-tb" onclick="pkZoom(+1)" style="width:24px;padding:5px 0;text-align:center">+</button>
               </div>
             </div>
+            <!-- Panneau dimensions cm — visible quand un visuel est sélectionné -->
+            <div id="pk-dim-panel" style="display:none;background:linear-gradient(135deg,#1a1a00,#1e1c00);border:1px solid rgba(212,168,67,.35);border-radius:5px;padding:7px 10px;margin-bottom:7px;gap:8px;align-items:center;flex-wrap:wrap">
+              <span style="font-size:9px;color:var(--gold);font-family:'JetBrains Mono',monospace;letter-spacing:1.5px;white-space:nowrap;flex-shrink:0">📐 DIMENSIONS</span>
+              <div style="display:flex;align-items:center;gap:4px">
+                <span style="font-size:9px;color:var(--grey-lt);font-family:'JetBrains Mono',monospace">H</span>
+                <input type="number" id="pk-dim-h" min="0.5" max="91" step="0.5"
+                  style="width:56px;background:#2a2a2a;border:1px solid rgba(26,158,143,.6);color:#f5f0e8;padding:4px 7px;font-size:13px;font-weight:600;border-radius:3px;outline:none"
+                  oninput="pkResizeSel('H')">
+                <span style="font-size:9px;color:var(--grey-lt);font-family:'JetBrains Mono',monospace">cm</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px">
+                <span style="font-size:9px;color:var(--grey-lt);font-family:'JetBrains Mono',monospace">L</span>
+                <input type="number" id="pk-dim-l" min="0.5" max="56" step="0.5"
+                  style="width:56px;background:#2a2a2a;border:1px solid rgba(26,158,143,.6);color:#f5f0e8;padding:4px 7px;font-size:13px;font-weight:600;border-radius:3px;outline:none"
+                  oninput="pkResizeSel('L')">
+                <span style="font-size:9px;color:var(--grey-lt);font-family:'JetBrains Mono',monospace">cm</span>
+              </div>
+              <button id="pk-dim-lock" onclick="pkToggleLock()" title="Verrouiller les proportions (ratio)"
+                style="background:none;border:1px solid rgba(255,255,255,.15);color:#888;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:11px;line-height:1;flex-shrink:0;transition:all .15s">🔓</button>
+              <span id="pk-dim-info" style="font-size:9px;color:var(--gold);font-family:'JetBrains Mono',monospace;margin-left:auto;white-space:nowrap"></span>
+            </div>
+
             <div class="pk-canvas-wrap" id="pk-cvwrap">
               <canvas id="pk-cv" style="cursor:crosshair;display:block"
                 onmousedown="pkCvDown(event)"
