@@ -201,7 +201,8 @@ const APPS = [
       { id: 'atelier-production',      label: 'Atelier Production',    icon: '⚙️', section: 'Production'       },
       { id: 'dtf-atelier-bn20-yannick',label: 'DTF Atelier BN20',     icon: '🖨',  section: 'Production'       },
       { id: 'dtf-atelier-usa',         label: 'DTF Atelier USA',      icon: '🖨',  section: 'Production'       },
-      { id: 'dtf-plaques-transfert',   label: 'DTF Plaques Transfert', icon: '🖨', section: 'Production'       },
+      { id: 'dtf-plaques-transfert',   label: 'DTF Plaques Transfert', icon: '🖨', section: 'Production', external: true, url: 'apps/dtf-plaques-transfert.html' },
+      { id: 'dtf-laize-1yard-22po',    label: 'DTF Laize 1 Yard 22po', icon: '📐', section: 'Production', external: true, url: 'apps/dtf-laize-1yard-22po.html'    },
       { id: 'signmaster-guide',        label: 'SignMaster Guide',      icon: '✂️', section: 'Production'       },
       { id: 'admin-photos-produits',   label: 'Photos Produits',       icon: '📸', section: 'Visuel & Contenu' },
       { id: 'hcs-designer',            label: '⬡ HCS Designer',        icon: '🎨', section: 'Visuel & Contenu' },
@@ -653,7 +654,7 @@ function renderView() {
         const viewDef   = outilsApp ? outilsApp.views.find(v => v.id === view) : null;
         if (viewDef && viewDef.external && viewDef.url) {
           /* Apps intégrées dans l'ERP via iframe — HCS Builder, Hub, Pass, Cockpit */
-          const IFRAME_APPS = ['ext-hcs-builder', 'ext-hub', 'ext-pass-hcs', 'ext-cockpit', 'ext-andromeda'];
+          const IFRAME_APPS = ['ext-hcs-builder', 'ext-hub', 'ext-pass-hcs', 'ext-cockpit', 'ext-andromeda', 'dtf-plaques-transfert', 'dtf-laize-1yard-22po'];
           if (IFRAME_APPS.includes(view)) {
             renderIframe(viewDef.url, container);
           } else {
