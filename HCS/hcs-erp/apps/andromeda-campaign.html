@@ -1536,6 +1536,26 @@ function render(id) {
               <div style="font-size:.62rem;color:rgba(255,255,255,.3);margin-top:4px">Étape 4 (Payer) est fixe.</div>
             </div>
           </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🧪 Tester l'outil placement</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:.67rem;color:rgba(255,255,255,.4);line-height:1.7">Ouvre l'outil directement pour tester sans passer par le LP.</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-outline" style="font-size:.72rem;background:rgba(108,99,255,.15);border-color:#6c63ff;color:#a78bfa"
+                  onclick="window.open('https://highcoffeeshirts.com/erp/apps/dtf-plaques-transfert.html?gang=1yard','_blank')">
+                  🛠 1 Yard (91×56 cm)
+                </button>
+                <button class="btn btn-outline" style="font-size:.72rem;background:rgba(108,99,255,.15);border-color:#6c63ff;color:#a78bfa"
+                  onclick="window.open('https://highcoffeeshirts.com/erp/apps/dtf-plaques-transfert.html?gang=halfyard','_blank')">
+                  🛠 ½ Yard (46×56 cm)
+                </button>
+              </div>
+              <button class="btn btn-primary" style="font-size:.72rem;width:100%"
+                onclick="previewLP(${id})">
+                👁️ Prévisualiser le parcours client complet
+              </button>
+            </div>
+          </div>
         </div>
         ` : c.id === 5 ? `
         <div class="ep-section">
@@ -4059,7 +4079,8 @@ function openFlow(idx) {
     fileB64:null, fileName:null, date:null, sessFmt:null, module:null,
     plan:null, duree:'mensuel', service:null, description:'',
     name:'', email:'', phone:'', note:'',
-    plateB64:null, plateName:null, plateLogos:0 };
+    plateB64:null, plateName:null, plateLogos:0,
+    packTrio:false, stickerCat:null, stickerSize:null };
   _b = { logos:[], placed:[] };
   document.getElementById('fl-overlay').classList.add('open');
   gfRender();
@@ -4068,7 +4089,8 @@ function openFlow(idx) {
 function closeFlow() { document.getElementById('fl-overlay').classList.remove('open'); }
 
 function gfStepLabels() {
-  if (CAMP_ID===4) return [CFG.label1||'Format', CFG.label2||'Composer', CFG.label3||'Contact', 'Payer'];
+  if (CAMP_ID===0) return [CFG.label1||'Sticker', CFG.label2||'Coordonnées', 'Payer'];
+  if (CAMP_ID===4) return [CFG.label1||'Planche', CFG.label2||'Coordonnées', 'Payer'];
   return [CFG.label1||'Options', CFG.label2||'Coordonnées', CFG.label3||'Paiement'];
 }
 
@@ -4086,8 +4108,7 @@ function gfRender() {
   document.getElementById('fl-step-bar').innerHTML = barHtml;
   var bodyEl = document.getElementById('fl-body');
   if (step===1) bodyEl.innerHTML=gfStep1HTML();
-  else if (step===2 && CAMP_ID===4) { bodyEl.innerHTML=gfStepBuilderHTML(); }
-  else if (step===2 || (CAMP_ID===4 && step===3)) bodyEl.innerHTML=gfStep2HTML();
+  else if (step===2) bodyEl.innerHTML=gfStep2HTML();
   else { bodyEl.innerHTML=gfStep3HTML(); setTimeout(function(){ gfInitKrypton(gfGetPrice()); },80); }
   var prevBtn=document.getElementById('fl-btn-prev');
   var nextBtn=document.getElementById('fl-btn-next');
@@ -4108,16 +4129,16 @@ function gfPrev() { if(_s.step>1){_s.step--;gfRender();} }
 function gfValidate() {
   var msg='';
   if (_s.step===1) {
+    if (CAMP_ID===0&&!_s.stickerCat) msg='Veuillez choisir un type de sticker.';
+    if (CAMP_ID===0&&_s.stickerCat&&_s.stickerCat!=='custom'&&!_s.stickerSize) msg='Veuillez choisir une taille.';
     if (CAMP_ID===3&&!_s.color)   msg='Veuillez choisir une couleur de T-shirt.';
     if (CAMP_ID===4&&!_s.format)  msg='Veuillez choisir un format gang sheet.';
+    if (CAMP_ID===4&&_s.format&&!_s.plateConfirmed) msg='Ouvrez l\\'outil, placez vos logos, puis cliquez ✅ J\\'ai placé mes logos.';
     if (CAMP_ID===5&&!_s.module)  msg='Veuillez choisir un module de formation.';
     if (CAMP_ID===6&&!_s.plan)    msg='Veuillez choisir un plan.';
     if (CAMP_ID===7&&!_s.service) msg='Veuillez choisir un service.';
   }
-  if (_s.step===2 && CAMP_ID===4) {
-    if (!_s.plateLogos) msg='Veuillez uploader vos logos et valider la planche.';
-  }
-  var isContactStep = (_s.step===2 && CAMP_ID!==4) || (_s.step===3 && CAMP_ID===4);
+  var isContactStep = _s.step===2;
   if (isContactStep) {
     var n=document.getElementById('gf-name')?document.getElementById('gf-name').value.trim():'';
     var e=document.getElementById('gf-email')?document.getElementById('gf-email').value.trim():'';
@@ -4139,12 +4160,30 @@ function gfStep1HTML() {
   var prod=PRODS[_s.prodIdx]||{};
   var prodLine='<div class="fl-prod-line"><span style="font-size:1.4rem">'+(prod.e||'📦')+'</span><span style="font-size:.82rem;font-weight:700;flex:1">'+prod.n+'</span><span style="font-size:.82rem;font-weight:900;color:'+PRIMARY+'">'+prod.p+'</span></div>';
   var lbl=function(t){return '<div class="fl-lbl">'+t+'</div>';};
+  if (CAMP_ID===0) {
+    var cats=[
+      {val:'vehicule', icon:'🚗', label:'Sticker Véhicule', desc:'Pare-brise · Carrosserie · Vitres', badge:'dès 2 500 XPF'},
+      {val:'vitrine',  icon:'🏪', label:'Sticker Vitrine Commerce', desc:'Enseigne · Heures · Logo boutique', badge:'dès 3 500 XPF'},
+      {val:'custom',   icon:'🎨', label:'Decal Custom', desc:'Casque · Va\\'a · Glacière · Surface', badge:'Sur devis'}
+    ];
+    var catCards=cats.map(function(c){
+      var sel=_s.stickerCat===c.val;
+      return '<div class="fl-plan-card'+(sel?' selected':'')+'" onclick="gfSetStickerCat(\\''+c.val+'\\')"><div class="fl-plan-head"><span class="fl-plan-emoji">'+c.icon+'</span><span class="fl-plan-name">'+c.label+'</span><span class="fl-plan-price" style="font-size:.68rem">'+c.badge+'</span></div><div class="fl-plan-av">'+c.desc+'</div></div>';
+    }).join('');
+    var sizes2=_s.stickerCat&&_s.stickerCat!=='custom'?
+      '<div style="margin-top:14px">'+lbl('Taille')+'<div class="fl-fmt-grid">'
+      +['S — 15cm × 1m20','M — 15cm × 1m35','L — 20cm × 1m50','XL — Sur mesure'].map(function(s){
+        return '<div class="fl-fmt-btn'+(_s.stickerSize===s?' selected':'')+'" onclick="gfSetStickerSize(\\''+s+'\\')" style="font-size:.68rem;padding:8px 10px;text-align:left">'+s+'</div>';
+      }).join('')+'</div></div>':'';
+    var upsellBadge=_s.stickerCat?'<div style="margin-top:12px;padding:8px 12px;background:rgba(255,165,0,.07);border:1px solid rgba(255,165,0,.2);border-radius:8px;font-size:.65rem;color:rgba(255,200,100,.7);line-height:1.7">💡 2ème sticker même commande → <strong>-20%</strong></div>':'';
+    return lbl('Type de sticker')+catCards+sizes2+upsellBadge;
+  }
   if (CAMP_ID===3) {
     var colors=CFG.tshirtColors||['Blanc','Noir','Gris chiné','Marine','Vert forêt','Rouge'];
     var HEX={Blanc:'#f5f5f5',Noir:'#111','Gris chiné':'#9e9e9e',Marine:'#1a237e','Vert forêt':'#2e7d32',Rouge:'#c62828'};
     var sizes=TSH_SIZES.length?TSH_SIZES:['XS','S','M','L','XL','2XL','3XL','4XL'];
-    var sw=colors.map(function(c){return '<div class="fl-color-wrap" onclick="gfSetColor(\''+c+'\')"><div class="fl-color-swatch'+(_s.color===c?' selected':'')+'" style="background:'+(HEX[c]||'#888')+(c==='Blanc'?';border-color:#ccc':'')+'"></div><div class="fl-color-label">'+c+'</div></div>';}).join('');
-    var sz=sizes.map(function(s){return '<div class="fl-fmt-btn'+(_s.size===s?' selected':'')+'" onclick="gfSetSize(\''+s+'\')">'+s+'</div>';}).join('');
+    var sw=colors.map(function(c){return '<div class="fl-color-wrap" onclick="gfSetColor(\\''+c+'\\')"><div class="fl-color-swatch'+(_s.color===c?' selected':'')+'" style="background:'+(HEX[c]||'#888')+(c==='Blanc'?';border-color:#ccc':'')+'"></div><div class="fl-color-label">'+c+'</div></div>';}).join('');
+    var sz=sizes.map(function(s){return '<div class="fl-fmt-btn'+(_s.size===s?' selected':'')+'" onclick="gfSetSize(\\''+s+'\\')">'+s+'</div>';}).join('');
     var hasImgs=Object.keys(FACE_IMGS).length>0;
     var gallery='';
     if(hasImgs){var imgs=PRODS.map(function(p,i){var fi=FACE_IMGS[i]&&FACE_IMGS[i].front;return fi?'<div style="aspect-ratio:1;border-radius:8px;overflow:hidden;border:2px solid '+(_s.prodIdx===i?PRIMARY:'rgba(255,255,255,.1)')+';cursor:pointer" onclick="gfSelProd('+i+')"><img src="'+fi+'" style="width:100%;height:100%;object-fit:contain"></div>':'';}).filter(Boolean).join('');if(imgs)gallery=lbl('Visuels')+'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px">'+imgs+'</div>';}
@@ -4153,36 +4192,58 @@ function gfStep1HTML() {
   if (CAMP_ID===4) {
     var fmtMap={'1yard':'1 Yard \xd7 22"','halfyard':'\xbd Yard \xd7 22"','22x30cm':'22" \xd7 30 cm','22x60cm':'22" \xd7 60 cm','22x90cm':'22" \xd7 90 cm','A3':'A3 (30\xd742 cm)','A2':'A2 (42\xd760 cm)'};
     var fmtDim={'1yard':'91\xd756 cm','halfyard':'46\xd756 cm','22x30cm':'30\xd722 cm','22x60cm':'60\xd722 cm','22x90cm':'90\xd722 cm','A3':'42\xd730 cm','A2':'60\xd742 cm'};
-    var fmtP={'1yard':15000,'halfyard':8500,'22x30cm':8500,'22x60cm':12000,'22x90cm':15000,'A3':9000,'A2':14000};
+    var fmtP={'1yard':20000,'halfyard':12000,'22x30cm':8500,'22x60cm':12000,'22x90cm':20000,'A3':9000,'A2':14000};
     var formats=CFG.formats||['1yard','halfyard'];
     var fb=formats.map(function(f){
       var sel=_s.format===f;
-      return '<div class="fl-fmt-btn'+(sel?' selected':'')+'" onclick="gfSetFormat(\''+f+'\')" style="text-align:left;padding:11px 13px">'
+      return '<div class="fl-fmt-btn'+(sel?' selected':'')+'" onclick="gfSetFormat(\\''+f+'\\')" style="text-align:left;padding:11px 13px">'
         +'<div style="font-size:.82rem;font-weight:800">'+(fmtMap[f]||f)+'</div>'
-        +'<div style="font-size:.62rem;color:rgba(255,255,255,'+(sel?'.65':'.38)+')'+'">'+( fmtDim[f]||'')+'&nbsp;&mdash;&nbsp;'+(fmtP[f]||0).toLocaleString('fr-FR')+' XPF</div>'
+        +'<div style="font-size:.62rem;color:rgba(255,255,255,'+(sel?'.65':'.38')+')'+'">'+( fmtDim[f]||'')+'&nbsp;&mdash;&nbsp;'+(fmtP[f]||0).toLocaleString('fr-FR')+' XPF</div>'
         +'</div>';
     }).join('');
-    var pb=_s.format?'<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 2px;margin-top:2px"><span style="font-size:.68rem;color:rgba(255,255,255,.4)">Prix</span><span class="fl-price-row" id="fl-price-row">'+((fmtP[_s.format]||0)*(_s.qty||1)).toLocaleString('fr-FR')+' XPF</span></div>':'';
-    return prodLine+lbl('Choisir votre format gang sheet')+'<div class="fl-fmt-grid" style="flex-direction:column;gap:8px">'+fb+'</div>'+pb
-      +'<div style="margin-top:12px;padding:9px 12px;background:rgba(255,255,255,.04);border-radius:8px;border-left:3px solid rgba(108,99,255,.5);font-size:.67rem;color:rgba(255,255,255,.5);line-height:1.5">'
-      +'A l\'étape suivante vous uploadez vos logos, ils seront plac\xe9s automatiquement sur la planche pour la remplir au maximum.</div>';
+    var pb=_s.format?'<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 2px;margin-top:4px"><span style="font-size:.68rem;color:rgba(255,255,255,.4)">Prix</span><span class="fl-price-row" id="fl-price-row">'+((fmtP[_s.format]||0)*(_s.qty||1)).toLocaleString('fr-FR')+' XPF</span></div>':'';
+    var plancheSection='';
+    if (_s.format && _s.plateConfirmed) {
+      var imgHtml=_s.plateB64?'<img src="'+_s.plateB64+'" style="max-width:100%;max-height:140px;border-radius:7px;border:1px solid rgba(255,255,255,.1);object-fit:contain;display:block;margin-bottom:8px">':'';
+      plancheSection='<div style="margin-top:14px;padding:12px;background:rgba(67,233,123,.06);border:1px solid rgba(67,233,123,.25);border-radius:10px">'
+        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+        +'<span style="font-size:1.1rem">&#x2705;</span>'
+        +'<div><div style="font-size:.82rem;font-weight:800;color:#43e97b">Planche confirm\xe9e</div>'
+        +'<div style="font-size:.62rem;color:rgba(255,255,255,.4)">Logos plac\xe9s sur la feuille DTF</div></div>'
+        +'</div>'
+        +imgHtml
+        +'<button onclick="openDtfTool()" style="width:100%;padding:7px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.55);font-size:.72rem;cursor:pointer">🔄 Modifier la planche</button>'
+        +'</div>';
+    } else if (_s.format) {
+      plancheSection='<div style="margin-top:14px;padding:18px 12px;text-align:center;background:rgba(108,99,255,.07);border:1.5px dashed rgba(108,99,255,.35);border-radius:10px">'
+        +'<div style="font-size:2rem;margin-bottom:8px">🎨</div>'
+        +'<div style="font-size:.82rem;font-weight:800;margin-bottom:6px">Composez votre planche</div>'
+        +'<div style="font-size:.67rem;color:rgba(255,255,255,.4);margin-bottom:14px;line-height:1.6">Uploadez vos logos • Placez-les sur la feuille DTF<br>Validez pour continuer la commande</div>'
+        +'<button onclick="openDtfTool()" style="padding:12px 26px;border-radius:50px;background:linear-gradient(135deg,#6c63ff,#a78bfa);color:#fff;border:none;font-size:.88rem;font-weight:800;cursor:pointer;box-shadow:0 4px 18px rgba(108,99,255,.4);">'
+        +'🎨 Placer mes logos →</button>'
+        +'<div style="margin-top:10px;font-size:.6rem;color:rgba(255,255,255,.25)">S\\'ouvre dans un nouvel onglet &mdash; revenez ici ensuite</div>'
+        +'<button onclick="gfConfirmPlanche()" style="margin-top:14px;width:100%;padding:11px;border-radius:8px;background:rgba(67,233,123,.1);border:1.5px solid rgba(67,233,123,.4);color:#43e97b;font-size:.82rem;font-weight:800;cursor:pointer">'
+        +'✅ J\\'ai placé mes logos — Continuer →</button>'
+        +'</div>';
+    }
+    return prodLine+lbl('Choisir votre format gang sheet')+'<div class="fl-fmt-grid" style="flex-direction:column;gap:8px">'+fb+'</div>'+pb+plancheSection;
   }
   if (CAMP_ID===5) {
     var mods=CFG.modules||['debutant','avance','complet'];
     var MOD={debutant:{label:'Débutant',emoji:'📗',price:CFG.price_debutant||15000,desc:'Bases DTF, manipulation, entretien'},avance:{label:'Avancé',emoji:'📘',price:CFG.price_avance||25000,desc:'Techniques pro, couleurs, sérigraphie'},complet:{label:'Complet',emoji:'🏆',price:CFG.price_complet||35000,desc:'Programme intégral débutant → expert'}};
-    var mc=mods.filter(function(m){return MOD[m];}).map(function(m){return '<div class="fl-plan-card'+(_s.module===m?' selected':'')+'" onclick="gfSetModule(\''+m+'\')"><div class="fl-plan-head"><span class="fl-plan-emoji">'+MOD[m].emoji+'</span><span class="fl-plan-name">'+MOD[m].label+'</span><span class="fl-plan-price">'+Number(MOD[m].price).toLocaleString('fr-FR')+' XPF</span></div><div class="fl-plan-av">'+MOD[m].desc+'</div></div>';}).join('');
+    var mc=mods.filter(function(m){return MOD[m];}).map(function(m){return '<div class="fl-plan-card'+(_s.module===m?' selected':'')+'" onclick="gfSetModule(\\''+m+'\\')"><div class="fl-plan-head"><span class="fl-plan-emoji">'+MOD[m].emoji+'</span><span class="fl-plan-name">'+MOD[m].label+'</span><span class="fl-plan-price">'+Number(MOD[m].price).toLocaleString('fr-FR')+' XPF</span></div><div class="fl-plan-av">'+MOD[m].desc+'</div></div>';}).join('');
     return prodLine+lbl('Choisir le module')+mc;
   }
   if (CAMP_ID===6) {
     var plans=CFG.plans||['starter','pro','premium'];
     var PLAN={starter:{label:'Starter',emoji:'🌱',priceM:1800,priceA:18000,color:'#30cfd0',av:'Points bonus HCS\\nAccès offres prioritaires'},pro:{label:'Pro',emoji:'⚡',priceM:3500,priceA:35000,color:'#a18cd1',av:'Points bonus ×2\\nLogos offerts (2/mois)\\nRemise 10%'},premium:{label:'Premium',emoji:'👑',priceM:5500,priceA:55000,color:'#f6d365',av:'Points bonus ×3\\nLogos offerts (5/mois)\\nRemise 20%\\nConseil personnalisé'}};
-    var pc=plans.filter(function(p){return PLAN[p];}).map(function(p){var av=(CFG['avantages_'+p]||PLAN[p].av).split('\\n').filter(Boolean).map(function(a){return '✓ '+a;}).join('<br>');return '<div class="fl-plan-card'+(_s.plan===p?' selected':'')+'" onclick="gfSetPlan(\''+p+'\')"><div class="fl-plan-head"><span class="fl-plan-emoji">'+PLAN[p].emoji+'</span><span class="fl-plan-name" style="color:'+PLAN[p].color+'">'+PLAN[p].label+'</span><span class="fl-plan-price" style="color:'+PLAN[p].color+'">'+PLAN[p].priceM.toLocaleString('fr-FR')+' XPF/mois</span></div><div class="fl-plan-av">'+av+'</div></div>';}).join('');
+    var pc=plans.filter(function(p){return PLAN[p];}).map(function(p){var av=(CFG['avantages_'+p]||PLAN[p].av).split('\\n').filter(Boolean).map(function(a){return '✓ '+a;}).join('<br>');return '<div class="fl-plan-card'+(_s.plan===p?' selected':'')+'" onclick="gfSetPlan(\\''+p+'\\')"><div class="fl-plan-head"><span class="fl-plan-emoji">'+PLAN[p].emoji+'</span><span class="fl-plan-name" style="color:'+PLAN[p].color+'">'+PLAN[p].label+'</span><span class="fl-plan-price" style="color:'+PLAN[p].color+'">'+PLAN[p].priceM.toLocaleString('fr-FR')+' XPF/mois</span></div><div class="fl-plan-av">'+av+'</div></div>';}).join('');
     return lbl('Choisir votre plan')+pc;
   }
   if (CAMP_ID===7) {
     var svcs=CFG.services||['vecto','detour','logo','pack'];
     var SVC={vecto:{label:'Vectorisation SVG/AI',icon:'📐',price:2500,desc:'Conversion vectoriel haute qualité'},detour:{label:'Détourage IA',icon:'✂️',price:1500,desc:'Fond transparent — PNG optimisé'},logo:{label:'Création logo complet',icon:'🎨',price:8000,desc:'Logo pro livré en vectoriel'},pack:{label:'Pack graphique',icon:'📦',price:8000,desc:'Vectorisation + Détourage + Retouches'}};
-    var sc=svcs.filter(function(s){return SVC[s];}).map(function(s){return '<div class="fl-svc-card'+(_s.service===s?' selected':'')+'" onclick="gfSetService(\''+s+'\')"><span class="fl-svc-icon">'+SVC[s].icon+'</span><div style="flex:1"><div class="fl-svc-label">'+SVC[s].label+'</div><div style="font-size:.62rem;color:rgba(255,255,255,.4);margin-top:2px">'+SVC[s].desc+'</div></div><span class="fl-svc-price">'+SVC[s].price.toLocaleString('fr-FR')+' XPF</span></div>';}).join('');
+    var sc=svcs.filter(function(s){return SVC[s];}).map(function(s){return '<div class="fl-svc-card'+(_s.service===s?' selected':'')+'" onclick="gfSetService(\\''+s+'\\')"><span class="fl-svc-icon">'+SVC[s].icon+'</span><div style="flex:1"><div class="fl-svc-label">'+SVC[s].label+'</div><div style="font-size:.62rem;color:rgba(255,255,255,.4);margin-top:2px">'+SVC[s].desc+'</div></div><span class="fl-svc-price">'+SVC[s].price.toLocaleString('fr-FR')+' XPF</span></div>';}).join('');
     return prodLine+lbl('Choisir le service')+sc;
   }
   return '';
@@ -4192,28 +4253,47 @@ function gfStep2HTML() {
   var lbl=function(t){return '<div class="fl-lbl">'+t+'</div>';};
   var extra='';
   if (CAMP_ID===3) {
-    extra='<div style="margin-bottom:14px">'+lbl('Quantité')+'<div class="fl-qty-row"><button class="fl-qty-btn" onclick="gfChgQty(-1)">−</button><span class="fl-qty-val" id="gf-qty-val">'+_s.qty+'</span><button class="fl-qty-btn" onclick="gfChgQty(1)">+</button></div></div>';
+    var trioSel=_s.packTrio;
+    var trioCard='<div onclick="gfToggleTrio()" style="border:1.5px solid rgba('+(trioSel?'246,211,101,.5':'255,255,255,.1')+');border-radius:12px;padding:13px 14px;margin-bottom:14px;cursor:pointer;background:rgba('+(trioSel?'246,211,101,.07':'255,255,255,.02')+')">'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+      +'<span style="font-size:1.3rem">🎁</span>'
+      +'<div style="flex:1"><div style="font-size:.82rem;font-weight:800;color:'+(trioSel?'#f6d365':'#f5ede0')+'">Pack Trio Collector</div>'
+      +'<div style="font-size:.63rem;color:rgba(255,255,255,.42);margin-top:2px">3 variantes de la collection — 1 de chaque design</div></div>'
+      +'<div style="text-align:right"><div style="font-size:.85rem;font-weight:900;color:#f6d365">9 900 XPF</div>'
+      +'<div style="font-size:.58rem;text-decoration:line-through;color:rgba(255,255,255,.3)">11 700 XPF</div></div>'
+      +'</div>'
+      +(trioSel?'<div style="margin-top:8px;font-size:.62rem;color:#f6d365;display:flex;align-items:center;gap:5px"><span>✓</span> Pack Trio sélectionné — économisez 1 800 XPF (-15%)</div>':'<div style="margin-top:8px;font-size:.62rem;color:rgba(255,255,255,.3)">Cliquer pour sélectionner le pack collector complet</div>')
+      +'</div>';
+    extra='<div style="margin-bottom:14px">'+lbl('Quantité')+'<div class="fl-qty-row"><button class="fl-qty-btn" onclick="gfChgQty(-1)">−</button><span class="fl-qty-val" id="gf-qty-val">'+_s.qty+'</span><button class="fl-qty-btn" onclick="gfChgQty(1)">+</button></div></div>'
+      +lbl('Offre exclusive')+trioCard;
   }
   if (CAMP_ID===4) {
-    var fP={'1yard':15000,'halfyard':8500,'22x30cm':8500,'22x60cm':12000,'22x90cm':15000,'A3':9000,'A2':14000};
-    var base=fP[_s.format]||8500;
+    var fP={'1yard':20000,'halfyard':12000,'22x30cm':8500,'22x60cm':12000,'22x90cm':20000,'A3':9000,'A2':14000};
+    var base=fP[_s.format]||12000;
     var thumbHtml=_s.plateB64?'<div style="margin-bottom:12px"><div style="font-size:.62rem;color:rgba(255,255,255,.4);margin-bottom:5px">Votre planche — '+(_s.plateLogos||0)+' logos plac\xe9s</div><img src="'+_s.plateB64+'" style="max-width:100%;max-height:120px;border-radius:6px;border:1px solid rgba(255,255,255,.12);object-fit:contain"></div>':'';
     extra=thumbHtml+'<div style="margin-bottom:14px">'+lbl('Nombre de planches')+'<div class="fl-qty-row"><button class="fl-qty-btn" onclick="gfChgQty(-1)">−</button><span class="fl-qty-val" id="gf-qty-val">'+_s.qty+'</span><button class="fl-qty-btn" onclick="gfChgQty(1)">+</button><span class="fl-price-row" id="fl-price-row">'+(base*_s.qty).toLocaleString('fr-FR')+' XPF</span></div></div>';
   }
   if (CAMP_ID===5) {
     var dates=(CFG.dates||'').split('\\n').filter(function(d){return d.trim();});
-    var dp=dates.length?dates.map(function(d){return '<div class="fl-date-pill'+(_s.date===d.trim()?' selected':'')+'" onclick="gfSetDate(\''+d.trim().replace(/'/g,"\\\\'")+'\',this)" data-date="'+d.trim()+'">'+d.trim()+'</div>';}).join(''):'<div style="font-size:.72rem;color:rgba(255,255,255,.4)">Contactez-nous pour les dates.</div>';
+    var dp=dates.length?dates.map(function(d){return '<div class="fl-date-pill'+(_s.date===d.trim()?' selected':'')+'" onclick="gfSetDate(\\''+d.trim().replace(/'/g,"\\\\'")+'\\'  ,this)" data-date="'+d.trim()+'">'+d.trim()+'</div>';}).join(''):'<div style="font-size:.72rem;color:rgba(255,255,255,.4)">Contactez-nous pour les dates.</div>';
     var fmts=CFG.formats||['atelier'];
     var fmtL={atelier:'🏫 En atelier',enligne:'💻 En ligne'};
-    var fb=fmts.map(function(f){return '<div class="fl-fmt-btn'+(_s.sessFmt===f?' selected':'')+'" onclick="gfSetSF(\''+f+'\')">'+( fmtL[f]||f)+'</div>';}).join('');
-    extra='<div style="margin-bottom:14px">'+lbl('Date de session')+'<div class="fl-date-grid">'+dp+'</div></div>'+(fmts.length>1?'<div style="margin-bottom:14px">'+lbl('Format')+'<div class="fl-fmt-grid">'+fb+'</div></div>':'');
+    var fb=fmts.map(function(f){return '<div class="fl-fmt-btn'+(_s.sessFmt===f?' selected':'')+'" onclick="gfSetSF(\\''+f+'\\')">'+( fmtL[f]||f)+'</div>';}).join('');
+    var machinesTeaser='<div style="margin-top:12px;padding:13px 14px;background:rgba(240,147,251,.05);border:1px solid rgba(240,147,251,.2);border-radius:10px">'
+      +'<div style="font-size:.72rem;font-weight:800;margin-bottom:5px;color:#f093fb">🏭 Suite optionnelle — Pack Machines</div>'
+      +'<div style="font-size:.63rem;color:rgba(255,255,255,.45);line-height:1.75">'
+      +'Après votre session, recevez un devis personnalisé :<br>'
+      +'<span style="color:rgba(255,255,255,.6)">Pack Passion</span> 400 000 XPF · <span style="color:rgba(255,255,255,.6)">Pack Pro</span> 500 000 XPF · <span style="color:rgba(255,255,255,.6)">Pack Studio</span> 600 000 XPF<br>'
+      +'Paiement 3×/4× sans frais disponible.</div>'
+      +'</div>';
+    extra='<div style="margin-bottom:14px">'+lbl('Date de session')+'<div class="fl-date-grid">'+dp+'</div></div>'+(fmts.length>1?'<div style="margin-bottom:14px">'+lbl('Format')+'<div class="fl-fmt-grid">'+fb+'</div></div>':'')+machinesTeaser;
   }
   if (CAMP_ID===6) {
     var PL2={starter:{priceM:1800,priceA:18000},pro:{priceM:3500,priceA:35000},premium:{priceM:5500,priceA:55000}};
     var inf=PL2[_s.plan]||{priceM:0,priceA:0};
     var dur=CFG.durees||['mensuel','annuel'];
     var pm={mensuel:inf.priceM.toLocaleString('fr-FR')+' XPF/mois',trimestriel:Math.round(inf.priceM*3*.95).toLocaleString('fr-FR')+' XPF/trim.',annuel:inf.priceA.toLocaleString('fr-FR')+' XPF/an'};
-    var dc=dur.map(function(d){return '<div class="fl-plan-card'+(_s.duree===d?' selected':'')+'" onclick="gfSetDuree(\''+d+'\')"><div class="fl-plan-head"><span class="fl-plan-name" style="text-transform:capitalize">'+d+'</span><span class="fl-plan-price">'+(pm[d]||'')+'</span></div>'+(d!=='mensuel'?'<div class="fl-plan-av" style="color:#43e97b">'+(d==='trimestriel'?'✓ Économisez 5%':'✓ Économisez 15%')+'</div>':'')+'</div>';}).join('');
+    var dc=dur.map(function(d){return '<div class="fl-plan-card'+(_s.duree===d?' selected':'')+'" onclick="gfSetDuree(\\''+d+'\\')"><div class="fl-plan-head"><span class="fl-plan-name" style="text-transform:capitalize">'+d+'</span><span class="fl-plan-price">'+(pm[d]||'')+'</span></div>'+(d!=='mensuel'?'<div class="fl-plan-av" style="color:#43e97b">'+(d==='trimestriel'?'✓ Économisez 5%':'✓ Économisez 15%')+'</div>':'')+'</div>';}).join('');
     extra='<div style="margin-bottom:14px">'+lbl('Durée')+dc+'</div>';
   }
   if (CAMP_ID===7&&CFG.allowUpload!==false) {
@@ -4319,7 +4399,9 @@ async function gfInitKrypton(amount) {
 function gfGetPrice() {
   var prod=PRODS[_s.prodIdx]||{};
   var base=parseInt((prod.p||'0').replace(/[^0-9]/g,''))||0;
-  if (CAMP_ID===4){var F={'1yard':15000,'halfyard':8500,'22x30cm':8500,'22x60cm':12000,'22x90cm':15000,'A3':9000,'A2':14000};return(F[_s.format]||base)*(_s.qty||1);}
+  if (CAMP_ID===0){var CAT={vehicule:2500,vitrine:3500,custom:0};var catBase=CAT[_s.stickerCat]||base;if(_s.stickerCat==='custom')return 0;return catBase*(_s.qty||1);}
+  if (CAMP_ID===3){var unitP=base||3900;if(_s.packTrio){return 9900;}return unitP*(_s.qty||1);}
+  if (CAMP_ID===4){var F={'1yard':20000,'halfyard':12000,'22x30cm':8500,'22x60cm':12000,'22x90cm':20000,'A3':9000,'A2':14000};return(F[_s.format]||base)*(_s.qty||1);}
   if (CAMP_ID===5){var M={debutant:+(CFG.price_debutant||15000),avance:+(CFG.price_avance||25000),complet:+(CFG.price_complet||35000)};return M[_s.module]||base;}
   if (CAMP_ID===6){var PL={starter:{priceM:1800,priceA:18000},pro:{priceM:3500,priceA:35000},premium:{priceM:5500,priceA:55000}};var inf=PL[_s.plan]||{priceM:base,priceA:base*10};if(_s.duree==='annuel')return inf.priceA;if(_s.duree==='trimestriel')return Math.round(inf.priceM*3*.95);return inf.priceM;}
   if (CAMP_ID===7){var SV={vecto:2500,detour:1500,logo:8000,pack:8000};return SV[_s.service]||base;}
@@ -4329,6 +4411,9 @@ function gfGetPrice() {
 function gfUpdateRecap() {
   var price=gfGetPrice();
   var opts=[];
+  if(_s.stickerCat) opts.push({vehicule:'Sticker Véhicule',vitrine:'Sticker Vitrine',custom:'Decal Custom'}[_s.stickerCat]||_s.stickerCat);
+  if(_s.stickerSize) opts.push(_s.stickerSize.toUpperCase());
+  if(_s.packTrio) opts.push('Pack Trio ×3');
   if(_s.color) opts.push(_s.color);
   if(_s.size) opts.push(_s.size);
   if(_s.format) opts.push({'1yard':'1 Yard \xd722"','halfyard':'\xbd Yard \xd722"'}[_s.format]||_s.format.replace('x','\xd7'));
@@ -4340,17 +4425,26 @@ function gfUpdateRecap() {
   if(_s.date) opts.push(_s.date);
   if(_s.fileName) opts.push('📎 '+_s.fileName.slice(0,20));
   document.getElementById('fl-recap-opts').textContent=opts.length?opts.join(' · '):'Aucune option sélectionnée';
-  document.getElementById('fl-recap-price').textContent=price.toLocaleString('fr-FR')+' XPF';
+  var priceEl=document.getElementById('fl-recap-price');
+  if(priceEl) priceEl.textContent=price===0?'Sur devis':price.toLocaleString('fr-FR')+' XPF';
   document.getElementById('fl-recap-qty').textContent=(_s.qty||1)>1?'×'+(_s.qty||1):'';
 }
 
 function gfSetColor(v) { _s.color=v; gfRender(); }
 function gfSetSize(v)  { _s.size=v;  gfRender(); }
-function gfSetFormat(v){ _s.format=v; gfRender(); }
+function gfSetFormat(v){
+  _s.format=v;
+  _s.plateB64=null; _s.plateLogos=0; _s.plateName=null;
+  gfRender();
+}
+function gfConfirmPlanche(){ _s.plateConfirmed=true; _s.plateLogos=_s.plateLogos||1; gfRender(); gfUpdateRecap(); }
 function gfSetModule(v){ _s.module=v; gfRender(); }
 function gfSetPlan(v)  { _s.plan=v;  gfRender(); }
 function gfSetDuree(v) { _s.duree=v; gfRender(); }
 function gfSetService(v){_s.service=v;gfRender();}
+function gfToggleTrio(){ _s.packTrio=!_s.packTrio; if(_s.packTrio){ _s.qty=3; } gfRender(); gfUpdateRecap(); }
+function gfSetStickerCat(v){ _s.stickerCat=v; _s.stickerSize=null; gfRender(); gfUpdateRecap(); }
+function gfSetStickerSize(v){ _s.stickerSize=v; gfRender(); gfUpdateRecap(); }
 function gfSelProd(i)  { _s.prodIdx=i; selectProd(i); gfRender(); }
 function gfSetDate(v,el) { _s.date=v; document.querySelectorAll('.fl-date-pill').forEach(function(p){p.classList.toggle('selected',p.dataset.date===v);}); gfUpdateRecap(); }
 function gfSetSF(v) { _s.sessFmt=v; document.querySelectorAll('#fl-body .fl-fmt-btn').forEach(function(b){b.classList.toggle('selected',b.textContent.trim().includes(v));}); gfUpdateRecap(); }
@@ -4403,14 +4497,14 @@ function gfStepBuilderHTML() {
       +'<div style="font-size:.88rem;font-weight:800;margin-bottom:8px">Composez votre planche de transfert</div>'
       +'<div style="font-size:.7rem;color:rgba(255,255,255,.42);margin-bottom:22px;line-height:1.7">'
       +'Uploadez vos logos • Placez-les sur la feuille DTF<br>'
-      +'Validez l\'aper\xe7u pour commander</div>'
+      +'Validez l\\'aper\xe7u pour commander</div>'
       +'<button onclick="openDtfTool()" style="padding:14px 30px;border-radius:50px;'
       +'background:linear-gradient(135deg,#6c63ff,#a78bfa);color:#fff;border:none;'
       +'font-size:.9rem;font-weight:800;cursor:pointer;'
       +'box-shadow:0 4px 22px rgba(108,99,255,.45);letter-spacing:.5px">'
-      +'🛠 Ouvrir l\'outil de placement →</button>'
+      +'🎨 Placer mes logos →</button>'
       +'<div style="margin-top:14px;font-size:.62rem;color:rgba(255,255,255,.28)">'
-      +'S\'ouvre dans une nouvelle fen\xeatre — revenez ici apr\xe8s validation</div>'
+      +'S\\'ouvre dans un nouvel onglet — revenez ici apr\xe8s validation</div>'
       +'</div>';
   }
   html += '</div>';
@@ -4420,7 +4514,7 @@ function gfStepBuilderHTML() {
 function openDtfTool() {
   var fmt = _s.format || '1yard';
   var toolUrl = 'https://highcoffeeshirts.com/erp/apps/dtf-plaques-transfert.html?gang='+fmt;
-  _gangWin = window.open(toolUrl, 'dtf-gang', 'width=1280,height=860,scrollbars=yes,resizable=yes');
+  _gangWin = window.open(toolUrl, '_blank');
 }
 
 window.addEventListener('message', function(e) {
@@ -7537,7 +7631,7 @@ function getParcoursCfg(campId) {
   if (!parcoursCfg[campId]) {
     const defaults = {
       3: { tshirtColors:['Blanc','Noir','Gris chiné','Marine','Vert forêt','Rouge'] },
-      4: { formats:['22x30cm','22x60cm'], resolution:'300', fileFormats:['PNG','PDF','PSD'], qtyMin:1, qtyMax:50, allowUpload:true, uploadHint:'Fichier PNG ou PDF 300 DPI, fond transparent' },
+      4: { formats:['1yard','halfyard'], resolution:'300', fileFormats:['PNG','PDF','PSD'], qtyMin:1, qtyMax:50, allowUpload:false, uploadHint:'Uploadez vos logos dans l\'outil de placement' },
       5: { modules:['debutant','avance','complet'], formats:['atelier'], dates:'', maxPlaces:8, adresse:'' },
       6: { plans:['starter','pro','premium'], durees:['mensuel','annuel'], autoRenew:true },
       7: { services:['vecto','detour','logo','pack'], fileFormats:['PNG','JPG','PDF'], delais:['48h','devis'], allowUpload:true, allowDesc:true, descPlaceholder:'Décrivez votre besoin (couleurs, style, références...)' }
@@ -8582,6 +8676,7 @@ function genRender() {
   if (step === 1)      bodyEl.innerHTML = genStep1HTML();
   else if (step === 2) bodyEl.innerHTML = genStep2HTML();
   else                 bodyEl.innerHTML = genStep3HTML();
+  if (campId === 4 && step === 1 && genFlow.selections.format && !genFlow.selections.plateConfirmed) setTimeout(genDtfInit, 50);
   // Boutons
   const prevBtn = document.getElementById('gen-btn-prev');
   const nextBtn = document.getElementById('gen-btn-next');
@@ -8614,6 +8709,7 @@ function genValidateStep() {
   if (step === 1) {
     if (campId === 3 && !selections.color)   msg = 'Veuillez choisir une couleur de T-shirt.';
     if (campId === 4 && !selections.format)  msg = 'Veuillez choisir un format gang sheet.';
+    if (campId === 4 && selections.format && !selections.plateConfirmed) msg = 'Placez vos logos et cliquez ✅ Valider ma planche.';
     if (campId === 5 && !selections.module)  msg = 'Veuillez choisir un module de formation.';
     if (campId === 6 && !selections.plan)    msg = 'Veuillez choisir un plan.';
     if (campId === 7 && !selections.service) msg = 'Veuillez choisir un service.';
@@ -8677,22 +8773,48 @@ function genStep1HTML() {
     return prodLine + logoGallery + label('Couleur du T-shirt') + `<div class="gen-color-grid">${swatches}</div>` + label('Taille') + `<div class="gen-format-grid">${szBtns}</div>`;
   }
 
-  // ── id=4 Grille DTF ──
+  // ── id=4 Pack Collector DTF ──
   if (campId === 4) {
-    const fmtMap = {'22x30cm':'22" × 30 cm','22x60cm':'22" × 60 cm','22x90cm':'22" × 90 cm','A3':'A3 (30×42 cm)','A2':'A2 (42×60 cm)'};
-    const fmtPrices = {'22x30cm':8500,'22x60cm':12000,'22x90cm':15000,'A3':9000,'A2':14000};
-    const formats = cfg.formats || ['22x30cm','22x60cm'];
-    const fmtBtns = formats.map(f=>`<div class="gen-format-btn${selections.format===f?' selected':''}" onclick="genSetFormat('${f}')">${fmtMap[f]||f}</div>`).join('');
-    const hasFile = !!selections.filePreview;
-    const hint = cfg.uploadHint || 'Fichier PNG ou PDF 300 DPI, fond transparent';
-    const priceBox = selections.format ? `<div class="gen-price-calc-box"><span class="gen-price-calc-label">Prix estimé</span><span class="gen-price-calc-val" id="gen-price-calc">${(fmtPrices[selections.format]*(selections.qty||1)).toLocaleString('fr-FR')} XPF</span></div>` : '';
-    return prodLine + label('Format gang sheet') + `<div class="gen-format-grid">${fmtBtns}</div>` + priceBox +
-      label('Fichier print-ready') + `<label style="cursor:pointer;display:block">
-      <div class="gen-upload-preview${hasFile?' has-file':''}" id="gen-upload-preview">
-        ${hasFile ? `<img src="${selections.filePreview}"><div class="gen-upload-overlay"><span style="color:white;font-size:0.75rem;font-weight:700">Changer</span></div>` : `<div style="text-align:center;color:var(--text-secondary);padding:12px"><div style="font-size:2rem;margin-bottom:6px">📎</div><div style="font-size:0.72rem">${hint}</div></div>`}
-      </div>
-      <input type="file" accept="image/*,.pdf,.ai,.psd" style="display:none" onchange="genFileLoad(event)">
-    </label>${selections.fileQuality ? `<div class="gen-file-quality ${selections.fileQuality.cls}">${selections.fileQuality.label}</div>` : ''}`;
+    const fmtMap    = {'1yard':'1 Yard × 22"','halfyard':'½ Yard × 22"'};
+    const fmtDims   = {'1yard':'55 × 91 cm','halfyard':'55 × 46 cm'};
+    const fmtPrices = {'1yard':20000,'halfyard':12000};
+    const formats   = ['1yard','halfyard'];
+    const fmtBtns   = formats.map(f=>`<div class="gen-format-btn${selections.format===f?' selected':''}" onclick="genSetFormat('${f}')" style="text-align:left;padding:10px 12px"><div style="font-size:.82rem;font-weight:800">${fmtMap[f]}</div><div style="font-size:.62rem;color:rgba(255,255,255,${selections.format===f?'.6':'.3'})">${fmtDims[f]} — ${(fmtPrices[f]||0).toLocaleString('fr-FR')} XPF</div></div>`).join('');
+    const priceBox  = selections.format ? `<div class="gen-price-calc-box"><span class="gen-price-calc-label">Prix estimé</span><span class="gen-price-calc-val" id="gen-price-calc">${(fmtPrices[selections.format]*(selections.qty||1)).toLocaleString('fr-FR')} XPF</span></div>` : '';
+
+    if (selections.plateConfirmed && selections.plateB64) {
+      return prodLine + label('Format gang sheet') + `<div class="gen-format-grid" style="flex-direction:column;gap:8px">${fmtBtns}</div>` + priceBox +
+        `<div style="margin-top:14px;padding:12px;background:rgba(67,233,123,.08);border:1px solid rgba(67,233,123,.3);border-radius:10px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:1.1rem">✅</span><div style="font-size:.82rem;font-weight:800;color:#43e97b">Planche confirmée — ${selections.plateLogos||0} logo(s)</div></div>
+          <img src="${selections.plateB64}" style="max-width:100%;max-height:110px;border-radius:6px;border:1px solid rgba(255,255,255,.1);object-fit:contain;display:block;margin-bottom:8px">
+          <button onclick="genDtfReset()" style="width:100%;padding:7px;border-radius:7px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);font-size:.72rem;cursor:pointer">🔄 Modifier la planche</button>
+        </div>`;
+    }
+    if (selections.format) {
+      return prodLine + label('Format gang sheet') + `<div class="gen-format-grid" style="flex-direction:column;gap:8px">${fmtBtns}</div>` + priceBox +
+        `<div style="margin-top:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.4)">Placer mes logos</div>
+            <span style="font-size:.62rem;color:rgba(255,255,255,.3)" id="gen-dtf-count">0 logos</span>
+          </div>
+          <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:6px;margin-bottom:8px;overflow:auto;text-align:center">
+            <canvas id="gen-dtf-canvas" style="border-radius:4px;cursor:crosshair;display:block;margin:0 auto;touch-action:none;max-width:100%"
+              onmousedown="genDtfCvDown(event)" onmousemove="genDtfCvMove(event)" onmouseup="genDtfCvUp()" onmouseleave="genDtfCvUp()"
+              ontouchstart="genDtfTouchStart(event)" ontouchmove="genDtfTouchMove(event)" ontouchend="genDtfCvUp()"></canvas>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <label style="flex:1;padding:9px;background:linear-gradient(135deg,#6c63ff,#a78bfa);border-radius:8px;color:#fff;font-size:.75rem;font-weight:800;cursor:pointer;text-align:center">
+              ➕ Ajouter logos<input type="file" accept="image/*" multiple onchange="genDtfFileLoad(event)" style="display:none">
+            </label>
+            <button onclick="genDtfDelActive()" style="padding:9px 12px;background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.25);border-radius:8px;color:#ff6b6b;font-size:.72rem;cursor:pointer">🗑</button>
+          </div>
+          <div style="font-size:.6rem;color:rgba(255,255,255,.28);margin-bottom:10px">Glissez les logos sur la planche · Cliquez pour sélectionner</div>
+          <button onclick="genDtfValidate()" style="width:100%;padding:11px;border-radius:8px;background:rgba(67,233,123,.1);border:1.5px solid rgba(67,233,123,.4);color:#43e97b;font-size:.82rem;font-weight:800;cursor:pointer">
+            ✅ Valider ma planche — Continuer →
+          </button>
+        </div>`;
+    }
+    return prodLine + label('Format gang sheet') + `<div class="gen-format-grid" style="flex-direction:column;gap:8px">${fmtBtns}</div>`;
   }
 
   // ── id=5 Formation Textile ──
@@ -8752,6 +8874,158 @@ function genStep1HTML() {
   return '';
 }
 
+// ── Canvas DTF inline (campId=4) ─────────────────────────
+var _gdtf = { cvs:null, ctx:null, logos:[], placed:[], active:-1, drag:null, scale:1, Wcm:91, Hcm:56, cw:0, ch:0 };
+
+function genDtfInit() {
+  var cvs = document.getElementById('gen-dtf-canvas');
+  if (!cvs) return;
+  var fmt = genFlow.selections.format || '1yard';
+  var Wcm = fmt === '1yard' ? 91 : 46, Hcm = 56;
+  var containerW = Math.min((cvs.parentElement ? cvs.parentElement.offsetWidth - 12 : 400), 430);
+  var scale = containerW / Wcm;
+  var cw = Math.round(Wcm * scale), ch = Math.round(Hcm * scale);
+  cvs.width = cw; cvs.height = ch;
+  cvs.style.width = cw + 'px'; cvs.style.height = ch + 'px';
+  _gdtf = { cvs: cvs, ctx: cvs.getContext('2d'), logos: _gdtf.logos || [], placed: _gdtf.placed || [], active: -1, drag: null, scale: scale, Wcm: Wcm, Hcm: Hcm, cw: cw, ch: ch };
+  genDtfRender();
+  genDtfUpdateCount();
+}
+
+function genDtfRender() {
+  var d = _gdtf;
+  if (!d.ctx) return;
+  var ctx = d.ctx;
+  ctx.clearRect(0, 0, d.cw, d.ch);
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, d.cw, d.ch);
+  // grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 0.5;
+  var gridStep = d.scale * 5;
+  for (var x = 0; x <= d.cw; x += gridStep) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, d.ch); ctx.stroke(); }
+  for (var y = 0; y <= d.ch; y += gridStep) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(d.cw, y); ctx.stroke(); }
+  // border
+  ctx.strokeStyle = 'rgba(108,99,255,0.6)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, d.cw - 2, d.ch - 2);
+  // placed logos
+  for (var i = 0; i < d.placed.length; i++) {
+    var p = d.placed[i];
+    if (!p.img) continue;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    var hw = p.w / 2, hh = p.h / 2;
+    ctx.drawImage(p.img, -hw, -hh, p.w, p.h);
+    if (i === d.active) {
+      ctx.strokeStyle = '#43e97b';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-hw - 2, -hh - 2, p.w + 4, p.h + 4);
+    }
+    ctx.restore();
+  }
+  // empty hint
+  if (d.placed.length === 0) {
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Ajoutez vos logos ici', d.cw / 2, d.ch / 2 - 8);
+    ctx.font = '11px sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillText('Glissez pour repositionner', d.cw / 2, d.ch / 2 + 10);
+  }
+}
+
+function genDtfFileLoad(e) {
+  var files = e.target.files;
+  if (!files || !files.length) return;
+  var DEFAULT_W = Math.round(_gdtf.scale * 8);
+  for (var i = 0; i < files.length; i++) {
+    (function(file) {
+      var img = new Image();
+      var url = URL.createObjectURL(file);
+      img.onload = function() {
+        var ratio = img.naturalWidth / img.naturalHeight;
+        var w = DEFAULT_W, h = Math.round(w / ratio);
+        _gdtf.placed.push({ img: img, x: Math.round(_gdtf.cw / 2), y: Math.round(_gdtf.ch / 2), w: w, h: h });
+        _gdtf.active = _gdtf.placed.length - 1;
+        genDtfRender();
+        genDtfUpdateCount();
+      };
+      img.src = url;
+    })(files[i]);
+  }
+  e.target.value = '';
+}
+
+function _gdtfPos(e) {
+  var rect = _gdtf.cvs.getBoundingClientRect();
+  var src = e.touches ? e.touches[0] : e;
+  return { x: (src.clientX - rect.left) * (_gdtf.cw / rect.width), y: (src.clientY - rect.top) * (_gdtf.ch / rect.height) };
+}
+
+function genDtfCvDown(e) {
+  var pos = _gdtfPos(e);
+  var hit = -1;
+  for (var i = _gdtf.placed.length - 1; i >= 0; i--) {
+    var p = _gdtf.placed[i];
+    var hw = p.w / 2, hh = p.h / 2;
+    if (pos.x >= p.x - hw && pos.x <= p.x + hw && pos.y >= p.y - hh && pos.y <= p.y + hh) { hit = i; break; }
+  }
+  _gdtf.active = hit;
+  if (hit >= 0) _gdtf.drag = { ox: pos.x - _gdtf.placed[hit].x, oy: pos.y - _gdtf.placed[hit].y };
+  else _gdtf.drag = null;
+  genDtfRender();
+}
+
+function genDtfCvMove(e) {
+  if (_gdtf.drag === null || _gdtf.active < 0) return;
+  e.preventDefault();
+  var pos = _gdtfPos(e);
+  _gdtf.placed[_gdtf.active].x = pos.x - _gdtf.drag.ox;
+  _gdtf.placed[_gdtf.active].y = pos.y - _gdtf.drag.oy;
+  genDtfRender();
+}
+
+function genDtfCvUp() { _gdtf.drag = null; }
+
+function genDtfTouchStart(e) { e.preventDefault(); genDtfCvDown(e); }
+function genDtfTouchMove(e)  { e.preventDefault(); genDtfCvMove(e); }
+
+function genDtfDelActive() {
+  if (_gdtf.active < 0 || !_gdtf.placed.length) return;
+  _gdtf.placed.splice(_gdtf.active, 1);
+  _gdtf.active = _gdtf.placed.length - 1;
+  genDtfRender();
+  genDtfUpdateCount();
+}
+
+function genDtfUpdateCount() {
+  var el = document.getElementById('gen-dtf-count');
+  if (el) el.textContent = _gdtf.placed.length + ' logo' + (_gdtf.placed.length !== 1 ? 's' : '');
+}
+
+function genDtfValidate() {
+  if (_gdtf.placed.length === 0) {
+    alert('Ajoutez au moins un logo avant de valider.');
+    return;
+  }
+  var b64 = _gdtf.cvs.toDataURL('image/jpeg', 0.75);
+  genFlow.selections.plateB64 = b64;
+  genFlow.selections.plateConfirmed = true;
+  genFlow.selections.plateLogos = _gdtf.placed.length;
+  genRender();
+}
+
+function genDtfReset() {
+  genFlow.selections.plateConfirmed = false;
+  genFlow.selections.plateB64 = null;
+  genFlow.selections.plateLogos = 0;
+  _gdtf.placed = [];
+  _gdtf.active = -1;
+  genRender();
+}
+
 // ── Étape 2 : Complément + Coordonnées ──────────────────
 function genStep2HTML() {
   const { campId, selections } = genFlow;
@@ -8770,8 +9044,8 @@ function genStep2HTML() {
   }
 
   if (campId === 4) {
-    const fmtPrices = {'22x30cm':8500,'22x60cm':12000,'22x90cm':15000,'A3':9000,'A2':14000};
-    const base = fmtPrices[selections.format] || 8500;
+    const fmtPrices = {'1yard':20000,'halfyard':12000};
+    const base = fmtPrices[selections.format] || 12000;
     extra = `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px">
       <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-bottom:8px">Quantité de feuilles</div>
       <div style="display:flex;align-items:center;gap:12px">
@@ -8922,7 +9196,7 @@ function genGetPrice() {
   const prod = CAMPS[campId].products[prodIdx];
   const base = parseInt(prod.p.replace(/[^\d]/g,'')) || 0;
   if (campId === 4) {
-    const P = {'22x30cm':8500,'22x60cm':12000,'22x90cm':15000,'A3':9000,'A2':14000};
+    const P = {'1yard':20000,'halfyard':12000,'22x30cm':8500,'22x60cm':12000,'22x90cm':20000,'A3':9000,'A2':14000};
     return (P[selections.format] || base) * (selections.qty || 1);
   }
   if (campId === 5) {

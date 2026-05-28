@@ -323,7 +323,119 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
   .calc-lay,.vis-lay,.plans,.form-lay{grid-template-columns:1fr}
   .stats-row{grid-template-columns:1fr 1fr}
   nav{display:none}
+  .pk-fmt-grid,.pk-step2-layout,.pk-step3-layout{grid-template-columns:1fr}
+  .pk-box{width:100%;border-radius:8px 8px 0 0;max-height:100vh;margin-top:auto}
+  #pack-modal{align-items:flex-end}
 }
+
+/* ══ PACK COLLECTOR DTF — MODAL ══ */
+.nav-pack{background:linear-gradient(135deg,var(--gold),#a07820)!important;color:var(--black)!important;font-weight:700!important}
+.nav-pack:hover{opacity:.9!important;color:var(--black)!important}
+
+#pack-modal{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.92);align-items:center;justify-content:center}
+#pack-modal.open{display:flex}
+.pk-box{background:#0f0f0f;border:1px solid var(--border);border-radius:12px;width:96%;max-width:980px;max-height:95vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 32px 80px rgba(0,0,0,.8)}
+.pk-head{padding:13px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#0a1a0f,#0f0f0f);flex-shrink:0}
+.pk-logo-badge{background:linear-gradient(135deg,var(--gold),#a07820);color:var(--black);font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;padding:4px 12px;border-radius:3px;white-space:nowrap}
+.pk-title{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:3px;color:var(--white);flex:1}
+.pk-close{background:none;border:none;color:var(--grey-lt);font-size:1.2rem;cursor:pointer;padding:4px 8px;border-radius:4px;transition:all .15s}
+.pk-close:hover{background:rgba(255,255,255,.07);color:var(--white)}
+.pk-steps{display:flex;align-items:center;gap:5px}
+.pk-dot{width:26px;height:26px;border-radius:50%;background:var(--grey);border:2px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--grey-lt);transition:all .2s;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.pk-dot.active{background:var(--teal-dk);border-color:var(--teal);color:#fff}
+.pk-dot.done{background:#1a4a00;border-color:#4a9a20;color:#7ddb3a}
+.pk-dot-line{width:16px;height:2px;background:rgba(255,255,255,.1);border-radius:1px}
+.pk-body{flex:1;overflow-y:auto;padding:20px}
+.pk-foot{padding:11px 20px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:space-between;align-items:center;flex-shrink:0}
+
+/* Step 1 */
+.pk-fmt-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
+.pk-fmt-card{border:2px solid var(--border);border-radius:10px;padding:20px 16px;cursor:pointer;transition:all .22s;background:linear-gradient(135deg,#141414,#1a1a1a);position:relative}
+.pk-fmt-card:hover{border-color:var(--teal);transform:translateY(-2px)}
+.pk-fmt-card.sel{border-color:var(--gold);background:linear-gradient(135deg,#1a1500,#111000)}
+.pk-fmt-check{display:none;position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:var(--gold);color:var(--black);font-size:.62rem;font-weight:900;align-items:center;justify-content:center}
+.pk-fmt-card.sel .pk-fmt-check{display:flex}
+.pk-sheet-viz{width:100%;background:rgba(255,255,255,.96);border-radius:4px;border:1px solid rgba(212,168,67,.22);position:relative;overflow:hidden;margin-bottom:13px;display:flex;align-items:center;justify-content:center;min-height:60px;max-height:130px}
+.pk-sheet-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px);background-size:6px 6px}
+.pk-sheet-lbl{position:absolute;bottom:3px;right:5px;font-size:7px;font-family:'JetBrains Mono',monospace;color:rgba(0,0,0,.28);letter-spacing:.5px}
+.pk-fmt-name{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;color:var(--gold);margin-bottom:2px}
+.pk-fmt-dims{font-size:10px;color:var(--grey-lt);font-family:'JetBrains Mono',monospace;letter-spacing:1px;margin-bottom:9px}
+.pk-fmt-price{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:2px;color:var(--white);line-height:1}
+.pk-fmt-price-sub{font-size:9px;color:var(--grey-lt);font-family:'JetBrains Mono',monospace;margin-top:3px}
+.pk-fmt-badge{display:inline-block;background:var(--teal-dk);color:var(--gold-lt);font-size:8px;font-weight:700;letter-spacing:2px;padding:2px 7px;border-radius:2px;font-family:'JetBrains Mono',monospace;margin-top:7px}
+.pk-fmt-card.sel .pk-fmt-badge{background:linear-gradient(135deg,var(--gold),#a07820);color:var(--black)}
+.pk-qty-row{display:flex;align-items:center;gap:14px}
+.pk-qty-lbl{font-size:9px;color:var(--grey-lt);font-family:'JetBrains Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;flex:1}
+.pk-qty-ctrl{display:flex;align-items:center;gap:8px;background:var(--grey);border-radius:6px;padding:4px 8px}
+.pk-qty-btn{width:28px;height:28px;border-radius:5px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:var(--white);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all .15s}
+.pk-qty-btn:hover{background:var(--teal-dk);border-color:var(--teal)}
+.pk-qty-val{font-size:1.1rem;font-weight:800;min-width:22px;text-align:center;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;color:var(--gold)}
+.pk-total-preview{margin-top:16px;background:linear-gradient(135deg,#0d1f1c,#111);border:1px solid var(--teal);border-radius:6px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.pk-total-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(245,240,232,.6);font-family:'JetBrains Mono',monospace}
+.pk-total-amt{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--gold-lt);letter-spacing:2px}
+
+/* Step 2 */
+.pk-step2-layout{display:grid;grid-template-columns:210px 1fr;gap:12px;align-items:start}
+.pk-upload-zone{border:2px dashed rgba(212,168,67,.3);border-radius:6px;padding:14px;text-align:center;cursor:pointer;transition:all .18s;background:rgba(212,168,67,.02);margin-bottom:9px}
+.pk-upload-zone:hover,.pk-upload-zone.drag{border-color:var(--gold);background:rgba(212,168,67,.06)}
+.pk-upload-zone .iz{font-size:20px}
+.pk-upload-zone p{font-size:9px;color:var(--grey-lt);margin-top:4px;line-height:1.6}
+.pk-logo-list{display:grid;gap:4px;max-height:220px;overflow-y:auto}
+.pk-logo-item{display:flex;align-items:center;gap:8px;background:var(--grey);border-radius:4px;padding:6px 8px;cursor:pointer;transition:all .14s;border:2px solid transparent}
+.pk-logo-item:hover{background:#333}
+.pk-logo-item.sel{background:linear-gradient(135deg,#0d1f1c,#111);border-color:var(--teal)}
+.pk-logo-thumb{width:26px;height:26px;object-fit:contain;border-radius:3px;background:rgba(255,255,255,.05)}
+.pk-logo-name{font-size:10px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--grey-lt)}
+.pk-logo-item.sel .pk-logo-name{color:var(--teal)}
+.pk-logo-rm{background:none;border:none;color:var(--red);cursor:pointer;font-size:10px;padding:2px 4px;opacity:.55;transition:opacity .14s;line-height:1}
+.pk-logo-rm:hover{opacity:1}
+.pk-empty-logos{font-size:9px;color:var(--grey-lt);text-align:center;padding:12px 6px;border:1px dashed rgba(255,255,255,.08);border-radius:4px;line-height:1.8}
+.pk-stats{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:10px}
+.pk-stat{background:var(--grey);border-radius:4px;padding:8px;text-align:center}
+.pk-stat-n{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--gold);letter-spacing:1px;line-height:1}
+.pk-stat-l{font-size:8px;color:var(--grey-lt);text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace;margin-top:2px}
+.pk-hint{font-size:9px;color:var(--grey-lt);font-family:'JetBrains Mono',monospace;margin-top:9px;padding:8px;background:rgba(26,158,143,.06);border-radius:4px;border-left:2px solid var(--teal);line-height:1.8}
+.pk-toolbar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px;align-items:center}
+.pk-tb{background:var(--grey);border:1px solid rgba(255,255,255,.09);color:var(--white);padding:5px 10px;font-size:10px;font-family:'DM Sans',sans-serif;border-radius:4px;cursor:pointer;transition:all .14s;white-space:nowrap}
+.pk-tb:hover,.pk-tb.on{background:var(--teal-dk);border-color:var(--teal)}
+.pk-tb.danger:hover{background:#5a0d0d;border-color:var(--red)}
+.pk-canvas-wrap{background:#1a1a1a;border:1px solid var(--border);border-radius:6px;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:10px;min-height:220px}
+
+/* Step 3 */
+.pk-step3-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.pk-contact-form{background:#111;border:1px solid var(--border);border-radius:8px;padding:18px}
+.pk-contact-form h3{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--gold);margin-bottom:14px}
+.pk-inp{width:100%;background:var(--grey);border:1px solid rgba(255,255,255,.08);color:var(--white);padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;border-radius:4px;outline:none;margin-bottom:11px;transition:border-color .18s}
+.pk-inp:focus{border-color:var(--teal)}
+.pk-ta{width:100%;background:var(--grey);border:1px solid rgba(255,255,255,.08);color:var(--white);padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;border-radius:4px;outline:none;margin-bottom:11px;resize:vertical;min-height:68px;transition:border-color .18s}
+.pk-ta:focus{border-color:var(--teal)}
+.pk-field-lbl{font-size:9px;letter-spacing:1.8px;text-transform:uppercase;color:var(--grey-lt);margin-bottom:4px;font-family:'JetBrains Mono',monospace;display:block}
+.pk-recap-box{background:linear-gradient(135deg,#0d1f1c,#111);border:1px solid var(--teal);border-radius:8px;padding:16px;margin-bottom:12px}
+.pk-recap-title{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:var(--teal);margin-bottom:11px}
+.pk-recap-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px}
+.pk-recap-row:last-child{border-bottom:none}
+.pk-recap-key{color:var(--grey-lt);font-family:'JetBrains Mono',monospace}
+.pk-recap-val{color:var(--white);font-weight:700;font-family:'JetBrains Mono',monospace}
+.pk-recap-val.gold{color:var(--gold)}
+.pk-total-bar{background:linear-gradient(135deg,var(--teal-dk),#0a3a34);border:1px solid var(--teal);border-radius:6px;padding:11px 14px;display:flex;justify-content:space-between;align-items:center;margin:11px 0}
+.pk-total-bar-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(245,240,232,.6);font-family:'JetBrains Mono',monospace}
+.pk-total-bar-val{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold-lt);letter-spacing:2px}
+.pk-cards-row{display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.pk-card-v{background:#1A1F71;color:#fff;font-style:italic;font-family:serif;font-size:11px;font-weight:900;padding:3px 8px;border-radius:4px}
+.pk-card-cb{background:#005EB8;color:#fff;font-size:9px;font-weight:900;padding:3px 8px;border-radius:4px}
+.pk-mc-wrap{display:inline-flex;align-items:center;height:22px}
+.pk-mc-r{width:14px;height:14px;border-radius:50%;background:#EB001B}
+.pk-mc-o{width:14px;height:14px;border-radius:50%;background:#F79E1B;margin-left:-6px}
+#pk-kr-zone{min-height:60px;margin-top:6px}
+.pk-payer-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--gold),#a07820);border:none;color:var(--black);font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:3px;border-radius:4px;cursor:pointer;transition:all .22s;margin-top:8px}
+.pk-payer-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(212,168,67,.38)}
+.pk-payer-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.pk-success-box{display:none;text-align:center;padding:32px;background:linear-gradient(135deg,#0d2a00,#0f1a00);border:1px solid #4a9a20;border-radius:8px;margin-bottom:12px}
+.pk-success-box.vis{display:block}
+.pk-success-ico{font-size:46px;margin-bottom:10px}
+.pk-success-title{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;color:#7ddb3a;margin-bottom:7px}
+.pk-success-sub{font-size:12px;color:#aaa;line-height:1.8}
+.pk-canvas-thumb{width:100%;border-radius:4px;border:1px solid var(--border);display:block}
 </style>
 </head>
 <body>
@@ -344,6 +456,7 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
     <a id="n-visuel"     onclick="goTab('visuel')">Placement Visuel</a>
     <a id="n-abonnement" onclick="goTab('abonnement')">Abonnements</a>
     <a id="n-commande"   onclick="goTab('commande')">Commander</a>
+    <a class="nav-pack" onclick="pkOpen()">🎁 Pack Collector</a>
   </nav>
 </header>
 
@@ -359,6 +472,7 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
       <div class="hero-btns">
         <button class="btn-p" onclick="goTab('abonnement')">Voir les Formules</button>
         <button class="btn-o" onclick="goTab('visuel')">Placer mes Logos →</button>
+        <button class="btn-p" style="background:linear-gradient(135deg,var(--gold),#a07820);border:none" onclick="pkOpen()">🎁 Pack Collector →</button>
       </div>
     </div>
     <div style="display:flex;justify-content:center">
@@ -784,6 +898,52 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
      JAVASCRIPT
 ═════════════════════════════════════════════ -->
 <script>
+
+/* ═══════ GANG MODE — commande depuis LP Andromeda ═══════ */
+var _gangMode = null;
+(function(){
+  var p = new URLSearchParams(window.location.search);
+  var g = p.get('gang'); if(!g) return;
+  _gangMode = g;
+  var gangSH = (g==='1yard') ? 910 : 460;
+  /* ajuste la hauteur du canvas AVANT initCanvas */
+  document.addEventListener('DOMContentLoaded', function(){
+    var cvEl = document.getElementById('mainCv');
+    if(cvEl){ cvEl.height = gangSH; cvEl.setAttribute('height', gangSH); }
+    /* met à jour SH global */
+    SH = gangSH;
+    /* titre */
+    var ttl = document.querySelector('#tab-visuel .sec-t');
+    if(ttl) ttl.textContent = 'Placement Visuel — Gang Sheet '
+      +(g==='1yard'?'1 Yard \xd7 22″ (91\xd756 cm)':'\xbd Yard \xd7 22″ (46\xd756 cm)');
+    /* bandeau commande */
+    var banner = document.createElement('div');
+    banner.id = 'gang-banner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;'
+      +'background:linear-gradient(135deg,#6c63ff,#a78bfa);color:#fff;'
+      +'padding:7px 16px;display:flex;align-items:center;gap:12px;'
+      +'font-family:DM Sans,system-ui,sans-serif;font-size:.82rem;'
+      +'box-shadow:0 3px 14px rgba(0,0,0,.45)';
+    banner.innerHTML = '<span style="font-weight:800;letter-spacing:1px">🛒 MODE COMMANDE</span>'
+      +'<span style="opacity:.85">Format : '+(g==='1yard'?'1 Yard \xd7 22″':'½ Yard \xd7 22″')+'</span>'
+      +'<span style="opacity:.55;font-size:.72rem">— Placez vos logos, puis cliquez Valider</span>'
+      +'<button id="gang-validate-btn" onclick="gangValidate()" style="margin-left:auto;padding:6px 18px;'
+      +'border-radius:20px;background:#fff;color:#6c63ff;border:none;font-weight:800;'
+      +'font-size:.8rem;cursor:pointer;white-space:nowrap">✅ Valider ma commande</button>';
+    document.body.prepend(banner);
+    document.querySelector('header').style.marginTop = '40px';
+    /* aller directement à l'onglet placement */
+    setTimeout(function(){ goTab('visuel'); }, 150);
+  });
+})();
+
+function gangValidate(){
+  if(!placed || !placed.length){ alert('Placez au moins un logo avant de valider.'); return; }
+  var b64 = cv ? cv.toDataURL('image/jpeg', 0.85) : null;
+  var payload = { type:'plateReady', plateB64:b64, logosCount:placed.length, format:_gangMode };
+  if(window.opener){ window.opener.postMessage(payload, '*'); window.close(); }
+  else { localStorage.setItem('hcs_gang_plate', JSON.stringify(payload)); window.close(); }
+}
 
 /* ═══════ TABS ═══════ */
 function goTab(id) {
@@ -1804,6 +1964,730 @@ window.clearLogoGallery=clearLogoGallery;
 window.imgDominantColor=imgDominantColor;
 window.renderLib=renderLib; window.drawItem=drawItem; window.renderCv=renderCv;
 window.surfacePct=surfacePct; window.h2r=h2r; window.updSelBox=updSelBox;
+
+/* ══════════════════════════════════════════════════════
+   PACK COLLECTOR DTF — PARCOURS CLIENT 3 ÉTAPES
+   Étape 1 : Format (1 yard / ½ yard) + quantité
+   Étape 2 : Upload logos + placement canvas simplifié
+   Étape 3 : Contact + paiement OSB Krypton
+══════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+var PK={
+  step:1, fmt:null, qty:1, z:1,
+  prices:{yard:20000,half:12000},
+  dims:{yard:{w:56,h:91,lbl:'56×91 cm'},half:{w:56,h:46,lbl:'56×46 cm'}},
+  S:4,                    /* px par cm */
+  CW:0, CH:0,             /* taille canvas */
+  cv:null, ctx:null,
+  logos:[],               /* [{name,url,img}] */
+  activeLogo:-1,          /* index logo sélectionné */
+  placed:[],              /* [{x,y,w,h,img,rot}] */
+  selItem:-1,             /* index item sélectionné */
+  tool:'place',
+  drag:null,
+
+  open:function(){
+    /* Reset état complet */
+    this.step=1; this.fmt=null; this.qty=1; this.z=1;
+    this.logos=[]; this.activeLogo=-1;
+    this.placed=[]; this.selItem=-1;
+    this.tool='place'; this.drag=null;
+    var ids=['pk-nom','pk-email','pk-tel','pk-notes'];
+    ids.forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+    var sb=document.getElementById('pk-success-box');
+    if(sb) sb.classList.remove('vis');
+    var sf=document.getElementById('pk-step3-form');
+    if(sf) sf.style.display='block';
+    var pb=document.getElementById('pk-payer-btn');
+    if(pb){pb.style.display='';pb.disabled=false;pb.textContent='💳 PAYER MAINTENANT';}
+    var kz=document.getElementById('pk-kr-zone');
+    if(kz) kz.innerHTML='';
+    var fc1=document.getElementById('pk-fc-yard');
+    var fc2=document.getElementById('pk-fc-half');
+    if(fc1) fc1.classList.remove('sel');
+    if(fc2) fc2.classList.remove('sel');
+    var ta=document.getElementById('pk-total-amt');
+    if(ta) ta.textContent='— XPF';
+    var td=document.getElementById('pk-total-detail');
+    if(td) td.textContent='Sélectionnez un format';
+    var qv=document.getElementById('pk-qty-val');
+    if(qv) qv.textContent='1';
+    if(window.KR){try{KR.removeForms();}catch(_){}}
+    document.getElementById('pack-modal').classList.add('open');
+    this.goStep(1);
+  },
+
+  close:function(){
+    document.getElementById('pack-modal').classList.remove('open');
+    if(window.KR){try{KR.removeForms();}catch(_){}}
+  },
+
+  goStep:function(n){
+    this.step=n;
+    for(var i=1;i<=3;i++){
+      var d=document.getElementById('pk-d'+i);
+      if(!d) continue;
+      d.className='pk-dot'+(i<n?' done':i===n?' active':'');
+    }
+    ['pk-s1','pk-s2','pk-s3'].forEach(function(id,idx){
+      var el=document.getElementById(id);
+      if(el) el.style.display=(idx+1===n)?'block':'none';
+    });
+    var titles=['ÉTAPE 1 — CHOIX DU FORMAT','ÉTAPE 2 — PLACEMENT DES LOGOS','ÉTAPE 3 — CONTACT & PAIEMENT'];
+    var tt=document.getElementById('pk-title');
+    if(tt) tt.textContent=titles[n-1];
+    var prevBtn=document.getElementById('pk-prev-btn');
+    var nextBtn=document.getElementById('pk-next-btn');
+    if(prevBtn) prevBtn.style.display=n>1?'inline-block':'none';
+    if(nextBtn){
+      nextBtn.style.display=n<3?'inline-block':'none';
+      if(n===2) nextBtn.textContent='Valider le placement →';
+      else nextBtn.textContent='Continuer →';
+    }
+    var infos=['Sélectionnez votre format','Placez vos logos puis validez','Coordonnées et paiement'];
+    var fi=document.getElementById('pk-foot-info');
+    if(fi) fi.textContent=infos[n-1];
+    if(n===2){var self=this;setTimeout(function(){self.initCanvas();},40);}
+    if(n===3) this.buildRecap();
+  },
+
+  next:function(){
+    if(this.step===1){
+      if(!this.fmt){alert('Sélectionnez un format (1 Yard ou ½ Yard).');return;}
+      this.goStep(2);
+    } else if(this.step===2){
+      if(!this.placed.length){alert('Placez au moins 1 logo sur la feuille avant de continuer.');return;}
+      this.goStep(3);
+    }
+  },
+  prev:function(){if(this.step>1)this.goStep(this.step-1);},
+
+  selFmt:function(f){
+    this.fmt=f;
+    var fc1=document.getElementById('pk-fc-yard');
+    var fc2=document.getElementById('pk-fc-half');
+    if(fc1) fc1.classList.toggle('sel',f==='yard');
+    if(fc2) fc2.classList.toggle('sel',f==='half');
+    this.updateTotal();
+  },
+
+  updQty:function(d){
+    this.qty=Math.max(1,Math.min(10,this.qty+d));
+    var qv=document.getElementById('pk-qty-val');
+    if(qv) qv.textContent=this.qty;
+    this.updateTotal();
+  },
+
+  updateTotal:function(){
+    if(!this.fmt){return;}
+    var pu=this.prices[this.fmt], tot=pu*this.qty;
+    var ta=document.getElementById('pk-total-amt');
+    var td=document.getElementById('pk-total-detail');
+    if(ta) ta.textContent=tot.toLocaleString('fr-FR')+' XPF';
+    if(td) td.textContent=this.qty+' × '+pu.toLocaleString('fr-FR')+' XPF ('+this.dims[this.fmt].lbl+')';
+  },
+
+  /* ────────── CANVAS ────────── */
+  initCanvas:function(){
+    if(!this.fmt) return;
+    var d=this.dims[this.fmt];
+    this.CW=d.w*this.S; this.CH=d.h*this.S;
+    var cv=document.getElementById('pk-cv');
+    if(!cv) return;
+    this.cv=cv; this.ctx=cv.getContext('2d');
+    cv.width=this.CW; cv.height=this.CH;
+    this._applyZoom(); this.render();
+  },
+
+  _applyZoom:function(){
+    if(!this.cv) return;
+    this.cv.style.width=Math.round(this.CW*this.z)+'px';
+    this.cv.style.height=Math.round(this.CH*this.z)+'px';
+  },
+
+  render:function(){
+    var ctx=this.ctx, W=this.CW, H=this.CH, S=this.S;
+    if(!ctx) return;
+    /* Fond blanc */
+    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
+    /* Grille cm */
+    ctx.strokeStyle='rgba(0,0,0,.06)'; ctx.lineWidth=0.4;
+    for(var x=0;x<=W;x+=S){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(var y=0;y<=H;y+=S){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    /* Grille 5 cm */
+    ctx.strokeStyle='rgba(0,0,0,.12)'; ctx.lineWidth=0.6;
+    for(var x5=0;x5<=W;x5+=S*5){ctx.beginPath();ctx.moveTo(x5,0);ctx.lineTo(x5,H);ctx.stroke();}
+    for(var y5=0;y5<=H;y5+=S*5){ctx.beginPath();ctx.moveTo(0,y5);ctx.lineTo(W,y5);ctx.stroke();}
+    /* Bordure or */
+    ctx.strokeStyle='rgba(212,168,67,.5)'; ctx.lineWidth=1.5;
+    ctx.strokeRect(1,1,W-2,H-2);
+    /* Libellé dimensions */
+    ctx.fillStyle='rgba(0,0,0,.2)';
+    ctx.font='bold '+Math.max(6,S*0.7)+'px monospace';
+    ctx.textAlign='center'; ctx.textBaseline='bottom';
+    if(this.fmt) ctx.fillText(this.dims[this.fmt].lbl, W/2, H-2);
+    /* Items */
+    var self=this;
+    this.placed.forEach(function(lg,i){self._drawItem(lg,i);});
+  },
+
+  _drawItem:function(lg,idx){
+    var ctx=this.ctx, sel=idx===this.selItem;
+    ctx.save();
+    if(lg.rot){ctx.translate(lg.x,lg.y);ctx.rotate(lg.rot*Math.PI/180);ctx.translate(-lg.x,-lg.y);}
+    var x0=lg.x-lg.w/2, y0=lg.y-lg.h/2;
+    if(lg.img){ctx.drawImage(lg.img,x0,y0,lg.w,lg.h);}
+    else{ctx.fillStyle='rgba(26,158,143,.6)';ctx.fillRect(x0,y0,lg.w,lg.h);}
+    if(sel){
+      ctx.strokeStyle='#d4a843'; ctx.lineWidth=1.5;
+      ctx.setLineDash([3,2]); ctx.strokeRect(x0-1,y0-1,lg.w+2,lg.h+2);
+      ctx.setLineDash([]);
+      /* Poignée rotation/resize */
+      ctx.fillStyle='#d4a843'; ctx.beginPath();
+      ctx.arc(lg.x+lg.w/2, lg.y+lg.h/2, 4, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  },
+
+  _evPos:function(e){
+    var r=this.cv.getBoundingClientRect();
+    return {ox:(e.clientX-r.left)*(this.CW/r.width), oy:(e.clientY-r.top)*(this.CH/r.height)};
+  },
+
+  _hitItem:function(ox,oy){
+    for(var i=this.placed.length-1;i>=0;i--){
+      var lg=this.placed[i];
+      if(ox>=lg.x-lg.w/2&&ox<=lg.x+lg.w/2&&oy>=lg.y-lg.h/2&&oy<=lg.y+lg.h/2) return i;
+    }
+    return -1;
+  },
+
+  cvDown:function(e){
+    var p=this._evPos(e), ox=p.ox, oy=p.oy;
+    if(this.tool==='place'){
+      if(this.activeLogo<0){
+        /* En mode "placer" sans logo sélectionné : sélectionner un item */
+        this.selItem=this._hitItem(ox,oy); this.render(); return;
+      }
+      var logo=this.logos[this.activeLogo]; if(!logo) return;
+      /* Taille par défaut 8×8 cm, adapté au ratio de l'image */
+      var dw=this.S*8, dh=this.S*8;
+      if(logo.img&&logo.img.naturalWidth&&logo.img.naturalHeight){
+        var asp=logo.img.naturalWidth/logo.img.naturalHeight;
+        dw=this.S*8; dh=Math.round(dw/asp);
+        if(dh>this.CH*0.45){dh=Math.round(this.CH*0.45);dw=Math.round(dh*asp);}
+      }
+      ox=Math.max(dw/2,Math.min(this.CW-dw/2,ox));
+      oy=Math.max(dh/2,Math.min(this.CH-dh/2,oy));
+      this.placed.push({x:ox,y:oy,w:dw,h:dh,img:logo.img,rot:0});
+      this.selItem=this.placed.length-1;
+      this.render(); this.updateStats();
+    } else {
+      /* Mode déplacer */
+      var hit=this._hitItem(ox,oy);
+      this.selItem=hit;
+      if(hit>=0){
+        var lg=this.placed[hit];
+        this.drag={sx:ox,sy:oy,ox0:lg.x,oy0:lg.y};
+        if(this.cv) this.cv.style.cursor='grabbing';
+      }
+      this.render();
+    }
+  },
+
+  cvMove:function(e){
+    if(!this.drag) return;
+    var p=this._evPos(e);
+    var lg=this.placed[this.selItem]; if(!lg) return;
+    lg.x=Math.max(lg.w/2,Math.min(this.CW-lg.w/2,this.drag.ox0+(p.ox-this.drag.sx)));
+    lg.y=Math.max(lg.h/2,Math.min(this.CH-lg.h/2,this.drag.oy0+(p.oy-this.drag.sy)));
+    this.render();
+  },
+
+  cvUp:function(){
+    this.drag=null;
+    if(this.cv&&this.tool==='move') this.cv.style.cursor='grab';
+  },
+
+  setTool:function(t){
+    this.tool=t;
+    var tp=document.getElementById('pk-t-place');
+    var tm=document.getElementById('pk-t-move');
+    if(tp) tp.classList.toggle('on',t==='place');
+    if(tm) tm.classList.toggle('on',t==='move');
+    if(this.cv) this.cv.style.cursor=t==='place'?'crosshair':'grab';
+  },
+
+  delSel:function(){
+    if(this.selItem<0) return;
+    this.placed.splice(this.selItem,1); this.selItem=-1;
+    this.render(); this.updateStats();
+  },
+
+  rotSel:function(){
+    if(this.selItem<0) return;
+    var lg=this.placed[this.selItem];
+    lg.rot=((lg.rot||0)+90)%360; this.render();
+  },
+
+  clearAll:function(){
+    if(!this.placed.length) return;
+    if(!confirm('Effacer tous les logos de la feuille ?')) return;
+    this.placed=[]; this.selItem=-1; this.render(); this.updateStats();
+  },
+
+  doZoom:function(d){
+    this.z=Math.max(0.4,Math.min(3,this.z+d*0.25));
+    this._applyZoom();
+    var zl=document.getElementById('pk-zlbl');
+    if(zl) zl.textContent=Math.round(this.z*100)+'%';
+  },
+
+  updateStats:function(){
+    var nb=this.placed.length;
+    var area=this.placed.reduce(function(a,lg){return a+lg.w*lg.h;},0);
+    var pct=(this.CW&&this.CH)?Math.min(100,Math.round(area/(this.CW*this.CH)*100)):0;
+    var sn=document.getElementById('pk-stat-nb');
+    var sp=document.getElementById('pk-stat-pct');
+    if(sn) sn.textContent=nb;
+    if(sp) sp.textContent=pct+'%';
+  },
+
+  /* ────────── LOGOS ────────── */
+  onFile:function(e){
+    Array.from(e.target.files).forEach(function(f){PK.loadLogo(f);});
+    e.target.value='';
+  },
+
+  onDrop:function(e){
+    e.preventDefault();
+    var dz=document.getElementById('pk-dropzone');
+    if(dz) dz.classList.remove('drag');
+    Array.from(e.dataTransfer.files)
+      .filter(function(f){return f.type.startsWith('image/');})
+      .forEach(function(f){PK.loadLogo(f);});
+  },
+
+  loadLogo:function(file){
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      var img=new Image();
+      img.onload=function(){
+        PK.logos.push({name:file.name.replace(/\.[^.]+$/,''), url:ev.target.result, img:img});
+        PK.renderLogoList();
+      };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  },
+
+  renderLogoList:function(){
+    var el=document.getElementById('pk-logo-list'); if(!el) return;
+    if(!this.logos.length){
+      el.innerHTML='<div class="pk-empty-logos">Aucun logo importé<br>Ajoutez vos visuels ci-dessus</div>';
+      return;
+    }
+    el.innerHTML=this.logos.map(function(lg,i){
+      var sel=PK.activeLogo===i?' sel':'';
+      return '<div class="pk-logo-item'+sel+'" onclick="PK.pickLogo('+i+')">'
+        +'<img class="pk-logo-thumb" src="'+lg.url+'" alt="'+lg.name+'">'
+        +'<span class="pk-logo-name">'+lg.name+'</span>'
+        +'<button class="pk-logo-rm" onclick="event.stopPropagation();PK.rmLogo('+i+')">✕</button>'
+        +'</div>';
+    }).join('');
+  },
+
+  pickLogo:function(i){
+    this.activeLogo=i;
+    this.setTool('place');
+    this.renderLogoList();
+    var ci=document.getElementById('pk-cv-info');
+    if(ci) ci.textContent='«'+this.logos[i].name+'» sélectionné — cliquez sur la feuille pour placer';
+  },
+
+  rmLogo:function(i){
+    this.logos.splice(i,1);
+    if(this.activeLogo>=this.logos.length) this.activeLogo=this.logos.length-1;
+    this.renderLogoList();
+  },
+
+  /* ────────── STEP 3 ────────── */
+  buildRecap:function(){
+    if(!this.fmt) return;
+    var d=this.dims[this.fmt], pu=this.prices[this.fmt], tot=pu*this.qty;
+    var fn=this.fmt==='yard'?'1 YARD':'½ YARD';
+    var ids={
+      'pk-rc-fmt':fn,
+      'pk-rc-dims':d.lbl,
+      'pk-rc-qty':this.qty+' feuille'+(this.qty>1?'s':''),
+      'pk-rc-logos':this.placed.length+' logo'+(this.placed.length>1?'s':''),
+      'pk-rc-punit':pu.toLocaleString('fr-FR')+' XPF',
+      'pk-rc-total':tot.toLocaleString('fr-FR')+' XPF',
+      'pk-pay-total':tot.toLocaleString('fr-FR')+' XPF'
+    };
+    Object.keys(ids).forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) el.textContent=ids[id];
+    });
+    /* Snapshot canvas */
+    if(this.cv){
+      try{
+        var pi=document.getElementById('pk-preview-img');
+        if(pi) pi.src=this.cv.toDataURL('image/png');
+      }catch(_){}
+    }
+  },
+
+  initPayment:async function(){
+    var nom=(document.getElementById('pk-nom')||{}).value||'';
+    var email=(document.getElementById('pk-email')||{}).value||'';
+    nom=nom.trim(); email=email.trim();
+    if(!nom||!email){alert('Renseignez votre nom et email pour procéder au paiement.');return;}
+    var btn=document.getElementById('pk-payer-btn');
+    if(btn){btn.disabled=true;btn.textContent='⏳ Connexion OSB...';}
+    var WURL='https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
+    var SEC='hcs-payzen-2026';
+    var tot=this.prices[this.fmt]*this.qty;
+    var fn=(this.fmt==='yard'?'1 Yard 56×91 cm':'½ Yard 56×46 cm')+' ×'+this.qty;
+    try{
+      var res=await fetch(WURL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-worker-secret':SEC},
+        body:JSON.stringify({
+          amount:tot, currency:'XPF',
+          orderId:'PACK-'+Date.now(),
+          customer:{
+            email:email,
+            firstName:nom.split(' ')[0]||nom,
+            lastName:nom.split(' ').slice(1).join(' ')||''
+          },
+          description:'Pack Collector DTF — '+fn,
+          metadata:{format:this.fmt,qty:this.qty,logos:this.placed.length}
+        })
+      });
+      if(!res.ok) throw new Error('Worker HTTP '+res.status);
+      var data=await res.json();
+      if(!data.formToken) throw new Error(data.errorMessage||'Token formToken manquant');
+
+      /* CSS Krypton */
+      if(!document.getElementById('pz-css1')){
+        var hrefs=['https://static.osb.pf/static/js/krypton-client/V4.0/stable/classic-reset.min.css',
+                   'https://static.osb.pf/static/js/krypton-client/V4.0/stable/classic.min.css'];
+        hrefs.forEach(function(h,i){
+          var l=document.createElement('link');l.id='pz-css'+(i+1);
+          l.rel='stylesheet';l.href=h;document.head.appendChild(l);
+        });
+      }
+      /* SDK Krypton */
+      if(!window.KR){
+        await new Promise(function(resolve,reject){
+          if(document.getElementById('pz-sdk')){resolve();return;}
+          var s=document.createElement('script');s.id='pz-sdk';
+          s.src='https://static.osb.pf/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js';
+          s.setAttribute('kr-public-key',data.publicKey);
+          s.setAttribute('kr-language','fr-FR');
+          s.onload=resolve;
+          s.onerror=function(){reject(new Error('SDK OSB indisponible'));};
+          document.head.appendChild(s);
+        });
+      }
+
+      /* Formulaire */
+      var kz=document.getElementById('pk-kr-zone');
+      if(kz) kz.innerHTML='<div class="kr-smart-form" kr-card-form-expanded></div>';
+      await KR.setFormConfig({'kr-public-key':data.publicKey,'kr-language':'fr-FR'});
+      await KR.setFormToken(data.formToken);
+      if(btn) btn.style.display='none';
+
+      /* Callback paiement */
+      KR.onSubmit(function(d){
+        var status=d&&d.clientAnswer&&d.clientAnswer.orderStatus;
+        if(['PAID','RUNNING','AUTHORISED'].indexOf(status)>=0){
+          /* Sauvegarder commande */
+          fetch(WURL.replace('/payzen-token','/order/save'),{
+            method:'POST',
+            headers:{'Content-Type':'application/json','x-worker-secret':SEC},
+            body:JSON.stringify({
+              orderId:'PACK-'+Date.now(), amount:tot, currency:'XPF',
+              campaignName:'Pack Collector DTF', product:fn,
+              client:{
+                name:nom, email:email,
+                phone:(document.getElementById('pk-tel')||{}).value||''
+              },
+              delivery:'À confirmer par HCS'
+            })
+          }).catch(function(){});
+          /* Succès UI */
+          var sf=document.getElementById('pk-step3-form');
+          if(sf) sf.style.display='none';
+          var sb=document.getElementById('pk-success-box');
+          if(sb) sb.classList.add('vis');
+          var sm=document.getElementById('pk-success-msg');
+          if(sm) sm.textContent='Merci '+nom+' ! Votre commande a été reçue. Nous vous contacterons à '+email+' sous 24h pour confirmer la production.';
+        }
+        return false;
+      });
+    }catch(err){
+      if(btn){btn.disabled=false;btn.textContent='💳 PAYER MAINTENANT';}
+      alert('Erreur paiement : '+err.message);
+    }
+  }
+};
+
+/* ── Bindings globaux ── */
+window.PK=PK;
+window.pkOpen=function(){PK.open();};
+window.pkClose=function(){PK.close();};
+window.pkNext=function(){PK.next();};
+window.pkPrev=function(){PK.prev();};
+window.pkSelFmt=function(f){PK.selFmt(f);};
+window.pkQty=function(d){PK.updQty(d);};
+window.pkSetTool=function(t){PK.setTool(t);};
+window.pkDelSel=function(){PK.delSel();};
+window.pkRotSel=function(){PK.rotSel();};
+window.pkClearAll=function(){PK.clearAll();};
+window.pkZoom=function(d){PK.doZoom(d);};
+window.pkOnFile=function(e){PK.onFile(e);};
+window.pkOnDrop=function(e){PK.onDrop(e);};
+window.pkCvDown=function(e){PK.cvDown(e);};
+window.pkCvMove=function(e){PK.cvMove(e);};
+window.pkCvUp=function(){PK.cvUp();};
+window.pkInitPayment=function(){PK.initPayment();};
+})();
 </script>
+
+<!-- ═══════════════════════════════════════════════════════
+     PACK COLLECTOR DTF — MODAL PARCOURS CLIENT 3 ÉTAPES
+════════════════════════════════════════════════════════ -->
+<div id="pack-modal">
+  <div class="pk-box">
+
+    <!-- ── HEADER ── -->
+    <div class="pk-head">
+      <div class="pk-logo-badge">🎁 PACK COLLECTOR</div>
+      <div class="pk-title" id="pk-title">ÉTAPE 1 — CHOIX DU FORMAT</div>
+      <div class="pk-steps">
+        <div class="pk-dot active" id="pk-d1">1</div>
+        <div class="pk-dot-line"></div>
+        <div class="pk-dot" id="pk-d2">2</div>
+        <div class="pk-dot-line"></div>
+        <div class="pk-dot" id="pk-d3">3</div>
+      </div>
+      <button class="pk-close" onclick="pkClose()" title="Fermer">✕</button>
+    </div>
+
+    <!-- ── BODY ── -->
+    <div class="pk-body">
+
+      <!-- ══ STEP 1 — FORMAT ══ -->
+      <div id="pk-s1">
+        <div class="pk-fmt-grid">
+
+          <!-- 1 YARD -->
+          <div class="pk-fmt-card" id="pk-fc-yard" onclick="pkSelFmt('yard')">
+            <div class="pk-fmt-check">✓</div>
+            <div class="pk-sheet-viz" style="aspect-ratio:56/91">
+              <div class="pk-sheet-grid"></div>
+              <div class="pk-sheet-lbl">56 × 91 cm</div>
+            </div>
+            <div class="pk-fmt-name">1 YARD</div>
+            <div class="pk-fmt-dims">22" × 1 yard · 56 × 91 cm</div>
+            <div class="pk-fmt-price">20 000 <span style="font-size:15px;color:var(--grey-lt)">XPF</span></div>
+            <div class="pk-fmt-price-sub">par feuille · jusqu'à 55+ logos</div>
+            <div class="pk-fmt-badge">FORMAT COMPLET</div>
+          </div>
+
+          <!-- ½ YARD -->
+          <div class="pk-fmt-card" id="pk-fc-half" onclick="pkSelFmt('half')">
+            <div class="pk-fmt-check">✓</div>
+            <div class="pk-sheet-viz" style="aspect-ratio:56/46">
+              <div class="pk-sheet-grid"></div>
+              <div class="pk-sheet-lbl">56 × 46 cm</div>
+            </div>
+            <div class="pk-fmt-name">½ YARD</div>
+            <div class="pk-fmt-dims">22" × ½ yard · 56 × 46 cm</div>
+            <div class="pk-fmt-price">12 000 <span style="font-size:15px;color:var(--grey-lt)">XPF</span></div>
+            <div class="pk-fmt-price-sub">par feuille · jusqu'à 27+ logos</div>
+            <div class="pk-fmt-badge">FORMAT DÉCOUVERTE</div>
+          </div>
+
+        </div>
+
+        <!-- Quantité -->
+        <div style="background:#111;border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:16px">
+          <div class="pk-qty-row">
+            <span class="pk-qty-lbl">Nombre de feuilles à commander</span>
+            <div class="pk-qty-ctrl">
+              <button class="pk-qty-btn" onclick="pkQty(-1)">−</button>
+              <span class="pk-qty-val" id="pk-qty-val">1</span>
+              <button class="pk-qty-btn" onclick="pkQty(+1)">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total estimé -->
+        <div class="pk-total-preview">
+          <div>
+            <div class="pk-total-lbl">TOTAL ESTIMÉ</div>
+            <div style="font-size:9px;color:var(--grey-lt);font-family:'JetBrains Mono',monospace;margin-top:3px" id="pk-total-detail">Sélectionnez un format</div>
+          </div>
+          <div class="pk-total-amt" id="pk-total-amt">— XPF</div>
+        </div>
+      </div>
+
+      <!-- ══ STEP 2 — PLACEMENT ══ -->
+      <div id="pk-s2" style="display:none">
+        <div class="pk-step2-layout">
+
+          <!-- Gauche : logos -->
+          <div>
+            <div class="pk-upload-zone" id="pk-dropzone"
+              onclick="document.getElementById('pk-file').click()"
+              ondragover="event.preventDefault();this.classList.add('drag')"
+              ondragleave="this.classList.remove('drag')"
+              ondrop="pkOnDrop(event)">
+              <div class="iz">🖼️</div>
+              <p>Glissez vos logos ici<br>ou cliquez pour importer<br><span style="color:var(--teal)">PNG · JPG · SVG · WebP</span></p>
+            </div>
+            <input type="file" id="pk-file" accept="image/*" multiple style="display:none" onchange="pkOnFile(event)">
+
+            <div id="pk-logo-list">
+              <div class="pk-empty-logos">Aucun logo importé<br>Ajoutez vos visuels ci-dessus</div>
+            </div>
+
+            <div class="pk-stats">
+              <div class="pk-stat">
+                <div class="pk-stat-n" id="pk-stat-nb">0</div>
+                <div class="pk-stat-l">logos placés</div>
+              </div>
+              <div class="pk-stat">
+                <div class="pk-stat-n" id="pk-stat-pct">0%</div>
+                <div class="pk-stat-l">surface utilisée</div>
+              </div>
+            </div>
+
+            <div class="pk-hint">
+              1 · Importez vos logos<br>
+              2 · Cliquez sur un logo (sélection)<br>
+              3 · Cliquez sur la feuille pour placer<br>
+              4 · Mode Déplacer pour repositionner
+            </div>
+          </div>
+
+          <!-- Droite : canvas -->
+          <div>
+            <div class="pk-toolbar">
+              <button class="pk-tb on" id="pk-t-place" onclick="pkSetTool('place')">📌 Placer</button>
+              <button class="pk-tb" id="pk-t-move" onclick="pkSetTool('move')">✥ Déplacer</button>
+              <button class="pk-tb danger" onclick="pkDelSel()">✕ Suppr.</button>
+              <button class="pk-tb" onclick="pkRotSel()">↻ 90°</button>
+              <button class="pk-tb danger" onclick="pkClearAll()">🗑 Vider</button>
+              <div style="margin-left:auto;display:flex;gap:4px;align-items:center">
+                <button class="pk-tb" onclick="pkZoom(-1)" style="width:24px;padding:5px 0;text-align:center">−</button>
+                <span style="font-size:10px;color:var(--gold);font-family:'JetBrains Mono',monospace;min-width:34px;text-align:center" id="pk-zlbl">100%</span>
+                <button class="pk-tb" onclick="pkZoom(+1)" style="width:24px;padding:5px 0;text-align:center">+</button>
+              </div>
+            </div>
+            <div class="pk-canvas-wrap" id="pk-cvwrap">
+              <canvas id="pk-cv" style="cursor:crosshair;display:block"
+                onmousedown="pkCvDown(event)"
+                onmousemove="pkCvMove(event)"
+                onmouseup="pkCvUp()"
+                onmouseleave="pkCvUp()"></canvas>
+            </div>
+            <div style="font-size:9px;color:var(--grey-lt);font-family:'JetBrains Mono',monospace;text-align:center;margin-top:6px" id="pk-cv-info">Sélectionnez un logo puis cliquez sur la feuille</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ══ STEP 3 — CONTACT & PAIEMENT ══ -->
+      <div id="pk-s3" style="display:none">
+        <!-- Confirmation succès -->
+        <div id="pk-success-box" class="pk-success-box">
+          <div class="pk-success-ico">✅</div>
+          <div class="pk-success-title">COMMANDE CONFIRMÉE !</div>
+          <div class="pk-success-sub" id="pk-success-msg">Votre commande a été reçue. Nous vous contacterons sous 24h.</div>
+        </div>
+
+        <div id="pk-step3-form">
+          <div class="pk-step3-layout">
+
+            <!-- Gauche : contact + aperçu -->
+            <div>
+              <div class="pk-contact-form">
+                <h3>📋 Vos coordonnées</h3>
+                <label class="pk-field-lbl">Prénom & Nom *</label>
+                <input type="text" class="pk-inp" id="pk-nom" placeholder="Ex : Maeva Tefaafana" required>
+                <label class="pk-field-lbl">Email *</label>
+                <input type="email" class="pk-inp" id="pk-email" placeholder="votre@email.pf" required>
+                <label class="pk-field-lbl">Téléphone / WhatsApp</label>
+                <input type="tel" class="pk-inp" id="pk-tel" placeholder="+689 87 XX XX XX">
+                <label class="pk-field-lbl">Instructions / Notes</label>
+                <textarea class="pk-ta" id="pk-notes" placeholder="Date souhaitée, nombre de t-shirts à presser, autres détails..."></textarea>
+              </div>
+              <!-- Aperçu canvas -->
+              <div style="margin-top:12px;background:#111;border:1px solid var(--border);border-radius:8px;padding:12px">
+                <div style="font-size:9px;color:var(--gold);font-family:'JetBrains Mono',monospace;letter-spacing:2px;margin-bottom:7px">APERÇU PLACEMENT</div>
+                <img id="pk-preview-img" class="pk-canvas-thumb" alt="Aperçu">
+              </div>
+            </div>
+
+            <!-- Droite : récap + paiement -->
+            <div>
+              <div class="pk-recap-box">
+                <div class="pk-recap-title">RÉCAPITULATIF COMMANDE</div>
+                <div class="pk-recap-row"><span class="pk-recap-key">Format</span><span class="pk-recap-val" id="pk-rc-fmt">—</span></div>
+                <div class="pk-recap-row"><span class="pk-recap-key">Dimensions</span><span class="pk-recap-val" id="pk-rc-dims">—</span></div>
+                <div class="pk-recap-row"><span class="pk-recap-key">Quantité</span><span class="pk-recap-val" id="pk-rc-qty">—</span></div>
+                <div class="pk-recap-row"><span class="pk-recap-key">Logos placés</span><span class="pk-recap-val" id="pk-rc-logos">—</span></div>
+                <div class="pk-recap-row"><span class="pk-recap-key">Prix unitaire</span><span class="pk-recap-val" id="pk-rc-punit">—</span></div>
+                <div class="pk-recap-row" style="padding:7px 0"><span class="pk-recap-key" style="font-size:12px;font-weight:700;color:var(--white)">TOTAL</span><span class="pk-recap-val gold" id="pk-rc-total" style="font-size:15px">—</span></div>
+              </div>
+
+              <div style="background:#111;border:1px solid var(--border);border-radius:8px;padding:16px">
+                <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:var(--gold);margin-bottom:11px">PAIEMENT SÉCURISÉ OSB</div>
+
+                <div class="pk-cards-row">
+                  <span style="font-size:9px;color:var(--grey-lt);font-family:'JetBrains Mono',monospace">Nous acceptons :</span>
+                  <span class="pk-card-v">VISA</span>
+                  <span class="pk-card-cb">CB</span>
+                  <span class="pk-mc-wrap"><span class="pk-mc-r"></span><span class="pk-mc-o"></span></span>
+                </div>
+
+                <div class="pk-total-bar">
+                  <div>
+                    <div class="pk-total-bar-lbl">À PAYER</div>
+                    <div style="font-size:8px;color:rgba(245,240,232,.4);font-family:'JetBrains Mono',monospace;margin-top:2px">SSL · Crypté · Banque de Polynésie</div>
+                  </div>
+                  <div class="pk-total-bar-val" id="pk-pay-total">—</div>
+                </div>
+
+                <div id="pk-kr-zone"></div>
+
+                <button class="pk-payer-btn" id="pk-payer-btn" onclick="pkInitPayment()">
+                  💳 PAYER MAINTENANT
+                </button>
+                <div style="font-size:8px;color:var(--grey-lt);text-align:center;margin-top:7px;font-family:'JetBrains Mono',monospace">🔒 Paiement 100% sécurisé OSB · Données chiffrées SSL</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /pk-body -->
+
+    <!-- ── FOOTER ── -->
+    <div class="pk-foot">
+      <button class="btn-o" id="pk-prev-btn" onclick="pkPrev()" style="display:none">← Retour</button>
+      <span style="font-size:10px;color:var(--grey-lt);font-family:'JetBrains Mono',monospace" id="pk-foot-info">Sélectionnez votre format</span>
+      <button class="btn-p" id="pk-next-btn" onclick="pkNext()">Continuer →</button>
+    </div>
+
+  </div><!-- /pk-box -->
+</div><!-- /pack-modal -->
+
 </body>
 </html>
