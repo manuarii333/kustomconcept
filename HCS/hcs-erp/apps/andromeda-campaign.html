@@ -5859,7 +5859,12 @@ async function renderStep4() {
       <p>Merci ${contact.name||''}. Votre commande <strong>${orderId}</strong> est confirmée.<br>Un email de confirmation sera envoyé à ${contact.email||''}.</p>
     </div>`;
 
-  foot.innerHTML = `<button class="btn-back" id="pz-back-btn" onclick="goStep(3)">← Retour</button>`;
+  foot.innerHTML = `
+    <button class="btn-back" id="pz-back-btn" onclick="goStep(3)">← Retour</button>
+    <button class="btn-checkout" id="pz-pay-btn" onclick="_triggerPay()" disabled
+      style="opacity:.4;cursor:not-allowed;flex:1;transition:all .2s">
+      🔒 Chargement…
+    </button>`;
 
   // Lire config PayZen de la campagne active
   const _g = el => document.getElementById(el);
@@ -5905,11 +5910,23 @@ async function renderStep4() {
     document.getElementById('pz-loading').style.display='none';
     document.getElementById('pz-kr-form').style.display='block';
 
+    // Activer le bouton "Payer" — il déclenche le bouton SDK OSB
+    const _payBtn = document.getElementById('pz-pay-btn');
+    if (_payBtn) {
+      _payBtn.disabled = false;
+      _payBtn.style.opacity = '1';
+      _payBtn.style.cursor = 'pointer';
+      _payBtn.textContent = '💳 Payer';
+    }
+
     KR.onSubmit(async d => {
       if (['PAID','RUNNING','AUTHORISED'].includes(d.clientAnswer.orderStatus)) {
         document.getElementById('pz-kr-form').style.display='none';
         document.getElementById('pz-ok').style.display='block';
         document.getElementById('pz-back-btn').style.display='none';
+        if (_payBtn) _payBtn.style.display='none';
+        const s4 = document.getElementById('ck-s4');
+        if (s4) s4.className = 'ck-step done';
         _enrichConfirmation(orderId, total, contact, delivery, items);
         // Sauvegarder commande
         try {
@@ -5931,8 +5948,33 @@ async function renderStep4() {
   } catch(e) {
     document.getElementById('pz-loading').style.display='none';
     const errEl=document.getElementById('pz-error');
-    errEl.style.display='block'; errEl.textContent='❌ '+e.message;
+    errEl.style.display='block'; errEl.textContent='⚠️ OSB indisponible : ' + e.message;
+    // Fallback : confirmer la commande sans paiement CB (à régler en boutique)
+    const _payBtnFb = document.getElementById('pz-pay-btn');
+    if (_payBtnFb) {
+      _payBtnFb.disabled = false;
+      _payBtnFb.style.opacity = '1';
+      _payBtnFb.style.cursor = 'pointer';
+      _payBtnFb.style.background = 'linear-gradient(135deg,#f6d365,#fda085)';
+      _payBtnFb.style.color = '#1a1a2e';
+      _payBtnFb.textContent = '✅ Confirmer commande';
+      _payBtnFb.onclick = () => {
+        document.getElementById('pz-error').style.display='none';
+        document.getElementById('pz-ok').style.display='block';
+        document.getElementById('pz-back-btn').style.display='none';
+        _payBtnFb.style.display='none';
+        const s4 = document.getElementById('ck-s4');
+        if (s4) s4.className = 'ck-step done';
+        _enrichConfirmation(orderId, total, contact, delivery, items);
+        CART=[]; updateBadge();
+      };
+    }
   }
+}
+
+function _triggerPay() {
+  const krBtn = document.querySelector('#pz-kr-form .kr-payment-button');
+  if (krBtn) { krBtn.click(); }
 }
 
 // ═══════════════════════════════════════════════════════
