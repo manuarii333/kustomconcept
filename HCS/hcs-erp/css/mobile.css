@@ -1,0 +1,160 @@
+/* ================================================================
+   HCS ERP — mobile.css
+   Responsive universel injecté dans toutes les pages.
+   Breakpoints : 900px (tablet) · 600px (mobile) · 400px (xs)
+   Fonctionne sans CSS variables — safe pour toutes les pages.
+   ================================================================ */
+
+/* ── Viewport sécurité ── */
+* { box-sizing: border-box; }
+img, video, canvas, iframe { max-width: 100%; height: auto; }
+
+/* ── Tables scrollables horizontalement ── */
+table {
+  min-width: 0;
+}
+.table-wrap, .table-scroll, .table-responsive {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Texte et inputs ── */
+input, select, textarea, button {
+  max-width: 100%;
+}
+
+/* ================================================================
+   TABLET ≤ 900px
+   ================================================================ */
+@media (max-width: 900px) {
+
+  /* Grids → 2 colonnes max */
+  [style*="grid-template-columns: repeat(3"],
+  [style*="grid-template-columns:repeat(3"],
+  [style*="grid-template-columns: repeat(4"],
+  [style*="grid-template-columns:repeat(4"],
+  [style*="grid-template-columns: repeat(5"],
+  [style*="grid-template-columns:repeat(5"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Classes courantes dans l'ERP */
+  .grid3, .grid4, .grid5,
+  .kpi-row, .agents-grid, .cards-grid,
+  .dash-grid-3, .dash-grid-4,
+  .stats-grid, .tools-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .grid2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Panels côte-à-côte → empilement */
+  .panel-row, .panel-cols, .two-col, .split-panel {
+    flex-direction: column !important;
+  }
+
+  /* Padding principal réduit */
+  main, .main-content, .view-content, .page-body {
+    padding: 14px 12px !important;
+  }
+
+  header, .topbar, .page-header {
+    padding: 10px 14px !important;
+  }
+
+  /* Tables : scroll */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Formulaires 1 col */
+  .form-row, .form-grid {
+    flex-direction: column !important;
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ================================================================
+   MOBILE ≤ 600px
+   ================================================================ */
+@media (max-width: 600px) {
+
+  /* Tout en 1 colonne */
+  .grid2, .grid3, .grid4, .grid5,
+  .kpi-row, .agents-grid, .cards-grid,
+  .dash-grid-3, .dash-grid-4,
+  .stats-grid, .tools-grid,
+  [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Flex row → colonne */
+  .header-right, .btn-row, .actions-bar {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  /* KPI values plus petits */
+  .kpi-val { font-size: 20px !important; }
+  .kpi { padding: 12px 10px !important; }
+
+  /* Titre header compact */
+  .logo h1, header h1 { font-size: 15px !important; }
+  .logo p, header p  { font-size: 10px !important; }
+
+  /* Panels padding réduit */
+  .panel { padding: 12px !important; }
+  main, .main-content {
+    padding: 10px 8px !important;
+  }
+
+  /* Boutons plein largeur dans les forms */
+  .form-row .btn, .test-form .btn {
+    flex: 1 !important;
+  }
+
+  /* Charts plus petits */
+  .chart-wrap { height: 160px !important; }
+
+  /* Connexions list compact */
+  .conn-list { max-height: 240px !important; }
+
+  /* Tableaux : masquer colonnes secondaires */
+  table th:nth-child(n+5),
+  table td:nth-child(n+5) {
+    display: none;
+  }
+
+  /* Modals plein écran */
+  .modal-box, .modal-content, [class*="modal"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* ================================================================
+   XS ≤ 400px
+   ================================================================ */
+@media (max-width: 400px) {
+
+  .kpi-row { grid-template-columns: 1fr 1fr !important; }
+  .kpi-val { font-size: 18px !important; }
+
+  header { padding: 8px 10px !important; }
+
+  /* Masquer encore plus de colonnes dans les tables */
+  table th:nth-child(n+4),
+  table td:nth-child(n+4) {
+    display: none;
+  }
+
+  /* Texte boutons cachés si icône suffit */
+  .btn-text-hide { display: none !important; }
+}
