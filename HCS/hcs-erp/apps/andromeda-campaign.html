@@ -11829,9 +11829,9 @@ async function vdecShowFiche(orderId) {
       }
     } catch(_) {}
 
-    // Fallback : reconstruit depuis les données KV déjà chargées
+    // Fallback : reconstruit depuis les données KV déjà chargées (Planning ou onglet Commandes)
     if (!raw) {
-      const kv = (_planningOrders || []).find(o => (o.orderId || o.order_id) === orderId);
+      const kv = [...(_planningOrders || []), ...(ordersData || [])].find(o => (o.orderId || o.order_id) === orderId);
       if (kv) {
         raw = {
           order_id:        kv.orderId || orderId,
@@ -11918,20 +11918,29 @@ function vdecRenderFiche(raw) {
     })
   ].join('') || `<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,.25);font-size:.72rem;padding:14px">Aucun élément</td></tr>`;
 
-  // ── Canvas placeholders (rendus en async après innerHTML) ─
-  const canvasPlaceholders = validatedKeys.map(vk =>
-    `<div class="vdec-fiche-view-card" id="fvcard-${vk}">
+  // ── Canvas placeholders — toutes les 4 vues (validées + non validées) ─
+  const canvasPlaceholders = VDEC_VIEWS_DEF.map(v => {
+    const vk = v.key;
+    const isVal = validatedKeys.includes(vk);
+    const safeId = (raw.order_id||'').replace(/'/g,'');
+    const statusBadge = isVal
+      ? `<span style="color:#43e97b;font-size:.6rem;font-weight:700">✓ Validée</span>`
+      : `<span style="color:rgba(255,255,255,.25);font-size:.6rem">○ Non validée</span>`;
+    const dlBtn = isVal
+      ? `<button onclick="vdecFicheDownloadView('${vk}','${safeId}')"
+              style="padding:3px 8px;background:rgba(79,172,254,.12);border:1px solid rgba(79,172,254,.4);color:#4facfe;border-radius:5px;font-size:.6rem;font-weight:700;cursor:pointer">⬇ PNG</button>`
+      : '';
+    return `<div class="vdec-fiche-view-card" id="fvcard-${vk}" style="${isVal?'':'opacity:.45;filter:grayscale(.4)'}">
       <div style="position:relative;background:#0a0a18">
         <canvas id="fvcv-${vk}" width="640" height="360" style="width:100%;display:block;border-radius:0"></canvas>
         <div id="fvcv-spin-${vk}" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);font-size:.72rem;color:rgba(255,255,255,.5)">⏳ Rendu…</div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:#111125">
-        <div class="vdec-fiche-view-lbl" style="padding:0">✓ ${VDEC_VIEW_LABELS[vk]||vk}</div>
-        <button onclick="vdecFicheDownloadView('${vk}','${(raw.order_id||'').replace(/'/g,'')}')"
-                style="padding:3px 8px;background:rgba(79,172,254,.12);border:1px solid rgba(79,172,254,.4);color:#4facfe;border-radius:5px;font-size:.6rem;font-weight:700;cursor:pointer">⬇ PNG</button>
+        <div class="vdec-fiche-view-lbl" style="padding:0">${VDEC_VIEW_LABELS[vk]||vk} &nbsp;${statusBadge}</div>
+        ${dlBtn}
       </div>
-    </div>`
-  ).join('');
+    </div>`;
+  }).join('');
 
   content.innerHTML = `
     <!-- En-tête -->
@@ -11942,13 +11951,50 @@ function vdecRenderFiche(raw) {
           <div style="font-size:.95rem;font-weight:800;color:rgba(255,255,255,.9)">${raw.cat_name||'Véhicule'}</div>
           ${raw.cat_model?`<div style="font-size:.72rem;color:rgba(255,255,255,.42);margin-top:2px">Modèle : ${raw.cat_model}</div>`:''}
           <div style="margin-top:7px;font-size:.67rem;color:rgba(255,255,255,.38)">
-            Vues validées : <b style="color:rgba(255,255,255,.7)">${validatedKeys.length?validatedKeys.map(k=>VDEC_VIEW_LABELS[k]||k).join(' · '):'Aucune'}</b>
+            Vues validées :
+            ${validatedKeys.length
+              ? validatedKeys.map(k=>`<b style="color:#43e97b">${VDEC_VIEW_LABELS[k]||k}</b>`).join(' · ')
+              : '<b style="color:rgba(255,255,255,.28)">Aucune</b>'}
           </div>
+          ${raw.note?`<div style="margin-top:5px;font-size:.64rem;color:#f0a030;font-style:italic">📝 ${raw.note}</div>`:''}
+          <div style="margin-top:5px;font-size:.6rem;color:rgba(255,255,255,.22)">Logos : ${logos.length} &nbsp;·&nbsp; Textes : ${texts.length}</div>
         </div>
         <div style="text-align:right">
           <div style="font-size:1.15rem;font-weight:800;color:#ff9966">${parseFloat(raw.total_xpf||0).toLocaleString('fr-FR')} XPF</div>
           <div style="margin-top:5px"><span style="padding:3px 10px;border-radius:20px;font-size:.67rem;font-weight:700;border:1px solid ${statusCol}44;background:${statusCol}18;color:${statusCol}">${statusFr}</span></div>
           <div style="font-size:.62rem;color:rgba(255,255,255,.28);margin-top:5px">${dateStr}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Caractéristiques commande -->
+    <div class="vdec-fiche-sec">
+      <div class="vdec-fiche-sec-title">🚗 Caractéristiques commande</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">
+        <div class="vdec-fiche-info-card">
+          <div class="vdec-fiche-info-lbl">Réf. commande</div>
+          <div class="vdec-fiche-info-val" style="font-size:.72rem;word-break:break-all">${raw.order_id||'—'}</div>
+        </div>
+        <div class="vdec-fiche-info-card">
+          <div class="vdec-fiche-info-lbl">Véhicule</div>
+          <div class="vdec-fiche-info-val">${raw.cat_icon||'🚗'} ${raw.cat_name||'—'}</div>
+          ${raw.cat_model?`<div style="font-size:.68rem;color:rgba(255,255,255,.42);margin-top:2px">${raw.cat_model}</div>`:''}
+        </div>
+        <div class="vdec-fiche-info-card">
+          <div class="vdec-fiche-info-lbl">Date commande</div>
+          <div class="vdec-fiche-info-val" style="font-size:.75rem">${dateStr}</div>
+        </div>
+        <div class="vdec-fiche-info-card">
+          <div class="vdec-fiche-info-lbl">Statut</div>
+          <div style="margin-top:4px"><span style="padding:3px 10px;border-radius:20px;font-size:.67rem;font-weight:700;border:1px solid ${statusCol}44;background:${statusCol}18;color:${statusCol}">${statusFr}</span></div>
+        </div>
+        <div class="vdec-fiche-info-card">
+          <div class="vdec-fiche-info-lbl">Total XPF</div>
+          <div class="vdec-fiche-info-val" style="color:#ff9966">${parseFloat(raw.total_xpf||0).toLocaleString('fr-FR')} XPF</div>
+        </div>
+        <div class="vdec-fiche-info-card">
+          <div class="vdec-fiche-info-lbl">Éléments</div>
+          <div class="vdec-fiche-info-val">${logos.length} logo${logos.length>1?'s':''} · ${texts.length} texte${texts.length>1?'s':''}</div>
         </div>
       </div>
     </div>
@@ -11971,12 +12017,11 @@ function vdecRenderFiche(raw) {
       </div>
     </div>
 
-    <!-- Canvas vues composites -->
-    ${validatedKeys.length ? `
+    <!-- Canvas toutes les vues -->
     <div class="vdec-fiche-sec">
-      <div class="vdec-fiche-sec-title">🖼️ Aperçu des vues validées — composite avec éléments placés</div>
+      <div class="vdec-fiche-sec-title">🖼️ Aperçu des vues — ${validatedKeys.length} / ${VDEC_VIEWS_DEF.length} validée${validatedKeys.length>1?'s':''}</div>
       <div class="vdec-fiche-views-grid">${canvasPlaceholders}</div>
-    </div>` : ''}
+    </div>
 
     <!-- Tableau éléments & dimensions -->
     <div class="vdec-fiche-sec">
@@ -12007,8 +12052,12 @@ function vdecRenderFiche(raw) {
     </div>`:''}
   `;
 
-  // ── Rendu canvas async ────────────────────────────────────
-  validatedKeys.forEach(vk => vdecFicheDrawCanvas(vk, getBgUrl(vk), logos, texts));
+  // ── Rendu canvas async — toutes les vues ─────────────────
+  VDEC_VIEWS_DEF.forEach(v => {
+    const isVal = validatedKeys.includes(v.key);
+    // Vues validées → avec logos+textes ; non validées → fond seul
+    vdecFicheDrawCanvas(v.key, getBgUrl(v.key), isVal ? logos : [], isVal ? texts : []);
+  });
 }
 
 // ── Canvas composite par vue ──────────────────────────────
