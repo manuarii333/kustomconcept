@@ -127,16 +127,15 @@ class VdecCommandesController {
     public function search(string $q): array {
         $like = '%' . $q . '%';
         $stmt = $this->pdo->prepare(
-            "SELECT id, order_id, status, total_xpf, cat_name, contact, created_at
+            "SELECT id, order_id, status, total_xpf, cat_name, cat_model, cat_icon,
+                    contact, delivery, logos, texts, views_json, note, created_at
              FROM vdec_commandes
-             WHERE order_id LIKE :q
-                OR cat_name LIKE :q
-                OR JSON_EXTRACT(contact,'$.name') LIKE :q
-                OR JSON_EXTRACT(contact,'$.email') LIKE :q
-             ORDER BY created_at DESC LIMIT 30"
+             WHERE order_id LIKE :q OR cat_name LIKE :q OR cat_model LIKE :q
+             ORDER BY created_at DESC LIMIT 50"
         );
         $stmt->execute([':q' => $like]);
-        return array_map([$this, 'decode'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+        $rows = array_map([$this, 'decode'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+        return ['items' => $rows, 'query' => $q, 'table' => 'vdec_commandes'];
     }
 
     private function decode(array $row): array {
