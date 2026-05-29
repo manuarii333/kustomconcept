@@ -437,6 +437,7 @@ nav a:hover,nav a.on{color:var(--gold);background:rgba(212,168,67,.08)}
 .pk-success-sub{font-size:12px;color:#aaa;line-height:1.8}
 .pk-canvas-thumb{width:100%;border-radius:4px;border:1px solid var(--border);display:block}
 </style>
+  <link rel="stylesheet" href="../css/mobile.css">
 </head>
 <body>
 
@@ -2281,6 +2282,18 @@ var PK={
     lg.rot=((lg.rot||0)+90)%360; this.render();
   },
 
+  dupSel:function(){
+    if(this.selItem<0) return;
+    var src=this.placed[this.selItem];
+    var off=this.S*2;
+    var nx=Math.min(this.CW-src.w/2, src.x+off);
+    var ny=Math.min(this.CH-src.h/2, src.y+off);
+    var copy={x:nx,y:ny,w:src.w,h:src.h,img:src.img,rot:src.rot||0};
+    this.placed.push(copy);
+    this.selItem=this.placed.length-1;
+    this.render(); this.updateStats();
+  },
+
   clearAll:function(){
     if(!this.placed.length) return;
     if(!confirm('Effacer tous les logos de la feuille ?')) return;
@@ -2495,6 +2508,7 @@ window.pkSelFmt=function(f){PK.selFmt(f);};
 window.pkQty=function(d){PK.updQty(d);};
 window.pkSetTool=function(t){PK.setTool(t);};
 window.pkDelSel=function(){PK.delSel();pkUpdSelPanel();};
+window.pkDupSel=function(){PK.dupSel();pkUpdSelPanel();};
 window.pkRotSel=function(){PK.rotSel();pkUpdSelPanel();};
 window.pkClearAll=function(){PK.clearAll();pkUpdSelPanel();};
 window.pkZoom=function(d){PK.doZoom(d);};
@@ -2690,6 +2704,7 @@ window.pkInitPayment=function(){PK.initPayment();};
               <button class="pk-tb on" id="pk-t-place" onclick="pkSetTool('place')">📌 Placer</button>
               <button class="pk-tb" id="pk-t-move" onclick="pkSetTool('move')">✥ Déplacer</button>
               <button class="pk-tb danger" onclick="pkDelSel()">✕ Suppr.</button>
+              <button class="pk-tb" onclick="pkDupSel()">⧉ Dupliquer</button>
               <button class="pk-tb" onclick="pkRotSel()">↻ 90°</button>
               <button class="pk-tb danger" onclick="pkClearAll()">🗑 Vider</button>
               <div style="margin-left:auto;display:flex;gap:4px;align-items:center">

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Composer ma planche — HCS DTF</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#0f0f1a;color:#f5ede0;min-height:100vh;display:flex;flex-direction:column}
+
+/* ─── Header ─── */
+.hdr{background:linear-gradient(135deg,#6c63ff,#a78bfa);padding:10px 18px;display:flex;align-items:center;gap:14px;flex-shrink:0;box-shadow:0 3px 14px rgba(0,0,0,.4)}
+.hdr-info{flex:1}
+.hdr-title{font-size:.92rem;font-weight:900;letter-spacing:.3px}
+.hdr-sub{font-size:.7rem;opacity:.82;margin-top:2px}
+#validate-btn{padding:9px 20px;border-radius:50px;background:#fff;color:#6c63ff;border:none;font-weight:900;font-size:.82rem;cursor:pointer;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.25);transition:.15s}
+#validate-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.35)}
+#validate-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* ─── Layout ─── */
+.body-wrap{flex:1;display:flex;flex-direction:column;align-items:center;padding:14px;gap:12px;overflow-y:auto}
+
+/* ─── Canvas ─── */
+.cv-wrap{border:2px solid rgba(108,99,255,.3);border-radius:10px;overflow:hidden;position:relative;box-shadow:0 0 40px rgba(108,99,255,.15)}
+canvas{display:block}
+.cv-tip{font-size:.62rem;color:rgba(255,255,255,.3);text-align:center;margin-top:-4px}
+
+/* ─── Upload zone ─── */
+.upload-zone{width:100%;max-width:560px;border:2px dashed rgba(108,99,255,.38);border-radius:12px;padding:18px 14px;text-align:center;cursor:pointer;background:rgba(108,99,255,.05);transition:.15s;position:relative}
+.upload-zone:hover{border-color:#a78bfa;background:rgba(108,99,255,.1)}
+.upload-zone input{display:none}
+.upload-zone-inner{display:flex;flex-direction:column;align-items:center;gap:6px}
+.upload-icon{font-size:1.8rem}
+.upload-label{font-size:.82rem;font-weight:800;color:#a78bfa}
+.upload-hint{font-size:.62rem;color:rgba(255,255,255,.32);line-height:1.7}
+
+/* ─── Logos bar ─── */
+.logos-bar{width:100%;max-width:560px}
+.logos-bar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.logos-bar-title{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.4)}
+.count-badge{display:inline-block;background:#6c63ff;color:#fff;font-size:.6rem;font-weight:800;border-radius:20px;padding:2px 7px;margin-left:5px}
+.clear-btn{background:none;border:1px solid rgba(255,80,80,.3);color:rgba(255,80,80,.6);border-radius:6px;padding:3px 10px;font-size:.62rem;cursor:pointer}
+.clear-btn:hover{background:rgba(255,80,80,.08)}
+.logos-list{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.logo-thumb{width:54px;height:54px;border-radius:8px;border:2px solid rgba(255,255,255,.1);background:#1a1a2e;overflow:hidden;cursor:pointer;position:relative;flex-shrink:0}
+.logo-thumb:hover{border-color:#a78bfa}
+.logo-thumb img{width:100%;height:100%;object-fit:contain;padding:3px}
+.logo-add-btn{width:54px;height:54px;border-radius:8px;border:2px dashed rgba(108,99,255,.35);background:transparent;color:#a78bfa;font-size:1.3rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.logo-add-btn:hover{border-color:#a78bfa;background:rgba(108,99,255,.08)}
+
+/* ─── Instructions ─── */
+.instructions{width:100%;max-width:560px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px 14px;font-size:.64rem;color:rgba(255,255,255,.38);line-height:2}
+
+/* ─── Validate bottom ─── */
+.bottom-bar{width:100%;max-width:560px;display:flex;gap:10px;margin-top:4px;margin-bottom:8px}
+.bottom-validate{flex:1;padding:14px;border-radius:50px;background:linear-gradient(135deg,#43e97b,#38f9d7);color:#0f0f1a;border:none;font-size:.92rem;font-weight:900;cursor:pointer;box-shadow:0 4px 20px rgba(67,233,123,.3);transition:.15s}
+.bottom-validate:hover{opacity:.9;transform:translateY(-1px)}
+.bottom-validate:disabled{opacity:.38;cursor:not-allowed;transform:none}
+.bottom-note{font-size:.58rem;color:rgba(255,255,255,.22);text-align:center;padding-bottom:10px}
+</style>
+  <link rel="stylesheet" href="../css/mobile.css">
+</head>
+<body>
+
+<!-- Header fixe -->
+<div class="hdr">
+  <div class="hdr-info">
+    <div class="hdr-title">🎨 Composer ma planche DTF</div>
+    <div class="hdr-sub" id="hdr-sub">Chargement…</div>
+  </div>
+  <button id="validate-btn" onclick="doValidate()" disabled>✅ Valider</button>
+</div>
+
+<div class="body-wrap">
+
+  <!-- Canvas -->
+  <div class="cv-wrap">
+    <canvas id="mainCv"></canvas>
+  </div>
+  <div class="cv-tip">Cliquez sur un logo pour le placer • Glissez pour déplacer • Coins pour redimensionner • Suppr pour effacer</div>
+
+  <!-- Upload zone -->
+  <label class="upload-zone" id="upload-zone">
+    <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" multiple id="file-input" onchange="onFilesAdded(this.files)">
+    <div class="upload-zone-inner">
+      <div class="upload-icon">📤</div>
+      <div class="upload-label">Uploader vos logos</div>
+      <div class="upload-hint">PNG · JPG · SVG — fond transparent recommandé<br>Plusieurs fichiers acceptés</div>
+    </div>
+  </label>
+
+  <!-- Logos bar -->
+  <div class="logos-bar" id="logos-bar" style="display:none">
+    <div class="logos-bar-head">
+      <div class="logos-bar-title">Vos logos <span class="count-badge" id="logo-count">0</span></div>
+      <button class="clear-btn" onclick="clearPlaced()">🗑 Vider la planche</button>
+    </div>
+    <div class="logos-list" id="logos-list"></div>
+  </div>
+
+  <!-- Instructions -->
+  <div class="instructions">
+    📌 <strong>Comment composer votre planche :</strong><br>
+    ① Uploadez vos logos (PNG fond transparent de préférence)<br>
+    ② Cliquez sur un logo en bas pour l'ajouter à la planche<br>
+    ③ Glissez-le pour le positionner • Coins pour redimensionner<br>
+    ④ Ajoutez autant de logos que vous souhaitez<br>
+    ⑤ Cliquez <strong>Valider</strong> quand la planche vous convient
+  </div>
+
+  <!-- Validate bottom -->
+  <div class="bottom-bar">
+    <button class="bottom-validate" id="bottom-validate-btn" onclick="doValidate()" disabled>
+      ✅ Valider ma planche et commander
+    </button>
+  </div>
+  <div class="bottom-note">Cette fenêtre se fermera automatiquement après validation</div>
+
+</div>
+
+<script>
+/* ══ CONFIG ══ */
+var SW = 560;
+var SH = 910;
+var _gangMode = null;
+var _logos  = [];   /* { id, name, img, origW, origH } */
+var _placed = [];   /* { logoId, x, y, w, h } */
+var cv, ctx;
+var _sel  = null;
+var _drag = null;
+var _idSeq = 0;
+var SCALE = 1;
+
+/* ══ INIT ══ */
+var _fmtMap = {
+  '1yard':   {label:'1 Yard \xd7 22″ (91\xd756 cm)', sh:910, sw:560},
+  'halfyard':{label:'\xbd Yard \xd7 22″ (46\xd756 cm)', sh:460, sw:560},
+  '22x30cm': {label:'22″ \xd7 30 cm', sh:300, sw:220},
+  '22x60cm': {label:'22″ \xd7 60 cm', sh:600, sw:220},
+  '22x90cm': {label:'22″ \xd7 90 cm', sh:900, sw:220},
+  'A3':      {label:'A3 (30\xd742 cm)', sh:420, sw:300},
+  'A2':      {label:'A2 (42\xd760 cm)', sh:600, sw:420}
+};
+
+(function(){
+  var p = new URLSearchParams(location.search);
+  var g = p.get('gang') || '1yard';
+  _gangMode = g;
+  var fmt = _fmtMap[g] || _fmtMap['1yard'];
+  SH = fmt.sh;
+  SW = fmt.sw;
+  document.getElementById('hdr-sub').textContent = 'Format : ' + fmt.label;
+  document.title = 'Planche DTF — ' + fmt.label;
+  document.addEventListener('DOMContentLoaded', initCanvas);
+})();
+
+/* ══ CANVAS ══ */
+function initCanvas() {
+  cv = document.getElementById('mainCv');
+  ctx = cv.getContext('2d');
+  var maxW = Math.min(window.innerWidth - 40, 540);
+  SCALE = Math.min(1, maxW / SW);
+  cv.width  = SW;
+  cv.height = SH;
+  cv.style.width  = Math.round(SW * SCALE) + 'px';
+  cv.style.height = Math.round(SH * SCALE) + 'px';
+
+  cv.addEventListener('mousedown',  onDown);
+  cv.addEventListener('mousemove',  onMove);
+  cv.addEventListener('mouseup',    onUp);
+  cv.addEventListener('mouseleave', onUp);
+  cv.addEventListener('touchstart', function(e){ onDown(e); if(_drag)e.preventDefault(); }, {passive:false});
+  cv.addEventListener('touchmove',  function(e){ onMove(e); e.preventDefault(); }, {passive:false});
+  cv.addEventListener('touchend',   onUp);
+  render();
+}
+
+function render() {
+  ctx.clearRect(0, 0, SW, SH);
+  /* White sheet */
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, SW, SH);
+  /* Grid */
+  ctx.strokeStyle = 'rgba(108,99,255,0.07)';
+  ctx.lineWidth = 1;
+  for (var x=0;x<=SW;x+=56){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,SH);ctx.stroke();}
+  for (var y=0;y<=SH;y+=56){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(SW,y);ctx.stroke();}
+  /* Border */
+  ctx.strokeStyle = 'rgba(108,99,255,0.35)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1,1,SW-2,SH-2);
+  /* Empty hint */
+  if (_placed.length === 0) {
+    ctx.fillStyle = 'rgba(108,99,255,0.15)';
+    ctx.font = '13px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('↓ Uploadez vos logos puis cliquez dessus pour les placer', SW/2, SH/2 - 6);
+    ctx.textAlign = 'left';
+  }
+  /* Logos */
+  for (var i=0;i<_placed.length;i++) {
+    var pl = _placed[i];
+    var ld = findLogo(pl.logoId);
+    if (!ld) continue;
+    ctx.drawImage(ld.img, pl.x, pl.y, pl.w, pl.h);
+    if (_sel === i) {
+      ctx.strokeStyle = '#6c63ff';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5,3]);
+      ctx.strokeRect(pl.x-2, pl.y-2, pl.w+4, pl.h+4);
+      ctx.setLineDash([]);
+      var hs = 10;
+      ctx.fillStyle = '#6c63ff';
+      [[pl.x-hs/2,pl.y-hs/2],[pl.x+pl.w-hs/2,pl.y-hs/2],[pl.x-hs/2,pl.y+pl.h-hs/2],[pl.x+pl.w-hs/2,pl.y+pl.h-hs/2]].forEach(function(c){ctx.fillRect(c[0],c[1],hs,hs);});
+    }
+  }
+}
+
+function findLogo(id){ for(var i=0;i<_logos.length;i++) if(_logos[i].id===id) return _logos[i]; return null; }
+
+/* ══ EVENTS ══ */
+function evPos(e) {
+  var r = cv.getBoundingClientRect();
+  var cx = e.touches ? e.touches[0].clientX : e.clientX;
+  var cy = e.touches ? e.touches[0].clientY : e.clientY;
+  return {x:(cx-r.left)/SCALE, y:(cy-r.top)/SCALE};
+}
+
+function onDown(e) {
+  var pos = evPos(e);
+  var hs = 10;
+  /* Resize handles */
+  if (_sel !== null) {
+    var pl = _placed[_sel];
+    var corners = [
+      {x:pl.x-hs/2,y:pl.y-hs/2,c:'tl'},{x:pl.x+pl.w-hs/2,y:pl.y-hs/2,c:'tr'},
+      {x:pl.x-hs/2,y:pl.y+pl.h-hs/2,c:'bl'},{x:pl.x+pl.w-hs/2,y:pl.y+pl.h-hs/2,c:'br'}
+    ];
+    for (var i=0;i<corners.length;i++){
+      var co=corners[i];
+      if(pos.x>=co.x&&pos.x<=co.x+hs&&pos.y>=co.y&&pos.y<=co.y+hs){
+        _drag={type:'resize',startX:pos.x,startY:pos.y,ox:pl.x,oy:pl.y,ow:pl.w,oh:pl.h,corner:co.c};
+        return;
+      }
+    }
+  }
+  /* Hit test */
+  var hit = -1;
+  for (var i=_placed.length-1;i>=0;i--){
+    var pl=_placed[i];
+    if(pos.x>=pl.x&&pos.x<=pl.x+pl.w&&pos.y>=pl.y&&pos.y<=pl.y+pl.h){hit=i;break;}
+  }
+  if (hit>=0){
+    _sel=hit;
+    _drag={type:'move',startX:pos.x,startY:pos.y,ox:_placed[hit].x,oy:_placed[hit].y};
+  } else {
+    _sel=null;
+  }
+  render();
+}
+
+function onMove(e) {
+  if (!_drag) return;
+  var pos = evPos(e);
+  var dx=pos.x-_drag.startX, dy=pos.y-_drag.startY;
+  var pl=_placed[_sel];
+  if (_drag.type==='move'){
+    pl.x=Math.max(0,Math.min(SW-pl.w,_drag.ox+dx));
+    pl.y=Math.max(0,Math.min(SH-pl.h,_drag.oy+dy));
+  } else {
+    var c=_drag.corner;
+    var nw=Math.max(20,c==='tl'||c==='bl'?_drag.ow-dx:_drag.ow+dx);
+    var nh=Math.max(20,c==='tl'||c==='tr'?_drag.oh-dy:_drag.oh+dy);
+    pl.w=nw; pl.h=nh;
+    if(c==='tl'||c==='tr') pl.y=_drag.oy+(_drag.oh-nh);
+    if(c==='tl'||c==='bl') pl.x=_drag.ox+(_drag.ow-nw);
+  }
+  render();
+}
+
+function onUp(){ _drag=null; }
+
+/* ══ UPLOAD ══ */
+function onFilesAdded(files) {
+  Array.from(files).forEach(function(f){
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      var img=new Image();
+      img.onload=function(){
+        var id=++_idSeq;
+        _logos.push({id:id,name:f.name,img:img,origW:img.width,origH:img.height});
+        placeOnCanvas(id);
+        refreshLogosList();
+      };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(f);
+  });
+  document.getElementById('file-input').value='';
+}
+
+function placeOnCanvas(logoId) {
+  var ld=findLogo(logoId);
+  if (!ld) return;
+  var maxW=Math.min(SW*0.42, 180);
+  var ratio=maxW/ld.origW;
+  var w=Math.round(ld.origW*ratio);
+  var h=Math.round(ld.origH*ratio);
+  var col=_placed.length%3;
+  var row=Math.floor(_placed.length/3);
+  var x=Math.min(20+col*(w+12), SW-w-5);
+  var y=Math.min(20+row*(h+12), SH-h-5);
+  _placed.push({logoId:logoId,x:x,y:y,w:w,h:h});
+  _sel=_placed.length-1;
+  syncValidateBtn();
+  render();
+}
+
+function refreshLogosList() {
+  var bar=document.getElementById('logos-bar');
+  var list=document.getElementById('logos-list');
+  var cnt=document.getElementById('logo-count');
+  bar.style.display=_logos.length?'':'none';
+  cnt.textContent=_logos.length;
+  list.innerHTML=_logos.map(function(l){
+    return '<div class="logo-thumb" onclick="placeOnCanvas('+l.id+')" title="Ajouter « '+l.name+' »">'
+      +'<img src="'+l.img.src+'" alt="">'
+      +'</div>';
+  }).join('')
+  +'<button class="logo-add-btn" onclick="document.getElementById(\'file-input\').click()" title="Ajouter un logo">+</button>';
+}
+
+function clearPlaced() {
+  if (_placed.length===0) return;
+  if (!confirm('Effacer tous les logos de la planche ?')) return;
+  _placed=[]; _sel=null;
+  syncValidateBtn();
+  render();
+}
+
+function syncValidateBtn() {
+  var disabled=_placed.length===0;
+  document.getElementById('validate-btn').disabled=disabled;
+  document.getElementById('bottom-validate-btn').disabled=disabled;
+}
+
+/* ══ VALIDATE ══ */
+function doValidate() {
+  if (!_placed.length){ alert('Placez au moins un logo sur la planche avant de valider.'); return; }
+  var b64=cv.toDataURL('image/jpeg', 0.85);
+  var payload={type:'plateReady', plateB64:b64, logosCount:_placed.length, format:_gangMode};
+  if (window.opener) {
+    window.opener.postMessage(payload,'*');
+    window.close();
+  } else {
+    localStorage.setItem('hcs_gang_plate', JSON.stringify(payload));
+    alert('Planche enregistr\xe9e ! Fermez cette fen\xeatre pour revenir \xe0 la commande.');
+    window.close();
+  }
+}
+
+/* ══ KEYBOARD ══ */
+document.addEventListener('keydown', function(e){
+  if ((e.key==='Delete'||e.key==='Backspace') && _sel!==null && document.activeElement.tagName!=='INPUT'){
+    _placed.splice(_sel,1);
+    _sel=null;
+    syncValidateBtn();
+    render();
+    e.preventDefault();
+  }
+  if (e.key==='Escape'){ _sel=null; render(); }
+});
+</script>
+</body>
+</html>
