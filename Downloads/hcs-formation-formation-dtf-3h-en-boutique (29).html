@@ -378,12 +378,15 @@ async function ckPayment() {
     if(!res.ok){const e=await res.json();throw new Error(e.error||'Erreur serveur');}
     const {formToken,publicKey} = await res.json();
     if(!document.getElementById('pz-css1')){const c1=document.createElement('link');c1.id='pz-css1';c1.rel='stylesheet';c1.href='https://static.osb.pf/static/js/krypton-client/V4.0/stable/classic-reset.min.css';document.head.appendChild(c1);const c2=document.createElement('link');c2.id='pz-css2';c2.rel='stylesheet';c2.href='https://static.osb.pf/static/js/krypton-client/V4.0/stable/classic.min.css';document.head.appendChild(c2);}
+    document.getElementById('pz-kr-form').removeAttribute('style');
     await new Promise((resolve,reject)=>{
-      if(window.KR){KR.setFormConfig({'kr-public-key':publicKey,'kr-language':'fr-FR'}).then(()=>KR.setFormToken(formToken)).then(resolve).catch(reject);}
-      else{const s=document.createElement('script');s.id='pz-sdk';s.src='https://static.osb.pf/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js';s.setAttribute('kr-public-key',publicKey);s.setAttribute('kr-language','fr-FR');s.onload=()=>KR.setFormToken(formToken).then(resolve);s.onerror=()=>reject(new Error('SDK OSB indisponible'));document.head.appendChild(s);}
+      const _t=setTimeout(()=>reject(new Error('Timeout connexion OSB (15s)')),15000);
+      const _ok=v=>{clearTimeout(_t);resolve(v);};
+      const _ko=e=>{clearTimeout(_t);reject(e);};
+      if(window.KR){KR.setFormConfig({'kr-public-key':publicKey,'kr-language':'fr-FR'}).then(()=>KR.setFormToken(formToken)).then(_ok).catch(_ko);}
+      else{const s=document.createElement('script');s.id='pz-sdk';s.src='https://static.osb.pf/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js';s.setAttribute('kr-public-key',publicKey);s.setAttribute('kr-language','fr-FR');s.onload=()=>KR.setFormToken(formToken).then(_ok).catch(_ko);s.onerror=()=>_ko(new Error('SDK OSB indisponible'));document.head.appendChild(s);}
     });
     document.getElementById('pz-loading').style.display='none';
-    document.getElementById('pz-kr-form').style.display='block';
     function showSuccess() {
       document.getElementById('pz-kr-form').style.display='none';
       const ok=document.getElementById('pz-ok');if(ok){ok.removeAttribute('style');ok.style.cssText='display:block!important';}
