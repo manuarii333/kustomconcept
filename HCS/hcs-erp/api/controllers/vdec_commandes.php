@@ -19,22 +19,30 @@ class VdecCommandesController {
 
     private function ensureTable(): void {
         $this->pdo->exec("CREATE TABLE IF NOT EXISTS vdec_commandes (
-            id          INT AUTO_INCREMENT PRIMARY KEY,
-            order_id    VARCHAR(40)  NOT NULL UNIQUE,
-            status      VARCHAR(20)  NOT NULL DEFAULT 'nouveau',
-            total_xpf   INT          NOT NULL DEFAULT 0,
-            cat_name    VARCHAR(100) NOT NULL DEFAULT '',
-            cat_model   VARCHAR(100) NOT NULL DEFAULT '',
-            cat_icon    VARCHAR(10)  NOT NULL DEFAULT '',
-            contact     JSON,
-            delivery    JSON,
-            logos       JSON,
-            texts       JSON,
-            views_json  JSON,
-            note        TEXT,
-            created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            id              INT AUTO_INCREMENT PRIMARY KEY,
+            order_id        VARCHAR(40)  NOT NULL UNIQUE,
+            status          VARCHAR(20)  NOT NULL DEFAULT 'nouveau',
+            total_xpf       INT          NOT NULL DEFAULT 0,
+            cat_name        VARCHAR(100) NOT NULL DEFAULT '',
+            cat_model       VARCHAR(100) NOT NULL DEFAULT '',
+            cat_icon        VARCHAR(10)  NOT NULL DEFAULT '',
+            contact         JSON,
+            delivery        JSON,
+            logos           JSON,
+            texts           JSON,
+            views_json      JSON,
+            view_snapshots  LONGTEXT,
+            note            TEXT,
+            created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        /* Migration : ajouter view_snapshots si table existait déjà sans ce champ */
+        try {
+            $this->pdo->exec("ALTER TABLE vdec_commandes ADD COLUMN view_snapshots LONGTEXT AFTER views_json");
+        } catch (\PDOException $e) {
+            /* Colonne déjà présente — ignorer */
+        }
     }
 
     public function getAll(array $params = []): array {
@@ -45,7 +53,7 @@ class VdecCommandesController {
         $where = $status ? 'WHERE status = :status' : '';
         $stmt  = $this->pdo->prepare(
             "SELECT id, order_id, status, total_xpf, cat_name, cat_model, cat_icon,
-                    contact, delivery, logos, texts, views_json, created_at
+                    contact, delivery, logos, texts, views_json, view_snapshots, created_at
              FROM vdec_commandes {$where}
              ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
         );
@@ -76,24 +84,26 @@ class VdecCommandesController {
         $catName  = $body['cat_name']  ?? '';
         $catModel = $body['cat_model'] ?? '';
         $catIcon  = $body['cat_icon']  ?? '';
-        $contact  = json_encode($body['contact']  ?? []);
-        $delivery = json_encode($body['delivery'] ?? []);
-        $logos    = json_encode($body['logos']    ?? []);
-        $texts    = json_encode($body['texts']    ?? []);
-        $views    = json_encode($body['views_validated'] ?? []);
+        $contact   = json_encode($body['contact']        ?? []);
+        $delivery  = json_encode($body['delivery']       ?? []);
+        $logos     = json_encode($body['logos']          ?? []);
+        $texts     = json_encode($body['texts']          ?? []);
+        $views     = json_encode($body['views_validated'] ?? []);
+        $snapshots = isset($body['view_snapshots']) ? json_encode($body['view_snapshots']) : null;
 
         $stmt = $this->pdo->prepare(
             "INSERT INTO vdec_commandes
                 (order_id, status, total_xpf, cat_name, cat_model, cat_icon,
-                 contact, delivery, logos, texts, views_json)
+                 contact, delivery, logos, texts, views_json, view_snapshots)
              VALUES (:order_id, :status, :total, :cat_name, :cat_model, :cat_icon,
-                     :contact, :delivery, :logos, :texts, :views)
+                     :contact, :delivery, :logos, :texts, :views, :snapshots)
              ON DUPLICATE KEY UPDATE
-                status    = VALUES(status),
-                total_xpf = VALUES(total_xpf),
-                contact   = VALUES(contact),
-                delivery  = VALUES(delivery),
-                updated_at = NOW()"
+                status         = VALUES(status),
+                total_xpf      = VALUES(total_xpf),
+                contact        = VALUES(contact),
+                delivery       = VALUES(delivery),
+                view_snapshots = COALESCE(VALUES(view_snapshots), view_snapshots),
+                updated_at     = NOW()"
         );
         $stmt->execute([
             ':order_id'  => $orderId,
@@ -107,6 +117,7 @@ class VdecCommandesController {
             ':logos'     => $logos,
             ':texts'     => $texts,
             ':views'     => $views,
+            ':snapshots' => $snapshots,
         ]);
         return ['ok' => true, 'order_id' => $orderId, 'id' => (int)$this->pdo->lastInsertId()];
     }
@@ -128,12 +139,12 @@ class VdecCommandesController {
         $like = '%' . $q . '%';
         $stmt = $this->pdo->prepare(
             "SELECT id, order_id, status, total_xpf, cat_name, cat_model, cat_icon,
-                    contact, delivery, logos, texts, views_json, note, created_at
+                    contact, delivery, logos, texts, views_json, view_snapshots, note, created_at
              FROM vdec_commandes
-             WHERE order_id LIKE :q OR cat_name LIKE :q OR cat_model LIKE :q
+             WHERE order_id LIKE :q1 OR cat_name LIKE :q2 OR cat_model LIKE :q3
              ORDER BY created_at DESC LIMIT 50"
         );
-        $stmt->execute([':q' => $like]);
+        $stmt->execute([':q1' => $like, ':q2' => $like, ':q3' => $like]);
         $rows = array_map([$this, 'decode'], $stmt->fetchAll(PDO::FETCH_ASSOC));
         return ['items' => $rows, 'query' => $q, 'table' => 'vdec_commandes'];
     }
@@ -147,6 +158,9 @@ class VdecCommandesController {
         if (isset($row['views_json']) && is_string($row['views_json'])) {
             $row['views_validated'] = json_decode($row['views_json'], true) ?? [];
             unset($row['views_json']);
+        }
+        if (isset($row['view_snapshots']) && is_string($row['view_snapshots'])) {
+            $row['view_snapshots'] = json_decode($row['view_snapshots'], true) ?? [];
         }
         return $row;
     }

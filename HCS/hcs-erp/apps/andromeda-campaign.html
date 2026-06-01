@@ -9929,6 +9929,14 @@ function genSubmitOrder() {
 /* Validate view button */
 .vdec-validate-view-btn{width:100%;padding:8px;border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;transition:all .2s;border:2px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:rgba(255,255,255,.45)}
 .vdec-validate-view-btn.validated{border-color:#43e97b;background:rgba(67,233,123,.1);color:#43e97b}
+/* Vignettes vues validées */
+.vdec-thumbs-wrap{display:flex;gap:6px;flex-wrap:wrap;padding:8px 10px;background:rgba(67,233,123,.05);border:1px solid rgba(67,233,123,.2);border-radius:8px}
+.vdec-thumbs-label{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(67,233,123,.7);margin-bottom:6px}
+.vdec-thumb-card{flex:1;min-width:80px;max-width:160px;border-radius:7px;overflow:hidden;border:2px solid rgba(67,233,123,.35);background:#0a0a18;cursor:pointer;transition:border-color .2s}
+.vdec-thumb-card:hover{border-color:#43e97b}
+.vdec-thumb-card img{width:100%;display:block;aspect-ratio:16/9;object-fit:cover}
+.vdec-thumb-card canvas{width:100%;display:block;aspect-ratio:16/9}
+.vdec-thumb-lbl{font-size:.55rem;font-weight:700;color:#43e97b;text-align:center;padding:3px 4px;background:rgba(0,0,0,.3)}
 .vdec-vtab.vdec-vtab-validated::after{content:'✓';color:#43e97b;font-size:.6rem;margin-left:4px;vertical-align:super}
 /* Price panel */
 .vdec-price-panel{background:rgba(255,150,100,.06);border:1px solid rgba(255,150,100,.2);border-radius:9px;padding:10px 12px;margin-top:8px}
@@ -10077,6 +10085,8 @@ function genSubmitOrder() {
           </div>
           <div style="font-size:.6rem;color:rgba(255,255,255,.2);text-align:center;margin-top:4px">🖱 Glissez logo/texte · Poignée orange = redimensionner · ✕ au survol = supprimer</div>
           <button class="vdec-validate-view-btn" id="vdec-validate-btn" onclick="vdecValidateView()">✓ Valider cette vue</button>
+          <!-- Résumé des vues validées -->
+          <div id="vdec-validated-thumbs" style="display:none;margin-top:10px"></div>
         </div>
         <!-- Panel droit -->
         <div class="vdec-panel">
@@ -10313,6 +10323,7 @@ let _vdec = {
   logos:[],
   texts:[], txtColor:'#ffffff', txtFont:'Impact', txtSize:40, txtRot:0,
   viewsValidated:{ left:false, front:false, back:false, right:false },
+  viewSnapshots:{},
   totalPrice:0,
   selectedObj: null,
   contact:{ name:'', email:'', phone:'', note:'' },
@@ -10325,6 +10336,7 @@ function vdecOpenFlow(campId, prodIdx) {
   _vdec = { step:1, catIdx:null, viewKey:'left', campId, prodIdx,
     logos:[], texts:[],
     viewsValidated:{ left:false, front:false, back:false, right:false },
+    viewSnapshots:{},
     totalPrice:0, selectedObj:null,
     txtColor:'#ffffff', txtFont:'Impact', txtSize:40, txtRot:0,
     contact: saved ? { name:saved.name||'', email:saved.email||'', phone:saved.phone||'', note:'' } : { name:'', email:'', phone:'', note:'' },
@@ -10433,6 +10445,8 @@ function vdecRenderS2() {
   const txtSec  = document.getElementById('vdec-section-txt');
   if (logoSec) logoSec.style.display = iface.showLogo !== false ? '' : 'none';
   if (txtSec)  txtSec.style.display  = iface.showText !== false ? '' : 'none';
+  // Afficher les vignettes des vues déjà validées (retour en arrière)
+  vdecUpdateValidatedThumbs();
 }
 
 function vdecSetView(key) {
@@ -10969,18 +10983,161 @@ function vdecCalcTotal() {
 
 /* ── Validation de vue ─────────────────────────────────── */
 function vdecValidateView() {
-  _vdec.viewsValidated[_vdec.viewKey] = true;
+  const vk = _vdec.viewKey;
+  _vdec.viewsValidated[vk] = true;
   /* Mettre à jour le bouton */
   const btn = document.getElementById('vdec-validate-btn');
   if (btn) { btn.textContent = '✓ Vue validée !'; btn.classList.add('validated'); }
-  /* Mettre à jour l'onglet de vue */
-  document.querySelectorAll('.vdec-vtab').forEach(t => {
-    if (t.textContent.includes(VDEC_VIEWS_DEF.find(v=>v.key===_vdec.viewKey)?.label?.slice(0,3)||'')) {
-      t.classList.add('vdec-vtab-validated');
-    }
-  });
   /* Re-render tabs proprement */
   vdecRenderViewTabs();
+  /* Capturer snapshot de la vue courante puis mettre à jour les vignettes */
+  vdecCaptureSnapshot(vk).then(() => vdecUpdateValidatedThumbs());
+}
+
+/* Affiche les vignettes des vues validées sous le bouton "Valider" */
+function vdecUpdateValidatedThumbs() {
+  const wrap = document.getElementById('vdec-validated-thumbs');
+  if (!wrap) return;
+  const validKeys = Object.keys(_vdec.viewsValidated).filter(k => _vdec.viewsValidated[k]);
+  if (!validKeys.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+  wrap.innerHTML = `
+    <div class="vdec-thumbs-label">✓ ${validKeys.length} vue${validKeys.length>1?'s':''} validée${validKeys.length>1?'s':''}</div>
+    <div class="vdec-thumbs-wrap">
+      ${validKeys.map(vk => {
+        const snap = _vdec.viewSnapshots[vk];
+        const lbl  = VDEC_VIEW_LABELS[vk] || vk;
+        const img  = snap ? `<img src="${snap}" alt="${lbl}">` : `<canvas id="vdec-sthumb-${vk}" width="320" height="180"></canvas>`;
+        return `<div class="vdec-thumb-card" title="${lbl}" onclick="vdecSetView('${vk}')">
+          ${img}
+          <div class="vdec-thumb-lbl">${lbl}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  /* Dessiner sur les canvases sans snapshot */
+  const cfg = vdecLoadCfg();
+  validKeys.forEach(vk => {
+    if (_vdec.viewSnapshots[vk]) return;
+    const cv = document.getElementById('vdec-sthumb-' + vk);
+    if (!cv) return;
+    const bgUrl = cfg.cats[_vdec.catIdx]?.views?.[vk] || '';
+    vdecDrawThumbCanvas(cv, bgUrl, _vdec.logos, _vdec.texts);
+  });
+}
+
+async function vdecDrawThumbCanvas(cv, bgUrl, logos, texts) {
+  const W = cv.width, H = cv.height;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#0a0a18'; ctx.fillRect(0, 0, W, H);
+  function loadImg(src) {
+    return new Promise(res => {
+      const img = new Image(); img.crossOrigin = 'anonymous';
+      img.onload = () => res(img); img.onerror = () => res(null);
+      img.src = src;
+    });
+  }
+  if (bgUrl) {
+    const bg = await loadImg(bgUrl);
+    if (bg) {
+      const scale = Math.min(W/bg.naturalWidth, H/bg.naturalHeight);
+      const dw = bg.naturalWidth*scale, dh = bg.naturalHeight*scale;
+      ctx.drawImage(bg, (W-dw)/2, (H-dh)/2, dw, dh);
+    }
+  }
+  for (const l of logos) {
+    if (!l.url) continue;
+    const img = await loadImg(l.url);
+    if (!img) continue;
+    const lw = (l.w??35)/100*W, lh = lw*img.naturalHeight/img.naturalWidth;
+    const cx = (l.x??50)/100*W, cy = (l.y??50)/100*H;
+    ctx.save(); ctx.globalAlpha=(l.op??100)/100; ctx.translate(cx,cy);
+    if (l.rot) ctx.rotate(l.rot*Math.PI/180);
+    ctx.drawImage(img,-lw/2,-lh/2,lw,lh); ctx.restore();
+  }
+  for (const t of texts) {
+    if (!t.text) continue;
+    const fs = (t.size||40)*(W/800);
+    const tx=(t.x??50)/100*W, ty=(t.y??55)/100*H;
+    ctx.save(); ctx.font=`900 ${fs}px '${t.font||'Impact'}',Impact,sans-serif`;
+    ctx.fillStyle=t.color||'#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor='rgba(0,0,0,.85)'; ctx.shadowBlur=6;
+    ctx.translate(tx,ty); if(t.rot) ctx.rotate(t.rot*Math.PI/180);
+    ctx.fillText(t.text,0,0); ctx.restore();
+  }
+}
+
+async function vdecCaptureSnapshot(vk) {
+  const cfg = vdecLoadCfg();
+  const cat = cfg.cats[_vdec.catIdx];
+  if (!cat) return;
+  const bgUrl = cat.views?.[vk] || '';
+  const W = 640, H = 360;
+  const cv  = document.createElement('canvas');
+  cv.width  = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+
+  function loadImg(src) {
+    return new Promise(res => {
+      const img = new Image(); img.crossOrigin = 'anonymous';
+      img.onload = () => res(img); img.onerror = () => res(null);
+      img.src = src;
+    });
+  }
+
+  ctx.fillStyle = '#0a0a18';
+  ctx.fillRect(0, 0, W, H);
+  if (bgUrl) {
+    const bg = await loadImg(bgUrl);
+    if (bg) {
+      const scale = Math.min(W / bg.naturalWidth, H / bg.naturalHeight);
+      const dw = bg.naturalWidth * scale, dh = bg.naturalHeight * scale;
+      ctx.drawImage(bg, (W-dw)/2, (H-dh)/2, dw, dh);
+    }
+  }
+  for (const l of _vdec.logos) {
+    if (!l.url) continue;
+    const img = await loadImg(l.url);
+    if (!img) continue;
+    const lw  = (l.w ?? 35) / 100 * W;
+    const lh  = lw * img.naturalHeight / img.naturalWidth;
+    const cx  = (l.x ?? 50) / 100 * W;
+    const cy  = (l.y ?? 50) / 100 * H;
+    const rot = (l.rot || 0) * Math.PI / 180;
+    ctx.save();
+    ctx.globalAlpha = (l.op ?? 100) / 100;
+    ctx.translate(cx, cy);
+    if (rot) ctx.rotate(rot);
+    ctx.drawImage(img, -lw/2, -lh/2, lw, lh);
+    ctx.restore();
+  }
+  for (const t of _vdec.texts) {
+    if (!t.text) continue;
+    const fontSize = (t.size || 40) * (W / 800);
+    const tx  = (t.x ?? 50) / 100 * W;
+    const ty  = (t.y ?? 55) / 100 * H;
+    const rot = (t.rot || 0) * Math.PI / 180;
+    ctx.save();
+    ctx.font         = `900 ${fontSize}px '${t.font||'Impact'}', Impact, sans-serif`;
+    ctx.fillStyle    = t.color || '#ffffff';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor  = 'rgba(0,0,0,0.85)';
+    ctx.shadowBlur   = 8;
+    ctx.translate(tx, ty);
+    if (rot) ctx.rotate(rot);
+    ctx.fillText(t.text, 0, 0);
+    ctx.restore();
+  }
+  ctx.save();
+  ctx.globalAlpha  = 0.28;
+  ctx.fillStyle    = '#ffffff';
+  ctx.font         = `600 ${W*0.014}px Inter, sans-serif`;
+  ctx.textAlign    = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('HCS — Déco Véhicule', W-8, H-6);
+  ctx.restore();
+
+  _vdec.viewSnapshots[vk] = cv.toDataURL('image/jpeg', 0.82);
 }
 
 function vdecRenderViewTabs() {
@@ -11001,7 +11158,27 @@ function vdecRenderS3() {
   const d = _vdec.delivery;
   const c = _vdec.contact;
   const ship = d.type === 'pickup' ? 0 : (VDEC_SHIP_RATES[d.island] || 1800);
+  /* Récapitulatif des vues validées */
+  const validKeys = Object.keys(_vdec.viewsValidated).filter(k => _vdec.viewsValidated[k]);
+  const summaryHtml = validKeys.length ? `
+    <div style="margin-bottom:16px;padding:12px;background:rgba(67,233,123,.06);border:1px solid rgba(67,233,123,.2);border-radius:10px">
+      <div style="font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:rgba(67,233,123,.7);margin-bottom:8px">
+        ✓ Votre décoration validée — ${validKeys.length} vue${validKeys.length>1?'s':''}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${validKeys.map(vk => {
+          const snap = _vdec.viewSnapshots[vk];
+          const lbl  = VDEC_VIEW_LABELS[vk] || vk;
+          return `<div style="flex:1;min-width:100px;max-width:200px;border-radius:8px;overflow:hidden;border:1.5px solid rgba(67,233,123,.3);background:#0a0a18">
+            ${snap ? `<img src="${snap}" style="width:100%;display:block;aspect-ratio:16/9;object-fit:cover" alt="${lbl}">`
+                   : `<canvas id="vdec-s3snap-${vk}" width="320" height="180" style="width:100%;display:block;aspect-ratio:16/9"></canvas>`}
+            <div style="font-size:.58rem;font-weight:700;color:#43e97b;text-align:center;padding:3px;background:rgba(0,0,0,.3)">${lbl}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : '';
   document.getElementById('vdec-s3-content').innerHTML = `
+    ${summaryHtml}
     <div class="vdec-s3-box">
       <div class="vdec-s3-label">Vos coordonnées</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
@@ -11052,6 +11229,13 @@ function vdecRenderS3() {
       </div>
     </div>
   `;
+  /* Dessiner les canvases snapshot si pas encore archivés */
+  const _cfgS3 = vdecLoadCfg();
+  validKeys.forEach(vk => {
+    if (_vdec.viewSnapshots[vk]) return;
+    const cv = document.getElementById('vdec-s3snap-' + vk);
+    if (cv) vdecDrawThumbCanvas(cv, _cfgS3.cats[_vdec.catIdx]?.views?.[vk] || '', _vdec.logos, _vdec.texts);
+  });
 }
 function vdecSetDelivType(type) {
   _vdec.delivery.type = type;
@@ -11289,6 +11473,7 @@ async function vdecArchiveOrder(total) {
     logos: _vdec.logos.map(l => ({ url:l.url, x:l.x, y:l.y, w:l.w, op:l.op, rot:l.rot||0, w_cm:l.w_cm, h_cm:l.h_cm })),
     texts: _vdec.texts.map(t => ({ text:t.text, font:t.font, color:t.color, size:t.size||40, rot:t.rot||0, x:t.x, y:t.y, w_cm:t.w_cm, h_cm:t.h_cm })),
     cat_views: cat?.views || {},
+    view_snapshots: _vdec.viewSnapshots,
     contact: _vdec.contact,
     delivery: _vdec.delivery,
     created_at: new Date().toISOString()
@@ -11861,12 +12046,13 @@ function vdecRenderFiche(raw) {
 
   // Parse JSON champs
   const jp = (v, fb) => { try { return typeof v === 'string' ? JSON.parse(v||fb) : (v||JSON.parse(fb)); } catch(_){ return JSON.parse(fb); } };
-  const contact  = jp(raw.contact,  '{}');
-  const delivery = jp(raw.delivery, '{}');
-  const viewsVal = jp(raw.views_validated, '{}');
-  const logos    = jp(raw.logos,    '[]');
-  const texts    = jp(raw.texts,    '[]');
-  const catViews = jp(raw.cat_views,'{}'); // sauvegardé depuis v2
+  const contact       = jp(raw.contact,        '{}');
+  const delivery      = jp(raw.delivery,       '{}');
+  const viewsVal      = jp(raw.views_validated,'{}');
+  const logos         = jp(raw.logos,          '[]');
+  const texts         = jp(raw.texts,          '[]');
+  const catViews      = jp(raw.cat_views,      '{}');
+  const viewSnapshots = jp(raw.view_snapshots, '{}'); // images archivées au moment de la validation
 
   // Fallback : images depuis config locale
   const cfg = vdecLoadCfg();
@@ -11918,25 +12104,32 @@ function vdecRenderFiche(raw) {
     })
   ].join('') || `<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,.25);font-size:.72rem;padding:14px">Aucun élément</td></tr>`;
 
-  // ── Canvas placeholders — toutes les 4 vues (validées + non validées) ─
+  // ── Vues — snapshot archivé si dispo, sinon rendu canvas ─
   const canvasPlaceholders = VDEC_VIEWS_DEF.map(v => {
-    const vk = v.key;
-    const isVal = validatedKeys.includes(vk);
-    const safeId = (raw.order_id||'').replace(/'/g,'');
+    const vk      = v.key;
+    const isVal   = validatedKeys.includes(vk);
+    const snap    = viewSnapshots[vk] || '';
+    const safeId  = (raw.order_id||'').replace(/'/g,'');
     const statusBadge = isVal
       ? `<span style="color:#43e97b;font-size:.6rem;font-weight:700">✓ Validée</span>`
       : `<span style="color:rgba(255,255,255,.25);font-size:.6rem">○ Non validée</span>`;
+    const archiveBadge = snap
+      ? `<span style="font-size:.55rem;color:rgba(79,172,254,.7);margin-left:4px">📦 archivée</span>`
+      : '';
     const dlBtn = isVal
       ? `<button onclick="vdecFicheDownloadView('${vk}','${safeId}')"
               style="padding:3px 8px;background:rgba(79,172,254,.12);border:1px solid rgba(79,172,254,.4);color:#4facfe;border-radius:5px;font-size:.6rem;font-weight:700;cursor:pointer">⬇ PNG</button>`
       : '';
+    const visual = snap
+      /* Image archivée depuis MySQL */
+      ? `<img src="${snap}" style="width:100%;display:block;border-radius:0" alt="Vue ${vk}">`
+      /* Pas de snapshot → canvas re-rendu dynamiquement */
+      : `<canvas id="fvcv-${vk}" width="640" height="360" style="width:100%;display:block;border-radius:0"></canvas>
+         <div id="fvcv-spin-${vk}" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);font-size:.72rem;color:rgba(255,255,255,.5)">⏳ Rendu…</div>`;
     return `<div class="vdec-fiche-view-card" id="fvcard-${vk}" style="${isVal?'':'opacity:.45;filter:grayscale(.4)'}">
-      <div style="position:relative;background:#0a0a18">
-        <canvas id="fvcv-${vk}" width="640" height="360" style="width:100%;display:block;border-radius:0"></canvas>
-        <div id="fvcv-spin-${vk}" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);font-size:.72rem;color:rgba(255,255,255,.5)">⏳ Rendu…</div>
-      </div>
+      <div style="position:relative;background:#0a0a18">${visual}</div>
       <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:#111125">
-        <div class="vdec-fiche-view-lbl" style="padding:0">${VDEC_VIEW_LABELS[vk]||vk} &nbsp;${statusBadge}</div>
+        <div class="vdec-fiche-view-lbl" style="padding:0">${VDEC_VIEW_LABELS[vk]||vk} &nbsp;${statusBadge}${archiveBadge}</div>
         ${dlBtn}
       </div>
     </div>`;
@@ -12052,10 +12245,10 @@ function vdecRenderFiche(raw) {
     </div>`:''}
   `;
 
-  // ── Rendu canvas async — toutes les vues ─────────────────
+  // ── Rendu canvas async — uniquement les vues sans snapshot archivé ─
   VDEC_VIEWS_DEF.forEach(v => {
+    if (viewSnapshots[v.key]) return; // snapshot archivé → pas besoin de re-rendre
     const isVal = validatedKeys.includes(v.key);
-    // Vues validées → avec logos+textes ; non validées → fond seul
     vdecFicheDrawCanvas(v.key, getBgUrl(v.key), isVal ? logos : [], isVal ? texts : []);
   });
 }
@@ -12144,12 +12337,18 @@ async function vdecFicheDrawCanvas(vk, bgUrl, logos, texts) {
 }
 
 function vdecFicheDownloadView(vk, orderId) {
-  const cv = document.getElementById('fvcv-' + vk);
-  if (!cv) return;
   const a = document.createElement('a');
   a.download = `fiche-${orderId}-${vk}.png`;
-  a.href = cv.toDataURL('image/png');
-  a.click();
+  /* Snapshot archivé (<img>) en priorité */
+  const imgEl = document.querySelector(`#fvcard-${vk} img`);
+  if (imgEl && imgEl.src) {
+    a.href = imgEl.src;
+    a.click();
+    return;
+  }
+  /* Fallback canvas re-rendu */
+  const cv = document.getElementById('fvcv-' + vk);
+  if (cv) { a.href = cv.toDataURL('image/png'); a.click(); }
 }
 
 // Fermer fiche avec Echap
