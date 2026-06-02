@@ -828,7 +828,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-prim
 
 <div class="app-body">
   <aside class="sidebar">
-    <div class="sidebar-label">8 Campagnes</div>
+    <div class="sidebar-label">9 Campagnes</div>
     <div id="sidebarList"></div>
   </aside>
   <div class="workspace" id="workspace"></div>
@@ -948,6 +948,23 @@ const CAMPS = [
     features:[{i:'🔄',t:'Vectorisation HD'},{i:'✂️',t:'Détourage IA'},{i:'⚡',t:'Livraison rapide'}],
     products:[{e:'📐',n:'Vectorisation simple',p:'2 500 XPF'},{e:'✂️',n:'Détourage IA',p:'1 500 XPF'},{e:'🎨',n:'Pack graphique',p:'8 000 XPF'}],
     ltype:'service', heroGrad:'linear-gradient(135deg,#2c3e50,#f6d365)'
+  },
+  {
+    id:8, icon:'🎁', iconBg:'linear-gradient(135deg,#d4a843,#1a9e8f)',
+    name:'Pack Collector DTF', tag:'Atelier client · Dès 12 000 XPF', active:true,
+    tags:['DTF','Pack','Planche'],
+    colors:{primary:'#d4a843',badge:'#d4a843',overlay:'rgba(8,8,8,0.65)'},
+    gradients:['linear-gradient(135deg,#d4a843,#1a9e8f)','linear-gradient(135deg,#080808,#d4a843)','linear-gradient(135deg,#0d1f1c,#d4a843)'],
+    headline:'PACK COLLECTOR DTF — ATELIER CLIENT',
+    subline:'Uploadez vos logos · Composez votre planche · Payez en ligne · Livraison 48h',
+    badge:'🎁 ATELIER CLIENT',
+    cta:'Composer ma planche',
+    domain:'highcoffeeshirts.com',
+    linktitle:'Pack Collector DTF — Atelier Client HCS Papeete',
+    url:'https://highcoffeeshirts.com/erp/apps/pack-collector-dtf.html',
+    features:[{i:'🖼️',t:'Uploadez vos logos PNG/JPG'},{i:'📐',t:'Composez la planche DTF'},{i:'💳',t:'Paiement OSB sécurisé · 48h'}],
+    products:[{e:'📋',n:'½ Yard 56×46 cm',p:'12 000 XPF'},{e:'🎁',n:'1 Yard 56×91 cm',p:'20 000 XPF'},{e:'✨',n:'Multi-feuilles',p:'Sur devis'}],
+    ltype:'service', heroGrad:'linear-gradient(135deg,#080808,#1a9e8f 40%,#d4a843)'
   }
 ];
 
@@ -2845,6 +2862,7 @@ function showPublishSuccess(name, url) {
 
 function previewLP(id) {
   const c = CAMPS[id];
+  if (c.id === 0) { vdecOpenFlow(id, 0); return; }
   const _dl = window._dl_override;
   window._dl_override = (name, html) => {
     window._dl_override = _dl;
@@ -3610,6 +3628,7 @@ document.addEventListener('keydown', e => { if(e.key==='Escape'){closeFlow();clo
 
 function exportLP(id) {
   const c = CAMPS[id];
+  if (c.id === 0) { exportLPVdec(id); return; }
   if (c.id === 1 || c.id === 2) { exportLPTshirt(id); return; }
   if (c.id >= 3) { exportLPGeneric(id); return; }
   const g = el => document.getElementById(el);
@@ -4193,6 +4212,320 @@ document.getElementById('modal-overlay').addEventListener('click', e => { if (e.
 </body></html>`;
   dl(`andromeda-lp-${c.id}-${c.name.replace(/[^\w]/g,'-').toLowerCase()}.html`, html);
   // Sauvegarde dans HCS ERP
+  hcsSaveCampaign(id);
+}
+
+// ═══════════════════════════════════════════════════════
+// EXPORT LP — DÉCO VÉHICULE (parcours vdec complet)
+// ═══════════════════════════════════════════════════════
+function exportLPVdec(id) {
+  const c = CAMPS[id];
+  const g = el => document.getElementById(el);
+  const headline   = g('hl-'+id)?.textContent || c.headline;
+  const subline    = g('sl-'+id)?.textContent || c.subline;
+  const badge      = g('bd-'+id)?.textContent || c.badge;
+  const cta        = g('ct-'+id)?.textContent || c.cta;
+  const domain     = g('dm-'+id)?.textContent || c.domain;
+  const linktitle  = g('lt-'+id)?.textContent || c.linktitle;
+  const cv         = g('cv-'+id);
+  const cvBg       = cv?.style.background || '';
+  const heroBg     = cvBg.includes('url(') ? cvBg : (cvBg || c.heroGrad);
+  const logoEl     = cv?.querySelector('.logo-overlay');
+  const logoHtml   = logoEl ? `<img src="${logoEl.src}" style="position:absolute;bottom:24px;right:24px;width:80px;height:80px;object-fit:contain;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.6);z-index:5">` : '';
+  const primary    = c.colors.primary;
+  const ovColor    = c.colors.overlay || 'rgba(0,0,0,.55)';
+  const workerUrl  = g('pz-worker-'+id)?.value?.trim()  || 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
+  const workerSec  = g('pz-secret-'+id)?.value?.trim()  || 'hcs-payzen-2026';
+  const workerMode = g('pz-mode-'+id)?.value || 'TEST';
+  const publicKey  = workerMode === 'PRODUCTION'
+    ? '41545085:publickey_IzNDzp5XcAadriFpCh08meZmg8Ri6WbYIG6TIQ9mpu2NA'
+    : '41545085:testpublickey_HJw0fXMbbvOAzJuN1BXImXIu5U16qkSHv2eQVjSu0YftA';
+
+  const vCfg  = vdecLoadCfg();
+  const cats  = vCfg.cats || vdecDefaultCfg().cats;
+  const tarifs = vCfg.tarifs || vdecDefaultCfg().tarifs;
+  const catsJson   = JSON.stringify(cats.map(cat => ({ id:cat.id||'', name:cat.name||'', model:cat.model||'', icon:cat.icon||'🚗' })));
+  const tarifsJson = JSON.stringify(tarifs);
+
+  const html = `<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${headline} — HCS Tahiti</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f0f1a;color:#e8e8f0}
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px 20px;background:${heroBg};background-size:cover;background-position:center;position:relative;overflow:hidden}
+.hero-overlay{position:absolute;inset:0;background:${ovColor}}
+.hero-content{max-width:560px;position:relative;z-index:2}
+h1{font-size:clamp(1.8rem,5vw,3rem);font-weight:900;margin-bottom:14px;line-height:1.1;color:white}
+.sub{font-size:1rem;opacity:.9;margin-bottom:20px;color:rgba(255,255,255,.85)}
+.badge-hp{display:inline-block;background:${primary};color:white;padding:8px 24px;border-radius:24px;font-weight:700;margin-bottom:20px;font-size:.9rem}
+.cta-hero{display:inline-block;background:white;color:${primary};padding:14px 36px;border-radius:30px;font-weight:700;font-size:1rem;text-decoration:none;box-shadow:0 8px 30px rgba(0,0,0,.3);cursor:pointer;border:none;transition:transform .15s}
+.cta-hero:hover{transform:translateY(-2px)}
+footer{text-align:center;padding:28px;color:rgba(255,255,255,.4);font-size:.82rem;border-top:1px solid rgba(255,255,255,.1)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:900;display:none;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:600px){.modal-overlay.open{align-items:center}}
+.ck-modal{background:#0f0f1a;border-radius:20px 20px 0 0;width:100%;max-width:540px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 48px rgba(0,0,0,.7)}
+@media(min-width:600px){.ck-modal{border-radius:20px;max-height:88vh}}
+.ck-head{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:#0a0a14}
+.ck-head-title{font-size:.92rem;font-weight:800;color:${primary}}
+.ck-close{background:none;border:none;color:rgba(255,255,255,.45);font-size:1.3rem;cursor:pointer;padding:4px 8px}
+.ck-steps{display:flex;padding:10px 18px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.ck-step{flex:1;text-align:center;position:relative}
+.ck-step::after{content:'';position:absolute;top:13px;left:50%;width:100%;height:2px;background:rgba(255,255,255,.08);z-index:0}
+.ck-step:last-child::after{display:none}
+.ck-dot{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.14);background:#1a1a2e;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;margin:0 auto 4px;position:relative;z-index:1;transition:all .2s;color:rgba(255,255,255,.35)}
+.ck-step.done .ck-dot{background:#43e97b;border-color:#43e97b;color:#0f0f1a}
+.ck-step.done::after{background:#43e97b}
+.ck-step.active .ck-dot{background:${primary};border-color:${primary};color:white;box-shadow:0 0 12px ${primary}55}
+.ck-lbl{font-size:.54rem;color:rgba(255,255,255,.3);font-weight:600}
+.ck-step.active .ck-lbl{color:${primary}}
+.ck-step.done .ck-lbl{color:#43e97b}
+.ck-body{flex:1;overflow-y:auto;padding:18px}
+.ck-foot{padding:12px 18px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:8px;flex-shrink:0}
+.btn-prev{padding:10px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);border-radius:8px;font-size:.82rem;cursor:pointer;font-family:inherit}
+.btn-next{flex:1;padding:11px;background:linear-gradient(135deg,${primary},#ff6584);color:white;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.btn-next:hover{opacity:.9}
+.btn-next:disabled{opacity:.3;cursor:not-allowed}
+.ck-section{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.3);margin-bottom:10px}
+.ck-field{margin-bottom:12px}
+.ck-label{display:block;font-size:.7rem;color:rgba(255,255,255,.45);margin-bottom:4px}
+.ck-input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#e8e8f0;font-size:.85rem;outline:none;font-family:inherit;transition:border-color .2s}
+.ck-input:focus{border-color:${primary}}
+.ck-input::placeholder{color:rgba(255,255,255,.2)}
+.ck-textarea{resize:vertical;min-height:80px}
+.vcat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:6px}
+.vcat-card{background:rgba(255,150,100,.04);border:2px solid rgba(255,150,100,.14);border-radius:12px;padding:20px 8px;text-align:center;cursor:pointer;transition:all .2s}
+.vcat-card:hover,.vcat-card.sel{border-color:${primary};background:rgba(255,153,102,.1);transform:translateY(-2px)}
+.vcat-icon{font-size:32px;display:block;margin-bottom:8px}
+.vcat-name{font-size:.8rem;font-weight:700;margin-bottom:3px}
+.vcat-model{font-size:.62rem;color:rgba(255,255,255,.38)}
+.upload-zone{border:2px dashed rgba(255,255,255,.12);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:10px}
+.upload-zone:hover,.upload-zone.has-file{border-color:${primary};background:rgba(255,153,102,.05)}
+.upload-zone input[type=file]{display:none}
+.upload-preview{max-width:100%;max-height:130px;object-fit:contain;border-radius:8px;margin-top:8px}
+.dlv-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.dlv-opt{padding:12px 8px;border-radius:10px;border:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);cursor:pointer;text-align:center;transition:all .2s}
+.dlv-opt.sel{border-color:${primary};background:rgba(255,153,102,.08)}
+.dlv-icon{font-size:20px;margin-bottom:5px}
+.dlv-label{font-size:.74rem;font-weight:700}
+.dlv-sub{font-size:.6rem;color:rgba(255,255,255,.3);margin-top:2px}
+.recap-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.recap-row{display:flex;justify-content:space-between;font-size:.76rem;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.recap-row:last-child{border:none;padding-top:8px;margin-top:4px;border-top:1px solid rgba(255,255,255,.07)}
+.recap-row span:first-child{color:rgba(255,255,255,.4)}
+.recap-row span:last-child{font-weight:600}
+.pz-loading{text-align:center;color:rgba(255,255,255,.4);font-size:.82rem;padding:18px}
+.pz-local{background:rgba(246,211,101,.1);border:1px solid rgba(246,211,101,.3);border-radius:12px;padding:16px;text-align:center}
+.pz-ok{background:rgba(67,233,123,.1);border:1px solid rgba(67,233,123,.28);border-radius:12px;padding:24px;text-align:center;display:none}
+.kr-embedded{background:#fff!important;border-radius:12px!important;padding:14px!important;margin-top:4px!important;box-shadow:0 2px 16px rgba(0,0,0,.18)!important}
+.kr-embedded .kr-payment-button{background:linear-gradient(135deg,${primary},#ff6584)!important;border-radius:10px!important;font-weight:800!important;font-size:.9rem!important;padding:12px!important;width:100%!important;border:none!important;color:#fff!important;cursor:pointer!important;margin-top:4px!important}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-overlay"></div>
+  ${logoHtml}
+  <div class="hero-content">
+    <div class="badge-hp">${badge}</div>
+    <h1>${headline}</h1>
+    <p class="sub">${subline}</p>
+    <button class="cta-hero" onclick="openCk()">${cta}</button>
+  </div>
+</div>
+<footer>© 2026 HCS Tahiti — ${domain} | ${linktitle}</footer>
+
+<div class="modal-overlay" id="ck-overlay">
+  <div class="ck-modal">
+    <div class="ck-head">
+      <span class="ck-head-title" id="ck-title">🚗 Votre véhicule</span>
+      <button class="ck-close" onclick="closeCk()">✕</button>
+    </div>
+    <div class="ck-steps">
+      <div class="ck-step active" id="cks1"><div class="ck-dot">1</div><div class="ck-lbl">Véhicule</div></div>
+      <div class="ck-step" id="cks2"><div class="ck-dot">2</div><div class="ck-lbl">Décoration</div></div>
+      <div class="ck-step" id="cks3"><div class="ck-dot">3</div><div class="ck-lbl">Coordonnées</div></div>
+      <div class="ck-step" id="cks4"><div class="ck-dot">4</div><div class="ck-lbl">Paiement</div></div>
+    </div>
+    <div class="ck-body" id="ck-body"></div>
+    <div class="ck-foot" id="ck-foot"></div>
+  </div>
+</div>
+
+<script>
+const CATS = ${catsJson};
+const TARIFS = ${tarifsJson};
+const WORKER_URL = '${workerUrl}';
+const WORKER_SEC = '${workerSec}';
+const WORKER_MODE = '${workerMode}';
+const PUBLIC_KEY = '${publicKey}';
+const SHIP_RATES = {tahiti:1800,moorea:1500,huahine:2500,'bora-bora':2500,raiatea:2500,tahaa:2500,maupiti:3500,rangiroa:3000,makemo:4000,tubuai:4000,'hiva-oa':5000,'nuku-hiva':5000};
+const ISLAND_LABELS = {tahiti:'Tahiti',moorea:'Moorea',huahine:'Huahine','bora-bora':'Bora Bora',raiatea:'Raiatea',tahaa:'Tahaa',maupiti:'Maupiti',rangiroa:'Rangiroa',makemo:'Makemo',tubuai:'Tubuai','hiva-oa':'Hiva Oa','nuku-hiva':'Nuku Hiva'};
+
+var ckStep=1, ckCatIdx=null, ckContact={}, ckDelivery={type:'pickup',shippingFee:0}, ckPhotoUrl='', ckDescription='';
+var ORDER_ID='VDC-'+Date.now();
+
+function getTotal(){
+  var base=2500;
+  var f=(TARIFS.forfaits||[]).find(function(f){return ckCatIdx!==null&&f.cat===CATS[ckCatIdx]?.id;});
+  if(f&&f.prix) base=f.prix;
+  return base+(ckDelivery.shippingFee||0);
+}
+
+function openCk(){ckStep=1;document.getElementById('ck-overlay').classList.add('open');document.body.style.overflow='hidden';render();}
+function closeCk(){document.getElementById('ck-overlay').classList.remove('open');document.body.style.overflow='';}
+document.getElementById('ck-overlay').addEventListener('click',function(e){if(e.target===e.currentTarget)closeCk();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeCk();});
+
+var STEP_TITLES={1:'🚗 Votre véhicule',2:'🎨 Votre décoration',3:'👤 Vos coordonnées',4:'💳 Paiement sécurisé'};
+function render(){
+  document.getElementById('ck-title').textContent=STEP_TITLES[ckStep];
+  for(var i=1;i<=4;i++){var el=document.getElementById('cks'+i);el.className='ck-step'+(i<ckStep?' done':i===ckStep?' active':'');}
+  if(ckStep===1)renderS1();
+  else if(ckStep===2)renderS2();
+  else if(ckStep===3)renderS3();
+  else renderS4();
+}
+
+function renderS1(){
+  var html='<div class="ck-section">Choisissez votre type de véhicule</div><div class="vcat-grid">';
+  CATS.forEach(function(cat,i){
+    html+='<div class="vcat-card'+(ckCatIdx===i?' sel':'')+'" onclick="selCat('+i+')">';
+    html+='<span class="vcat-icon">'+cat.icon+'</span>';
+    html+='<div class="vcat-name">'+cat.name+'</div>';
+    html+='<div class="vcat-model">'+cat.model+'</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  document.getElementById('ck-body').innerHTML=html;
+  document.getElementById('ck-foot').innerHTML='<button class="btn-next" onclick="next1()"'+(ckCatIdx===null?' disabled':'')+'> Suivant — Décoration →</button>';
+}
+function selCat(i){ckCatIdx=i;renderS1();}
+function next1(){if(ckCatIdx===null){alert('Choisissez un type de véhicule.');return;}ckStep=2;render();}
+
+function renderS2(){
+  var prevHtml=ckPhotoUrl?'<br><img class="upload-preview" src="'+ckPhotoUrl+'" alt="Aperçu">':'';
+  document.getElementById('ck-body').innerHTML=
+    '<div class="ck-section">Décrivez votre décoration</div>'+
+    '<div class="ck-field"><label class="ck-label">Description *</label>'+
+    '<textarea class="ck-input ck-textarea" id="ck-desc" placeholder="Ex: Logo entreprise sur les portes avant, texte en rouge...">'+ckDescription+'</textarea></div>'+
+    '<div class="ck-field"><label class="ck-label">Visuel de référence (optionnel)</label>'+
+    '<div class="upload-zone'+(ckPhotoUrl?' has-file':'')+'" onclick="document.getElementById(\'ck-file\').click()">'+
+    '<input type="file" id="ck-file" accept="image/*" onchange="handlePhoto(this)">'+
+    (ckPhotoUrl?prevHtml:'<div style="font-size:1.6rem;margin-bottom:6px">📷</div><div style="font-size:.76rem;color:rgba(255,255,255,.35)">Cliquer pour uploader un visuel ou logo</div>')+
+    '</div></div>';
+  document.getElementById('ck-foot').innerHTML=
+    '<button class="btn-prev" onclick="ckStep=1;render()">← Retour</button>'+
+    '<button class="btn-next" onclick="next2()">Suivant — Coordonnées →</button>';
+}
+function handlePhoto(input){
+  var f=input.files[0];if(!f)return;
+  var r=new FileReader();r.onload=function(e){ckPhotoUrl=e.target.result;renderS2();};r.readAsDataURL(f);
+}
+function next2(){
+  var desc=document.getElementById('ck-desc')?.value.trim();
+  if(!desc){alert('Décrivez votre décoration.');return;}
+  ckDescription=desc;ckStep=3;render();
+}
+
+function renderS3(){
+  var d=ckDelivery;
+  var minDate=new Date(Date.now()+864e6*10).toISOString().slice(0,10);
+  var islandOpts=Object.keys(SHIP_RATES).map(function(k){return '<option value="'+k+'"'+(d.island===k?' selected':'')+'>'+ISLAND_LABELS[k]+' — '+SHIP_RATES[k].toLocaleString('fr-FR')+' XPF</option>';}).join('');
+  document.getElementById('ck-body').innerHTML=
+    '<div class="ck-section">Vos coordonnées</div>'+
+    '<div class="ck-field"><label class="ck-label">Prénom & Nom *</label><input class="ck-input" id="ck-name" value="'+(ckContact.name||'')+'" placeholder="Jean Dupont"></div>'+
+    '<div class="ck-field"><label class="ck-label">Email *</label><input class="ck-input" id="ck-email" type="email" value="'+(ckContact.email||'')+'" placeholder="jean@mail.com"></div>'+
+    '<div class="ck-field"><label class="ck-label">Téléphone</label><input class="ck-input" id="ck-phone" type="tel" value="'+(ckContact.phone||'')+'" placeholder="87 00 00 00"></div>'+
+    '<div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.3);margin:12px 0 8px">Livraison</div>'+
+    '<div class="dlv-opts">'+
+    '<div class="dlv-opt'+(d.type==='pickup'?' sel':'')+'" id="dlv-pickup" onclick="swDlv(\'pickup\')"><div class="dlv-icon">🏪</div><div class="dlv-label">Retrait boutique</div><div class="dlv-sub">HCS — Papeete</div></div>'+
+    '<div class="dlv-opt'+(d.type==='delivery'?' sel':'')+'" id="dlv-delivery" onclick="swDlv(\'delivery\')"><div class="dlv-icon">🚚</div><div class="dlv-label">Livraison île</div><div class="dlv-sub">3–5 jours</div></div>'+
+    '</div>'+
+    '<div id="f-pickup" style="'+(d.type==='pickup'?'':'display:none')+'">'+
+    '<div class="ck-field"><label class="ck-label">Date souhaitée (min 10 j)</label><input class="ck-input" id="ck-date" type="date" min="'+minDate+'" value="'+(d.pickupDate||'')+'"></div>'+
+    '</div>'+
+    '<div id="f-delivery" style="'+(d.type==='delivery'?'':'display:none')+'">'+
+    '<div class="ck-field"><label class="ck-label">Île de destination</label><select class="ck-input" id="ck-island">'+islandOpts+'</select></div>'+
+    '</div>';
+  document.getElementById('ck-foot').innerHTML=
+    '<button class="btn-prev" onclick="ckStep=2;render()">← Retour</button>'+
+    '<button class="btn-next" onclick="next3()">Continuer — Paiement →</button>';
+}
+function swDlv(type){
+  document.getElementById('dlv-pickup')?.classList.toggle('sel',type==='pickup');
+  document.getElementById('dlv-delivery')?.classList.toggle('sel',type==='delivery');
+  document.getElementById('f-pickup').style.display=type==='pickup'?'':'none';
+  document.getElementById('f-delivery').style.display=type==='delivery'?'':'none';
+  ckDelivery.type=type;
+}
+function next3(){
+  var name=document.getElementById('ck-name')?.value.trim();
+  var email=document.getElementById('ck-email')?.value.trim();
+  if(!name){alert('Saisissez votre nom.');return;}
+  if(!email||!email.includes('@')){alert('Email invalide.');return;}
+  ckContact={name:name,email:email,phone:document.getElementById('ck-phone')?.value.trim()||''};
+  if(ckDelivery.type==='delivery'){
+    ckDelivery.island=document.getElementById('ck-island')?.value||'tahiti';
+    ckDelivery.shippingFee=SHIP_RATES[ckDelivery.island]||1800;
+  } else {
+    ckDelivery.pickupDate=document.getElementById('ck-date')?.value||'';
+    ckDelivery.shippingFee=0;
+  }
+  ckStep=4;render();
+}
+
+async function renderS4(){
+  var total=getTotal();
+  var cat=ckCatIdx!==null?CATS[ckCatIdx]:{};
+  var ship=ckDelivery.shippingFee||0;
+  document.getElementById('ck-body').innerHTML=
+    '<div class="recap-box">'+
+    '<div class="recap-row"><span>Véhicule</span><span>'+(cat.icon||'🚗')+' '+(cat.name||'—')+'</span></div>'+
+    '<div class="recap-row"><span>Modèle</span><span>'+(cat.model||'—')+'</span></div>'+
+    '<div class="recap-row"><span>Client</span><span>'+ckContact.name+'</span></div>'+
+    '<div class="recap-row"><span>Email</span><span>'+ckContact.email+'</span></div>'+
+    '<div class="recap-row"><span>Livraison</span><span>'+(ckDelivery.type==='pickup'?'🏪 Retrait boutique':'🚚 '+(ISLAND_LABELS[ckDelivery.island||'tahiti']||''))+'</span></div>'+
+    (ship?'<div class="recap-row"><span>Frais de port</span><span>'+ship.toLocaleString('fr-FR')+' XPF</span></div>':'')+
+    '<div class="recap-row"><span style="font-weight:700">Total estimé</span><span style="font-weight:900;color:${primary};font-size:1.05rem">'+total.toLocaleString('fr-FR')+' XPF</span></div>'+
+    '</div>'+
+    '<div id="pz-area"></div>'+
+    '<div class="pz-ok" id="pz-ok"><div style="font-size:2.5rem;margin-bottom:10px">✅</div><div style="font-size:1rem;font-weight:800;color:#43e97b">Commande confirmée !</div><div style="font-size:.76rem;color:rgba(255,255,255,.45);margin-top:6px" id="pz-ok-msg">Merci '+ckContact.name+' — nous vous contacterons sous 24h.</div></div>';
+  document.getElementById('ck-foot').innerHTML='<button class="btn-prev" id="pz-back" onclick="ckStep=3;render()">← Retour</button>';
+  if(location.protocol==='file:'){
+    document.getElementById('pz-area').innerHTML=
+      '<div class="pz-local">'+
+      '<div style="font-size:.82rem;font-weight:700;color:#f6d365;margin-bottom:8px">⚠️ Mode local — Simulation paiement</div>'+
+      '<div style="font-size:.72rem;color:rgba(255,255,255,.55);line-height:1.6;margin-bottom:12px">Le formulaire OSB nécessite https://.<br>Déployez sur le serveur pour le paiement réel.</div>'+
+      '<button onclick="simPay()" style="padding:11px 22px;background:linear-gradient(135deg,#43e97b,#38f9d7);border:none;border-radius:10px;color:#0a1a10;font-size:.85rem;font-weight:800;cursor:pointer">✅ Simuler paiement '+total.toLocaleString('fr-FR')+' XPF (test)</button>'+
+      '</div>';
+    return;
+  }
+  document.getElementById('pz-area').innerHTML='<div class="pz-loading">🔒 Connexion sécurisée OSB…</div><div class="kr-embedded" id="pz-kr-form" style="display:none"></div>';
+  try {
+    var res=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SEC},body:JSON.stringify({amount:total,currency:'XPF',orderId:ORDER_ID,mode:WORKER_MODE,customerEmail:ckContact.email})});
+    if(!res.ok) throw new Error('Erreur worker ('+res.status+')');
+    var data=await res.json();
+    var formToken=data.formToken,pubKey=data.publicKey||PUBLIC_KEY;
+    if(!formToken) throw new Error('Token invalide');
+    document.getElementById('pz-area').querySelector('.pz-loading').style.display='none';
+    document.getElementById('pz-kr-form').style.display='block';
+    if(!document.getElementById('pz-css1')){var c1=document.createElement('link');c1.id='pz-css1';c1.rel='stylesheet';c1.href='https://static.osb.pf/static/js/krypton-client/V4.0/stable/classic-reset.min.css';document.head.appendChild(c1);var c2=document.createElement('link');c2.id='pz-css2';c2.rel='stylesheet';c2.href='https://static.osb.pf/static/js/krypton-client/V4.0/stable/classic.min.css';document.head.appendChild(c2);}
+    if(!window.KR){await new Promise(function(res2,rej){var s=document.createElement('script');s.id='pz-sdk';s.src='https://static.osb.pf/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js';s.setAttribute('kr-public-key',pubKey);s.setAttribute('kr-language','fr-FR');s.onload=res2;s.onerror=function(){rej(new Error('SDK OSB indisponible'));};document.head.appendChild(s);});}
+    await KR.setFormConfig({'kr-public-key':pubKey,'kr-language':'fr-FR'});
+    await KR.setFormToken(formToken);
+    KR.onSubmit(function(d){if(['PAID','AUTHORISED','RUNNING'].includes(d?.clientAnswer?.orderStatus)){showOk();}return false;});
+    new MutationObserver(function(){if(document.querySelector('.kr-payment-success')){showOk();}}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+  } catch(e){
+    document.getElementById('pz-area').innerHTML='<div style="color:#ff6b6b;text-align:center;padding:14px;font-size:.78rem">❌ '+e.message+'</div><button onclick="renderS4()" style="display:block;margin:8px auto;padding:8px 16px;background:rgba(255,255,255,.08);border:none;border-radius:8px;color:white;cursor:pointer;font-size:.74rem">Réessayer</button>';
+  }
+}
+function showOk(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';var b=document.getElementById('pz-back');if(b)b.style.display='none';}
+function simPay(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';document.getElementById('pz-ok-msg').textContent='Merci '+ckContact.name+' — commande simulée (mode test, non facturé).';var b=document.getElementById('pz-back');if(b)b.style.display='none';}
+<\/script>
+</body></html>`;
+  dl(`vdec-lp-${c.name.replace(/[^\w]/g,'-').toLowerCase()}.html`, html);
   hcsSaveCampaign(id);
 }
 
@@ -11338,6 +11671,17 @@ async function vdecInitPZ(total) {
     } catch(e) {
       btnDiv.innerHTML = `<div style="color:#ff6b6b;text-align:center;padding:14px;font-size:.78rem">❌ ${e.message}</div><button onclick="vdecRenderS4()" style="display:block;margin:8px auto;padding:8px 16px;background:rgba(255,255,255,.1);border:none;border-radius:8px;color:white;cursor:pointer;font-size:.74rem">Réessayer</button>`;
     }
+    return;
+  }
+
+  if (location.protocol === 'file:') {
+    btnDiv.innerHTML = `<div style="background:rgba(246,211,101,.1);border:1px solid rgba(246,211,101,.35);border-radius:12px;padding:18px;text-align:center">
+      <div style="font-size:.82rem;font-weight:700;color:#f6d365;margin-bottom:8px">⚠️ Mode local — Simulation paiement</div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:12px">Le formulaire OSB nécessite https://.<br>Déployez sur le serveur pour activer le paiement réel.</div>
+      <button onclick="(async function(){document.getElementById('vdec-pz-btn').style.display='none';var ok=document.getElementById('vdec-pz-ok');if(ok)ok.style.display='block';try{await vdecArchiveOrder(${total})}catch(e){console.warn(e)}})()" style="padding:12px 24px;background:linear-gradient(135deg,#43e97b,#38f9d7);border:none;border-radius:10px;color:#0a1a10;font-size:.85rem;font-weight:800;cursor:pointer">
+        ✅ Simuler paiement ${total.toLocaleString('fr-FR')} XPF (test)
+      </button>
+    </div>`;
     return;
   }
 

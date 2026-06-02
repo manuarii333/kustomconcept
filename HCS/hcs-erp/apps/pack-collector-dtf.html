@@ -337,7 +337,7 @@ body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;fo
         <li>Mixez tailles et formes librement</li>
         <li>Export PNG 300 DPI inclus</li>
       </ul>
-      <button class="offer-cta">🎁 Commander ce format →</button>
+      <button type="button" class="offer-cta" data-fmt="yard">🎁 Commander ce format →</button>
     </div>
 
     <!-- ½ YARD -->
@@ -357,7 +357,7 @@ body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;fo
         <li>Livraison rapide sous 48h</li>
         <li>Parfait pour 1 à 3 t-shirts</li>
       </ul>
-      <button class="offer-cta">Commander ce format →</button>
+      <button type="button" class="offer-cta" data-fmt="half">Commander ce format →</button>
     </div>
 
   </div>
@@ -397,7 +397,7 @@ body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;fo
         <div class="j-head-brand">🎁 PACK COLLECTOR DTF</div>
         <div class="j-head-fmt" id="j-head-fmt">Sélectionnez votre format</div>
       </div>
-      <button class="j-close" onclick="journeyClose()">✕</button>
+      <button type="button" class="j-close" onclick="journeyClose()">✕</button>
     </div>
 
     <!-- Progress steps -->
@@ -575,7 +575,7 @@ body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;fo
                 <div class="j-total-pay-val" id="j-pay-total">—</div>
               </div>
               <div id="j-kr-zone"></div>
-              <button class="j-payer-btn" id="j-payer-btn" onclick="J.initPayment()">💳 PAYER MAINTENANT</button>
+              <button type="button" class="j-payer-btn" id="j-payer-btn" onclick="J.initPayment()">💳 PAYER MAINTENANT</button>
               <div style="font-size:8px;color:var(--grey-lt);text-align:center;margin-top:8px;font-family:'JetBrains Mono',monospace">🔒 Paiement sécurisé OSB · Données chiffrées SSL</div>
             </div>
             <div class="j-recap-aside">
@@ -599,9 +599,9 @@ body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;fo
 
     <!-- Footer nav -->
     <div class="j-foot">
-      <button class="j-btn j-btn-p" id="j-prev-btn" onclick="J.prev()" style="display:none">← Retour</button>
+      <button type="button" class="j-btn j-btn-p" id="j-prev-btn" onclick="J.prev()" style="display:none">← Retour</button>
       <span class="j-err" id="j-err"></span>
-      <button class="j-btn j-btn-n" id="j-next-btn" onclick="J.next()">Continuer →</button>
+      <button type="button" class="j-btn j-btn-n" id="j-next-btn" onclick="J.next()">Continuer →</button>
     </div>
 
   </div><!-- /j-box -->
@@ -611,7 +611,7 @@ body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;fo
 /* ══════════════════════════════════════════════════════
    PACK COLLECTOR — JOURNEY ENGINE
 ══════════════════════════════════════════════════════ */
-(function(){
+try{(function(){
 'use strict';
 var J={
   step:1, fmt:null, qty:1, z:1,
@@ -659,7 +659,7 @@ var J={
     if(prev)prev.style.display=n>1?'inline-block':'none';
     if(next){
       next.style.display=n<5?'inline-block':'none';
-      var labels=['','Continuer →','Composer ma planche →','Valider l\'aperçu →','Continuer vers le paiement →'];
+      var labels=['','Continuer →','Voir l\'aperçu →','Valider l\'aperçu →','Continuer vers le paiement →'];
       if(labels[n])next.textContent=labels[n];
     }
     var err=document.getElementById('j-err');if(err)err.textContent='';
@@ -667,7 +667,7 @@ var J={
     var hf=document.getElementById('j-head-fmt');
     if(hf&&this.fmt){
       var fn=this.fmt==='yard'?'1 YARD × 22" (56×91 cm)':'½ YARD × 22" (56×46 cm)';
-      hf.textContent=fn+' · '+this.qty+' feuille'+(this.qty>1?'s')+' · '+(this.prices[this.fmt]*this.qty).toLocaleString('fr-FR')+' XPF';
+      hf.textContent=fn+' · '+this.qty+' feuille'+(this.qty>1?'s':'')+' · '+(this.prices[this.fmt]*this.qty).toLocaleString('fr-FR')+' XPF';
     } else if(hf){hf.textContent='Sélectionnez votre format';}
     if(n===2){var self=this;setTimeout(function(){self.initCanvas();},40);}
     if(n===3)this.buildApercu();
@@ -836,8 +836,8 @@ var J={
   },
 
   initPayment:async function(){
-    var nom=(document.getElementById('j-nom')||{}).value.trim();
-    var email=(document.getElementById('j-email')||{}).value.trim();
+    var nom=((document.getElementById('j-nom')||{}).value||'').trim();
+    var email=((document.getElementById('j-email')||{}).value||'').trim();
     if(!nom||!email){alert('Renseignez votre nom et email.');return;}
     var btn=document.getElementById('j-payer-btn');if(btn){btn.disabled=true;btn.textContent='⏳ Connexion OSB...';}
     var WURL='https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
@@ -870,6 +870,34 @@ var J={
 window.J=J;
 window.journeyOpen=function(fmt){J.open(fmt);};
 window.journeyClose=function(){J.close();};
+
+/* ── Binding CTA landing page via addEventListener ── */
+document.querySelectorAll('.offer-cta[data-fmt]').forEach(function(btn){
+  btn.addEventListener('click',function(e){
+    e.stopPropagation();
+    J.open(btn.getAttribute('data-fmt'));
+  });
+});
+})();}catch(e){console.error('PackDTF init error:',e);}
+
+/* ── Fallback garanti — fonctionne même si le script principal plante ── */
+(function(){
+  function openModal(fmt){
+    var m=document.getElementById('journey-modal');
+    if(m)m.classList.add('open');
+    if(window.J&&window.J.open)window.J.open(fmt);
+  }
+  document.querySelectorAll('[data-fmt]').forEach(function(el){
+    el.addEventListener('click',function(ev){
+      ev.stopPropagation();
+      openModal(el.getAttribute('data-fmt'));
+    });
+  });
+  /* Fermeture modale via overlay */
+  var m=document.getElementById('journey-modal');
+  if(m)m.addEventListener('click',function(ev){
+    if(ev.target===m){if(window.J)window.J.close();else m.classList.remove('open');}
+  });
 })();
 </script>
 </body>
