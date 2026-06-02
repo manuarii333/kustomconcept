@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Andromeda Campaign Builder — HCS</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>🚀</text></svg>">
-<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' *.highcoffeeshirt.workers.dev *.highcoffeeshirts.com highcoffeeshirts.com *.osb.pf *.googleapis.com *.dropboxapi.com *.dropbox.com *.n8n.cloud data: blob: 'unsafe-inline' 'unsafe-eval';">
+
 <style>
 :root {
   --bg-primary: #0f0f1a;
@@ -600,7 +601,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-prim
 .hcs-camp-hist-statut { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--accent); background: rgba(108,99,255,0.15); padding: 2px 7px; border-radius: 10px; flex-shrink: 0; }
 .hcs-camp-hist-date { font-size: 0.6rem; color: var(--text-secondary); flex-shrink: 0; }
 #btn-hcs-camp-history {
-  display: none; position: fixed; bottom: 20px; right: 20px;
+  display: none; position: fixed; bottom: 72px; right: 20px;
   background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
   color: var(--text-secondary); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px;
   padding: 6px 14px; cursor: pointer; z-index: 9997; transition: all 0.15s; text-transform: uppercase;
@@ -2171,7 +2172,7 @@ function render(id) {
           <div class="frow"><label class="flabel">URL Worker PayZen</label>
             <input class="finput" placeholder="https://worker.workers.dev/payzen-token" value="https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token" id="pz-worker-${id}"></div>
           <div class="frow"><label class="flabel">Secret Worker</label>
-            <input class="finput" type="password" placeholder="votre_secret" value="hcs-payzen-2026" id="pz-secret-${id}"></div>
+            <input class="finput" type="password" placeholder="votre_secret (requis pour l'export)" id="pz-secret-${id}"></div>
           <div class="frow"><label class="flabel">Mode</label>
             <select class="finput" id="pz-mode-${id}" style="background:var(--bg-panel);color:var(--text)">
               <option value="TEST">TEST</option>
@@ -2518,6 +2519,14 @@ function applyBg(file, id) {
     compressImage(raw, 900, 900, 0.7, compressed => {
       saveBg(id, compressed);
     });
+    // Mini-vignette pour la liste LPs (220×120, 50% qualité → ~8KB)
+    compressImage(raw, 220, 120, 0.5, tiny => {
+      try {
+        const thumbs = JSON.parse(localStorage.getItem('hcs_bg_thumbs_v1') || '{}');
+        thumbs[id] = tiny;
+        localStorage.setItem('hcs_bg_thumbs_v1', JSON.stringify(thumbs));
+      } catch(_) {}
+    });
     saveState(id);
   };
   r.readAsDataURL(file);
@@ -2539,6 +2548,11 @@ function clearBg(id) {
   try {
     const all = JSON.parse(localStorage.getItem(IMG_STORE) || '{}');
     if (all[id]) { delete all[id].bgDataUrl; localStorage.setItem(IMG_STORE, JSON.stringify(all)); }
+  } catch(_) {}
+  try {
+    const thumbs = JSON.parse(localStorage.getItem('hcs_bg_thumbs_v1') || '{}');
+    delete thumbs[id];
+    localStorage.setItem('hcs_bg_thumbs_v1', JSON.stringify(thumbs));
   } catch(_) {}
   saveState(id);
 }
@@ -2969,7 +2983,7 @@ function exportLPTshirt(id) {
   const badge2    = c.colors.badge;
 
   const workerUrl    = g('pz-worker-'+id)?.value?.trim() || 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
-  const workerSecret = g('pz-secret-'+id)?.value?.trim() || 'hcs-payzen-2026';
+  const workerSecret = g('pz-secret-'+id)?.value?.trim() || '';
   const workerMode   = g('pz-mode-'+id)?.value || 'TEST';
 
   const faces    = pcfg.faces || ['front'];
@@ -3181,7 +3195,6 @@ const SHIP_RATES   = {tahiti:1800,moorea:1500,huahine:2500,'bora-bora':2500,raia
 const CAMP_NAME    = '${c.name.replace(/'/g,"\\'")}';
 const EMOJI        = '${emoji}';
 const PICWISH_URL  = 'https://hcs-proxy.highcoffeeshirt.workers.dev/api/picwish';
-const PICWISH_SECRET = 'hcs-proxy-2026';
 const LBL1='${lbl1.replace(/'/g,"\\'")}', LBL2='${lbl2.replace(/'/g,"\\'")}', LBL3='${lbl3.replace(/'/g,"\\'")}';
 const LP_SLUG='${lpSlug}';
 
@@ -3328,7 +3341,7 @@ function logoLoad(e) {
         const b64 = url.replace(/^data:[^;]+;base64,/, '');
         const res = await fetch(PICWISH_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Worker-Secret': PICWISH_SECRET },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ image_base64: b64, operation: 'remove-background' })
         });
         if (!res.ok) throw new Error('Worker ' + res.status);
@@ -3607,7 +3620,7 @@ async function ckPayment() {
           delivery:{type:ckDelivery.type,address:ckDelivery.address||'',island:ckDelivery.island||'',shippingFee:ckDelivery.shippingFee||0,pickupDate:ckDelivery.pickupDate||'',slot:ckDelivery.slot||'',deliveryDelay:3},
           note: [ckContact.note||'', 'Taille:'+flow.size, p.couleur?'Couleur:'+p.couleur:'', 'Logo:'+flow.logoName, 'Face:'+flow.face, 'Placement:x='+Math.round(flow.logoPos.xPct)+'%,y='+Math.round(flow.logoPos.yPct)+'%,w='+Math.round(flow.logoPos.wPct)+'%'].filter(Boolean).join(' | ')
         })
-      }).catch(e=>console.warn('Ordre non sauvegardé:',e));
+      }).catch(function(_e){console.error('[HCS] Ordre non sauvegardé:',_e);var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_ord-warn')){var _w=document.createElement('p');_w.id='_ord-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
     }
     KR.onSubmit(d=>{if(['PAID','RUNNING','AUTHORISED'].includes(d?.clientAnswer?.orderStatus)){showSuccess();}return false;});
     const krForm=document.querySelector('.kr-embedded');
@@ -3654,7 +3667,7 @@ function exportLP(id) {
   });
 
   const workerUrl = g('pz-worker-'+id)?.value?.trim() || 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
-  const workerSecret = g('pz-secret-'+id)?.value?.trim() || 'hcs-payzen-2026';
+  const workerSecret = g('pz-secret-'+id)?.value?.trim() || '';
   const workerMode   = g('pz-mode-'+id)?.value || 'TEST';
   const primary  = c.colors.primary;
   const badge2   = c.colors.badge;
@@ -4164,7 +4177,7 @@ async function renderStep4() {
           delivery:{ type:ckDelivery.type, address:ckDelivery.address||'', island:ckDelivery.island||'', shippingFee:ckDelivery.shippingFee||0, pickupDate:ckDelivery.pickupDate||'', slot:ckDelivery.slot||'', deliveryDelay:3 },
           note:ckContact.note||''
         })
-      }).catch(e => console.warn('Ordre non sauvegardé:',e));
+      }).catch(function(_e){console.error('[HCS] Ordre non sauvegardé:',_e);var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_ord-warn')){var _w=document.createElement('p');_w.id='_ord-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
       /* Enrichir la confirmation avec fidélité + lien compte client */
       _enrichConfirmation(orderId, total, ckContact, ckDelivery, p?.n || '');
     }
@@ -4235,7 +4248,7 @@ function exportLPVdec(id) {
   const primary    = c.colors.primary;
   const ovColor    = c.colors.overlay || 'rgba(0,0,0,.55)';
   const workerUrl  = g('pz-worker-'+id)?.value?.trim()  || 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
-  const workerSec  = g('pz-secret-'+id)?.value?.trim()  || 'hcs-payzen-2026';
+  const workerSec  = g('pz-secret-'+id)?.value?.trim()  || '';
   const workerMode = g('pz-mode-'+id)?.value || 'TEST';
   const publicKey  = workerMode === 'PRODUCTION'
     ? '41545085:publickey_IzNDzp5XcAadriFpCh08meZmg8Ri6WbYIG6TIQ9mpu2NA'
@@ -4542,7 +4555,7 @@ function exportLPGeneric(id) {
   const logoEl    = cv?.querySelector('.logo-overlay');
   const logoSrc   = logoEl?.src || '';
   const workerUrl = g('pz-worker-'+id)?.value || 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
-  const workerSec = g('pz-secret-'+id)?.value || 'hcs-payzen-2026';
+  const workerSec = g('pz-secret-'+id)?.value || '';
   const mode      = g('pz-mode-'+id)?.value   || 'TEST';
   const publicKey = mode === 'PRODUCTION'
     ? '41545085:publickey_IzNDzp5XcAadriFpCh08meZmg8Ri6WbYIG6TIQ9mpu2NA'
@@ -5074,7 +5087,7 @@ async function gfInitKrypton(amount) {
             delivery:{type:'pickup',address:'',pickupDate:_s.date||'',deliveryDelay:0},
             note:optParts.join(' | ')
           })
-        }).catch(function(e){console.warn('Ordre non sauvegardé:',e);});
+        }).catch(function(_e){console.error('[HCS] Ordre non sauvegardé:',_e);var _gf=document.getElementById('gf-pz-kr-form');if(_gf&&!document.getElementById('_gf-warn')){var _w=document.createElement('p');_w.id='_gf-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:8px;text-align:center';_w.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si pas de confirmation.';_gf.appendChild(_w);}});
         document.getElementById('gf-pz-kr-form').innerHTML='<div style="text-align:center;padding:24px"><div style="font-size:2.5rem;margin-bottom:8px">✅</div><div style="font-size:1rem;font-weight:800;color:#43e97b">Paiement confirmé !</div><div style="font-size:.72rem;color:rgba(255,255,255,.5);margin-top:6px">Merci '+(_s.name?_s.name.split(' ')[0]:'')+(', votre commande est enregistrée.')+'</div></div>';
         try{_enrichConfirmation(orderId,total,{name:_s.name||'',email:_s.email||'',phone:_s.phone||''},{type:'pickup',pickupDate:_s.date||''},prod.n||'');}catch(e){}
         setTimeout(closeFlow,2800);
@@ -5252,7 +5265,7 @@ function exportAd(id) {
   });
 
   const workerUrl    = g('pz-worker-'+id)?.value?.trim() || 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
-  const workerSecret = g('pz-secret-'+id)?.value?.trim() || 'hcs-payzen-2026';
+  const workerSecret = g('pz-secret-'+id)?.value?.trim() || '';
   const workerMode   = g('pz-mode-'+id)?.value || 'TEST';
   const primary      = c.colors.primary;
   const badge2       = c.colors.badge;
@@ -5740,7 +5753,7 @@ async function renderStep4() {
           delivery:{ type:ckDelivery.type, address:ckDelivery.address||'', island:ckDelivery.island||'', shippingFee:ckDelivery.shippingFee||0, pickupDate:ckDelivery.pickupDate||'', slot:ckDelivery.slot||'', deliveryDelay:3 },
           note:ckContact.note||''
         })
-      }).catch(e => console.warn('Ordre non sauvegardé:',e));
+      }).catch(function(_e){console.error('[HCS] Ordre non sauvegardé:',_e);var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_ord-warn')){var _w=document.createElement('p');_w.id='_ord-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
       /* Enrichir la confirmation avec fidélité + lien compte client */
       _enrichConfirmation(orderId, total, ckContact, ckDelivery, p?.n || '');
     }
@@ -5787,7 +5800,7 @@ async function testPayzen(id) {
   const g = el => document.getElementById(el);
   const amount = parseInt(g('pz-amount-'+id)?.value) || 0;
   const workerUrl = g('pz-worker-'+id)?.value?.trim() || 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
-  const secret = g('pz-secret-'+id)?.value?.trim() || 'hcs-payzen-2026';
+  const secret = g('pz-secret-'+id)?.value?.trim() || '';
   const mode = g('pz-mode-'+id)?.value || 'TEST';
 
   if (!amount || amount <= 0) { alert('Saisissez un montant.'); return; }
@@ -5949,7 +5962,7 @@ function normalizePhone(raw) {
 let CART = [];
 let CK_STEP = 1;
 const WORKER_URL = 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
-const WORKER_SECRET_VAL = 'hcs-payzen-2026';
+const WORKER_SECRET_VAL = '';
 const WORKER_MODE = 'TEST';
 
 // ── Panier ──────────────────────────────────────────────
@@ -6273,7 +6286,7 @@ async function renderStep4() {
               note:contact.note||''
             })
           });
-        } catch(e){ console.warn('Ordre non sauvegardé:',e); }
+        } catch(e){ console.error('[HCS] Ordre non sauvegardé:',e);var _oe=document.getElementById('pz-ok');if(_oe&&!document.getElementById('_stk-warn')){var _sw=document.createElement('p');_sw.id='_stk-warn';_sw.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px';_sw.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si pas de confirmation.';_oe.appendChild(_sw);} }
         CART=[]; updateBadge();
       }
       return false;
@@ -6519,6 +6532,7 @@ async function loadLPs() {
 
 function renderLPs(pages) {
   const ws = document.getElementById('workspace');
+  const bgThumbs = JSON.parse(localStorage.getItem('hcs_bg_thumbs_v1') || '{}');
   const cards = pages.map(p => {
     const thumbUrl = `${WORKER_BASE}/thumb/${p.slug}?t=${Date.now()}`;
     const date = p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
@@ -6528,9 +6542,15 @@ function renderLPs(pages) {
       const s = c.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
       return s === p.slug || (p.campaignName && p.campaignName === c.name);
     });
+    // Image de fond chargée (mini-vignette persistée localStorage ou mémoire vive)
+    const campBgThumb = camp ? (bgThumbs[camp.id] || (_memState[camp.id]?.bgDataUrl) || null) : null;
+    const vigBg = camp
+      ? (campBgThumb ? `url(${campBgThumb}) center/cover no-repeat` : camp.heroGrad)
+      : null;
+    const vigOverlay = campBgThumb ? 'rgba(0,0,0,0.52)' : (camp?.colors?.overlay || 'rgba(0,0,0,0.45)');
     const vignette = camp ? `
-      <div style="position:relative;height:110px;background:${camp.heroGrad};overflow:hidden;border-bottom:1px solid #2a2a4a;flex-shrink:0">
-        <div style="position:absolute;inset:0;background:${camp.colors.overlay}"></div>
+      <div style="position:relative;height:110px;background:${vigBg};overflow:hidden;border-bottom:1px solid #2a2a4a;flex-shrink:0">
+        <div style="position:absolute;inset:0;background:${vigOverlay}"></div>
         <div style="position:relative;z-index:2;padding:10px;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
           <div style="font-size:0.62rem;font-weight:900;color:white;line-height:1.2;text-shadow:0 1px 4px rgba(0,0,0,.7)">${camp.headline}</div>
           <div style="display:inline-block;margin-top:5px;background:${camp.colors.badge};color:white;padding:2px 8px;border-radius:10px;font-size:0.52rem;font-weight:700">${camp.badge}</div>
@@ -7335,7 +7355,7 @@ async function updateOrderStatusPlanning(orderId, status) {
       fetch(`${HCS_API_BASE}/${order._mysqlTable}/${order._mysqlId}`, {
         method:'PUT', headers:{'Content-Type':'application/json','x-api-key':HCS_API_KEY},
         body: JSON.stringify({ status: frStatus })
-      }).catch(e => console.warn('[planning] MySQL sync err:', e));
+      }).catch(e => showToast('⚠️ Sync MySQL statut échoué : ' + e.message, true));
     }
     showToast(`✅ ${orderId} → ${status}`);
     await loadPlanning();
@@ -7354,7 +7374,7 @@ async function deleteOrderPlanning(orderId) {
     if (order?._mysqlId && order?._mysqlTable) {
       fetch(`${HCS_API_BASE}/${order._mysqlTable}/${order._mysqlId}`, {
         method:'DELETE', headers:{'x-api-key':HCS_API_KEY}
-      }).catch(e => console.warn('[planning] MySQL delete err:', e));
+      }).catch(e => showToast('⚠️ Suppression MySQL échouée : ' + e.message, true));
     }
     showToast(`🗑 ${orderId} supprimée`);
     await loadPlanning();
@@ -9951,7 +9971,7 @@ function genStep3HTML() {
   const camp = CAMPS[campId]; const prod = camp.products[prodIdx];
   const price = genGetPrice();
   const workerUrl = document.getElementById(`pz-worker-${campId}`)?.value || 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
-  const workerSec = document.getElementById(`pz-secret-${campId}`)?.value || 'hcs-payzen-2026';
+  const workerSec = document.getElementById(`pz-secret-${campId}`)?.value || '';
   const mode      = document.getElementById(`pz-mode-${campId}`)?.value   || 'TEST';
   const publicKey = mode === 'PRODUCTION'
     ? '41545085:publickey_IzNDzp5XcAadriFpCh08meZmg8Ri6WbYIG6TIQ9mpu2NA'
@@ -10625,7 +10645,7 @@ function vdecSyncToServer(cfg) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': VDEC_API_KEY },
     body: JSON.stringify(cfg)
-  }).catch(e => console.warn('[vdec] sync server err:', e));
+  }).catch(e => showToast('⚠️ Config véhicule non synchronisée : ' + e.message, true));
 }
 
 async function vdecSyncFromServer() {
@@ -11150,7 +11170,7 @@ async function vdecHandleLogoUpload(input) {
         vdecRenderCanvas(vdecLoadCfg().cats[_vdec.catIdx]);
         vdecRenderLogoList();
       }
-    } catch(err) { console.warn('[vdec] logo upload err:', err); }
+    } catch(err) { showToast('❌ Upload logo échoué : ' + err.message, true); }
   };
   reader.readAsDataURL(file);
   input.value = '';
@@ -11678,7 +11698,7 @@ async function vdecInitPZ(total) {
     btnDiv.innerHTML = `<div style="background:rgba(246,211,101,.1);border:1px solid rgba(246,211,101,.35);border-radius:12px;padding:18px;text-align:center">
       <div style="font-size:.82rem;font-weight:700;color:#f6d365;margin-bottom:8px">⚠️ Mode local — Simulation paiement</div>
       <div style="font-size:.72rem;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:12px">Le formulaire OSB nécessite https://.<br>Déployez sur le serveur pour activer le paiement réel.</div>
-      <button onclick="(async function(){document.getElementById('vdec-pz-btn').style.display='none';var ok=document.getElementById('vdec-pz-ok');if(ok)ok.style.display='block';try{await vdecArchiveOrder(${total})}catch(e){console.warn(e)}})()" style="padding:12px 24px;background:linear-gradient(135deg,#43e97b,#38f9d7);border:none;border-radius:10px;color:#0a1a10;font-size:.85rem;font-weight:800;cursor:pointer">
+      <button onclick="(async function(){document.getElementById('vdec-pz-btn').style.display='none';var ok=document.getElementById('vdec-pz-ok');if(ok)ok.style.display='block';try{await vdecArchiveOrder(${total})}catch(e){showToast('❌ Archivage simulation échoué : '+e.message,true)}})()" style="padding:12px 24px;background:linear-gradient(135deg,#43e97b,#38f9d7);border:none;border-radius:10px;color:#0a1a10;font-size:.85rem;font-weight:800;cursor:pointer">
         ✅ Simuler paiement ${total.toLocaleString('fr-FR')} XPF (test)
       </button>
     </div>`;
@@ -11734,7 +11754,7 @@ async function vdecInitPZ(total) {
     const showOk = () => {
       formEl.style.display = 'none';
       document.getElementById('vdec-pz-ok').style.display = 'block';
-      vdecArchiveOrder(total).catch(e => console.warn('[vdec] archive err:', e));
+      vdecArchiveOrder(total).catch(e => showToast('⚠️ Archivage commande échoué : ' + e.message, true));
     };
     KR.onSubmit(d => { if (['PAID','RUNNING','AUTHORISED'].includes(d?.clientAnswer?.orderStatus)) showOk(); return false; });
     const kf = formEl.querySelector('.kr-embedded');
@@ -11827,7 +11847,7 @@ async function vdecArchiveOrder(total) {
       headers: { 'Content-Type': 'application/json', 'x-api-key': VDEC_API_KEY },
       body: JSON.stringify(order)
     });
-  } catch(e) { console.warn('[vdec] commande MySQL err:', e); }
+  } catch(e) { showToast('⚠️ Enregistrement commande MySQL échoué', true); }
   /* Email récap client (BCC admin) */
   try {
     await fetch(VDEC_API + '/send-vdec-email.php', {
@@ -11835,7 +11855,7 @@ async function vdecArchiveOrder(total) {
       headers: { 'Content-Type': 'application/json', 'x-api-key': VDEC_API_KEY },
       body: JSON.stringify(order)
     });
-  } catch(e) { console.warn('[vdec] email client err:', e); }
+  } catch(e) { showToast('⚠️ Email confirmation non envoyé (vérifiez le serveur)', true); }
   /* Enregistrement Worker KV → apparaît dans Planning Andromeda */
   try {
     const viewLabels = { left:'Gauche', front:'Avant', back:'Arrière', right:'Droite' };
@@ -11862,7 +11882,7 @@ async function vdecArchiveOrder(total) {
         ].filter(Boolean).join(' | ')
       })
     });
-  } catch(e) { console.warn('[vdec] Worker KV save err:', e); }
+  } catch(e) { showToast('⚠️ Planning non mis à jour (Worker KV)', true); }
   /* Webhook n8n → emails client + admin (no-cors : n8n cloud ne renvoie pas Access-Control-Allow-Origin) */
   try {
     await fetch(VDEC_N8N_WEBHOOK, {
@@ -11871,7 +11891,7 @@ async function vdecArchiveOrder(total) {
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ ...order, emailClient: _vdec.contact.email, emailAdmin: VDEC_ADMIN_EMAIL })
     });
-  } catch(e) { console.warn('[vdec] n8n webhook err:', e); }
+  } catch(e) { showToast('⚠️ Webhook n8n échoué — vérifiez le workflow', true); }
 }
 
 // Escape key
@@ -12044,7 +12064,7 @@ function vdecAdmPickImg(ci, viewKey) {
       cfg.cats[ci].views[viewKey] = url;
       vdecSaveCfg(cfg);
       vdecAdmRenderCats();
-    } catch(err) { console.warn('[vdec] upload img err:', err); }
+    } catch(err) { showToast('❌ Upload image véhicule échoué : ' + err.message, true); }
   };
   inp.click();
 }
@@ -12090,7 +12110,7 @@ function vdecAdmAddLogos() {
       try {
         const url = await vdecUploadImage(file, 'logos');
         serverLogos.push({ name: file.name.replace(/\.[^.]+$/, ''), url });
-      } catch(err) { console.warn('[vdec] logo upload err:', err); }
+      } catch(err) { showToast('❌ Upload logo échoué : ' + err.message, true); }
     }
     if (serverLogos.length) {
       const cfg2 = vdecLoadCfg();
