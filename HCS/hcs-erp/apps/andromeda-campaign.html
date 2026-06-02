@@ -11758,12 +11758,10 @@ function vdecNext() {
     /* Vérifier qu'au moins une vue a des éléments, et que toutes les vues utilisées sont validées */
     const hasElements = _vdec.logos.length > 0 || _vdec.texts.length > 0;
     if (!hasElements) { alert('Ajoutez au moins un logo ou un texte sur le mockup.'); return; }
-    /* Vérifier les dimensions obligatoires */
-    const missingDim = [
-      ..._vdec.logos.filter(l => !l.w_cm || !l.h_cm).map((_, i) => `Logo ${i+1}`),
-      ..._vdec.texts.filter(t => !t.w_cm || !t.h_cm).map((t, i) => `Texte "${t.text}"`)
-    ];
-    if (missingDim.length) { alert('Renseignez les dimensions (L×H) pour : ' + missingDim.join(', ')); return; }
+    /* Dimensions manquantes → appliquer valeurs par défaut (50×20 cm) */
+    _vdec.logos.forEach(l => { if (!l.w_cm) l.w_cm = 50; if (!l.h_cm) l.h_cm = 50; });
+    _vdec.texts.forEach(t => { if (!t.w_cm) t.w_cm = 50; if (!t.h_cm) t.h_cm = 20; });
+    vdecCalcTotal();
     /* Vérifier que la vue courante est validée */
     const notValidated = VDEC_VIEWS_DEF.filter(v => !_vdec.viewsValidated[v.key]);
     const allViews = Object.values(_vdec.viewsValidated);
