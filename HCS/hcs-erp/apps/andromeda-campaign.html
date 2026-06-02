@@ -4534,7 +4534,8 @@ async function renderS4(){
     document.getElementById('pz-area').innerHTML='<div style="color:#ff6b6b;text-align:center;padding:14px;font-size:.78rem">❌ '+e.message+'</div><button onclick="renderS4()" style="display:block;margin:8px auto;padding:8px 16px;background:rgba(255,255,255,.08);border:none;border-radius:8px;color:white;cursor:pointer;font-size:.74rem">Réessayer</button>';
   }
 }
-function showOk(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';var b=document.getElementById('pz-back');if(b)b.style.display='none';}
+function _vdSaveOrder(){var cat=ckCatIdx!==null?CATS[ckCatIdx]:{};fetch('https://payzen-hcs.highcoffeeshirt.workers.dev/order/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:ORDER_ID,amount:getTotal(),currency:'XPF',campaignName:'Déco Véhicule',lpSlug:'sticker-auto-0',product:(cat.icon||'🚗')+' '+(cat.name||'')+(cat.model?' — '+cat.model:''),client:ckContact,delivery:ckDelivery,note:ckDescription+(ckPhotoUrl?' | [Photo fournie par le client]':''),mode:WORKER_MODE})}).catch(function(_e){var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_vd-warn')){var _w=document.createElement('p');_w.id='_vd-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+ORDER_ID+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});}
+function showOk(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';var b=document.getElementById('pz-back');if(b)b.style.display='none';_vdSaveOrder();}
 function simPay(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';document.getElementById('pz-ok-msg').textContent='Merci '+ckContact.name+' — commande simulée (mode test, non facturé).';var b=document.getElementById('pz-back');if(b)b.style.display='none';}
 <\/script>
 </body></html>`;
@@ -10015,9 +10016,26 @@ async function genInitKrypton(amount, workerUrl, workerSec, publicKey, mode) {
     await KR.setFormToken(data.formToken);
     KR.onSubmit(async (r) => {
       const status = r.clientAnswer?.orderStatus;
-      if (status === 'PAID' || status === 'AUTHORISED') {
+      if (['PAID','AUTHORISED','RUNNING'].includes(status)) {
         document.getElementById('gen-pz-kr-form').innerHTML =
           `<div style="text-align:center;padding:24px"><div style="font-size:2.5rem;margin-bottom:8px">✅</div><div style="font-size:1rem;font-weight:800;color:#43e97b">Paiement confirmé !</div><div style="font-size:0.72rem;color:var(--text-secondary);margin-top:6px">Merci, votre commande est enregistrée.</div></div>`;
+        // Sauvegarde commande Worker KV + WhatsApp
+        try {
+          const _gc = CAMPS[genFlow.campId]; const _gp = _gc.products[genFlow.prodIdx]; const _gs = genFlow.selections;
+          const _gOpts = [_gs.color,_gs.size,_gs.format,_gs.module,_gs.plan,_gs.service,_gs.description,_gs.contactNote].filter(Boolean).join(' | ');
+          const _gSlug = _gc.name.replace(/[^a-zA-Z0-9]/g,'-').toLowerCase() + '-' + genFlow.campId;
+          fetch(workerUrl.replace('/payzen-token','/order/save'), {
+            method:'POST', headers:{'Content-Type':'application/json','X-Worker-Secret':workerSec},
+            body: JSON.stringify({
+              orderId:'GEN-'+Date.now(), amount, currency:'XPF',
+              campaignName:_gc.name, product:_gp.n, lpSlug:_gSlug,
+              size:_gs.size||_gs.format||_gs.module||_gs.plan||_gs.service||'', qty:_gs.qty||1,
+              client:{name:_gs.contactName||'',email:_gs.contactEmail||'',phone:_gs.contactPhone||''},
+              delivery:{type:'pickup',address:'',pickupDate:_gs.date||'',deliveryDelay:0},
+              note:_gOpts, mode
+            })
+          }).catch(e => console.error('[HCS] genFlow ordre non sauvegardé:',e));
+        } catch(_) {}
         setTimeout(closeGenericFlow, 2800);
       }
       return true;
@@ -11382,15 +11400,18 @@ async function vdecDrawThumbCanvas(cv, bgUrl, logos, texts) {
   const W = cv.width, H = cv.height;
   const ctx = cv.getContext('2d');
   ctx.fillStyle = '#0a0a18'; ctx.fillRect(0, 0, W, H);
-  function loadImg(src) {
+  function loadImg(src, cors) {
     return new Promise(res => {
-      const img = new Image(); img.crossOrigin = 'anonymous';
+      const img = new Image();
+      if (cors !== false) img.crossOrigin = 'anonymous';
       img.onload = () => res(img); img.onerror = () => res(null);
       img.src = src;
     });
   }
   if (bgUrl) {
-    const bg = await loadImg(bgUrl);
+    // Try CORS first; if blocked (file:// → https://) retry without — canvas-taint OK for display
+    let bg = await loadImg(bgUrl);
+    if (!bg) bg = await loadImg(bgUrl, false);
     if (bg) {
       const scale = Math.min(W/bg.naturalWidth, H/bg.naturalHeight);
       const dw = bg.naturalWidth*scale, dh = bg.naturalHeight*scale;
@@ -11429,9 +11450,10 @@ async function vdecCaptureSnapshot(vk) {
   cv.width  = W; cv.height = H;
   const ctx = cv.getContext('2d');
 
-  function loadImg(src) {
+  function loadImg(src, cors) {
     return new Promise(res => {
-      const img = new Image(); img.crossOrigin = 'anonymous';
+      const img = new Image();
+      if (cors !== false) img.crossOrigin = 'anonymous';
       img.onload = () => res(img); img.onerror = () => res(null);
       img.src = src;
     });
@@ -11440,7 +11462,9 @@ async function vdecCaptureSnapshot(vk) {
   ctx.fillStyle = '#0a0a18';
   ctx.fillRect(0, 0, W, H);
   if (bgUrl) {
-    const bg = await loadImg(bgUrl);
+    // Try CORS first; fall back without crossOrigin if server blocks it
+    let bg = await loadImg(bgUrl);
+    if (!bg) bg = await loadImg(bgUrl, false);
     if (bg) {
       const scale = Math.min(W / bg.naturalWidth, H / bg.naturalHeight);
       const dw = bg.naturalWidth * scale, dh = bg.naturalHeight * scale;
@@ -11449,7 +11473,8 @@ async function vdecCaptureSnapshot(vk) {
   }
   for (const l of _vdec.logos) {
     if (!l.url) continue;
-    const img = await loadImg(l.url);
+    let img = await loadImg(l.url);
+    if (!img) img = await loadImg(l.url, false);
     if (!img) continue;
     const lw  = (l.w ?? 35) / 100 * W;
     const lh  = lw * img.naturalHeight / img.naturalWidth;
@@ -11490,7 +11515,13 @@ async function vdecCaptureSnapshot(vk) {
   ctx.fillText('HCS — Déco Véhicule', W-8, H-6);
   ctx.restore();
 
-  _vdec.viewSnapshots[vk] = cv.toDataURL('image/jpeg', 0.82);
+  try {
+    _vdec.viewSnapshots[vk] = cv.toDataURL('image/jpeg', 0.82);
+  } catch(e) {
+    // Canvas tainted (cross-origin image loaded without CORS headers) — store bgUrl directly
+    // so step 3 still displays the vehicle image via <img src>
+    _vdec.viewSnapshots[vk] = bgUrl || null;
+  }
 }
 
 function vdecRenderViewTabs() {
