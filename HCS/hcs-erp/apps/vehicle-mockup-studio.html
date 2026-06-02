@@ -801,12 +801,15 @@ function _cachePhoto(key) {
   const src = _getPhotoSrc(key);
   if (!src) { delete _photoImgCache[key]; return; }
   if (_photoImgCache[key] && _photoImgCache[key]._src === src) return;
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img._src = src;
-  img.onload = () => { _photoImgCache[key] = img; if (editor) editor.render(); };
-  img.onerror = () => { delete _photoImgCache[key]; };
-  img.src = src;
+  const tryLoad = (cors) => {
+    const img = new Image();
+    if (cors) img.crossOrigin = 'anonymous';
+    img._src = src;
+    img.onload = () => { _photoImgCache[key] = img; if (editor) editor.render(); };
+    img.onerror = () => { if (cors) tryLoad(false); else delete _photoImgCache[key]; };
+    img.src = src;
+  };
+  tryLoad(true);
 }
 
 function saveVehiclePhotos() { localStorage.setItem('vms_photos', JSON.stringify(vehiclePhotos)); }
@@ -1869,7 +1872,7 @@ class MockupEditor {
     const vn = this.vehicle ? this.vehicle.name.replace(/\s+/g,'_') : 'vehicule';
     const a = document.createElement('a');
     a.download = `HCS_Mockup_${vn}_${viewName}_${Date.now()}.png`;
-    a.href = tmpC.toDataURL('image/png');
+    try { a.href = tmpC.toDataURL('image/png'); } catch(e) { alert('Export impossible (restriction CORS locale). Déployer sur le serveur pour télécharger.'); return; }
     a.click();
   }
 }

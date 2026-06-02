@@ -2968,15 +2968,23 @@ function downloadThumb(wrap){
     showToast('⬇ Image téléchargée !');return;
   }
   // URL externe (DALL-E) → canvas pour contournement CORS
-  const tmp=new Image();tmp.crossOrigin='anonymous';
-  tmp.onload=()=>{
-    const c=document.createElement('canvas');c.width=tmp.naturalWidth;c.height=tmp.naturalHeight;
-    c.getContext('2d').drawImage(tmp,0,0);
-    const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download=filename;a.click();
-    showToast('⬇ Image téléchargée !');
+  const tryDownload = (cors) => {
+    const tmp = new Image();
+    if (cors) tmp.crossOrigin = 'anonymous';
+    tmp.onload = () => {
+      const c = document.createElement('canvas'); c.width = tmp.naturalWidth; c.height = tmp.naturalHeight;
+      c.getContext('2d').drawImage(tmp, 0, 0);
+      try {
+        const a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = filename; a.click();
+        showToast('⬇ Image téléchargée !');
+      } catch(e) {
+        if (cors) tryDownload(false); else showToast('⚠ Téléchargement impossible (restriction CORS)', 'var(--red)');
+      }
+    };
+    tmp.onerror = () => { if (cors) tryDownload(false); else showToast('⚠ Téléchargement impossible (restriction CORS)', 'var(--red)'); };
+    tmp.src = src + '?t=' + Date.now();
   };
-  tmp.onerror=()=>showToast('⚠ Téléchargement impossible (restriction CORS)','var(--red)');
-  tmp.src=src+'?t='+Date.now();
+  tryDownload(true);
 }
 
 /* ══ EXPORT ══════════════════════════════════════════════════ */
