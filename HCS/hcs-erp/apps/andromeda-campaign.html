@@ -2756,6 +2756,17 @@ async function _uploadCampaignImages(id, lpSlug, onProgress) {
     }
   }
 
+  // Pour toutes les campagnes : uploader l'image de fond si elle est base64
+  // (évite d'embarquer une image ~130 KB dans le JSON envoyé au Worker)
+  const cv = document.getElementById('cv-' + id);
+  const cvBg = cv?.style.background || '';
+  if (cvBg.includes('url(') && cvBg.includes('base64')) {
+    onProgress && onProgress(0, 1);
+    const bgUrl = await _uploadImgToWorker(`${lpSlug}-bg`, _memState[id]?.bgDataUrl || '');
+    if (bgUrl) urls['_bg'] = bgUrl;
+    onProgress && onProgress(1, 1);
+  }
+
   return urls;
 }
 
@@ -2974,7 +2985,8 @@ function exportLPTshirt(id) {
   const domain    = g('dm-'+id)?.textContent || c.domain;
   const cv        = g('cv-'+id);
   const cvBg      = cv?.style.background || '';
-  const heroBg    = cvBg.includes('url(') ? cvBg : (cvBg || c.heroGrad);
+  const _bgUrl1   = (window._img_url_map || {})['_bg'];
+  const heroBg    = _bgUrl1 ? `url("${_bgUrl1}") center/cover no-repeat` : (cvBg.includes('url(') ? cvBg : (cvBg || c.heroGrad));
   const ov        = g('ov-'+id);
   const ovColor   = ov?.style.background || c.colors.overlay;
   const logoEl    = cv?.querySelector('.logo-overlay');
@@ -3655,7 +3667,8 @@ function exportLP(id) {
 
   const cv      = g('cv-'+id);
   const cvBg    = cv?.style.background || '';
-  const heroBg  = cvBg.includes('url(') ? cvBg : (cvBg || c.heroGrad);
+  const _bgUrl4 = (window._img_url_map || {})['_bg'];
+  const heroBg  = _bgUrl4 ? `url("${_bgUrl4}") center/cover no-repeat` : (cvBg.includes('url(') ? cvBg : (cvBg || c.heroGrad));
   const ov      = g('ov-'+id);
   const ovColor = ov?.style.background || c.colors.overlay;
   const logoEl  = cv?.querySelector('.logo-overlay');
@@ -4242,7 +4255,10 @@ function exportLPVdec(id) {
   const linktitle  = g('lt-'+id)?.textContent || c.linktitle;
   const cv         = g('cv-'+id);
   const cvBg       = cv?.style.background || '';
-  const heroBg     = cvBg.includes('url(') ? cvBg : (cvBg || c.heroGrad);
+  const _bgCdnUrl  = (window._img_url_map || {})['_bg'] || null;
+  const heroBg     = _bgCdnUrl
+    ? `url("${_bgCdnUrl}") center/cover no-repeat`
+    : (cvBg.includes('url(') ? cvBg : (cvBg || c.heroGrad));
   const logoEl     = cv?.querySelector('.logo-overlay');
   const logoHtml   = logoEl ? `<img src="${logoEl.src}" style="position:absolute;bottom:24px;right:24px;width:80px;height:80px;object-fit:contain;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.6);z-index:5">` : '';
   const primary    = c.colors.primary;
@@ -4424,7 +4440,7 @@ function renderS2(){
     '<div class="ck-field"><label class="ck-label">Description *</label>'+
     '<textarea class="ck-input ck-textarea" id="ck-desc" placeholder="Ex: Logo entreprise sur les portes avant, texte en rouge...">'+ckDescription+'</textarea></div>'+
     '<div class="ck-field"><label class="ck-label">Visuel de référence (optionnel)</label>'+
-    '<div class="upload-zone'+(ckPhotoUrl?' has-file':'')+'" onclick="document.getElementById(\'ck-file\').click()">'+
+    '<div class="upload-zone'+(ckPhotoUrl?' has-file':'')+'" onclick="vdecTriggerUpload(this)">'+
     '<input type="file" id="ck-file" accept="image/*" onchange="handlePhoto(this)">'+
     (ckPhotoUrl?prevHtml:'<div style="font-size:1.6rem;margin-bottom:6px">📷</div><div style="font-size:.76rem;color:rgba(255,255,255,.35)">Cliquer pour uploader un visuel ou logo</div>')+
     '</div></div>';
@@ -4537,6 +4553,7 @@ async function renderS4(){
 function _vdSaveOrder(){var cat=ckCatIdx!==null?CATS[ckCatIdx]:{};fetch('https://payzen-hcs.highcoffeeshirt.workers.dev/order/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:ORDER_ID,amount:getTotal(),currency:'XPF',campaignName:'Déco Véhicule',lpSlug:'sticker-auto-0',product:(cat.icon||'🚗')+' '+(cat.name||'')+(cat.model?' — '+cat.model:''),client:ckContact,delivery:ckDelivery,note:ckDescription+(ckPhotoUrl?' | [Photo fournie par le client]':''),mode:WORKER_MODE})}).catch(function(_e){var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_vd-warn')){var _w=document.createElement('p');_w.id='_vd-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+ORDER_ID+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});}
 function showOk(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';var b=document.getElementById('pz-back');if(b)b.style.display='none';_vdSaveOrder();}
 function simPay(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';document.getElementById('pz-ok-msg').textContent='Merci '+ckContact.name+' — commande simulée (mode test, non facturé).';var b=document.getElementById('pz-back');if(b)b.style.display='none';}
+function vdecTriggerUpload(el){var inp=el.querySelector('input');if(inp)inp.click();}
 <\/script>
 </body></html>`;
   dl(`vdec-lp-${c.name.replace(/[^\w]/g,'-').toLowerCase()}.html`, html);
@@ -4552,7 +4569,8 @@ function exportLPGeneric(id) {
   const cta       = g('ct-'+id)?.textContent || c.cta;
   const cv        = g('cv-'+id);
   const cvBg      = cv?.style.background || '';
-  const heroBg    = cvBg.includes('url(') ? cvBg : (cvBg || c.heroGrad);
+  const _bgUrl2   = (window._img_url_map || {})['_bg'];
+  const heroBg    = _bgUrl2 ? `url("${_bgUrl2}") center/cover no-repeat` : (cvBg.includes('url(') ? cvBg : (cvBg || c.heroGrad));
   const logoEl    = cv?.querySelector('.logo-overlay');
   const logoSrc   = logoEl?.src || '';
   const workerUrl = g('pz-worker-'+id)?.value || 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
@@ -5252,7 +5270,8 @@ function exportAd(id) {
 
   const cv      = g('cv-'+id);
   const cvBg    = cv?.style.background || '';
-  const heroBg  = cvBg.includes('url(') ? cvBg : (cvBg || c.heroGrad);
+  const _bgUrl5 = (window._img_url_map || {})['_bg'];
+  const heroBg  = _bgUrl5 ? `url("${_bgUrl5}") center/cover no-repeat` : (cvBg.includes('url(') ? cvBg : (cvBg || c.heroGrad));
   const ov      = g('ov-'+id);
   const ovColor = ov?.style.background || c.colors.overlay;
   const logoEl  = cv?.querySelector('.logo-overlay');
