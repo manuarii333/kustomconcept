@@ -7113,6 +7113,73 @@ async function _enrichConfirmation(orderId, total, contact, delivery, productNam
       })
     });
   } catch(_) { /* email admin non bloquant */ }
+
+  /* ── Push automatique vers Planning Production ─────── */
+  try {
+    /* Décrire le produit */
+    const prodDesc = typeof productName === 'string'
+      ? productName
+      : Array.isArray(productName)
+        ? productName.map(i => `${i.qty || i.quantity || 1}× ${i.name || i.label || ''}`).join(', ')
+        : String(productName || '');
+
+    /* Date deadline : retrait demandé ou +10 jours */
+    const dlDate = delivery?.pickupDate
+      ? new Date(delivery.pickupDate).toISOString()
+      : new Date(Date.now() + 10 * 86400000).toISOString();
+
+    /* Détection type production depuis la description */
+    const dl = prodDesc.toLowerCase();
+    let prodType = 'vinyle';
+    if (/dtf|transfert|flex|flock|thermocollant/.test(dl)) prodType = 'dtf';
+    else if (/casquette|cap|chapeau/.test(dl))              prodType = 'casquette';
+    else if (/broderie/.test(dl))                           prodType = 'multi';
+
+    /* Infos livraison compactes */
+    const livrNote = delivery?.type === 'delivery'
+      ? `Livraison ${delivery.island || 'Tahiti'}${delivery.address ? ' · ' + delivery.address : ''}`
+      : `Retrait boutique${delivery?.pickupDate ? ' le ' + delivery.pickupDate : ''}`;
+
+    const planPayload = {
+      store_id:       'andromeda-' + orderId,
+      client:         contact.name  || contact.email || '',
+      ref:            orderId,
+      canal:          'Andromeda',
+      desc:           prodDesc || orderId,
+      type:           prodType,
+      machine:        '',
+      qty:            1,
+      deadline:       dlDate,
+      priority:       'normal',
+      notes:          `✅ Payé ${total.toLocaleString('fr-FR')} XPF — ${contact.email || ''}${contact.phone ? ' · ' + contact.phone : ''} — ${livrNote}`,
+      col:            'attente',
+      lignes:         '[]',
+      mockup_urls:    '[]',
+      checklist_prod: '[]',
+      reservation:    'null',
+    };
+
+    await fetch(`${ERP_API}/planning_commandes`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': HCS_API_KEY },
+      body:    JSON.stringify(planPayload),
+    });
+
+    /* Bouton "→ Planning Production" dans l'écran de succès */
+    const okEl2 = document.getElementById('pz-ok');
+    if (okEl2) {
+      const planBtn = document.createElement('a');
+      planBtn.href = '/erp/#production/planning';
+      planBtn.style.cssText = [
+        'display:block;text-align:center;padding:10px 14px;margin-top:10px;',
+        'background:rgba(255,107,0,.12);border:1px solid rgba(255,107,0,.35);',
+        'border-radius:8px;color:#FF6B00;font-weight:700;font-size:.8rem;',
+        'text-decoration:none;letter-spacing:.02em;'
+      ].join('');
+      planBtn.textContent = '📋 Voir dans le Planning Production →';
+      okEl2.appendChild(planBtn);
+    }
+  } catch(_e) { console.warn('[HCS] Planning push failed:', _e); }
 }
 
 // ═══════════════════════════════════════════════════════
