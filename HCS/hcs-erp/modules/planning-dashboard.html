@@ -1915,7 +1915,8 @@ function renderCard(c) {
 
   if (c.col === 'matiere') {
     actionsHtml = `
-      <button class="cmd-btn cmd-btn-reserve" onclick="openReservationModal('${c.id}')">📦 Réserver stock</button>
+      <button class="cmd-btn cmd-btn-reserve" onclick="openReservationModal('${c.id}')" title="Saisir le détail de la réservation stock">📦 Réserver stock</button>
+      <button class="cmd-btn cmd-btn-next" onclick="advanceCmd('${c.id}')" title="Passer directement en colonne Réservation">→ Réservation</button>
       ${btnLancer}
       <button class="cmd-btn cmd-btn-del" onclick="deleteCmd('${c.id}')">✕</button>
     `;
@@ -1935,9 +1936,13 @@ function renderCard(c) {
     `;
   } else {
     const nextLabel = nextCol ? COL_LABELS[nextCol] : null;
+    const isNextMatiere = nextCol === 'matiere';
     actionsHtml = `
       ${nextLabel
-        ? `<button class="cmd-btn cmd-btn-next" onclick="advanceCmd('${c.id}')">→ ${nextLabel}</button>`
+        ? `<button class="cmd-btn ${isNextMatiere ? 'cmd-btn-reserve' : 'cmd-btn-next'}" onclick="advanceCmd('${c.id}')"
+            title="${isNextMatiere ? 'Démarrer le cycle de réservation de stock / matière' : ''}">
+            ${isNextMatiere ? '📦 Réserver matière' : '→ ' + nextLabel}
+           </button>`
         : '<button class="cmd-btn cmd-btn-next" style="opacity:.4" disabled>✅ Terminé</button>'}
       ${btnLancer}
       <button class="cmd-btn cmd-btn-del" onclick="deleteCmd('${c.id}')">✕</button>
@@ -2134,6 +2139,13 @@ function advanceCmd(id) {
   // Intercept transition vers production → ouvre la checklist
   if (next === 'prod') {
     openChecklistProdModal(cmd);
+  } else if (next === 'matiere') {
+    // Attente matière = début du cycle de réservation : déplacer + ouvrir modal
+    cmd.col = 'matiere';
+    save();
+    _MYSQL.upsertCmd(cmd);
+    render();
+    openReservationModal(id);
   } else {
     cmd.col = next;
     save();
