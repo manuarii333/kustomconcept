@@ -1032,6 +1032,30 @@ function select(id) {
 // PARCOURS CLIENT — données et rendu
 // ═══════════════════════════════════════════════════════
 const PARCOURS_CFG = {
+  0:{ color:'#ff6584', label:'Déco Véhicule', priceRange:'2 500 – 15 000 XPF',
+    steps:[
+      { n:1, icon:'🚗', name:'Type de véhicule', label:'Véhicule', desc:'Sélection catégorie (voiture, camion, moto, bateau…) + modèle', time:'~30s',
+        req:['Catégorie véhicule'], opt:['Modèle précis'], funnel:100 },
+      { n:2, icon:'🎨', name:'Description décoration', label:'Décoration', desc:'Texte libre + upload visuel/logo de référence (optionnel)', time:'~90s',
+        req:['Description'], opt:['Visuel de référence'], funnel:84 },
+      { n:3, icon:'👤', name:'Coordonnées & Livraison', label:'Coordonnées', desc:'Nom, email, tél + choix retrait boutique ou livraison île', time:'~90s',
+        req:['Nom complet','Email','Mode livraison'], opt:['Téléphone','Date retrait'], funnel:71 },
+      { n:4, icon:'💳', name:'Paiement OSB', label:'Paiement', desc:'Récap commande + tunnel Krypton SDK — CB sécurisée', time:'~60s',
+        req:['Carte bancaire'], opt:[], funnel:54 }
+    ],
+    cfg:[
+      { k:'Worker URL', v:'payzen-hcs.workers.dev', ok:true },
+      { k:'Catégories véhicule', v:'Config vdecAdmin', ok:true },
+      { k:'Tarifs par catégorie', v:'Config vdecAdmin', ok:true },
+      { k:'Livraison îles', v:'12 destinations', ok:true },
+      { k:'Upload photo client', v:'FileReader base64', ok:true },
+    ],
+    tips:[
+      { i:'🚗', t:'<strong>Catégories</strong> — configurez les catégories et tarifs dans le panneau Déco Véhicule (sidebar Config).' },
+      { i:'📸', t:'<strong>Photo référence</strong> — le champ upload est optionnel mais augmente le taux de conversion car le client se projette.' },
+      { i:'💡', t:'<strong>Tarif minimum</strong> — affichez "À partir de 2 500 XPF" sur le hero pour ancrer la valeur avant l\'entrée dans le parcours.' },
+    ]
+  },
   3:{ color:'#ff6b6b', label:'DTF Originals', priceRange:'2 500 – 6 500 XPF',
     steps:[
       { n:1, icon:'🎨', name:'Design & Couleur', label:'Options', desc:'Choix couleur (6 coloris) + taille (XS→4XL) + visuel', time:'~45s',
@@ -2771,6 +2795,10 @@ async function _uploadCampaignImages(id, lpSlug, onProgress) {
 }
 
 async function publishLP(id) {
+  if (location.protocol === 'file:') {
+    showToast('⚠️ Publication impossible en local — ouvre https://highcoffeeshirts.com/erp/', true);
+    return;
+  }
   if (!adminSecret) {
     showToast('🔐 Connecte-toi en admin pour publier (section Commandes)', true);
     return;
@@ -2790,11 +2818,19 @@ async function publishLP(id) {
   showPublishProgress(2, 4, '📄 Génération du HTML…');
 
   let generatedHtml = null;
-  const _orig = window._dl_override;
-  window._dl_override = (name, content) => { generatedHtml = content; };
-  exportLP(id);
-  window._dl_override = _orig;
-  window._img_url_map = null;
+  try {
+    const _orig = window._dl_override;
+    window._dl_override = (name, content) => { generatedHtml = content; };
+    await exportLP(id);
+    window._dl_override = _orig;
+  } catch(e) {
+    window._dl_override = null;
+    hidePublishProgress();
+    showToast('❌ Erreur génération HTML : ' + e.message, true);
+    return;
+  } finally {
+    window._img_url_map = null;
+  }
 
   if (!generatedHtml) {
     hidePublishProgress();
