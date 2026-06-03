@@ -4676,21 +4676,31 @@ async function importFacturesVersPlanning() {
   /* Supprimer les doublons aussi dans MySQL */
   toDelete.forEach(c => _MYSQL.delCmd(c));
 
-  /* ── 2. Charger les factures (localStorage + MySQL) ── */
+  /* ── 2. Charger contacts + factures (localStorage + MySQL) ── */
   let factures = [];
+  const contactMap = {}; /* id → { nom, prenom } */
 
-  /* Depuis hcs_erp_db (localStorage) */
+  /* Contacts depuis hcs_erp_db (localStorage) */
   try {
     const db = JSON.parse(localStorage.getItem('hcs_erp_db') || '{}');
+    if (Array.isArray(db.contacts)) {
+      db.contacts.forEach(c => { if (c.id) contactMap[c.id] = c; });
+    }
     if (Array.isArray(db.factures)) factures.push(...db.factures);
   } catch(e) {}
 
-  /* Depuis MySQL */
+  /* Contacts + Factures depuis MySQL — requêtes parallèles */
   try {
-    const r = await fetch(`${apiUrl}/factures?limit=500&sort=created_at&order=desc`,
-      { headers: { 'x-api-key': apiKey } });
-    if (r.ok) {
-      const { items } = await r.json();
+    const [rFac, rCont] = await Promise.all([
+      fetch(`${apiUrl}/factures?limit=500&sort=created_at&order=desc`, { headers: { 'x-api-key': apiKey } }),
+      fetch(`${apiUrl}/contacts?limit=1000`, { headers: { 'x-api-key': apiKey } }),
+    ]);
+    if (rCont.ok) {
+      const { items: conts } = await rCont.json();
+      conts.forEach(c => { if (c.id) contactMap[c.id] = c; });
+    }
+    if (rFac.ok) {
+      const { items } = await rFac.json();
       const lsRefs = new Set(factures.map(f => f.ref || f.numero || '').filter(Boolean));
       items.forEach(item => {
         const ref = item.ref || item.numero || '';
@@ -4699,6 +4709,20 @@ async function importFacturesVersPlanning() {
       });
     }
   } catch(e) {}
+
+  /* Résout le nom complet Prénom NOM depuis le contactMap */
+  function _resolveNomClient(fac) {
+    const cid = fac.contactId || fac.client_id || '';
+    if (cid && contactMap[cid]) {
+      const c = contactMap[cid];
+      const prenom = (c.prenom || '').trim();
+      const nom    = (c.nom    || '').trim();
+      if (prenom && nom) return prenom + ' ' + nom;
+      return nom || prenom || fac.client || fac.client_nom || '';
+    }
+    /* Fallback : champ client déjà stocké sur la facture */
+    return (fac.client || fac.client_nom || '').trim();
+  }
 
   /* ── 3. Filtrer : Payé partiel ou Payé ── */
   /* Calcule le total réellement payé depuis paiements[] ou lettrage */
@@ -4775,9 +4799,11 @@ async function importFacturesVersPlanning() {
       : '';
     const statutLabel = _estRegle(fac) ? '✅ Réglée' : '⚠️ Partiel';
 
+    const nomComplet = _resolveNomClient(fac);
+
     const cmd = {
       id:        'fac-' + (fac.id || Date.now().toString(36) + Math.random().toString(36).slice(2)),
-      client:    fac.client || '',
+      client:    nomComplet,
       ref:       facRef,
       canal:     'ERP',
       desc:      desc || facRef,
