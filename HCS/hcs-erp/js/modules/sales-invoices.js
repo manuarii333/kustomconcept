@@ -623,6 +623,26 @@ window.SalesInvoices = (() => {
       btn.addEventListener('click', () => {
         const idx = parseInt(btn.dataset.delPay, 10);
         C()._state.paiements.splice(idx, 1);
+
+        if (doc) {
+          const delTotaux   = C()._calcTotaux(C()._state.lignes);
+          const delPaye     = C()._totalPaiements(C()._state.paiements);
+          let delStatut;
+          if (delPaye >= delTotaux.totalTTC && delTotaux.totalTTC > 0) {
+            delStatut = 'Payé';
+          } else if (delPaye > 0) {
+            delStatut = 'Payé partiel';
+          } else {
+            /* Aucun paiement restant : revenir au statut pré-paiement */
+            delStatut = ['Payé', 'Payé partiel'].includes(doc.statut) ? 'Brouillon' : (doc.statut || 'Brouillon');
+          }
+          Store.update('factures', doc.id, {
+            paiements: C()._state.paiements,
+            statut:    delStatut,
+            lettrage:  _computeLettrage(C()._state.paiements, delTotaux.totalTTC)
+          });
+        }
+
         _refreshPaiementsSection(doc, toolbar, area);
       });
     });
@@ -822,6 +842,14 @@ window.SalesInvoices = (() => {
       if (!contactId || contactId === '__new__') { toast('Veuillez sélectionner un client.', 'error'); return; }
       if (C()._state.lignes.length === 0) { toast('Ajoutez au moins un article.', 'error'); return; }
 
+      const saveTotaux  = C()._calcTotaux(C()._state.lignes);
+      const savePaye    = C()._totalPaiements(C()._state.paiements);
+      const saveStatut  = savePaye >= saveTotaux.totalTTC && saveTotaux.totalTTC > 0
+        ? 'Payé'
+        : savePaye > 0
+          ? 'Payé partiel'
+          : (doc?.statut || 'Brouillon');
+
       const record = {
         ref,
         _type:        'Facture',
@@ -831,12 +859,12 @@ window.SalesInvoices = (() => {
         dateEcheance: document.getElementById('i-echeance')?.value  || '',
         notes:        document.getElementById('i-notes')?.value     || '',
         mockupUrls:   C()._mockupUrls,
-        statut:       doc?.statut || 'Brouillon',
+        statut:       saveStatut,
         commandeId:   doc?.commandeId || null,
         lignes:       C()._state.lignes,
         paiements:    C()._state.paiements,
-        ...C()._calcTotaux(C()._state.lignes),
-        lettrage:     _computeLettrage(C()._state.paiements, C()._calcTotaux(C()._state.lignes).totalTTC)
+        ...saveTotaux,
+        lettrage:     _computeLettrage(C()._state.paiements, saveTotaux.totalTTC)
       };
 
       if (isNew) {

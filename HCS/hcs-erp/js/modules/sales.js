@@ -31,7 +31,7 @@ const Sales = (() => {
      CONSTANTES MÉTIER
      ---------------------------------------------------------------- */
 
-  const STATUTS_DEVIS = ['Brouillon', 'Envoyé', 'Confirmé', 'Annulé'];
+  const STATUTS_DEVIS = ['Brouillon', 'Envoyé', 'Confirmé', 'Facturé', 'Annulé'];
 
   const STATUTS_CMD = [
     'Brouillon', 'Confirmé', 'En production', 'Prêt', 'Livré', 'Terminé'
@@ -45,6 +45,7 @@ const Sales = (() => {
     'Brouillon': 'badge-gray',
     'Envoyé':    'badge-blue',
     'Confirmé':  'badge-green',
+    'Facturé':   'badge-violet',
     'Annulé':    'badge-red'
   };
 

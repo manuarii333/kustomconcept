@@ -613,6 +613,9 @@ window.SalesQuotes = (() => {
       toast(`📄 Facture ${facRef} créée (${typeLabel}, ${C()._fmt(totalRegle)} réglé).`, 'success');
     }
 
+    /* Marquer le devis comme facturé */
+    Store.update('devis', devis.id, { statut: 'Facturé' });
+
     /* ----------------------------------------------------------------
        ÉCRITURES COMPTABLES AUTOMATIQUES
        Supprimer les écritures précédentes de cette pièce, puis recréer
@@ -718,7 +721,7 @@ window.SalesQuotes = (() => {
       btns.push(`<button class="btn btn-success btn-sm" data-q-action="confirmer">✔ Confirmer</button>`);
       btns.push(`<button class="btn btn-danger btn-sm"  data-q-action="annuler">✕ Annuler</button>`);
     }
-    if (['Envoyé', 'Confirmé'].includes(statut)) {
+    if (['Envoyé', 'Confirmé', 'Facturé'].includes(statut)) {
       if (factureLiee) {
         /* Facture déjà créée → lien direct, bouton désactivé */
         btns.push(`<button class="btn btn-ghost btn-sm" data-q-action="voir-facture" data-linked-id="${factureLiee.id}"
@@ -1455,16 +1458,28 @@ window.SalesQuotes = (() => {
       ],
       { type: 'totale', dateEcheance: '' },
       (data) => {
+        /* Guard anti-doublon */
+        const dejaFacturee = Store.getAll('factures').find(f => f.devisId === devis.id);
+        if (dejaFacturee) {
+          toast(`⚠️ Ce devis est déjà lié à la facture ${dejaFacturee.ref}.`, 'warning');
+          C()._goForm('invoices', dejaFacturee.id, toolbar, area);
+          return;
+        }
+
         const ref = C()._genRef('FAC', 'factures');
         const isAcompte = data.type === 'acompte';
+
+        /* P3 — recalcul fiable depuis les lignes (fallback si totaux absents sur le devis) */
+        const totauxCalc = C()._calcTotaux(devis.lignes || []);
         let lignes = devis.lignes;
-        let totalHT  = devis.totalHT;
-        let totalTVA = devis.totalTVA;
-        let totalTTC = devis.totalTTC;
+        let totalHT  = devis.totalHT  ?? totauxCalc.totalHT;
+        let totalTVA = devis.totalTVA ?? totauxCalc.totalTVA;
+        let totalTTC = devis.totalTTC ?? totauxCalc.totalTTC;
 
         if (isAcompte && data.montantAcompte) {
           const montantAc = parseFloat(data.montantAcompte) || 0;
-          const ratio = devis.totalTTC > 0 ? montantAc / devis.totalTTC : 1;
+          const base = totalTTC > 0 ? totalTTC : totauxCalc.totalTTC;
+          const ratio = base > 0 ? montantAc / base : 1;
           lignes = devis.lignes.map(l => ({
             ...l,
             prixUnitaire: Math.round((l.prixUnitaire || 0) * ratio)
@@ -1492,6 +1507,9 @@ window.SalesQuotes = (() => {
           notes:        (isAcompte ? `Acompte sur devis ${devis.ref}` : `Facture devis ${devis.ref}`)
                         + (devis.notes ? '\n' + devis.notes : '')
         });
+
+        /* P1 — marquer le devis comme facturé */
+        Store.update('devis', devis.id, { statut: 'Facturé' });
 
         toast(`✔ Facture ${ref} créée depuis ${devis.ref}.`, 'success');
         C()._goList('quotes', toolbar, area);
