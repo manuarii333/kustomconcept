@@ -601,6 +601,10 @@
       <button class="btn btn-ghost" onclick="openOFModal()" title="Ordre de fabrication">🔢 Ordre fab.</button>
       <span class="n-badge" id="badge-of" style="background:var(--orange);display:none;">0</span>
     </div>
+    <div class="btn-wrap">
+      <button class="btn btn-ghost" onclick="importFacturesVersPlanning()" title="Importer les factures partiellement réglées / réglées" style="border-color:var(--green);color:var(--green);">🧾 Import Factures</button>
+      <span class="n-badge" id="badge-fac-import" style="background:var(--green);display:none;">0</span>
+    </div>
     <button class="btn btn-orange" onclick="openAddModal()">+ Nouvelle commande</button>
   </div>
 </div>
@@ -4650,6 +4654,170 @@ function resetEmailsSent(fournisseurId) {
   save();
   renderEmailsFournisseurs();
   updateHeaderBadges();
+}
+
+/* ─── IMPORT FACTURES VERS PLANNING ─── */
+async function importFacturesVersPlanning() {
+  const apiUrl = localStorage.getItem('hcs_api_url') || 'https://highcoffeeshirts.com/erp/api';
+  const apiKey = localStorage.getItem('hcs_api_key') || 'hcs-erp-2026';
+
+  /* ── 1. Supprimer les doublons dans les commandes existantes (même ref) ── */
+  const seenRefs = new Set();
+  const before = commandes.length;
+  const toDelete = [];
+  commandes = commandes.filter(c => {
+    const key = (c.ref || '').trim();
+    if (!key) return true; // garder celles sans ref
+    if (seenRefs.has(key)) { toDelete.push(c); return false; }
+    seenRefs.add(key);
+    return true;
+  });
+  const removed = before - commandes.length;
+  /* Supprimer les doublons aussi dans MySQL */
+  toDelete.forEach(c => _MYSQL.delCmd(c));
+
+  /* ── 2. Charger les factures (localStorage + MySQL) ── */
+  let factures = [];
+
+  /* Depuis hcs_erp_db (localStorage) */
+  try {
+    const db = JSON.parse(localStorage.getItem('hcs_erp_db') || '{}');
+    if (Array.isArray(db.factures)) factures.push(...db.factures);
+  } catch(e) {}
+
+  /* Depuis MySQL */
+  try {
+    const r = await fetch(`${apiUrl}/factures?limit=500&sort=created_at&order=desc`,
+      { headers: { 'x-api-key': apiKey } });
+    if (r.ok) {
+      const { items } = await r.json();
+      const lsRefs = new Set(factures.map(f => f.ref || f.numero || '').filter(Boolean));
+      items.forEach(item => {
+        const ref = item.ref || item.numero || '';
+        if (ref && !lsRefs.has(ref)) { factures.push(item); lsRefs.add(ref); }
+        else if (!ref) factures.push(item);
+      });
+    }
+  } catch(e) {}
+
+  /* ── 3. Filtrer : Payé partiel ou Payé ── */
+  /* Calcule le total réellement payé depuis paiements[] ou lettrage */
+  function _totalPaye(fac) {
+    if (fac.lettrage && fac.lettrage.totalPaye > 0) return fac.lettrage.totalPaye;
+    if (Array.isArray(fac.paiements)) {
+      return fac.paiements.reduce((s, p) => s + (+(p.montant || 0)), 0);
+    }
+    return 0;
+  }
+  function _estRegle(fac) {
+    if (fac.statut === 'Payé') return true;
+    if (fac.lettrage?.estSolde) return true;
+    const tp = _totalPaye(fac);
+    return fac.totalTTC > 0 && tp >= fac.totalTTC;
+  }
+  function _estPartiellement(fac) {
+    if (fac.statut === 'Payé partiel') return true;
+    const tp = _totalPaye(fac);
+    if (tp <= 0) return false;
+    if (!fac.totalTTC) return true;
+    return tp < fac.totalTTC;
+  }
+
+  const qualifying = factures.filter(f => _estRegle(f) || _estPartiellement(f));
+
+  /* ── 4. Détecter celles déjà dans le planning ── */
+  const existingRefs = new Set(commandes.map(c => (c.ref || '').trim()).filter(Boolean));
+
+  /* ── 5. Créer une carte pour chaque facture non encore planifiée ── */
+  let added = 0;
+  qualifying.forEach(fac => {
+    const facRef = (fac.ref || fac.numero || '').trim();
+    if (facRef && existingRefs.has(facRef)) return;
+
+    /* Détecter type depuis les lignes */
+    const lignes = fac.lignes || [];
+    const lignesText = lignes.map(l =>
+      (l.produit || l.description || l.technique || '')).join(' ').toLowerCase();
+    let type = 'multi';
+    if (/dtf|transfert|flex|flock|thermocollant/.test(lignesText)) type = 'dtf';
+    else if (/vinyle|vinyl|plotter|sticker/.test(lignesText)) type = 'vinyle';
+    else if (/casquette|cap|chapeau/.test(lignesText)) type = 'casquette';
+    else if (/broderie/.test(lignesText)) type = 'multi';
+
+    /* Description depuis les lignes */
+    const desc = lignes.length
+      ? lignes.slice(0, 5).map(l =>
+          `${l.qte || 1}× ${(l.produit || l.description || '').trim()}`).join(', ')
+      : (fac.description || fac.notes || facRef || '');
+
+    /* Quantité totale */
+    const qty = lignes.reduce((s, l) => s + (+(l.qte || 1)), 0) || 1;
+
+    /* Deadline */
+    const deadline = fac.dateEcheance
+      ? new Date(fac.dateEcheance).toISOString()
+      : new Date(Date.now() + 7 * 86400000).toISOString();
+
+    /* Priorité */
+    const partiel  = _estPartiellement(fac);
+    const priority = partiel ? 'urgent' : 'normal';
+
+    /* Montant affiché dans notes */
+    const tp = _totalPaye(fac);
+    const totalTxt = fac.totalTTC
+      ? `${Number(fac.totalTTC).toLocaleString('fr-FR')} XPF`
+      : '';
+    const payeTxt  = tp > 0
+      ? `Payé: ${Number(tp).toLocaleString('fr-FR')} XPF`
+      : '';
+    const resteTxt = (fac.totalTTC && tp > 0 && tp < fac.totalTTC)
+      ? ` — Reste: ${Number(fac.totalTTC - tp).toLocaleString('fr-FR')} XPF`
+      : '';
+    const statutLabel = _estRegle(fac) ? '✅ Réglée' : '⚠️ Partiel';
+
+    const cmd = {
+      id:        'fac-' + (fac.id || Date.now().toString(36) + Math.random().toString(36).slice(2)),
+      client:    fac.client || '',
+      ref:       facRef,
+      canal:     'ERP',
+      desc:      desc || facRef,
+      type,
+      machine:   '',
+      qty,
+      deadline,
+      priority,
+      notes:     `${statutLabel}${totalTxt ? ' — ' + totalTxt : ''}${payeTxt ? ' — ' + payeTxt : ''}${resteTxt}`,
+      col:       'attente',
+      createdAt: new Date().toISOString(),
+      lignes,
+    };
+
+    commandes.push(cmd);
+    if (facRef) existingRefs.add(facRef);
+    added++;
+  });
+
+  save();
+  render();
+
+  /* Mettre à jour le badge du bouton */
+  const badge = document.getElementById('badge-fac-import');
+  if (badge) {
+    badge.textContent = added;
+    badge.style.display = added > 0 ? 'flex' : 'none';
+    if (added > 0) setTimeout(() => { badge.style.display = 'none'; }, 5000);
+  }
+
+  /* Sync nouvelles cartes vers MySQL */
+  const newCmds = commandes.filter(c => c.id.startsWith('fac-') && !c._mysql_id);
+  for (const cmd of newCmds) await _MYSQL.upsertCmd(cmd);
+
+  const lines = [];
+  if (removed) lines.push(`🗑 ${removed} doublon(s) supprimé(s)`);
+  if (added)   lines.push(`✅ ${added} carte(s) créée(s) depuis factures réglées`);
+  if (!removed && !added) lines.push('✅ Aucun doublon, aucune facture à importer');
+  if (qualifying.length && !added) lines.push(`ℹ ${qualifying.length} facture(s) déjà dans le planning`);
+  alert(lines.join('\n'));
 }
 </script>
 <!-- Input file partagé pour upload mockup sur cartes planning -->
