@@ -9212,7 +9212,7 @@ function tshStudioSetFace(face) {
   });
 }
 
-function tshDrawComposite() {
+async function tshDrawComposite() {
   const { campId, prodIdx, clientLogoUrl, face } = tshBuy;
   const canvas = document.getElementById('tsh-composite-canvas');
   if (!canvas) return;
@@ -11952,6 +11952,18 @@ function vdecNext() {
     const notValidated = VDEC_VIEWS_DEF.filter(v => !_vdec.viewsValidated[v.key]);
     const allViews = Object.values(_vdec.viewsValidated);
     if (!allViews.some(v => v)) { alert('Validez au moins une vue avec le bouton "✓ Valider cette vue".'); return; }
+    /* Mode intégré LP (iframe) → envoyer résultats au parent puis fermer */
+    if (window.parent !== window) {
+      const firstSnap = Object.values(_vdec.viewSnapshots || {}).find(s => s) || null;
+      const validatedLabels = VDEC_VIEWS_DEF.filter(v => _vdec.viewsValidated[v.key]).map(v => v.label).join(', ');
+      window.parent.postMessage({
+        type: 'vdec-complete',
+        snapshot: firstSnap,
+        views: VDEC_VIEWS_DEF.filter(v => _vdec.viewsValidated[v.key]).length,
+        viewLabels: validatedLabels
+      }, '*');
+      return;
+    }
     _vdec.step = 3;
   } else if (_vdec.step === 3) {
     const name  = document.getElementById('vdec-cname')?.value?.trim();
