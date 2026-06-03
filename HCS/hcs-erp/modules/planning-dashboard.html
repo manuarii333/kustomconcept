@@ -118,6 +118,22 @@
     border:1px solid var(--border); cursor:zoom-in; position:relative;
   }
   .card-mockup-thumb img { width:100%; height:100%; object-fit:cover; display:block; pointer-events:none; }
+  .card-mockup-del {
+    position:absolute; top:2px; right:2px;
+    width:16px; height:16px; border-radius:50%;
+    background:rgba(0,0,0,.72); color:#fff;
+    font-size:10px; line-height:16px; text-align:center;
+    cursor:pointer; display:none; border:none; padding:0; z-index:2;
+  }
+  .card-mockup-thumb:hover .card-mockup-del { display:block; }
+  .card-mockup-add {
+    width:56px; height:56px; border-radius:5px; flex-shrink:0;
+    border:1px dashed var(--border); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--text-muted); font-size:22px; background:transparent;
+    transition:border-color .15s, color .15s;
+  }
+  .card-mockup-add:hover { border-color:var(--orange); color:var(--orange); }
   /* Lignes articles sur carte */
   .card-lignes { font-size:10px; color:var(--text-muted); line-height:1.6; margin-bottom:5px; }
   .card-ligne-row { display:flex; gap:4px; align-items:baseline; }
@@ -1800,6 +1816,58 @@ function planMockupHide() {
   if (box) box.style.opacity = '0';
 }
 
+/* ── Upload mockup depuis la carte ── */
+let _planMockupCurrentId = null;
+
+function planMockupUploadOpen(cmdId) {
+  _planMockupCurrentId = cmdId;
+  const inp = document.getElementById('plan-mockup-input');
+  inp.value = '';
+  inp.click();
+}
+
+function planMockupOnChange(input) {
+  const file = input.files[0];
+  if (!file || !_planMockupCurrentId) return;
+  const cmd = commandes.find(c => c.id === _planMockupCurrentId);
+  if (!cmd) return;
+  _planMockupCurrentId = null;
+
+  /* Redimensionner si > 1 Mo pour éviter de saturer localStorage */
+  const MAX_PX = 800;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > MAX_PX || h > MAX_PX) {
+        const ratio = Math.min(MAX_PX / w, MAX_PX / h);
+        w = Math.round(w * ratio); h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      if (!cmd.mockupUrls) cmd.mockupUrls = [];
+      cmd.mockupUrls.push({ dataUrl, nom: file.name });
+      save();
+      _MYSQL.upsertCmd(cmd);
+      render();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function planMockupRemove(cmdId, idx) {
+  const cmd = commandes.find(c => c.id === cmdId);
+  if (!cmd || !cmd.mockupUrls) return;
+  cmd.mockupUrls.splice(idx, 1);
+  save();
+  _MYSQL.upsertCmd(cmd);
+  render();
+}
+
 function urgencyClass(cmd) {
   const now = Date.now();
   const dl = new Date(cmd.deadline).getTime();
@@ -1954,16 +2022,18 @@ function renderCard(c) {
   mockups.slice(0, 4).forEach((m, mi) => {
     _planMockupStore[c.id + '-' + mi] = { dataUrl: m.dataUrl, nom: m.nom || '' };
   });
-  const mockupHtml = mockups.length ? `
+  const mockupHtml = `
     <div class="card-mockups">
       ${mockups.slice(0, 4).map((m, mi) => `
         <div class="card-mockup-thumb" data-mk="${c.id}-${mi}"
              onmouseenter="planMockupShow(this)"
              onmouseleave="planMockupHide()">
           <img src="${escHtml(m.dataUrl)}" alt="${escHtml(m.nom || 'mockup')}" />
+          <button class="card-mockup-del" onclick="event.stopPropagation();planMockupRemove('${c.id}',${mi})" title="Supprimer">×</button>
         </div>`).join('')}
       ${mockups.length > 4 ? `<div style="font-size:10px;color:var(--text-muted);align-self:center;">+${mockups.length - 4}</div>` : ''}
-    </div>` : '';
+      ${mockups.length < 8 ? `<button class="card-mockup-add" onclick="event.stopPropagation();planMockupUploadOpen('${c.id}')" title="Ajouter un mockup">+</button>` : ''}
+    </div>`;
 
   /* ── Lignes articles ── */
   const lignes = c.lignes || [];
@@ -4582,5 +4652,8 @@ function resetEmailsSent(fournisseurId) {
   updateHeaderBadges();
 }
 </script>
+<!-- Input file partagé pour upload mockup sur cartes planning -->
+<input type="file" id="plan-mockup-input" accept="image/*" style="display:none"
+       onchange="planMockupOnChange(this)">
 </body>
 </html>
