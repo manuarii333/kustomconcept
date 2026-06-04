@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Andromeda Campaign Builder — HCS</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>🚀</text></svg>">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' *.highcoffeeshirt.workers.dev *.highcoffeeshirts.com highcoffeeshirts.com *.osb.pf *.googleapis.com *.dropboxapi.com *.dropbox.com *.n8n.cloud data: blob: 'unsafe-inline' 'unsafe-eval';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' *.highcoffeeshirt.workers.dev *.highcoffeeshirts.com highcoffeeshirts.com *.osb.pf *.googleapis.com *.gstatic.com *.dropboxapi.com *.dropbox.com *.n8n.cloud data: blob: 'unsafe-inline' 'unsafe-eval';">
 
 <style>
 :root {
@@ -4469,29 +4469,44 @@ function renderS1(){
 function selCat(i){ckCatIdx=i;renderS1();}
 function next1(){if(ckCatIdx===null){alert('Choisissez un type de véhicule.');return;}ckStep=2;render();}
 
+var _vdecMockupReady=false;
 function renderS2(){
-  var prevHtml=ckPhotoUrl?'<br><img class="upload-preview" src="'+ckPhotoUrl+'" alt="Aperçu">':'';
   document.getElementById('ck-body').innerHTML=
-    '<div class="ck-section">Décrivez votre décoration</div>'+
-    '<div class="ck-field"><label class="ck-label">Description *</label>'+
-    '<textarea class="ck-input ck-textarea" id="ck-desc" placeholder="Ex: Logo entreprise sur les portes avant, texte en rouge...">'+ckDescription+'</textarea></div>'+
-    '<div class="ck-field"><label class="ck-label">Visuel de référence (optionnel)</label>'+
-    '<div class="upload-zone'+(ckPhotoUrl?' has-file':'')+'" onclick="vdecTriggerUpload(this)">'+
-    '<input type="file" id="ck-file" accept="image/*" onchange="handlePhoto(this)">'+
-    (ckPhotoUrl?prevHtml:'<div style="font-size:1.6rem;margin-bottom:6px">📷</div><div style="font-size:.76rem;color:rgba(255,255,255,.35)">Cliquer pour uploader un visuel ou logo</div>')+
-    '</div></div>';
+    '<div class="ck-section">Personnalisez votre décoration</div>'+
+    (_vdecMockupReady&&ckPhotoUrl?
+      '<div style="text-align:center;margin-bottom:14px"><img src="'+ckPhotoUrl+'" style="max-width:100%;max-height:160px;border-radius:10px;border:2px solid #43e97b;object-fit:contain"></div>'+
+      '<div style="font-size:.76rem;color:#43e97b;text-align:center;margin-bottom:14px">'+ckDescription+'</div>':
+      '<div style="text-align:center;padding:18px 0 20px;color:rgba(255,255,255,.35);font-size:.8rem">Ouvrez le studio pour personnaliser votre décoration</div>')+
+    '<button onclick="openMockupStudio()" style="width:100%;padding:13px;background:linear-gradient(135deg,#ff9966,#ff6584);border:none;border-radius:10px;color:white;font-size:.88rem;font-weight:800;cursor:pointer">'+
+    '🎨 '+(_vdecMockupReady?'Modifier dans':'Ouvrir')+' le Studio Mockup</button>';
   document.getElementById('ck-foot').innerHTML=
     '<button class="btn-prev" onclick="ckStep=1;render()">← Retour</button>'+
-    '<button class="btn-next" onclick="next2()">Suivant — Coordonnées →</button>';
+    '<button class="btn-next" onclick="next2()"'+(_vdecMockupReady?'':' disabled')+'>Suivant — Coordonnées →</button>';
 }
-function handlePhoto(input){
-  var f=input.files[0];if(!f)return;
-  var r=new FileReader();r.onload=function(e){ckPhotoUrl=e.target.result;renderS2();};r.readAsDataURL(f);
+function openMockupStudio(){
+  var ol=document.createElement('div');ol.id='vdec-studio-ol';
+  ol.style.cssText='position:fixed;inset:0;z-index:9999;background:#0f0f1a;display:flex;flex-direction:column';
+  ol.innerHTML='<div style="padding:8px 14px;background:#0a0a14;border-bottom:1px solid rgba(255,150,100,.25);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">'+
+    '<span style="color:#ff9966;font-weight:800;font-size:.88rem">🎨 Studio Mockup</span>'+
+    '<button onclick="vdecCloseStudio()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:.74rem">✕ Fermer</button>'+
+    '</div>'+
+    '<iframe src="https://highcoffeeshirts.com/erp/apps/andromeda-campaign.html?vdec=1&camp=0" style="flex:1;border:none;width:100%" allow="clipboard-read;clipboard-write"></iframe>';
+  document.body.appendChild(ol);
+  window.addEventListener('message',_vdecMsgHandler);
+}
+function vdecCloseStudio(){var ol=document.getElementById('vdec-studio-ol');if(ol)ol.remove();window.removeEventListener('message',_vdecMsgHandler);}
+function _vdecMsgHandler(e){
+  if(!e.data||e.data.type!=='vdec-complete')return;
+  window.removeEventListener('message',_vdecMsgHandler);
+  var ol=document.getElementById('vdec-studio-ol');if(ol)ol.remove();
+  _vdecMockupReady=true;
+  ckPhotoUrl=e.data.snapshot||'';
+  ckDescription='✓ Décoration validée — '+e.data.viewLabels;
+  renderS2();
 }
 function next2(){
-  var desc=document.getElementById('ck-desc')?.value.trim();
-  if(!desc){alert('Décrivez votre décoration.');return;}
-  ckDescription=desc;ckStep=3;render();
+  if(!_vdecMockupReady){alert('Ouvrez le Studio Mockup et validez au moins une vue.');return;}
+  ckStep=3;render();
 }
 
 function renderS3(){
@@ -12071,6 +12086,22 @@ async function vdecArchiveOrder(total) {
     });
   } catch(e) { showToast('⚠️ Webhook n8n échoué — vérifiez le workflow', true); }
 }
+
+/* ── Mode intégré LP : ?vdec=1 → auto-ouvre le studio ── */
+(function() {
+  const _p = new URLSearchParams(location.search);
+  if (_p.get('vdec') !== '1') return;
+  // Masquer l'UI Andromeda, ne garder que le vdec modal plein écran
+  document.addEventListener('DOMContentLoaded', function() {
+    const appBody = document.querySelector('.app-body');
+    const header  = document.querySelector('.app-header, header, nav');
+    if (appBody) appBody.style.display = 'none';
+    if (header)  header.style.display  = 'none';
+    document.body.style.background = '#0f0f1a';
+    const campId = parseInt(_p.get('camp') || '0');
+    setTimeout(function() { vdecOpenFlow(campId, 0); }, 300);
+  });
+})();
 
 // Escape key
 document.addEventListener('keydown', e => {
