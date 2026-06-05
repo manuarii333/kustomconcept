@@ -87,6 +87,11 @@ window.SalesInvoices = (() => {
      ================================================================ */
 
   function _renderInvoicesList(toolbar, area) {
+    /* Réinitialiser la recherche précédente pour éviter une liste vide au retour */
+    if (typeof _tableState !== 'undefined' && _tableState['sales-invoices-table']) {
+      _tableState['sales-invoices-table'].query = '';
+    }
+
     let allFacs = Store.getAll('factures');
     const isKanban = C()._state.listMode === 'kanban';
 
@@ -98,6 +103,7 @@ window.SalesInvoices = (() => {
 
     toolbar.innerHTML = `
       <button class="btn btn-primary btn-sm" id="btn-new-invoice">+ Nouveau</button>
+      <button class="btn btn-ghost btn-sm" id="btn-sync-mysql-fac" title="Importer les factures depuis MySQL">☁↓ Sync</button>
       <select class="form-control" id="filter-invoice-tab"
         style="height:28px;width:140px;font-size:12px;">
         <option value="toutes">Toutes (${allFacs.length})</option>
@@ -140,6 +146,22 @@ window.SalesInvoices = (() => {
 
     document.getElementById('btn-new-invoice')
       ?.addEventListener('click', () => C()._goForm('invoices', null, toolbar, area));
+
+    document.getElementById('btn-sync-mysql-fac')
+      ?.addEventListener('click', async function() {
+        this.disabled = true;
+        this.textContent = '⏳…';
+        const result = await Store.syncFromMySQL(['factures']);
+        this.disabled = false;
+        this.textContent = '☁↓ Sync';
+        if (result.synced > 0) {
+          toast(`${result.synced} facture(s) importée(s) depuis MySQL.`, 'success');
+          _renderInvoicesList(toolbar, area);
+        } else {
+          toast('Aucune nouvelle facture à importer.', 'info');
+        }
+      });
+
     document.getElementById('btn-i-list')?.addEventListener('click', () => {
       C()._state.listMode = 'list'; _renderInvoicesList(toolbar, area);
     });

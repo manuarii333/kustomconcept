@@ -26,6 +26,11 @@ window.SalesQuotes = (() => {
 
   /* ---- Liste des devis ---- */
   function _renderQuotesList(toolbar, area) {
+    /* Réinitialiser la recherche précédente pour éviter une liste vide au retour */
+    if (typeof _tableState !== 'undefined' && _tableState['sales-quotes-table']) {
+      _tableState['sales-quotes-table'].query = '';
+    }
+
     let allDevis = Store.getAll('devis');
     const isKanban = C()._state.listMode === 'kanban';
 
@@ -954,7 +959,7 @@ window.SalesQuotes = (() => {
             modeReglement:   '',
             lignes:          (doc.lignes || []).map(l => ({ ...l })),
           };
-          const saved = Store.add('devis', copy);
+          const saved = Store.create('devis', copy);
           toast(`Devis dupliqué : ${newRef}`, 'success');
           C()._goForm('quotes', saved.id, toolbar, area);
           return;
