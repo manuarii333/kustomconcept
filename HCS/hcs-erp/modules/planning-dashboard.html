@@ -4657,6 +4657,13 @@ function resetEmailsSent(fournisseurId) {
 }
 
 /* ─── IMPORT FACTURES VERS PLANNING ─── */
+/* Helper JSON parse — version globale (accessible hors _MYSQL) */
+function _jsonParse(val, fallback) {
+  if (val === null || val === undefined || val === '') return fallback;
+  if (typeof val === 'object') return val;
+  try { return JSON.parse(val); } catch { return fallback; }
+}
+
 async function importFacturesVersPlanning() {
   const apiUrl = localStorage.getItem('hcs_api_url') || 'https://highcoffeeshirts.com/erp/api';
   const apiKey = localStorage.getItem('hcs_api_key') || 'hcs-erp-2026';
@@ -4722,8 +4729,8 @@ async function importFacturesVersPlanning() {
             ref:        r.ref || r.numero || '',
             client:     r.client_nom || r.client || '',
             contactId:  r.client_id  || r.contactId || '',
-            lignes:     _tryParse(r.lignes, []),
-            mockupUrls: _tryParse(r.mockup_urls, []),
+            lignes:     _jsonParse(r.lignes, []),
+            mockupUrls: _jsonParse(r.mockup_urls, []),
           };
         }
         /* Compléter mockups depuis hcs_erp_mockups si vide */
@@ -4877,12 +4884,29 @@ async function importFacturesVersPlanning() {
   const newCmds = commandes.filter(c => c.id.startsWith('fac-') && !c._mysql_id);
   for (const cmd of newCmds) await _MYSQL.upsertCmd(cmd);
 
-  const lines = [];
-  if (removed) lines.push(`🗑 ${removed} doublon(s) supprimé(s)`);
-  if (added)   lines.push(`✅ ${added} carte(s) créée(s) depuis devis réglés${added > 0 ? ' (avec mockups si disponibles)' : ''}`);
-  if (!removed && !added) lines.push('✅ Aucun doublon, aucun devis à importer');
-  if (qualifying.length && !added) lines.push(`ℹ ${qualifying.length} devis déjà dans le planning`);
-  alert(lines.join('\n'));
+  /* Toast résumé */
+  const toastEl = document.getElementById('_sync-toast');
+  function _showImportToast(msg, ok) {
+    if (!toastEl) return;
+    toastEl.textContent = msg;
+    toastEl.style.color = ok ? 'var(--green)' : 'var(--yellow)';
+    toastEl.style.opacity = '1';
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => { toastEl.style.opacity = '0'; }, 6000);
+  }
+
+  console.log('[Import Factures] factures chargées:', factures.length,
+    '| qualifiées:', qualifying.length,
+    '| ajoutées:', added,
+    '| doublons supprimés:', removed);
+
+  const parts = [];
+  if (removed) parts.push(`🗑 ${removed} doublon(s)`);
+  if (added)   parts.push(`✅ ${added} carte(s) créée(s)`);
+  if (!removed && !added && qualifying.length) parts.push(`ℹ ${qualifying.length} déjà dans le planning`);
+  if (!removed && !added && !qualifying.length) parts.push('⚠ Aucune facture réglée trouvée');
+
+  _showImportToast(parts.join(' · '), added > 0 || removed > 0);
 }
 </script>
 <!-- Input file partagé pour upload mockup sur cartes planning -->
