@@ -4667,70 +4667,90 @@ async function importFacturesVersPlanning() {
   const toDelete = [];
   commandes = commandes.filter(c => {
     const key = (c.ref || '').trim();
-    if (!key) return true; // garder celles sans ref
+    if (!key) return true;
     if (seenRefs.has(key)) { toDelete.push(c); return false; }
     seenRefs.add(key);
     return true;
   });
   const removed = before - commandes.length;
-  /* Supprimer les doublons aussi dans MySQL */
   toDelete.forEach(c => _MYSQL.delCmd(c));
 
-  /* ── 2. Charger contacts + factures (localStorage + MySQL) ── */
-  let factures = [];
-  const contactMap = {}; /* id → { nom, prenom } */
+  /* ── 2. Charger contacts + devis + factures (localStorage + MySQL) ── */
+  const contactMap = {}; /* id → { nom, prenom, ... } */
+  const devisMap   = {}; /* id → devis object          */
+  let   factures   = [];
 
-  /* Contacts depuis hcs_erp_db (localStorage) */
+  /* Depuis hcs_erp_db (localStorage) */
   try {
     const db = JSON.parse(localStorage.getItem('hcs_erp_db') || '{}');
-    if (Array.isArray(db.contacts)) {
-      db.contacts.forEach(c => { if (c.id) contactMap[c.id] = c; });
-    }
+    if (Array.isArray(db.contacts)) db.contacts.forEach(c => { if (c.id) contactMap[c.id] = c; });
+    if (Array.isArray(db.devis))    db.devis.forEach(d    => { if (d.id) devisMap[d.id]    = d; });
     if (Array.isArray(db.factures)) factures.push(...db.factures);
   } catch(e) {}
 
-  /* Contacts + Factures depuis MySQL — requêtes parallèles */
+  /* Mockups stockés séparément (évite le quota localStorage) */
+  let mockupsStore = {};
+  try { mockupsStore = JSON.parse(localStorage.getItem('hcs_erp_mockups') || '{}'); } catch(e) {}
+
+  /* Fusionner mockups dans les devis localStorage */
+  Object.values(devisMap).forEach(d => {
+    if ((!d.mockupUrls || !d.mockupUrls.length) && mockupsStore[d.id]) {
+      d.mockupUrls = mockupsStore[d.id];
+    }
+  });
+
+  /* Depuis MySQL — contacts + devis + factures en parallèle */
   try {
-    const [rFac, rCont] = await Promise.all([
+    const [rFac, rCont, rDev] = await Promise.all([
       fetch(`${apiUrl}/factures?limit=500&sort=created_at&order=desc`, { headers: { 'x-api-key': apiKey } }),
-      fetch(`${apiUrl}/contacts?limit=1000`, { headers: { 'x-api-key': apiKey } }),
+      fetch(`${apiUrl}/contacts?limit=1000`,                           { headers: { 'x-api-key': apiKey } }),
+      fetch(`${apiUrl}/devis?limit=500&sort=created_at&order=desc`,    { headers: { 'x-api-key': apiKey } }),
     ]);
+
     if (rCont.ok) {
       const { items: conts } = await rCont.json();
       conts.forEach(c => { if (c.id) contactMap[c.id] = c; });
     }
+
+    if (rDev.ok) {
+      const { items: devs } = await rDev.json();
+      devs.forEach(r => {
+        const id = r.store_id || String(r.id);
+        if (!devisMap[id]) {
+          devisMap[id] = {
+            id,
+            ref:        r.ref || r.numero || '',
+            client:     r.client_nom || r.client || '',
+            contactId:  r.client_id  || r.contactId || '',
+            lignes:     _tryParse(r.lignes, []),
+            mockupUrls: _tryParse(r.mockup_urls, []),
+          };
+        }
+        /* Compléter mockups depuis hcs_erp_mockups si vide */
+        const d = devisMap[id];
+        if ((!d.mockupUrls || !d.mockupUrls.length) && mockupsStore[id]) {
+          d.mockupUrls = mockupsStore[id];
+        }
+      });
+    }
+
     if (rFac.ok) {
       const { items } = await rFac.json();
-      const lsRefs = new Set(factures.map(f => f.ref || f.numero || '').filter(Boolean));
+      const lsRefs = new Set(factures.map(f => (f.ref || f.numero || '')).filter(Boolean));
       items.forEach(item => {
         const ref = item.ref || item.numero || '';
-        if (ref && !lsRefs.has(ref)) { factures.push(item); lsRefs.add(ref); }
-        else if (!ref) factures.push(item);
+        const fObj = { ...item, devisId: item.devis_id || item.devisId || '' };
+        if (ref && !lsRefs.has(ref)) { factures.push(fObj); lsRefs.add(ref); }
+        else if (!ref) factures.push(fObj);
       });
     }
   } catch(e) {}
 
-  /* Résout le nom complet Prénom NOM depuis le contactMap */
-  function _resolveNomClient(fac) {
-    const cid = fac.contactId || fac.client_id || '';
-    if (cid && contactMap[cid]) {
-      const c = contactMap[cid];
-      const prenom = (c.prenom || '').trim();
-      const nom    = (c.nom    || '').trim();
-      if (prenom && nom) return prenom + ' ' + nom;
-      return nom || prenom || fac.client || fac.client_nom || '';
-    }
-    /* Fallback : champ client déjà stocké sur la facture */
-    return (fac.client || fac.client_nom || '').trim();
-  }
-
-  /* ── 3. Filtrer : Payé partiel ou Payé ── */
-  /* Calcule le total réellement payé depuis paiements[] ou lettrage */
+  /* ── Helpers ── */
   function _totalPaye(fac) {
     if (fac.lettrage && fac.lettrage.totalPaye > 0) return fac.lettrage.totalPaye;
-    if (Array.isArray(fac.paiements)) {
+    if (Array.isArray(fac.paiements))
       return fac.paiements.reduce((s, p) => s + (+(p.montant || 0)), 0);
-    }
     return 0;
   }
   function _estRegle(fac) {
@@ -4743,90 +4763,109 @@ async function importFacturesVersPlanning() {
     if (fac.statut === 'Payé partiel') return true;
     const tp = _totalPaye(fac);
     if (tp <= 0) return false;
-    if (!fac.totalTTC) return true;
-    return tp < fac.totalTTC;
+    return !fac.totalTTC || tp < fac.totalTTC;
   }
 
+  /* Nom complet Prénom NOM — cherche dans devis puis facture puis contacts */
+  function _resolveNom(devis, fac) {
+    const cid = (devis?.contactId || devis?.client_id || fac?.contactId || fac?.client_id || '').trim();
+    if (cid && contactMap[cid]) {
+      const c = contactMap[cid];
+      const prenom = (c.prenom || '').trim();
+      const nom    = (c.nom    || '').trim();
+      if (prenom && nom) return prenom + ' ' + nom;
+      return nom || prenom;
+    }
+    return (devis?.client || fac?.client || fac?.client_nom || '').trim();
+  }
+
+  /* ── 3. Filtrer : factures avec au moins un paiement (partiel ou total) ── */
   const qualifying = factures.filter(f => _estRegle(f) || _estPartiellement(f));
 
-  /* ── 4. Détecter celles déjà dans le planning ── */
-  const existingRefs = new Set(commandes.map(c => (c.ref || '').trim()).filter(Boolean));
+  /* ── 4. Construire une carte PAR DEVIS (une seule même si plusieurs factures) ── */
+  const existingRefs     = new Set(commandes.map(c => (c.ref || '').trim()).filter(Boolean));
+  const processedDevisIds = new Set(); /* évite doublons multi-factures sur même devis */
 
-  /* ── 5. Créer une carte pour chaque facture non encore planifiée ── */
   let added = 0;
+
   qualifying.forEach(fac => {
-    const facRef = (fac.ref || fac.numero || '').trim();
-    if (facRef && existingRefs.has(facRef)) return;
+    /* Trouver le devis lié */
+    const devisId = (fac.devisId || fac.devis_id || '').trim();
+    const devis   = devisId ? devisMap[devisId] : null;
 
-    /* Détecter type depuis les lignes */
-    const lignes = fac.lignes || [];
-    const lignesText = lignes.map(l =>
-      (l.produit || l.description || l.technique || '')).join(' ').toLowerCase();
-    let type = 'multi';
-    if (/dtf|transfert|flex|flock|thermocollant/.test(lignesText)) type = 'dtf';
-    else if (/vinyle|vinyl|plotter|sticker/.test(lignesText)) type = 'vinyle';
-    else if (/casquette|cap|chapeau/.test(lignesText)) type = 'casquette';
-    else if (/broderie/.test(lignesText)) type = 'multi';
+    /* Ref principale = DEV-xxx du devis si dispo, sinon FAC-xxx */
+    const mainRef = ((devis?.ref || fac.ref || fac.numero || '')).trim();
+    if (!mainRef) return;
 
-    /* Description depuis les lignes */
+    /* Dédupliquer : ref déjà dans planning OU devis déjà traité */
+    if (existingRefs.has(mainRef)) return;
+    if (devisId && processedDevisIds.has(devisId)) return;
+
+    /* Lignes : préférer celles du devis (plus complètes) */
+    const lignes = (devis?.lignes?.length ? devis.lignes : fac.lignes) || [];
+
+    /* Description */
     const desc = lignes.length
       ? lignes.slice(0, 5).map(l =>
           `${l.qte || 1}× ${(l.produit || l.description || '').trim()}`).join(', ')
-      : (fac.description || fac.notes || facRef || '');
+      : (fac.description || fac.notes || mainRef);
 
-    /* Quantité totale */
+    /* Quantité */
     const qty = lignes.reduce((s, l) => s + (+(l.qte || 1)), 0) || 1;
+
+    /* Type production */
+    const dl = (desc + ' ' + lignes.map(l => l.technique || '').join(' ')).toLowerCase();
+    let type = 'multi';
+    if (/dtf|transfert|flex|flock|thermocollant/.test(dl)) type = 'dtf';
+    else if (/vinyle|vinyl|plotter|sticker/.test(dl))       type = 'vinyle';
+    else if (/casquette|cap|chapeau/.test(dl))              type = 'casquette';
+
+    /* Mockups depuis le devis (priorité) ou la facture */
+    const mockupUrls = (devis?.mockupUrls?.length ? devis.mockupUrls : (fac.mockupUrls || []));
 
     /* Deadline */
     const deadline = fac.dateEcheance
       ? new Date(fac.dateEcheance).toISOString()
       : new Date(Date.now() + 7 * 86400000).toISOString();
 
-    /* Priorité */
-    const partiel  = _estPartiellement(fac);
-    const priority = partiel ? 'urgent' : 'normal';
-
-    /* Montant affiché dans notes */
-    const tp = _totalPaye(fac);
-    const totalTxt = fac.totalTTC
-      ? `${Number(fac.totalTTC).toLocaleString('fr-FR')} XPF`
-      : '';
-    const payeTxt  = tp > 0
-      ? `Payé: ${Number(tp).toLocaleString('fr-FR')} XPF`
-      : '';
-    const resteTxt = (fac.totalTTC && tp > 0 && tp < fac.totalTTC)
-      ? ` — Reste: ${Number(fac.totalTTC - tp).toLocaleString('fr-FR')} XPF`
-      : '';
-    const statutLabel = _estRegle(fac) ? '✅ Réglée' : '⚠️ Partiel';
-
-    const nomComplet = _resolveNomClient(fac);
+    /* Priorité + notes paiement */
+    const partiel      = _estPartiellement(fac);
+    const priority     = partiel ? 'urgent' : 'normal';
+    const tp           = _totalPaye(fac);
+    const totalTxt     = fac.totalTTC ? `${Number(fac.totalTTC).toLocaleString('fr-FR')} XPF` : '';
+    const payeTxt      = tp > 0 ? `Payé: ${Number(tp).toLocaleString('fr-FR')} XPF` : '';
+    const resteTxt     = (fac.totalTTC && tp > 0 && tp < fac.totalTTC)
+                         ? ` — Reste: ${Number(fac.totalTTC - tp).toLocaleString('fr-FR')} XPF` : '';
+    const statutLabel  = _estRegle(fac) ? '✅ Réglée' : '⚠️ Partiel';
 
     const cmd = {
-      id:        'fac-' + (fac.id || Date.now().toString(36) + Math.random().toString(36).slice(2)),
-      client:    nomComplet,
-      ref:       facRef,
-      canal:     'ERP',
-      desc:      desc || facRef,
+      id:         'fac-' + (fac.id || Date.now().toString(36) + Math.random().toString(36).slice(2)),
+      client:     _resolveNom(devis, fac),
+      ref:        mainRef,
+      canal:      'ERP',
+      desc:       desc || mainRef,
       type,
-      machine:   '',
+      machine:    '',
       qty,
       deadline,
       priority,
-      notes:     `${statutLabel}${totalTxt ? ' — ' + totalTxt : ''}${payeTxt ? ' — ' + payeTxt : ''}${resteTxt}`,
-      col:       'attente',
-      createdAt: new Date().toISOString(),
+      notes:      `${statutLabel}${totalTxt ? ' — ' + totalTxt : ''}${payeTxt ? ' — ' + payeTxt : ''}${resteTxt}`,
+      col:        'attente',
+      createdAt:  new Date().toISOString(),
       lignes,
+      mockupUrls,
     };
 
     commandes.push(cmd);
-    if (facRef) existingRefs.add(facRef);
+    existingRefs.add(mainRef);
+    if (devisId) processedDevisIds.add(devisId);
     added++;
   });
 
   save();
   render();
 
-  /* Mettre à jour le badge du bouton */
+  /* Badge bouton */
   const badge = document.getElementById('badge-fac-import');
   if (badge) {
     badge.textContent = added;
@@ -4834,15 +4873,15 @@ async function importFacturesVersPlanning() {
     if (added > 0) setTimeout(() => { badge.style.display = 'none'; }, 5000);
   }
 
-  /* Sync nouvelles cartes vers MySQL */
+  /* Sync MySQL */
   const newCmds = commandes.filter(c => c.id.startsWith('fac-') && !c._mysql_id);
   for (const cmd of newCmds) await _MYSQL.upsertCmd(cmd);
 
   const lines = [];
   if (removed) lines.push(`🗑 ${removed} doublon(s) supprimé(s)`);
-  if (added)   lines.push(`✅ ${added} carte(s) créée(s) depuis factures réglées`);
-  if (!removed && !added) lines.push('✅ Aucun doublon, aucune facture à importer');
-  if (qualifying.length && !added) lines.push(`ℹ ${qualifying.length} facture(s) déjà dans le planning`);
+  if (added)   lines.push(`✅ ${added} carte(s) créée(s) depuis devis réglés${added > 0 ? ' (avec mockups si disponibles)' : ''}`);
+  if (!removed && !added) lines.push('✅ Aucun doublon, aucun devis à importer');
+  if (qualifying.length && !added) lines.push(`ℹ ${qualifying.length} devis déjà dans le planning`);
   alert(lines.join('\n'));
 }
 </script>
