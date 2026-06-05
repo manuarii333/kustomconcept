@@ -4692,7 +4692,16 @@ async function importFacturesVersPlanning() {
     const db = JSON.parse(localStorage.getItem('hcs_erp_db') || '{}');
     if (Array.isArray(db.contacts)) db.contacts.forEach(c => { if (c.id) contactMap[c.id] = c; });
     if (Array.isArray(db.devis))    db.devis.forEach(d    => { if (d.id) devisMap[d.id]    = d; });
-    if (Array.isArray(db.factures)) factures.push(...db.factures);
+    if (Array.isArray(db.factures)) {
+      db.factures.forEach(f => {
+        factures.push({
+          ...f,
+          lettrage:  _jsonParse(f.lettrage,  null),
+          paiements: _jsonParse(f.paiements, Array.isArray(f.paiements) ? f.paiements : []),
+          lignes:    _jsonParse(f.lignes,    Array.isArray(f.lignes)    ? f.lignes    : []),
+        });
+      });
+    }
   } catch(e) {}
 
   /* Mockups stockés séparément (évite le quota localStorage) */
@@ -4746,12 +4755,29 @@ async function importFacturesVersPlanning() {
       const lsRefs = new Set(factures.map(f => (f.ref || f.numero || '')).filter(Boolean));
       items.forEach(item => {
         const ref = item.ref || item.numero || '';
-        const fObj = { ...item, devisId: item.devis_id || item.devisId || '' };
+        /* Normaliser les champs MySQL (noms snake_case + JSON strings) */
+        const lettrage  = _jsonParse(item.lettrage,  null);
+        const paiements = _jsonParse(item.paiements, []);
+        const fObj = {
+          id:           item.store_id || String(item.id),
+          ref,
+          client:       item.client_nom  || item.client     || '',
+          contactId:    item.client_id   || item.contactId  || '',
+          devisId:      item.devis_id    || item.devisId    || '',
+          statut:       item.statut      || '',
+          totalTTC:     +(item.total_ttc || item.totalTTC   || 0),
+          dateEcheance: item.date_echeance || item.dateEcheance || '',
+          lignes:       _jsonParse(item.lignes,      []),
+          paiements,
+          lettrage,
+          mockupUrls:   _jsonParse(item.mockup_urls || item.mockupUrls, []),
+          description:  item.description || item.notes || '',
+        };
         if (ref && !lsRefs.has(ref)) { factures.push(fObj); lsRefs.add(ref); }
         else if (!ref) factures.push(fObj);
       });
     }
-  } catch(e) {}
+  } catch(e) { console.warn('[Import Factures] MySQL fetch error:', e); }
 
   /* ── Helpers ── */
   function _totalPaye(fac) {
