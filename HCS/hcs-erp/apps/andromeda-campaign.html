@@ -767,6 +767,13 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-prim
 .prc-illus-icon{font-size:1rem;margin-bottom:2px}
 .prc-illus-name{font-size:.56rem;font-weight:700;margin-bottom:1px}
 .prc-illus-detail{font-size:.5rem;color:var(--text-secondary);line-height:1.3}
+/* ── Liens & Accès rapide ── */
+.prc-links{display:flex;flex-wrap:wrap;gap:7px}
+.prc-link-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:7px;background:var(--bg-card);border:1px solid var(--border);font-size:.68rem;font-weight:700;cursor:pointer;text-decoration:none;color:var(--text-primary);transition:all .15s}
+.prc-link-btn:hover{background:rgba(108,99,255,.1);border-color:rgba(108,99,255,.4);color:#fff}
+.prc-link-ok{border-color:rgba(67,233,123,.28);color:rgba(255,255,255,.85)}
+.prc-link-warn{border-color:rgba(255,200,60,.2);color:var(--text-secondary);opacity:.55;cursor:default;pointer-events:none}
+.prc-link-ext{font-size:.52rem;opacity:.6}
 </style>
 <script src="hcs-api-shared.js"></script>
   <link rel="stylesheet" href="../css/mobile.css">
@@ -1050,6 +1057,12 @@ const PARCOURS_CFG = {
       { k:'Livraison îles', v:'12 destinations', ok:true },
       { k:'Upload photo client', v:'FileReader base64', ok:true },
     ],
+    links:[
+      { icon:'🌐', label:'LP Déco Véhicule', url:'', ok:false },
+      { icon:'🚗', label:'Vehicle Mockup Studio', url:'../apps/vehicle-mockup-studio.html', ok:true },
+      { icon:'🗺️', label:'Parcours Client', url:'../apps/andromeda-parcours-client.html', ok:true },
+      { icon:'📢', label:'Andromeda', url:'../apps/andromeda-campaign.html', ok:true },
+    ],
     tips:[
       { i:'🚗', t:'<strong>Catégories</strong> — configurez les catégories et tarifs dans le panneau Déco Véhicule (sidebar Config).' },
       { i:'📸', t:'<strong>Photo référence</strong> — le champ upload est optionnel mais augmente le taux de conversion car le client se projette.' },
@@ -1071,6 +1084,12 @@ const PARCOURS_CFG = {
       { k:'Tailles', v:'XS → 4XL', ok:true },
       { k:'Visuels face/dos', v:'Optionnel', ok:false },
       { k:'Quantité min/max', v:'1 – 99', ok:true },
+    ],
+    links:[
+      { icon:'🌐', label:'LP DTF Originals', url:'', ok:false },
+      { icon:'🎨', label:'DTF Studio', url:'../apps/dtf-studio.html', ok:true },
+      { icon:'🖼', label:'MockupForge v12', url:'../apps/mockup-forge-v12.html', ok:true },
+      { icon:'👕', label:'T-Shirt Mockup Studio', url:'../apps/tshirt-mockup-studio.html', ok:true },
     ],
     tips:[
       { i:'💡', t:'<strong>Galerie logos</strong> — renseignez les visuels face/dos dans la config pour que le client visualise le rendu avant achat.' },
@@ -1096,6 +1115,12 @@ const PARCOURS_CFG = {
       { k:'Canvas placement', v:'Inline (genDtf*)', ok:true },
       { k:'Tuto placement client', v:'À ajouter LP', ok:false },
     ],
+    links:[
+      { icon:'🌐', label:'Pack Collector (live)', url:'https://highcoffeeshirts.com/erp/apps/pack-collector-dtf.html', ok:true, ext:true },
+      { icon:'🎁', label:'Atelier Pack Collector', url:'../apps/hcs-atelier-pack-collector.html', ok:true },
+      { icon:'📐', label:'DTF Gang Sheet', url:'../apps/dtf-gang-sheet.html', ok:true },
+      { icon:'📋', label:'DTF Laize 1 Yard', url:'../apps/dtf-laize-1yard-22po.html', ok:true },
+    ],
     tips:[
       { i:'🎯', t:'<strong>Drop-off étape 2</strong> — le canvas peut dérouter les nouveaux clients. Ajoutez une vidéo tuto 15 s sur la LP.' },
       { i:'📏', t:'<strong>Guide dimensions</strong> — affichez un repère cm/cm pour que le client visualise la taille réelle de sa planche.' },
@@ -1117,6 +1142,12 @@ const PARCOURS_CFG = {
       { k:'Module Complet', v:'35 000 XPF', ok:true },
       { k:'Dates sessions', v:'À configurer', ok:false },
       { k:'Places restantes', v:'Non implémenté', ok:false },
+    ],
+    links:[
+      { icon:'🌐', label:'LP Formation 3H (live)', url:'https://highcoffeeshirts.com/hcs-formation-dtf-3h.html', ok:true, ext:true },
+      { icon:'🧮', label:'DTF Calculator', url:'../apps/dtf-calculator-hcs-v2.html', ok:true },
+      { icon:'📅', label:'Planning Production', url:'../modules/planning-dashboard.html', ok:true },
+      { icon:'🎓', label:'Agents IA', url:'../apps/hcs-agents-profiles.html', ok:true },
     ],
     tips:[
       { i:'📅', t:'<strong>Dates dynamiques</strong> — configurez les prochaines sessions dans Andromeda. Les dates épuisées disparaissent automatiquement.' },
@@ -1140,6 +1171,12 @@ const PARCOURS_CFG = {
       { k:'Durée annuelle', v:'Remise ~14%', ok:true },
       { k:'Activation CRM n8n', v:'À connecter', ok:false },
     ],
+    links:[
+      { icon:'🌐', label:'LP Abonnements', url:'', ok:false },
+      { icon:'💰', label:'Caisse POS', url:'../modules/caisse-pos.html', ok:true },
+      { icon:'⭐', label:'Commercial & CRM', url:'../modules/commercial-dashboard.html', ok:true },
+      { icon:'📊', label:'Finance Dashboard', url:'../modules/finance-dashboard.html', ok:true },
+    ],
     tips:[
       { i:'🌟', t:'<strong>Ancrage annuel</strong> — afficher "économisez X XPF" plutôt que le taux de remise est plus concret.' },
       { i:'💡', t:'<strong>Comparatif</strong> — le tableau avantages côte-à-côte est le format qui convertit le mieux pour les abonnements.' },
@@ -1161,6 +1198,12 @@ const PARCOURS_CFG = {
       { k:'Création logo', v:'8 000 XPF', ok:true },
       { k:'Pack graphique', v:'8 000 XPF', ok:true },
       { k:'Notif. livraison n8n', v:'À configurer', ok:false },
+    ],
+    links:[
+      { icon:'🌐', label:'LP Graphiques / Vecto', url:'', ok:false },
+      { icon:'✂️', label:'PicWish Pipeline', url:'../apps/picwish-pipeline.html', ok:true },
+      { icon:'🎨', label:'DTF Studio', url:'../apps/dtf-studio.html', ok:true },
+      { icon:'🔄', label:'Kustom Koncept', url:'../apps/kustomkoncept.html', ok:true },
     ],
     tips:[
       { i:'📁', t:'<strong>Upload optionnel</strong> — le client peut envoyer le fichier par email après paiement, pas d\'obligation au checkout.' },
@@ -1207,6 +1250,20 @@ function renderParcoursFn(id, container) {
     +'<div><div style="font-size:.95rem;font-weight:800">'+cfg.label+'</div>'
     +'<div style="font-size:.68rem;color:var(--text-secondary);margin-top:2px">'+cfg.priceRange+' · '+cfg.steps.length+' étapes tunnel</div></div>'
     +'<div style="margin-left:auto;font-size:.72rem;font-weight:900;color:'+color+'">'+cfg.steps[cfg.steps.length-1].funnel+'% conv.</div></div>';
+
+  // ── Liens & Accès rapide
+  var linksHtml = '';
+  if (cfg.links && cfg.links.length) {
+    var linkBtns = cfg.links.map(function(l) {
+      if (!l.ok || !l.url) {
+        return '<span class="prc-link-btn prc-link-warn">'+l.icon+' '+l.label+' <span class="prc-link-ext">⚠ À déployer</span></span>';
+      }
+      var target = l.ext ? ' target="_blank" rel="noopener"' : '';
+      var extBadge = l.ext ? ' <span class="prc-link-ext">↗</span>' : '';
+      return '<a class="prc-link-btn prc-link-ok" href="'+l.url+'"'+target+'>'+l.icon+' '+l.label+extBadge+'</a>';
+    }).join('');
+    linksHtml = '<div class="prc-panel" style="margin-bottom:16px"><div class="prc-panel-title">🔗 Liens & Accès rapide</div><div class="prc-links">'+linkBtns+'</div></div>';
+  }
 
   // ── Option B — Flow opérateur
   var flowHtml = '<div class="prc-section-tag prc-tag-b">B · Vue opérateur</div>'
@@ -1315,7 +1372,7 @@ function renderParcoursFn(id, container) {
     +'</div>'
     +detailHtml+'</div>';
 
-  container.innerHTML = headerHtml + flowHtml + metricsHtml + twoColHtml + tipsHtml + clientPreviewHtml;
+  container.innerHTML = headerHtml + linksHtml + flowHtml + metricsHtml + twoColHtml + tipsHtml + clientPreviewHtml;
 }
 
 function prcSetStep(id, step) {
@@ -4424,8 +4481,9 @@ const CATS = ${catsJson};
 const TARIFS = ${tarifsJson};
 const WORKER_URL = '${workerUrl}';
 const WORKER_SEC = '${workerSec}';
-const WORKER_MODE = '${workerMode}';
-const PUBLIC_KEY = '${publicKey}';
+const _urlMode=new URLSearchParams(location.search).get('mode');
+const WORKER_MODE=_urlMode==='test'?'TEST':_urlMode==='prod'?'PRODUCTION':'${workerMode}';
+const PUBLIC_KEY=WORKER_MODE==='PRODUCTION'?'41545085:publickey_IzNDzp5XcAadriFpCh08meZmg8Ri6WbYIG6TIQ9mpu2NA':'41545085:testpublickey_HJw0fXMbbvOAzJuN1BXImXIu5U16qkSHv2eQVjSu0YftA';
 const SHIP_RATES = {tahiti:1800,moorea:1500,huahine:2500,'bora-bora':2500,raiatea:2500,tahaa:2500,maupiti:3500,rangiroa:3000,makemo:4000,tubuai:4000,'hiva-oa':5000,'nuku-hiva':5000};
 const ISLAND_LABELS = {tahiti:'Tahiti',moorea:'Moorea',huahine:'Huahine','bora-bora':'Bora Bora',raiatea:'Raiatea',tahaa:'Tahaa',maupiti:'Maupiti',rangiroa:'Rangiroa',makemo:'Makemo',tubuai:'Tubuai','hiva-oa':'Hiva Oa','nuku-hiva':'Nuku Hiva'};
 
