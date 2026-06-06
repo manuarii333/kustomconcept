@@ -990,13 +990,6 @@ function buildSidebar() {
       </div>
       <div class="item-dot ${c.active?'dot-on':'dot-off'}"></div>
     </div>
-    ${c.id===0?`<div class="camp-item" style="padding:5px 12px 5px 28px;opacity:.85;cursor:pointer" onclick="openVDecAdmin()">
-      <div class="item-icon" style="background:rgba(255,101,132,.12);border:1px solid rgba(255,101,132,.25);font-size:.8rem;width:26px;height:26px">⚙️</div>
-      <div style="flex:1;min-width:0">
-        <div class="item-name" style="font-size:.72rem;color:rgba(255,150,130,.9)">Admin Déco Véhicule</div>
-        <div class="item-tag">Modèles · Tarifs · Logos</div>
-      </div>
-    </div>`:''}
   `).join('') + `
   <div class="sidebar-sep"></div>
   <div class="sidebar-label">Gestion</div>
@@ -1027,9 +1020,13 @@ function buildSidebar() {
   </div>
   <div class="sidebar-sep"></div>
   <div class="sidebar-label">Config</div>
-  <div class="sidebar-action" id="nav-vdec" onclick="openVDecAdmin()">
+  <div class="sidebar-action" id="nav-vdec-camp" onclick="select(0)">
     <div class="sa-icon" style="background:linear-gradient(135deg,#ff6584,#ff9966)">🚗</div>
-    <div><div class="sa-label">Déco Véhicule</div><div class="item-tag">Modèles · Logos · Polices</div></div>
+    <div><div class="sa-label">Déco Véhicule</div><div class="item-tag">Campagne · Parcours client</div></div>
+  </div>
+  <div class="sidebar-action" id="nav-vdec" onclick="openVDecAdmin()">
+    <div class="sa-icon" style="background:linear-gradient(135deg,#c13155,#ff9966)">⚙️</div>
+    <div><div class="sa-label">Admin Déco Véhicule</div><div class="item-tag">Modèles · Tarifs · Logos</div></div>
   </div>`;
 }
 
