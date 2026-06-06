@@ -8009,6 +8009,11 @@ function renderConfigAdmin(c) {
                 <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-step2-on" checked
                   onchange="tshSetParcours(${id},'showStep2',this.checked)"><span class="pcfg-toggle-slider"></span></label>
               </div>
+              <div class="pcfg-toggle-row" style="padding-left:14px;border-left:2px solid rgba(246,211,101,.25);margin-left:4px">
+                <span class="pcfg-toggle-lbl" style="font-size:0.66rem">🏷️ Logos DTF prédéfinis <span style="color:#f6d365;font-size:0.55rem">affichés au client</span></span>
+                <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-dtf-on"
+                  onchange="tshSetParcours(${id},'showDtfLogos',this.checked);tshToggleDtfSections(${id},this.checked)"><span class="pcfg-toggle-slider"></span></label>
+              </div>
               <div class="pcfg-toggle-row">
                 <span class="pcfg-toggle-lbl">③ Taille obligatoire</span>
                 <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-step3-sz" checked
@@ -8074,9 +8079,9 @@ function renderConfigAdmin(c) {
                   </label>
                 </div>
 
-                <!-- Logos DTF prédéfinis (étape 2 désactivée = produit déjà imprimé) -->
-                <div style="border-top:1px solid rgba(255,255,255,.07);padding-top:8px;margin-top:2px">
-                  <div style="font-size:0.6rem;color:#f6d365;font-weight:700;margin-bottom:6px">🏷️ Logos DTF prédéfinis <span style="font-weight:400;color:#9090b0">(si étape 2 désactivée)</span></div>
+                <!-- Logos DTF prédéfinis -->
+                <div class="tsh-dtf-section-${id}" style="border-top:1px solid rgba(255,255,255,.07);padding-top:8px;margin-top:2px;display:none">
+                  <div style="font-size:0.6rem;color:#f6d365;font-weight:700;margin-bottom:6px">🏷️ Logos DTF prédéfinis <span style="font-weight:400;color:#9090b0">(visibles client)</span></div>
                   <div style="display:flex;gap:6px">
                     ${[1,2,3].map(n => `
                     <label style="flex:1;cursor:pointer;text-align:center">
@@ -8844,6 +8849,21 @@ function tshGetDtfLogos(campId, prodIdx) {
   return [1,2,3].map(n => obj[n] || null).filter(Boolean);
 }
 
+function tshToggleDtfSections(campId, show) {
+  document.querySelectorAll(`.tsh-dtf-section-${campId}`).forEach(el => {
+    el.style.display = show ? '' : 'none';
+  });
+}
+
+function tshPickDtfLogo(campId, prodIdx, n) {
+  const logo = tshDtfLogos[campId]?.[prodIdx]?.[n];
+  if (!logo) return;
+  tshBuy.clientLogoUrl  = logo.url;
+  tshBuy.clientLogoName = logo.name;
+  tshBuy.clientLogoDpi  = 300;
+  tshBuyRender();
+}
+
 function tshSetFace(campId, face, enabled) {
   const conf = tshGetParcours(campId);
   if (!conf.faces) conf.faces = ['front'];
@@ -8861,14 +8881,15 @@ function tshSetFace(campId, face, enabled) {
   }
 }
 
-// tshParcours[campId] = { showStep2, requireSize, sizes:[...], labels:{1,2,3}, faces:[...] }
+// tshParcours[campId] = { showStep2, showDtfLogos, requireSize, sizes:[...], labels:{1,2,3}, faces:[...] }
 const tshParcours = {};
 function tshGetParcours(campId) {
   if (!tshParcours[campId]) {
     const isCap = campId === 2;
     tshParcours[campId] = {
-      showStep2:   true,
-      requireSize: true,
+      showStep2:    true,
+      showDtfLogos: false,
+      requireSize:  true,
       sizes: isCap ? ['XS','S','M','L','XL','2XL'] : ['XS','S','M','L','XL','2XL','3XL','4XL'],
       labels: {
         1: document.getElementById(`tsh-${campId}-lbl1`)?.value || (isCap ? 'Choisir la casquette' : 'Choisir le produit'),
@@ -9294,8 +9315,44 @@ function tshBuyStep1HTML() {
 // ── Étape 2 : Upload logo(s) client + vérification qualité ─
 function tshBuyStep2HTML() {
   const { clientLogoUrl, clientLogoDpi, clientLogoName, logoBackUrl, logoBackName, logoBackDpi } = tshBuy;
-  const pcfg = tshGetParcours(tshBuy.campId);
+  const { campId, prodIdx } = tshBuy;
+  const pcfg = tshGetParcours(campId);
   const is2face = (pcfg.faces || ['front']).length > 1;
+
+  // Bloc logos DTF prédéfinis (si activé dans admin)
+  let dtfPickerHtml = '';
+  if (pcfg.showDtfLogos) {
+    const dtfObj = tshDtfLogos[campId]?.[prodIdx] || {};
+    const dtfCards = [1,2,3].map(n => {
+      const logo = dtfObj[n];
+      if (!logo) return '';
+      const isSel = clientLogoUrl === logo.url;
+      return `<div onclick="tshPickDtfLogo(${campId},${prodIdx},${n})"
+        style="cursor:pointer;flex:1;min-width:76px;max-width:96px;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 6px;border-radius:10px;
+               border:2px solid ${isSel ? '#f6d365' : 'rgba(246,211,101,.2)'};
+               background:${isSel ? 'rgba(246,211,101,.12)' : 'rgba(246,211,101,.04)'};transition:all .15s">
+        <div style="width:60px;height:60px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35)">
+          <img src="${logo.url}" style="max-width:90%;max-height:90%;object-fit:contain">
+        </div>
+        <div style="font-size:0.58rem;color:${isSel ? '#f6d365' : '#9090b0'};text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:84px">
+          ${logo.name || 'Logo DTF ' + n}
+        </div>
+        ${isSel ? '<div style="font-size:0.52rem;color:#f6d365;font-weight:800">✓ Sélectionné</div>' : ''}
+      </div>`;
+    }).filter(Boolean).join('');
+    if (dtfCards) {
+      dtfPickerHtml = `<div style="width:100%;border:1px solid rgba(246,211,101,.25);border-radius:12px;padding:12px 10px;background:rgba(246,211,101,.04)">
+        <div style="font-size:0.7rem;font-weight:800;color:#f6d365;margin-bottom:10px;text-align:center">🏷️ Choisissez un logo DTF</div>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">${dtfCards}</div>
+        <div style="font-size:0.58rem;color:rgba(255,255,255,.3);text-align:center;margin-top:8px">Cliquez sur un logo pour le sélectionner</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;width:100%;max-width:280px">
+        <div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div>
+        <span style="font-size:0.6rem;color:rgba(255,255,255,.3)">ou</span>
+        <div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div>
+      </div>`;
+    }
+  }
 
   // Carte upload pour une face
   const uploadCard = (url, dpi, name, face) => {
@@ -9324,6 +9381,7 @@ function tshBuyStep2HTML() {
       ? `<div style="font-size:0.6rem;color:var(--text-secondary);text-align:center;line-height:1.5;max-width:280px">💡 Sans logo dos, le logo avant sera utilisé pour les deux faces.</div>`
       : '';
     return `<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:4px 0">
+      ${dtfPickerHtml}
       <div style="text-align:center">
         <div style="font-size:0.8rem;font-weight:800;margin-bottom:4px">Vos logos avant &amp; dos</div>
         <div style="font-size:0.66rem;color:var(--text-secondary)">Format PNG ou PDF vectoriel — 300 DPI recommandé</div>
@@ -9351,6 +9409,7 @@ function tshBuyStep2HTML() {
     : `<div style="width:120px;aspect-ratio:1;background:var(--bg-panel);border-radius:8px;border:2px dashed var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;opacity:0.6"><span style="font-size:1.8rem">🖼️</span><span style="font-size:0.6rem;color:var(--text-secondary)">Votre logo ici</span></div>`;
   const dpiWarn1 = (clientLogoDpi > 0 && clientLogoDpi < 150) ? `<div style="background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.3);border-radius:8px;padding:8px;font-size:0.64rem;color:#ffb3b3;text-align:center;max-width:280px;line-height:1.5">⚠️ En cliquant sur Suivant vous acceptez que la qualité d'impression ne sera pas optimale. HCS ne pourra être tenu responsable du résultat.</div>` : '';
   return `<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 0">
+    ${dtfPickerHtml}
     <div style="text-align:center">
       <div style="font-size:0.8rem;font-weight:800;margin-bottom:4px">Uploadez votre logo</div>
       <div style="font-size:0.68rem;color:var(--text-secondary)">Format PNG ou PDF vectoriel — 300 DPI minimum recommandé</div>
