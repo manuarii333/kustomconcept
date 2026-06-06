@@ -257,6 +257,7 @@ $migrations = [
         'mockup_urls'     => 'LONGTEXT NULL',
         'checklist_prod'  => 'LONGTEXT NULL',
         'reservation'     => 'LONGTEXT NULL',
+        'statut_paiement' => 'VARCHAR(20) NULL DEFAULT ""',
         'updated_at'      => 'DATETIME NULL',
     ],
     /* ── Planning Production : fournisseurs ──────────────── */

@@ -4853,8 +4853,8 @@ async function importFacturesVersPlanning() {
         const resolvedNom = _resolveNom(devis, fac);
         const newStatut   = _estRegle(fac) ? 'regle' : 'partiel';
         let changed = false;
-        if (!exist.client && resolvedNom)  { exist.client          = resolvedNom; changed = true; }
-        if (!exist.statut_paiement)        { exist.statut_paiement = newStatut;   changed = true; }
+        if (!exist.client && resolvedNom)          { exist.client          = resolvedNom; changed = true; }
+        if (exist.statut_paiement !== newStatut)   { exist.statut_paiement = newStatut;   changed = true; }
         if (changed) { save(); _MYSQL.upsertCmd(exist); }
       }
       return;

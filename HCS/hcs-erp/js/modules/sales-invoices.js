@@ -8,6 +8,9 @@ window.SalesInvoices = (() => {
   /* Référence paresseuse vers le bridge partagé de sales.js */
   const C = () => window._SalesCore;
 
+  /* Flag : auto-sync MySQL déclenché une seule fois par session */
+  let _autoSyncDone = false;
+
   /* ================================================================
      LETTRAGE — utilitaires
      ================================================================ */
@@ -93,6 +96,21 @@ window.SalesInvoices = (() => {
     }
 
     let allFacs = Store.getAll('factures');
+
+    /* Auto-sync depuis MySQL si liste vide : afficher un loader puis re-rendre */
+    if (!allFacs.length && window.MYSQL && !_autoSyncDone) {
+      _autoSyncDone = true;
+      toolbar.innerHTML = '';
+      area.innerHTML = `<div style="padding:64px;text-align:center;color:var(--text-muted,#c8b89a);">
+        <div style="font-size:28px;margin-bottom:12px;">⏳</div>
+        <div style="font-size:14px;">Chargement des factures depuis le serveur…</div>
+      </div>`;
+      Store.pullAllFromMySQL(['factures'])
+        .then(() => { _renderInvoicesList(toolbar, area); })
+        .catch(() => { _renderInvoicesList(toolbar, area); });
+      return;
+    }
+
     const isKanban = C()._state.listMode === 'kanban';
 
     /* Totaux rapides pour résumé */
@@ -151,14 +169,15 @@ window.SalesInvoices = (() => {
       ?.addEventListener('click', async function() {
         this.disabled = true;
         this.textContent = '⏳…';
-        const result = await Store.syncFromMySQL(['factures']);
+        const result = await Store.pullAllFromMySQL(['factures']);
         this.disabled = false;
         this.textContent = '☁↓ Sync';
-        if (result.synced > 0) {
-          toast(`${result.synced} facture(s) importée(s) depuis MySQL.`, 'success');
+        const total = (result.added || 0) + (result.updated || 0);
+        if (total > 0) {
+          toast(`${total} facture(s) synchronisée(s) depuis MySQL.`, 'success');
           _renderInvoicesList(toolbar, area);
         } else {
-          toast('Aucune nouvelle facture à importer.', 'info');
+          toast('Factures à jour — aucune modification.', 'info');
         }
       });
 

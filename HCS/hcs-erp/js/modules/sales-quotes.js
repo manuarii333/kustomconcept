@@ -13,6 +13,9 @@ window.SalesQuotes = (() => {
   /* IDs des devis sélectionnés pour action groupée */
   let _selectedQuoteIds = new Set();
 
+  /* Flag : auto-sync MySQL déclenché une seule fois par session */
+  let _autoSyncDone = false;
+
   function _updateBulkDeleteBtn() {
     const btn = document.getElementById('btn-delete-selected-quotes');
     if (!btn) return;
@@ -32,6 +35,21 @@ window.SalesQuotes = (() => {
     }
 
     let allDevis = Store.getAll('devis');
+
+    /* Auto-sync depuis MySQL si liste vide : afficher un loader puis re-rendre */
+    if (!allDevis.length && window.MYSQL && !_autoSyncDone) {
+      _autoSyncDone = true;
+      toolbar.innerHTML = '';
+      area.innerHTML = `<div style="padding:64px;text-align:center;color:var(--text-muted,#c8b89a);">
+        <div style="font-size:28px;margin-bottom:12px;">⏳</div>
+        <div style="font-size:14px;">Chargement des devis depuis le serveur…</div>
+      </div>`;
+      Store.pullAllFromMySQL(['devis'])
+        .then(() => { _renderQuotesList(toolbar, area); })
+        .catch(() => { _renderQuotesList(toolbar, area); });
+      return;
+    }
+
     const isKanban = C()._state.listMode === 'kanban';
 
     toolbar.innerHTML = `
@@ -76,15 +94,16 @@ window.SalesQuotes = (() => {
       ?.addEventListener('click', async function() {
         this.disabled = true;
         this.textContent = '⏳ Sync...';
-        const result = await Store.syncFromMySQL(['devis']);
+        const result = await Store.pullAllFromMySQL(['devis']);
         this.disabled = false;
         this.textContent = '↓ Sync MySQL';
-        if (result.synced > 0) {
-          if (typeof showToast === 'function') showToast(`${result.synced} devis importé(s) depuis MySQL`, 'success');
+        const total = (result.added || 0) + (result.updated || 0);
+        if (total > 0) {
           allDevis = Store.getAll('devis');
           _applyQuoteFilters();
+          if (typeof showToast === 'function') showToast(`${total} devis synchronisé(s) depuis MySQL`, 'success');
         } else {
-          if (typeof showToast === 'function') showToast('Aucun nouveau devis à importer', 'info');
+          if (typeof showToast === 'function') showToast('Devis à jour — aucune modification', 'info');
         }
       });
     document.getElementById('btn-dedup-devis')?.addEventListener('click', () => {

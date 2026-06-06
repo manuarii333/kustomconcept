@@ -34,8 +34,8 @@ $_origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $_allowed = ['https://highcoffeeshirts.com', 'https://www.highcoffeeshirts.com'];
 if (in_array($_origin, $_allowed, true) || (defined('DEV_MODE') && DEV_MODE)) {
     header('Access-Control-Allow-Origin: ' . ($_origin ?: $_allowed[0]));
-} elseif ($_origin === '' || preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?$#', $_origin)) {
-    header('Access-Control-Allow-Origin: ' . ($_origin ?: '*'));
+} elseif ($_origin === '' || $_origin === 'null' || preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?$#', $_origin)) {
+    header('Access-Control-Allow-Origin: *');
 } else {
     header('Access-Control-Allow-Origin: https://highcoffeeshirts.com');
 }

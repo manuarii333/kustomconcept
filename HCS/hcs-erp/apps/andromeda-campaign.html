@@ -2796,7 +2796,8 @@ async function _uploadCampaignImages(id, lpSlug, onProgress) {
 
 async function publishLP(id) {
   if (location.protocol === 'file:') {
-    showToast('⚠️ Publication impossible en local — ouvre https://highcoffeeshirts.com/erp/', true);
+    window.open('https://highcoffeeshirts.com/erp/#outils/ext-andromeda', '_blank');
+    showToast('🌐 ERP ouvert dans un nouvel onglet — publie depuis là-bas', false);
     return;
   }
   if (!adminSecret) {
@@ -7800,10 +7801,14 @@ function saveState(id) {
 }
 
 function saveBg(id, dataUrl) {
-  // Le fond (bg) n'est pas persisté dans localStorage (trop lourd → quota dépassé).
-  // Il est conservé en mémoire dans _memState[id].bgUrl pour le switching.
   if (!_memState[id]) _memState[id] = {};
   _memState[id].bgDataUrl = dataUrl;
+  try {
+    const all = JSON.parse(localStorage.getItem(IMG_STORE) || '{}');
+    if (!all[id]) all[id] = {};
+    all[id].bgDataUrl = dataUrl;
+    localStorage.setItem(IMG_STORE, JSON.stringify(all));
+  } catch(e) { console.warn('⚠️ saveBg localStorage plein:', e.message); }
 }
 
 function _attachLogoDrag(img) {
@@ -7829,8 +7834,10 @@ function restoreState(onlyId = null) {
       if (!cv) return;
 
       // ── Fond vignette ──────────────────────────────────
-      // Priorité : mémoire (bgUrl complet) → mémoire (bgDataUrl)
-      const bgUrl = mem.bgUrl || (mem.bgDataUrl ? `url(${mem.bgDataUrl}) center/cover no-repeat` : null);
+      // Priorité : mémoire (bgUrl complet) → mémoire (bgDataUrl) → localStorage (bgDataUrl)
+      const bgUrl = mem.bgUrl
+        || (mem.bgDataUrl  ? `url(${mem.bgDataUrl})  center/cover no-repeat` : null)
+        || (saved.bgDataUrl ? `url(${saved.bgDataUrl}) center/cover no-repeat` : null);
       if (bgUrl) {
         cv.style.background = bgUrl;
         const hint = cv.querySelector('.upload-hint');
@@ -11967,8 +11974,9 @@ function vdecNext() {
     const notValidated = VDEC_VIEWS_DEF.filter(v => !_vdec.viewsValidated[v.key]);
     const allViews = Object.values(_vdec.viewsValidated);
     if (!allViews.some(v => v)) { alert('Validez au moins une vue avec le bouton "✓ Valider cette vue".'); return; }
-    /* Mode intégré LP (iframe) → envoyer résultats au parent puis fermer */
-    if (window.parent !== window) {
+    /* Mode intégré LP (iframe avec ?vdec=1) → envoyer résultats au parent LP puis fermer */
+    const _isLPFrame = window.parent !== window && new URLSearchParams(location.search).get('vdec') === '1';
+    if (_isLPFrame) {
       const firstSnap = Object.values(_vdec.viewSnapshots || {}).find(s => s) || null;
       const validatedLabels = VDEC_VIEWS_DEF.filter(v => _vdec.viewsValidated[v.key]).map(v => v.label).join(', ');
       window.parent.postMessage({
