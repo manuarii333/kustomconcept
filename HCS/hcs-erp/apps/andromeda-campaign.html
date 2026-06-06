@@ -3955,6 +3955,7 @@ function selCat(i){ckCatIdx=i;renderS1();}
 function next1(){if(ckCatIdx===null){alert('Choisissez un type de véhicule.');return;}ckStep=2;render();}
 
 var _vdecMockupReady=false;
+var _vdecLogos=[],_vdecTexts=[],_vdecViewsVal={},_vdecViewSnaps={},_vdecCatIdx=null;
 function renderS2(){
   document.getElementById('ck-body').innerHTML=
     '<div class="ck-section">Personnalisez votre décoration</div>'+
@@ -3987,6 +3988,11 @@ function _vdecMsgHandler(e){
   _vdecMockupReady=true;
   ckPhotoUrl=e.data.snapshot||'';
   ckDescription='✓ Décoration validée — '+e.data.viewLabels;
+  _vdecLogos=e.data.logos||[];
+  _vdecTexts=e.data.texts||[];
+  _vdecViewsVal=e.data.views_validated||{};
+  _vdecViewSnaps=e.data.view_snapshots||{};
+  _vdecCatIdx=e.data.catIdx!=null?e.data.catIdx:null;
   renderS2();
 }
 function next2(){
@@ -4086,7 +4092,15 @@ async function renderS4(){
     document.getElementById('pz-area').innerHTML='<div style="color:#ff6b6b;text-align:center;padding:14px;font-size:.78rem">❌ '+e.message+'</div><button onclick="renderS4()" style="display:block;margin:8px auto;padding:8px 16px;background:rgba(255,255,255,.08);border:none;border-radius:8px;color:white;cursor:pointer;font-size:.74rem">Réessayer</button>';
   }
 }
-function _vdSaveOrder(){var cat=ckCatIdx!==null?CATS[ckCatIdx]:{};fetch('https://payzen-hcs.highcoffeeshirt.workers.dev/order/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:ORDER_ID,amount:getTotal(),currency:'XPF',campaignName:'Déco Véhicule',lpSlug:'sticker-auto-0',product:(cat.icon||'🚗')+' '+(cat.name||'')+(cat.model?' — '+cat.model:''),client:ckContact,delivery:ckDelivery,note:ckDescription+(ckPhotoUrl?' | [Photo fournie par le client]':''),mode:WORKER_MODE})}).catch(function(_e){var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_vd-warn')){var _w=document.createElement('p');_w.id='_vd-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+ORDER_ID+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});}
+function _vdSaveOrder(){
+  var cat=ckCatIdx!==null?CATS[ckCatIdx]:{};
+  var sidx=_vdecCatIdx!=null?_vdecCatIdx:ckCatIdx;
+  var scat=sidx!=null&&CATS[sidx]?CATS[sidx]:cat;
+  /* Worker KV */
+  fetch('https://payzen-hcs.highcoffeeshirt.workers.dev/order/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:ORDER_ID,amount:getTotal(),currency:'XPF',campaignName:'Déco Véhicule',lpSlug:'sticker-auto-0',product:(scat.icon||'🚗')+' '+(scat.name||'')+(scat.model?' — '+scat.model:''),client:ckContact,delivery:ckDelivery,note:ckDescription+(ckPhotoUrl?' | [Photo fournie par le client]':''),mode:WORKER_MODE})}).catch(function(_e){var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_vd-warn')){var _w=document.createElement('p');_w.id='_vd-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+ORDER_ID+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
+  /* MySQL vdec_commandes — design complet */
+  fetch('https://highcoffeeshirts.com/erp/api/vdec_commandes',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':'hcs-erp-2026'},body:JSON.stringify({order_id:ORDER_ID,status:'payé',total_xpf:getTotal(),cat_name:scat.name||'',cat_model:scat.model||'',cat_icon:scat.icon||'🚗',views_validated:_vdecViewsVal,logos:_vdecLogos,texts:_vdecTexts,cat_views:scat.views||{},view_snapshots:_vdecViewSnaps,contact:ckContact,delivery:ckDelivery,created_at:new Date().toISOString()})}).catch(function(){});
+}
 function showOk(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';var b=document.getElementById('pz-back');if(b)b.style.display='none';_vdSaveOrder();}
 function simPay(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';document.getElementById('pz-ok-msg').textContent='Merci '+ckContact.name+' — commande simulée (mode test, non facturé).';var b=document.getElementById('pz-back');if(b)b.style.display='none';}
 function vdecTriggerUpload(el){var inp=el.querySelector('input');if(inp)inp.click();}
@@ -12310,7 +12324,12 @@ function vdecNext() {
         type: 'vdec-complete',
         snapshot: firstSnap,
         views: VDEC_VIEWS_DEF.filter(v => _vdec.viewsValidated[v.key]).length,
-        viewLabels: validatedLabels
+        viewLabels: validatedLabels,
+        logos: _vdec.logos,
+        texts: _vdec.texts,
+        views_validated: _vdec.viewsValidated,
+        view_snapshots: _vdec.viewSnapshots,
+        catIdx: _vdec.catIdx
       }, '*');
       return;
     }
