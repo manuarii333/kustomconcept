@@ -3570,6 +3570,10 @@ function _hexToRgb(hex) {
   return `${r},${g},${b}`;
 }
 function _downloadHtml(html, filename) {
+  if (typeof window._dl_override === 'function') {
+    window._dl_override(filename, html);
+    return;
+  }
   const blob = new Blob([html], {type:'text/html'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
