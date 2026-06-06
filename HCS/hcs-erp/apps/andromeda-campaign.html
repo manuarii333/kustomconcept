@@ -2653,6 +2653,20 @@ footer{text-align:center;padding:24px 16px;color:rgba(255,255,255,.4);font-size:
 .recap-row{display:flex;justify-content:space-between;font-size:.78rem;padding:4px 0;border-bottom:1px solid #2a2a4a22}
 .recap-row:last-child{border:none;padding-top:8px;margin-top:4px;border-top:1px solid #2a2a4a}
 .recap-row span:first-child{color:#9090b0}
+@media(max-width:480px){
+  .section{padding:24px 14px}
+  .hero{padding:32px 16px;min-height:85vh}
+  .sub{font-size:.9rem}
+  .cta-hero{padding:12px 24px;font-size:.9rem}
+  .fl-body{padding:14px}
+  .fl-foot{padding:10px 14px}
+  .fl-head{padding:10px 14px}
+  .ck-steps{padding:10px 12px}
+  .ck-lbl{font-size:.5rem}
+  .dlv-opts{grid-template-columns:1fr}
+  .fl-size-grid{grid-template-columns:repeat(4,1fr);gap:4px}
+  .fl-sz-btn{font-size:.65rem;padding:7px 2px}
+}
 ${_lpPayCss(primary)}
 </style></head>
 <body>
@@ -3234,7 +3248,7 @@ h1{font-size:clamp(1.8rem,5vw,3rem);font-weight:900;margin-bottom:14px;line-heig
 .section{padding:40px 20px;max-width:960px;margin:0 auto}
 .section-title{font-size:1.1rem;font-weight:800;margin-bottom:20px;text-align:center}
 /* PRODUITS */
-.prods{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-bottom:12px}
+.prods{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:18px;margin-bottom:12px}
 .prod{background:rgba(255,255,255,.05);border-radius:14px;overflow:hidden;border:2px solid rgba(255,255,255,.1);cursor:pointer;transition:all .2s;position:relative}
 .prod:hover{border-color:${primary};transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
 .prod.selected{border-color:${primary};background:rgba(108,99,255,.1);box-shadow:0 0 0 4px ${primary}33}
@@ -3260,7 +3274,7 @@ h1{font-size:clamp(1.8rem,5vw,3rem);font-weight:900;margin-bottom:14px;line-heig
 .feat-icon{font-size:28px;margin-bottom:8px}
 .feat-txt{font-size:.82rem;color:rgba(255,255,255,.7)}
 /* PLANS */
-.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-top:20px}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-top:20px}
 .plan{background:rgba(255,255,255,.05);border-radius:12px;padding:20px;text-align:center;border:1px solid rgba(255,255,255,.1);cursor:pointer;transition:all .2s}
 .plan:hover,.plan.selected{border-color:${primary};background:${primary}1a;transform:translateY(-2px)}
 .plan-name{font-weight:700;color:${primary};margin-bottom:8px}
@@ -3339,6 +3353,23 @@ footer{text-align:center;padding:28px;color:rgba(255,255,255,.4);font-size:.82re
 .kr-embedded .kr-payment-button{background:linear-gradient(135deg,${primary},#ff6584)!important;border-radius:10px!important;font-weight:800!important;font-size:.9rem!important;padding:13px!important;width:100%!important;border:none!important;color:#fff!important;cursor:pointer!important;margin-top:4px!important;letter-spacing:.5px!important;box-shadow:0 4px 16px ${primary}55!important}
 .kr-embedded .kr-payment-button:hover{opacity:.92!important;transform:translateY(-1px)!important}
 .kr-embedded .kr-form-error{background:#fff5f5!important;border:1px solid #ffc9c9!important;border-radius:8px!important;padding:10px 12px!important;color:#c92a2a!important;font-size:.78rem!important;margin-top:8px!important}
+@media(max-width:480px){
+  .section{padding:24px 14px}
+  .hero{padding:32px 16px;min-height:80vh}
+  .cta-hero{padding:12px 24px;font-size:.9rem}
+  .section-title{font-size:.95rem}
+  .prod-info{padding:10px 12px}
+  .prod-name{font-size:.8rem}
+  .prod-price{font-size:.95rem}
+  .dlv-opts{grid-template-columns:1fr}
+  .ck-steps{padding:10px 12px}
+  .ck-lbl{font-size:.5rem}
+  .modal-body{padding:14px}
+  .modal-foot{padding:10px 14px}
+  .plan{padding:14px}
+  .plan-price{font-size:1.2rem}
+  footer{padding:20px 14px}
+}
 </style></head>
 <body>
 
@@ -3847,7 +3878,8 @@ footer{text-align:center;padding:28px;color:rgba(255,255,255,.4);font-size:.82re
 .ck-input:focus{border-color:${primary}}
 .ck-input::placeholder{color:rgba(255,255,255,.2)}
 .ck-textarea{resize:vertical;min-height:80px}
-.vcat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:6px}
+.vcat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+@media(max-width:400px){.vcat-grid{grid-template-columns:repeat(2,1fr)}}
 .vcat-card{background:rgba(255,150,100,.04);border:2px solid rgba(255,150,100,.14);border-radius:12px;padding:20px 8px;text-align:center;cursor:pointer;transition:all .2s}
 .vcat-card:hover,.vcat-card.sel{border-color:${primary};background:rgba(255,153,102,.1);transform:translateY(-2px)}
 .vcat-icon{font-size:32px;display:block;margin-bottom:8px}
@@ -3873,6 +3905,17 @@ footer{text-align:center;padding:28px;color:rgba(255,255,255,.4);font-size:.82re
 .pz-ok{background:rgba(67,233,123,.1);border:1px solid rgba(67,233,123,.28);border-radius:12px;padding:24px;text-align:center;display:none}
 .kr-embedded{background:#fff!important;border-radius:12px!important;padding:14px!important;margin-top:4px!important;box-shadow:0 2px 16px rgba(0,0,0,.18)!important}
 .kr-embedded .kr-payment-button{background:linear-gradient(135deg,${primary},#ff6584)!important;border-radius:10px!important;font-weight:800!important;font-size:.9rem!important;padding:12px!important;width:100%!important;border:none!important;color:#fff!important;cursor:pointer!important;margin-top:4px!important}
+@media(max-width:480px){
+  .hero{padding:32px 16px;min-height:80vh}
+  .cta-hero{padding:12px 24px;font-size:.9rem}
+  .section{padding:24px 14px}
+  .dlv-opts{grid-template-columns:1fr}
+  .ck-body{padding:14px}
+  .ck-foot{padding:10px 14px}
+  .vcat-card{padding:14px 6px}
+  .vcat-icon{font-size:26px}
+  .ck-lbl{font-size:.48rem}
+}
 </style>
 </head>
 <body>
@@ -4171,7 +4214,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .hero-cta:hover{transform:translateY(-2px)}
 .prods-section{padding:40px 20px;max-width:900px;margin:0 auto}
 .prods-section h2{font-size:1.1rem;font-weight:800;margin-bottom:20px;text-align:center}
-.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px}
 .prod-card{background:#1a0e07;border:2px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .15s}
 .prod-card.selected,.prod-card:hover{border-color:${primary};transform:translateY(-3px)}
 .prod-img{aspect-ratio:4/3;background:#2a1508;display:flex;align-items:center;justify-content:center;font-size:3rem}
@@ -4180,7 +4223,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .prod-name{font-size:.85rem;font-weight:700;margin-bottom:4px}
 .prod-price{font-size:.95rem;font-weight:900;color:${primary}}
 .prod-desc{font-size:.7rem;color:rgba(255,255,255,.45);margin-top:4px}
-.cta-bar{position:sticky;bottom:0;z-index:50;padding:12px 20px;background:rgba(15,15,26,.95);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cta-bar{position:sticky;bottom:0;z-index:50;padding:12px 20px;background:rgba(15,15,26,.95);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .cta-bar-label{font-size:.78rem;color:rgba(255,255,255,.55)}
 .cta-bar-price{font-size:1rem;font-weight:900;color:${primary}}
 .cta-bar-btn{padding:11px 28px;border-radius:50px;background:${primary};color:#fff;border:none;font-size:.9rem;font-weight:800;cursor:pointer;white-space:nowrap;transition:opacity .15s}
@@ -4258,6 +4301,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .fl-pz-price-val{font-size:1.6rem;font-weight:900;color:${primary}}
 .fl-pz-price-lbl{font-size:.72rem;color:rgba(255,255,255,.45);margin-top:4px}
 .fl-pz-badges{display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:14px}
+@media(max-width:480px){
+.hero{padding:48px 16px 36px}
+.prods-section{padding:24px 12px}
+.prod-grid{gap:10px}
+.prod-info{padding:10px 12px}
+.cta-bar{padding:10px 14px}
+.cta-bar-btn{padding:10px 20px;font-size:.82rem;width:100%}
+.fl-box{border-radius:20px 20px 0 0;max-height:95vh}
+.fl-body{padding:12px 14px}
+}
+@media(max-width:360px){
+.fl-color-grid{grid-template-columns:repeat(4,1fr)}
+}
+@media(min-width:600px){
+.fl-overlay{align-items:center}
+.fl-box{border-radius:18px;max-height:92vh}
+}
 </style>
 </head>
 <body>
@@ -4890,7 +4950,7 @@ h1{font-size:clamp(1.8rem,5vw,3rem);font-weight:900;margin-bottom:14px;line-heig
 .section{padding:40px 20px;max-width:960px;margin:0 auto;background:#0f0f1a;color:#e8e8f0}
 .section-title{font-size:1.1rem;font-weight:800;margin-bottom:20px;text-align:center}
 /* PRODUITS */
-.prods{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-bottom:12px}
+.prods{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:18px;margin-bottom:12px}
 .prod{background:rgba(255,255,255,.05);border-radius:14px;overflow:hidden;border:2px solid rgba(255,255,255,.1);cursor:pointer;transition:all .2s;position:relative}
 .prod:hover{border-color:${primary};transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
 .prod.selected{border-color:${primary};background:rgba(108,99,255,.1);box-shadow:0 0 0 4px ${primary}33}
@@ -4959,6 +5019,23 @@ footer{background:#0f0f1a;text-align:center;padding:28px;color:rgba(255,255,255,
 .recap-row span:first-child{color:#9090b0}
 .recap-row span:last-child{font-weight:600}
 ${_lpPayCss(primary)}
+@media(max-width:480px){
+.fb-wrap{margin:10px auto;border-radius:0}
+.section{padding:24px 14px}
+.hero{padding:32px 16px;min-height:80vh}
+.cta-hero{padding:12px 24px;font-size:.9rem}
+.section-title{font-size:.95rem}
+.prods{gap:10px}
+.prod-info{padding:10px 12px}
+.btn-order{padding:14px;font-size:.9rem}
+.dlv-opts{grid-template-columns:1fr}
+.modal-overlay.open{align-items:flex-end}
+.checkout-modal{border-radius:20px 20px 0 0;max-height:95vh}
+}
+@media(min-width:600px){
+.modal-overlay.open{align-items:center}
+.checkout-modal{border-radius:20px;max-height:88vh}
+}
 </style></head>
 <body>
 
@@ -13471,62 +13548,75 @@ function vdecRenderFiche(raw) {
   const tableRows = [
     ...logos.map((l, i) => {
       const thumb = l.url ? `<img src="${l.url}" style="height:38px;max-width:70px;object-fit:contain;vertical-align:middle;border-radius:4px;background:rgba(255,255,255,.05)">` : '🖼️';
-      const hasDim = l.w_cm || l.h_cm;
       const hasPos = l.x !== undefined;
-      return `<tr>
-        <td><span style="background:rgba(255,150,100,.18);color:#ff9966;padding:2px 7px;border-radius:10px;font-size:.62rem;font-weight:800">L${i+1}</span></td>
-        <td>${thumb}</td>
-        <td style="font-size:.72rem;color:rgba(255,255,255,.5)">${hasPos?Math.round(l.x)+'%, '+Math.round(l.y)+'%':'—'}</td>
-        <td style="font-weight:700;color:#4facfe">${l.w_cm?parseFloat(l.w_cm).toFixed(1)+' cm':'—'}</td>
-        <td style="font-weight:700;color:#43e97b">${l.h_cm?parseFloat(l.h_cm).toFixed(1)+' cm':'—'}</td>
-        <td style="font-size:.68rem;color:rgba(255,255,255,.4)">${l.rot?l.rot+'°':'0°'}${l.op&&l.op<100?' · '+l.op+'%':''}</td>
+      return `<tr style="border-bottom:1px solid rgba(255,255,255,.04)">
+        <td style="padding:8px 8px"><span style="background:rgba(255,150,100,.18);color:#ff9966;padding:2px 7px;border-radius:10px;font-size:.62rem;font-weight:800">L${i+1}</span></td>
+        <td style="padding:8px 8px">${thumb}</td>
+        <td style="padding:8px 8px;font-size:.72rem;color:rgba(255,255,255,.25)">—</td>
+        <td style="padding:8px 8px;font-size:.72rem;color:rgba(255,255,255,.25)">—</td>
+        <td style="padding:8px 8px;font-size:.72rem;color:rgba(255,255,255,.5)">${hasPos?Math.round(l.x)+'%, '+Math.round(l.y)+'%':'—'}</td>
+        <td style="padding:8px 8px;font-weight:700;color:#4facfe;text-align:center">${l.w_cm?parseFloat(l.w_cm).toFixed(1)+' cm':'—'}</td>
+        <td style="padding:8px 8px;font-weight:700;color:#43e97b;text-align:center">${l.h_cm?parseFloat(l.h_cm).toFixed(1)+' cm':'—'}</td>
+        <td style="padding:8px 8px;font-size:.68rem;color:rgba(255,255,255,.4)">${l.rot?l.rot+'°':'0°'}${l.op&&l.op<100?' · '+l.op+'%':''}</td>
       </tr>`;
     }),
     ...texts.map((t, i) => {
-      const preview = `<span style="font-family:'${t.font||'Impact'}',sans-serif;color:${t.color||'#fff'};font-weight:900;font-size:.9rem;text-shadow:0 1px 3px rgba(0,0,0,.7)">${t.text||''}</span>`;
-      const swatch  = `<span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${t.color||'#fff'};vertical-align:middle;border:1px solid rgba(255,255,255,.25);margin-left:3px"></span>`;
-      const hasPos  = t.x !== undefined;
-      return `<tr>
-        <td><span style="background:rgba(79,172,254,.18);color:#4facfe;padding:2px 7px;border-radius:10px;font-size:.62rem;font-weight:800">T${i+1}</span></td>
-        <td>${preview}<div style="font-size:.58rem;color:rgba(255,255,255,.3);margin-top:2px">${t.font||'—'}${swatch}</div></td>
-        <td style="font-size:.72rem;color:rgba(255,255,255,.5)">${hasPos?Math.round(t.x)+'%, '+Math.round(t.y)+'%':'—'}</td>
-        <td style="font-weight:700;color:#4facfe">${t.w_cm?parseFloat(t.w_cm).toFixed(1)+' cm':'—'}</td>
-        <td style="font-weight:700;color:#43e97b">${t.h_cm?parseFloat(t.h_cm).toFixed(1)+' cm':'—'}</td>
-        <td style="font-size:.68rem;color:rgba(255,255,255,.4)">${t.size||40}px · ${t.rot?t.rot+'°':'0°'}</td>
+      const preview  = `<span style="font-family:'${t.font||'Impact'}',Impact,sans-serif;color:${t.color||'#fff'};font-weight:900;font-size:.88rem;text-shadow:0 1px 3px rgba(0,0,0,.7)">${t.text||''}</span>`;
+      const fontCell = `<span style="font-family:'${t.font||'Impact'}',Impact,sans-serif;font-size:.75rem;font-weight:700;color:#c4b5fd">${t.font||'Impact'}</span>`;
+      const hexColor = t.color || '#ffffff';
+      const colorCell= `<span style="display:inline-flex;align-items:center;gap:5px"><span style="display:inline-block;width:15px;height:15px;border-radius:3px;background:${hexColor};border:1px solid rgba(255,255,255,.3);flex-shrink:0"></span><span style="font-size:.65rem;font-weight:700;color:rgba(255,255,255,.8);font-family:monospace">${hexColor}</span></span>`;
+      const hasPos   = t.x !== undefined;
+      return `<tr style="border-bottom:1px solid rgba(255,255,255,.04)">
+        <td style="padding:8px 8px"><span style="background:rgba(79,172,254,.18);color:#4facfe;padding:2px 7px;border-radius:10px;font-size:.62rem;font-weight:800">T${i+1}</span></td>
+        <td style="padding:8px 8px">${preview}</td>
+        <td style="padding:8px 8px">${fontCell}</td>
+        <td style="padding:8px 8px">${colorCell}</td>
+        <td style="padding:8px 8px;font-size:.72rem;color:rgba(255,255,255,.5)">${hasPos?Math.round(t.x)+'%, '+Math.round(t.y)+'%':'—'}</td>
+        <td style="padding:8px 8px;font-weight:700;color:#4facfe;text-align:center">${t.w_cm?parseFloat(t.w_cm).toFixed(1)+' cm':'—'}</td>
+        <td style="padding:8px 8px;font-weight:700;color:#43e97b;text-align:center">${t.h_cm?parseFloat(t.h_cm).toFixed(1)+' cm':'—'}</td>
+        <td style="padding:8px 8px;font-size:.68rem;color:rgba(255,255,255,.4)">${t.size||40}px · ${t.rot?t.rot+'°':'0°'}</td>
       </tr>`;
     })
-  ].join('') || `<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,.25);font-size:.72rem;padding:14px">Aucun élément</td></tr>`;
+  ].join('') || `<tr><td colspan="8" style="text-align:center;color:rgba(255,255,255,.25);font-size:.72rem;padding:16px">Aucun élément</td></tr>`;
 
   // ── Vues — snapshot archivé si dispo, sinon rendu canvas ─
-  const canvasPlaceholders = VDEC_VIEWS_DEF.map(v => {
-    const vk      = v.key;
-    const isVal   = validatedKeys.includes(vk);
-    const snap    = viewSnapshots[vk] || '';
-    const safeId  = (raw.order_id||'').replace(/'/g,'');
-    const statusBadge = isVal
-      ? `<span style="color:#43e97b;font-size:.6rem;font-weight:700">✓ Validée</span>`
-      : `<span style="color:rgba(255,255,255,.25);font-size:.6rem">○ Non validée</span>`;
-    const archiveBadge = snap
-      ? `<span style="font-size:.55rem;color:rgba(79,172,254,.7);margin-left:4px">📦 archivée</span>`
-      : '';
-    const dlBtn = isVal
-      ? `<button onclick="vdecFicheDownloadView('${vk}','${safeId}')"
-              style="padding:3px 8px;background:rgba(79,172,254,.12);border:1px solid rgba(79,172,254,.4);color:#4facfe;border-radius:5px;font-size:.6rem;font-weight:700;cursor:pointer">⬇ PNG</button>`
+  const _safeId = (raw.order_id||'').replace(/'/g,'');
+  function _makeVCard(vk, isVal) {
+    const snap = viewSnapshots[vk] || '';
+    const banner = isVal
+      ? `<div style="background:rgba(67,233,123,.13);border-bottom:1px solid rgba(67,233,123,.3);padding:5px 10px;font-size:.6rem;font-weight:800;color:#43e97b;display:flex;align-items:center;gap:5px;letter-spacing:.7px">✓ VUE VALIDÉE${snap?`<span style="font-size:.52rem;color:rgba(67,233,123,.55);margin-left:auto">📦 archivée</span>`:''}</div>`
       : '';
     const visual = snap
-      /* Image archivée depuis MySQL */
       ? `<img src="${snap}" style="width:100%;display:block;border-radius:0" alt="Vue ${vk}">`
-      /* Pas de snapshot → canvas re-rendu dynamiquement */
       : `<canvas id="fvcv-${vk}" width="640" height="360" style="width:100%;display:block;border-radius:0"></canvas>
          <div id="fvcv-spin-${vk}" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);font-size:.72rem;color:rgba(255,255,255,.5)">⏳ Rendu…</div>`;
-    return `<div class="vdec-fiche-view-card" id="fvcard-${vk}" style="${isVal?'':'opacity:.45;filter:grayscale(.4)'}">
+    const dlBtn = isVal
+      ? `<button onclick="vdecFicheDownloadView('${vk}','${_safeId}')" style="padding:3px 8px;background:rgba(79,172,254,.12);border:1px solid rgba(79,172,254,.4);color:#4facfe;border-radius:5px;font-size:.6rem;font-weight:700;cursor:pointer">⬇ PNG</button>`
+      : '';
+    const statusLabel = isVal ? '' : `<span style="color:rgba(255,255,255,.2);font-size:.6rem">○ Non validée</span>`;
+    const cardStyle = isVal
+      ? 'border-color:rgba(67,233,123,.5);box-shadow:0 0 0 2px rgba(67,233,123,.1)'
+      : 'opacity:.3;filter:grayscale(.6)';
+    return `<div class="vdec-fiche-view-card" id="fvcard-${vk}" style="${cardStyle}">
+      ${banner}
       <div style="position:relative;background:#0a0a18">${visual}</div>
       <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:#111125">
-        <div class="vdec-fiche-view-lbl" style="padding:0">${VDEC_VIEW_LABELS[vk]||vk} &nbsp;${statusBadge}${archiveBadge}</div>
+        <div class="vdec-fiche-view-lbl" style="padding:0">${VDEC_VIEW_LABELS[vk]||vk}&nbsp;${statusLabel}</div>
         ${dlBtn}
       </div>
     </div>`;
-  }).join('');
+  }
+  const _valViews    = VDEC_VIEWS_DEF.filter(v =>  validatedKeys.includes(v.key));
+  const _nonValViews = VDEC_VIEWS_DEF.filter(v => !validatedKeys.includes(v.key));
+  const canvasPlaceholders = [
+    _valViews.length > 0
+      ? `<div style="display:grid;grid-template-columns:repeat(${Math.min(_valViews.length,2)},1fr);gap:14px${_nonValViews.length>0?';margin-bottom:16px':''}">${_valViews.map(v=>_makeVCard(v.key,true)).join('')}</div>`
+      : '',
+    _nonValViews.length > 0
+      ? `${_valViews.length>0?'<div style="font-size:.58rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.18);margin-bottom:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05)">○ Non validées</div>':''}
+         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px">${_nonValViews.map(v=>_makeVCard(v.key,false)).join('')}</div>`
+      : ''
+  ].join('');
 
   content.innerHTML = `
     <!-- En-tête -->
