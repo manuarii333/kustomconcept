@@ -8014,6 +8014,11 @@ function renderConfigAdmin(c) {
                 <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-dtf-on"
                   onchange="tshSetParcours(${id},'showDtfLogos',this.checked);tshToggleDtfSections(${id},this.checked)"><span class="pcfg-toggle-slider"></span></label>
               </div>
+              <div class="pcfg-toggle-row" style="padding-left:14px;border-left:2px solid rgba(79,172,254,.25);margin-left:4px">
+                <span class="pcfg-toggle-lbl" style="font-size:0.66rem">✏️ Texte personnalisé <span style="color:#4facfe;font-size:0.55rem">sur le t-shirt</span></span>
+                <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-text-on"
+                  onchange="tshSetParcours(${id},'showCustomText',this.checked);tshToggleTextSection(${id},this.checked)"><span class="pcfg-toggle-slider"></span></label>
+              </div>
               <div class="pcfg-toggle-row">
                 <span class="pcfg-toggle-lbl">③ Taille obligatoire</span>
                 <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-step3-sz" checked
@@ -8098,6 +8103,89 @@ function renderConfigAdmin(c) {
             </div>
           </div>
 
+          <!-- Config texte personnalisé -->
+          <div class="pcfg-section tsh-text-section-${id}" style="display:none">
+            <div class="pcfg-title">✏️ Options texte personnalisé</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:10px">
+
+              <!-- Positions disponibles -->
+              <div>
+                <div style="font-size:0.6rem;color:rgba(255,255,255,.45);margin-bottom:5px">Positions proposées au client</div>
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  ${[
+                    {val:'front-center',label:'Poitrine centre'},
+                    {val:'front-left',  label:'Poche gauche'},
+                    {val:'front-bottom',label:'Bas devant'},
+                    {val:'back-top',    label:'Nuque (dos)'},
+                    {val:'back-center', label:'Dos centre'}
+                  ].map(p => `
+                  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.65rem;color:rgba(255,255,255,.7)">
+                    <input type="checkbox" checked
+                      onchange="tshTextCfgTogglePos(${id},'${p.val}',this.checked)"
+                      style="accent-color:#4facfe">
+                    ${p.label}
+                  </label>`).join('')}
+                </div>
+              </div>
+
+              <!-- Polices disponibles -->
+              <div style="border-top:1px solid rgba(255,255,255,.07);padding-top:8px">
+                <div style="font-size:0.6rem;color:rgba(255,255,255,.45);margin-bottom:5px">Polices proposées</div>
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  ${[
+                    {val:'Arial, sans-serif',          label:'Arial (moderne)'},
+                    {val:'Impact, fantasy',            label:'Impact (bold)'},
+                    {val:'Georgia, serif',             label:'Georgia (élégant)'},
+                    {val:"'Courier New', monospace",   label:'Courier (rétro)'},
+                    {val:"'Trebuchet MS', sans-serif", label:'Trebuchet (sport)'}
+                  ].map((f,fi) => `
+                  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.65rem;color:rgba(255,255,255,.7)">
+                    <input type="checkbox" checked
+                      onchange="tshTextCfgToggleFont(${id},${fi},this.checked)"
+                      style="accent-color:#a78bfa">
+                    <span style="font-family:${f.val}">${f.label}</span>
+                  </label>`).join('')}
+                </div>
+              </div>
+
+              <!-- Couleur par défaut -->
+              <div style="border-top:1px solid rgba(255,255,255,.07);padding-top:8px">
+                <div style="font-size:0.6rem;color:rgba(255,255,255,.45);margin-bottom:5px">Couleur par défaut</div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                  ${['#ffffff','#000000','#ff3b3b','#4facfe','#f6d365','#43e97b','#a78bfa','#ff9f43'].map(c=>`
+                  <div style="width:20px;height:20px;border-radius:50%;background:${c};cursor:pointer;border:2px solid rgba(255,255,255,.25)"
+                    onclick="tshTextCfgSetDefault(${id},'color','${c}')"></div>`).join('')}
+                  <input type="color" value="#ffffff"
+                    oninput="tshTextCfgSetDefault(${id},'color',this.value)"
+                    style="width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.2);padding:0;cursor:pointer;background:transparent">
+                </div>
+              </div>
+
+              <!-- Taille min / max / défaut -->
+              <div style="border-top:1px solid rgba(255,255,255,.07);padding-top:8px">
+                <div style="font-size:0.6rem;color:rgba(255,255,255,.45);margin-bottom:5px">Taille (pt) — plage client</div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <label style="font-size:0.62rem;color:rgba(255,255,255,.6)">Min
+                    <input type="number" min="8" max="48" value="16"
+                      oninput="tshTextCfgSetDefault(${id},'minSize',+this.value)"
+                      style="width:44px;margin-left:4px;padding:3px 5px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.4);color:#fff;font-size:0.62rem">
+                  </label>
+                  <label style="font-size:0.62rem;color:rgba(255,255,255,.6)">Max
+                    <input type="number" min="16" max="120" value="72"
+                      oninput="tshTextCfgSetDefault(${id},'maxSize',+this.value)"
+                      style="width:44px;margin-left:4px;padding:3px 5px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.4);color:#fff;font-size:0.62rem">
+                  </label>
+                  <label style="font-size:0.62rem;color:rgba(255,255,255,.6)">Défaut
+                    <input type="number" min="8" max="120" value="32"
+                      oninput="tshTextCfgSetDefault(${id},'defaultSize',+this.value)"
+                      style="width:44px;margin-left:4px;padding:3px 5px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.4);color:#fff;font-size:0.62rem">
+                  </label>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
           <!-- Titres des étapes -->
           <div class="pcfg-section">
             <div class="pcfg-title">🏷️ Titres des étapes</div>
@@ -8131,11 +8219,92 @@ function renderConfigAdmin(c) {
                 <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-step2-on" checked
                   onchange="tshSetParcours(${id},'showStep2',this.checked)"><span class="pcfg-toggle-slider"></span></label>
               </div>
+              <div class="pcfg-toggle-row" style="padding-left:14px;border-left:2px solid rgba(79,172,254,.25);margin-left:4px">
+                <span class="pcfg-toggle-lbl" style="font-size:0.66rem">✏️ Texte personnalisé <span style="color:#4facfe;font-size:0.55rem">sur la casquette</span></span>
+                <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-text-on"
+                  onchange="tshSetParcours(${id},'showCustomText',this.checked);tshToggleTextSection(${id},this.checked)"><span class="pcfg-toggle-slider"></span></label>
+              </div>
               <div class="pcfg-toggle-row">
                 <span class="pcfg-toggle-lbl">③ Taille obligatoire</span>
                 <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-step3-sz" checked
                   onchange="tshSetParcours(${id},'requireSize',this.checked)"><span class="pcfg-toggle-slider"></span></label>
               </div>
+            </div>
+          </div>
+
+          <!-- Config texte personnalisé casquette -->
+          <div class="pcfg-section tsh-text-section-${id}" style="display:none">
+            <div class="pcfg-title">✏️ Options texte personnalisé</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:10px">
+
+              <!-- Positions casquette -->
+              <div>
+                <div style="font-size:0.6rem;color:rgba(255,255,255,.45);margin-bottom:5px">Positions proposées au client</div>
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  ${[
+                    {val:'front-center',label:'Panneau avant centre'},
+                    {val:'front-left',  label:'Panneau avant gauche'},
+                    {val:'back-center', label:'Dos (rabat)'},
+                    {val:'front-bottom',label:'Bord visière'}
+                  ].map(p => `
+                  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.65rem;color:rgba(255,255,255,.7)">
+                    <input type="checkbox" checked
+                      onchange="tshTextCfgTogglePos(${id},'${p.val}',this.checked)"
+                      style="accent-color:#4facfe">
+                    ${p.label}
+                  </label>`).join('')}
+                </div>
+              </div>
+
+              <!-- Polices -->
+              <div style="border-top:1px solid rgba(255,255,255,.07);padding-top:8px">
+                <div style="font-size:0.6rem;color:rgba(255,255,255,.45);margin-bottom:5px">Polices proposées</div>
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  ${TSH_FONT_OPTS.map((f,fi) => `
+                  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.65rem;color:rgba(255,255,255,.7)">
+                    <input type="checkbox" checked
+                      onchange="tshTextCfgToggleFont(${id},${fi},this.checked)"
+                      style="accent-color:#a78bfa">
+                    <span style="font-family:${f.val}">${f.label}</span>
+                  </label>`).join('')}
+                </div>
+              </div>
+
+              <!-- Couleur par défaut -->
+              <div style="border-top:1px solid rgba(255,255,255,.07);padding-top:8px">
+                <div style="font-size:0.6rem;color:rgba(255,255,255,.45);margin-bottom:5px">Couleur par défaut</div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                  ${TSH_CLR_SWATCHES.map(c=>`
+                  <div style="width:20px;height:20px;border-radius:50%;background:${c};cursor:pointer;border:2px solid rgba(255,255,255,.25)"
+                    onclick="tshTextCfgSetDefault(${id},'color','${c}')"></div>`).join('')}
+                  <input type="color" value="#ffffff"
+                    oninput="tshTextCfgSetDefault(${id},'color',this.value)"
+                    style="width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.2);padding:0;cursor:pointer;background:transparent">
+                </div>
+              </div>
+
+              <!-- Taille -->
+              <div style="border-top:1px solid rgba(255,255,255,.07);padding-top:8px">
+                <div style="font-size:0.6rem;color:rgba(255,255,255,.45);margin-bottom:5px">Taille (pt) — plage client</div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <label style="font-size:0.62rem;color:rgba(255,255,255,.6)">Min
+                    <input type="number" min="8" max="48" value="12"
+                      oninput="tshTextCfgSetDefault(${id},'minSize',+this.value)"
+                      style="width:44px;margin-left:4px;padding:3px 5px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.4);color:#fff;font-size:0.62rem">
+                  </label>
+                  <label style="font-size:0.62rem;color:rgba(255,255,255,.6)">Max
+                    <input type="number" min="12" max="80" value="48"
+                      oninput="tshTextCfgSetDefault(${id},'maxSize',+this.value)"
+                      style="width:44px;margin-left:4px;padding:3px 5px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.4);color:#fff;font-size:0.62rem">
+                  </label>
+                  <label style="font-size:0.62rem;color:rgba(255,255,255,.6)">Défaut
+                    <input type="number" min="8" max="80" value="24"
+                      oninput="tshTextCfgSetDefault(${id},'defaultSize',+this.value)"
+                      style="width:44px;margin-left:4px;padding:3px 5px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.4);color:#fff;font-size:0.62rem">
+                  </label>
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -8855,6 +9024,48 @@ function tshToggleDtfSections(campId, show) {
   });
 }
 
+function tshToggleTextSection(campId, show) {
+  document.querySelectorAll(`.tsh-text-section-${campId}`).forEach(el => {
+    el.style.display = show ? '' : 'none';
+  });
+}
+
+// Met à jour un champ texte client sans re-render complet (perf input live)
+function tshTextInputLive(val) {
+  tshBuy.customText = val;
+  const el = document.getElementById('tsh-text-preview-el');
+  if (el) el.textContent = val || 'Aperçu';
+}
+
+// Met à jour textColor / textFont / textPos / textSize puis re-render
+function tshTextSet(key, val) {
+  tshBuy[key] = val;
+  tshBuyRender();
+}
+
+// Admin — toggle une position dans textCfg.positions
+function tshTextCfgTogglePos(campId, pos, checked) {
+  const cfg = tshGetParcours(campId).textCfg;
+  if (checked) { if (!cfg.positions.includes(pos)) cfg.positions.push(pos); }
+  else cfg.positions = cfg.positions.filter(p => p !== pos);
+}
+
+// Admin — toggle une police dans textCfg.fonts (par index dans TSH_FONT_OPTS)
+function tshTextCfgToggleFont(campId, fi, checked) {
+  const cfg = tshGetParcours(campId).textCfg;
+  const val = TSH_FONT_OPTS[fi]?.val;
+  if (!val) return;
+  if (checked) { if (!cfg.fonts.includes(val)) cfg.fonts.push(val); }
+  else cfg.fonts = cfg.fonts.filter(f => f !== val);
+}
+
+// Admin — modifie un paramètre par défaut du textCfg
+function tshTextCfgSetDefault(campId, key, val) {
+  const cfg = tshGetParcours(campId).textCfg;
+  if (key === 'color') cfg.defaultColor = val;
+  else cfg[key] = val;
+}
+
 function tshPickDtfLogo(campId, prodIdx, n) {
   const logo = tshDtfLogos[campId]?.[prodIdx]?.[n];
   if (!logo) return;
@@ -8881,14 +9092,43 @@ function tshSetFace(campId, face, enabled) {
   }
 }
 
-// tshParcours[campId] = { showStep2, showDtfLogos, requireSize, sizes:[...], labels:{1,2,3}, faces:[...] }
+// ── Constantes texte personnalisé ────────────────────────
+const TSH_FONT_OPTS = [
+  { val:'Arial, sans-serif',          label:'Arial' },
+  { val:'Impact, fantasy',            label:'Impact' },
+  { val:'Georgia, serif',             label:'Georgia' },
+  { val:"'Courier New', monospace",   label:'Courier' },
+  { val:"'Trebuchet MS', sans-serif", label:'Trebuchet' }
+];
+const TSH_POS_OPTS = [
+  { val:'front-center', label:'Poitrine', x:50, y:38 },
+  { val:'front-left',   label:'Poche',    x:28, y:35 },
+  { val:'front-bottom', label:'Bas',      x:50, y:72 },
+  { val:'back-top',     label:'Nuque',    x:50, y:22 },
+  { val:'back-center',  label:'Dos',      x:50, y:50 }
+];
+const TSH_CLR_SWATCHES = ['#ffffff','#000000','#ff3b3b','#4facfe','#f6d365','#43e97b','#a78bfa','#ff9f43'];
+
+// tshParcours[campId] = { showStep2, showDtfLogos, showCustomText, textCfg, requireSize, sizes:[...], labels:{1,2,3}, faces:[...] }
 const tshParcours = {};
 function tshGetParcours(campId) {
   if (!tshParcours[campId]) {
     const isCap = campId === 2;
     tshParcours[campId] = {
-      showStep2:    true,
-      showDtfLogos: false,
+      showStep2:      true,
+      showDtfLogos:   false,
+      showCustomText: false,
+      textCfg: {
+        positions:   TSH_POS_OPTS.map(p => p.val),
+        fonts:       TSH_FONT_OPTS.map(f => f.val),
+        colors:      [...TSH_CLR_SWATCHES],
+        defaultColor:'#ffffff',
+        defaultFont: 'Arial, sans-serif',
+        defaultPos:  'front-center',
+        defaultSize: 32,
+        minSize:     16,
+        maxSize:     72
+      },
       requireSize:  true,
       sizes: isCap ? ['XS','S','M','L','XL','2XL'] : ['XS','S','M','L','XL','2XL','3XL','4XL'],
       labels: {
@@ -9193,12 +9433,13 @@ function stkClientConfirm() {
 // ① Produit  ② Votre logo (300 DPI)  ③ Aperçu  ④ Taille & Commander
 // ═══════════════════════════════════════════════════════
 const TSH_SIZES = ['XS','S','M','L','XL','2XL','3XL','4XL'];
-let tshBuy = { campId:null, step:1, prodIdx:0, clientLogoUrl:null, clientLogoName:'', clientLogoDpi:0, logoBackUrl:null, logoBackName:'', logoBackDpi:0, logoFrontPos:null, logoBackPos:null, logoPos:null, faceSubstep:'front', size:'M', qty:1 };
+let tshBuy = { campId:null, step:1, prodIdx:0, clientLogoUrl:null, clientLogoName:'', clientLogoDpi:0, logoBackUrl:null, logoBackName:'', logoBackDpi:0, logoFrontPos:null, logoBackPos:null, logoPos:null, faceSubstep:'front', size:'M', qty:1, customText:'', textColor:'#ffffff', textFont:'Arial, sans-serif', textPos:'front-center', textSize:32 };
 
 function tshOpenBuyFlow(campId) {
   const _pcfg0 = tshGetParcours(campId);
   const _initSize = _pcfg0.requireSize ? null : 'M';
-  tshBuy = { campId, step:1, prodIdx: _selectedProd[campId] ?? 0, clientLogoUrl:null, clientLogoName:'', clientLogoDpi:0, logoBackUrl:null, logoBackName:'', logoBackDpi:0, logoFrontPos:null, logoBackPos:null, logoPos:null, faceSubstep:'front', size:_initSize, qty:1 };
+  const _tc0 = tshGetParcours(campId).textCfg || {};
+  tshBuy = { campId, step:1, prodIdx: _selectedProd[campId] ?? 0, clientLogoUrl:null, clientLogoName:'', clientLogoDpi:0, logoBackUrl:null, logoBackName:'', logoBackDpi:0, logoFrontPos:null, logoBackPos:null, logoPos:null, faceSubstep:'front', size:_initSize, qty:1, customText:'', textColor:_tc0.defaultColor||'#ffffff', textFont:_tc0.defaultFont||'Arial, sans-serif', textPos:_tc0.defaultPos||'front-center', textSize:_tc0.defaultSize||32 };
   const _fab=document.getElementById('vdec-fab');if(_fab)_fab.style.display='none';
   document.getElementById('tsh-buy-modal').classList.add('open');
   tshBuyRender();
@@ -9354,6 +9595,133 @@ function tshBuyStep2HTML() {
     }
   }
 
+  // Bloc texte personnalisé (si activé dans admin)
+  let textPickerHtml = '';
+  if (pcfg.showCustomText) {
+    const tc       = pcfg.textCfg || {};
+    const availPos = (tc.positions || []).filter(v => TSH_POS_OPTS.find(p => p.val === v));
+    const availFnt = (tc.fonts    || []).filter(v => TSH_FONT_OPTS.find(f => f.val === v));
+    const swatches = (tc.colors   || TSH_CLR_SWATCHES);
+    const minSz    = tc.minSize     || 16;
+    const maxSz    = tc.maxSize     || 72;
+    const ct       = tshBuy.customText  || '';
+    const cColor   = tshBuy.textColor   || tc.defaultColor || '#ffffff';
+    const cFont    = tshBuy.textFont    || tc.defaultFont  || (availFnt[0] || 'Arial, sans-serif');
+    const cPos     = tshBuy.textPos     || tc.defaultPos   || (availPos[0] || 'front-center');
+    const cSize    = tshBuy.textSize    || tc.defaultSize  || 32;
+
+    // Pilules positions
+    const posPills = availPos.map(v => {
+      const opt = TSH_POS_OPTS.find(p => p.val === v);
+      const sel = cPos === v;
+      return `<button onclick="tshTextSet('textPos','${v}')"
+        style="padding:4px 11px;border-radius:20px;border:1.5px solid ${sel?'#4facfe':'rgba(255,255,255,.15)'};
+               background:${sel?'rgba(79,172,254,.15)':'transparent'};
+               color:${sel?'#4facfe':'rgba(255,255,255,.5)'};font-size:0.62rem;
+               font-weight:${sel?'700':'400'};cursor:pointer;white-space:nowrap">
+        ${opt?.label || v}
+      </button>`;
+    }).join('');
+
+    // Pilules polices
+    const fntPills = availFnt.map((v, fi) => {
+      const opt = TSH_FONT_OPTS.find(f => f.val === v);
+      const sel = cFont === v;
+      const idx = TSH_FONT_OPTS.findIndex(f => f.val === v);
+      return `<button onclick="tshTextSet('textFont',TSH_FONT_OPTS[${idx}].val)"
+        style="padding:4px 12px;border-radius:20px;border:1.5px solid ${sel?'#a78bfa':'rgba(255,255,255,.15)'};
+               background:${sel?'rgba(167,139,250,.15)':'transparent'};
+               color:${sel?'#a78bfa':'rgba(255,255,255,.55)'};font-family:${v};
+               font-size:0.68rem;font-weight:${sel?'700':'400'};cursor:pointer;white-space:nowrap">
+        ${opt?.label || v}
+      </button>`;
+    }).join('');
+
+    // Palettes couleurs
+    const clrSwatches = swatches.map(c => {
+      const sel = cColor === c;
+      return `<div onclick="tshTextSet('textColor','${c}')"
+        style="width:22px;height:22px;border-radius:50%;background:${c};cursor:pointer;flex-shrink:0;
+               border:2px solid ${sel?'#fff':'rgba(255,255,255,.2)'};
+               box-shadow:${sel?'0 0 0 2px rgba(255,255,255,.35)':'none'}">
+      </div>`;
+    }).join('');
+
+    // Aperçu live sur la vignette t-shirt
+    const shirtSrc = tshGetFaceImg(campId, prodIdx, 'front') || '';
+    const posOpt   = TSH_POS_OPTS.find(p => p.val === cPos) || TSH_POS_OPTS[0];
+    const scaledPx = Math.max(8, Math.round(cSize * 0.27));
+    const previewEl = shirtSrc
+      ? `<div style="position:relative;width:90px;aspect-ratio:2/3;border-radius:8px;overflow:hidden;
+                     background:var(--bg-panel);flex-shrink:0;border:1px solid var(--border)">
+           <img src="${shirtSrc}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top">
+           <div id="tsh-text-preview-el"
+             style="position:absolute;left:${posOpt.x}%;top:${posOpt.y}%;transform:translate(-50%,-50%);
+                    font-family:${cFont};font-size:${scaledPx}px;color:${cColor};
+                    text-align:center;white-space:nowrap;font-weight:700;
+                    text-shadow:0 1px 3px rgba(0,0,0,.7);pointer-events:none;
+                    max-width:88%;overflow:hidden">${ct || 'Aperçu'}</div>
+         </div>`
+      : `<div id="tsh-text-preview-el" style="display:none"></div>`;
+
+    textPickerHtml = `
+    <div style="width:100%;border:1px solid rgba(79,172,254,.3);border-radius:12px;padding:12px 10px 10px;background:rgba(79,172,254,.04)">
+      <div style="font-size:0.7rem;font-weight:800;color:#4facfe;margin-bottom:10px">✏️ Texte personnalisé</div>
+
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        ${previewEl}
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px;min-width:0">
+
+          <!-- Input -->
+          <input id="tsh-text-input" type="text" maxlength="40" placeholder="Votre texte…" value="${ct.replace(/"/g,'&quot;')}"
+            oninput="tshTextInputLive(this.value)"
+            style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(79,172,254,.35);
+                   background:rgba(0,0,0,.3);color:#fff;font-size:0.76rem;box-sizing:border-box;outline:none">
+
+          <!-- Taille -->
+          <div>
+            <div style="font-size:0.57rem;color:rgba(255,255,255,.4);margin-bottom:3px">
+              Taille : <span id="tsh-text-size-lbl">${cSize}</span> pt
+            </div>
+            <input type="range" min="${minSz}" max="${maxSz}" value="${cSize}"
+              oninput="tshBuy.textSize=+this.value;
+                       document.getElementById('tsh-text-size-lbl').textContent=this.value;
+                       const _pe=document.getElementById('tsh-text-preview-el');
+                       if(_pe)_pe.style.fontSize=Math.max(8,Math.round(+this.value*.27))+'px'"
+              style="width:100%;accent-color:#4facfe;margin:0">
+          </div>
+
+          <!-- Couleur -->
+          <div>
+            <div style="font-size:0.57rem;color:rgba(255,255,255,.4);margin-bottom:4px">Couleur</div>
+            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+              ${clrSwatches}
+              <input type="color" value="${cColor}"
+                oninput="tshTextSet('textColor',this.value)"
+                title="Couleur libre"
+                style="width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.2);
+                       padding:0;cursor:pointer;background:transparent;flex-shrink:0">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Police -->
+      <div style="margin-top:9px">
+        <div style="font-size:0.57rem;color:rgba(255,255,255,.4);margin-bottom:4px">Police de caractères</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">${fntPills}</div>
+      </div>
+
+      <!-- Position -->
+      <div style="margin-top:9px">
+        <div style="font-size:0.57rem;color:rgba(255,255,255,.4);margin-bottom:4px">
+          Emplacement ${campId === 2 ? 'sur la casquette' : 'sur le t-shirt'}
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">${posPills}</div>
+      </div>
+    </div>`;
+  }
+
   // Carte upload pour une face
   const uploadCard = (url, dpi, name, face) => {
     const cls = dpi >= 300 ? 'tsh-dpi-ok' : dpi >= 150 ? 'tsh-dpi-warn' : dpi > 0 ? 'tsh-dpi-bad' : '';
@@ -9382,6 +9750,7 @@ function tshBuyStep2HTML() {
       : '';
     return `<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:4px 0">
       ${dtfPickerHtml}
+      ${textPickerHtml}
       <div style="text-align:center">
         <div style="font-size:0.8rem;font-weight:800;margin-bottom:4px">Vos logos avant &amp; dos</div>
         <div style="font-size:0.66rem;color:var(--text-secondary)">Format PNG ou PDF vectoriel — 300 DPI recommandé</div>
@@ -9410,6 +9779,7 @@ function tshBuyStep2HTML() {
   const dpiWarn1 = (clientLogoDpi > 0 && clientLogoDpi < 150) ? `<div style="background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.3);border-radius:8px;padding:8px;font-size:0.64rem;color:#ffb3b3;text-align:center;max-width:280px;line-height:1.5">⚠️ En cliquant sur Suivant vous acceptez que la qualité d'impression ne sera pas optimale. HCS ne pourra être tenu responsable du résultat.</div>` : '';
   return `<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 0">
     ${dtfPickerHtml}
+    ${textPickerHtml}
     <div style="text-align:center">
       <div style="font-size:0.8rem;font-weight:800;margin-bottom:4px">Uploadez votre logo</div>
       <div style="font-size:0.68rem;color:var(--text-secondary)">Format PNG ou PDF vectoriel — 300 DPI minimum recommandé</div>
@@ -10783,7 +11153,7 @@ function genSubmitOrder() {
 .vdec-view-tabs{display:flex;gap:5px;flex-wrap:wrap}
 .vdec-vtab{padding:6px 13px;border-radius:16px;font-size:.7rem;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,.14);background:transparent;color:rgba(255,255,255,.45);transition:all .2s}
 .vdec-vtab.active{background:#ff9966;color:#1a0e07;border-color:#ff9966}
-.vdec-canvas-wrap{flex:1;position:relative;background:#0d0d1a;border-radius:12px;border:1px solid rgba(255,255,255,.07);overflow:hidden;display:flex;align-items:center;justify-content:center;user-select:none;min-height:280px}
+.vdec-canvas-wrap{width:100%;aspect-ratio:16/9;position:relative;background:#0d0d1a;border-radius:12px;border:1px solid rgba(255,255,255,.07);overflow:hidden;display:flex;align-items:center;justify-content:center;user-select:none}
 .vdec-canvas-wrap img.vdec-veh-img{max-width:100%;max-height:100%;object-fit:contain;pointer-events:none;display:block}
 .vdec-no-img-msg{color:rgba(255,255,255,.2);font-size:.78rem;text-align:center;padding:30px 20px;line-height:1.7}
 .vdec-logo-el{position:absolute;cursor:grab;touch-action:none}
@@ -11618,7 +11988,7 @@ function vdecRenderLogoList() {
         <input type="number" class="vdec-dim-input" min="1" max="300" placeholder="H" value="${lo.h_cm||''}"
                oninput="_vdec.logos[${i}].h_cm=this.value;vdecCalcTotal()" title="Hauteur cm">
         <span class="vdec-dim-unit">cm</span>
-        ${price > 0 ? `<span class="vdec-dim-price">~${price.toLocaleString('fr-FR')} XPF</span>` : '<span class="vdec-dim-price" style="color:rgba(255,255,255,.25)">—</span>'}
+        <span class="vdec-dim-price" data-logo-price="${i}" ${price > 0 ? '' : 'style="color:rgba(255,255,255,.25)"'}>${price > 0 ? '~'+price.toLocaleString('fr-FR')+' XPF' : '—'}</span>
       </div>
     </div>`;
   }).join('');
@@ -11869,7 +12239,7 @@ function vdecRenderTxtList() {
         <input type="number" class="vdec-dim-input" min="1" max="300" placeholder="H" value="${t.h_cm||''}"
                oninput="_vdec.texts[${i}].h_cm=this.value;vdecCalcTotal()" title="Hauteur cm">
         <span class="vdec-dim-unit">cm</span>
-        ${price > 0 ? `<span class="vdec-dim-price">~${price.toLocaleString('fr-FR')} XPF</span>` : '<span class="vdec-dim-price" style="color:rgba(255,255,255,.25)">—</span>'}
+        <span class="vdec-dim-price" data-txt-price="${i}" ${price > 0 ? '' : 'style="color:rgba(255,255,255,.25)"'}>${price > 0 ? '~'+price.toLocaleString('fr-FR')+' XPF' : '—'}</span>
       </div>
     </div>`;
   }).join('');
@@ -11904,9 +12274,21 @@ function vdecCalcTotal() {
   if (sec) sec.style.display = rows.length ? 'block' : 'none';
   if (itemsEl) itemsEl.innerHTML = rows.map(r => `<div class="vdec-price-row"><span>${r.label}</span><span>${r.price.toLocaleString('fr-FR')} XPF</span></div>`).join('');
   if (totalEl) totalEl.textContent = total > 0 ? total.toLocaleString('fr-FR') + ' XPF' : '—';
-  /* Rafraîchit aussi les mini-prix inline dans les listes */
-  vdecRenderLogoList();
-  vdecRenderTxtList();
+  /* Met à jour les prix inline sans recréer les inputs (préserve le focus) */
+  _vdec.logos.forEach(function(lo, i) {
+    var el = document.querySelector('[data-logo-price="'+i+'"]');
+    if (!el) return;
+    var p = vdecCalcItemPrice(lo.w_cm, lo.h_cm, cfg);
+    el.textContent = p > 0 ? '~'+p.toLocaleString('fr-FR')+' XPF' : '—';
+    el.style.color = p > 0 ? '' : 'rgba(255,255,255,.25)';
+  });
+  _vdec.texts.forEach(function(t, i) {
+    var el = document.querySelector('[data-txt-price="'+i+'"]');
+    if (!el) return;
+    var p = vdecCalcItemPrice(t.w_cm, t.h_cm, cfg);
+    el.textContent = p > 0 ? '~'+p.toLocaleString('fr-FR')+' XPF' : '—';
+    el.style.color = p > 0 ? '' : 'rgba(255,255,255,.25)';
+  });
 }
 
 /* ── Validation de vue ─────────────────────────────────── */
