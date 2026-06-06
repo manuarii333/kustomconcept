@@ -1069,6 +1069,66 @@ const PARCOURS_CFG = {
       { i:'💡', t:'<strong>Tarif minimum</strong> — affichez "À partir de 2 500 XPF" sur le hero pour ancrer la valeur avant l\'entrée dans le parcours.' },
     ]
   },
+  1:{ color:'#4facfe', label:'T-Shirt Personnalisé', priceRange:'3 500 – 6 500 XPF',
+    steps:[
+      { n:1, icon:'👕', name:'Choisir le t-shirt', label:'Options', desc:'Couleur (blanc, noir, gris…) + taille (XS→4XL)', time:'~30s',
+        req:['Couleur','Taille'], opt:['Quantité'], funnel:100 },
+      { n:2, icon:'🎨', name:'Votre design', label:'Design', desc:'Upload photo/logo ou sélection galerie — aperçu en temps réel', time:'~2 min',
+        req:['Visuel ou texte'], opt:['Position','Taille impression'], funnel:81 },
+      { n:3, icon:'👤', name:'Coordonnées', label:'Coordonnées', desc:'Nom, email, tél + choix retrait boutique ou livraison île', time:'~60s',
+        req:['Nom complet','Email'], opt:['Téléphone','Note'], funnel:68 },
+      { n:4, icon:'💳', name:'Paiement OSB', label:'Paiement', desc:'Récap commande + tunnel Krypton SDK — CB sécurisée', time:'~60s',
+        req:['Carte bancaire'], opt:[], funnel:52 }
+    ],
+    cfg:[
+      { k:'Worker URL', v:'payzen-hcs.workers.dev', ok:true },
+      { k:'Coloris disponibles', v:'6 coloris', ok:true },
+      { k:'Tailles', v:'XS → 4XL', ok:true },
+      { k:'Upload visuel client', v:'FileReader base64', ok:true },
+      { k:'Aperçu mockup live', v:'Mockup Studio', ok:true },
+    ],
+    links:[
+      { icon:'🌐', label:'LP T-Shirt Perso', url:'', ok:false },
+      { icon:'👕', label:'T-Shirt Mockup Studio', url:'../apps/tshirt-mockup-studio.html', ok:true },
+      { icon:'🖼', label:'MockupForge v12', url:'../apps/mockup-forge-v12.html', ok:true },
+      { icon:'🎨', label:'DTF Studio', url:'../apps/dtf-studio.html', ok:true },
+    ],
+    tips:[
+      { i:'🖼', t:'<strong>Aperçu live</strong> — le Mockup Studio affiche le visuel client en temps réel sur le t-shirt avant validation.' },
+      { i:'📐', t:'<strong>Position impression</strong> — proposez face / dos / poche comme options pour augmenter le panier moyen.' },
+      { i:'🚀', t:'<strong>Upsell quantité</strong> — dégressif à partir de 3 unités : +30% de conversion sur les commandes groupe.' },
+    ]
+  },
+  2:{ color:'#43e97b', label:'Casquette Brodée / DTF', priceRange:'3 000 – 4 500 XPF',
+    steps:[
+      { n:1, icon:'🧢', name:'Choisir la casquette', label:'Modèle', desc:'Dad Hat · Snapback · Casquette brodée — couleur + taille', time:'~30s',
+        req:['Modèle','Couleur'], opt:['Taille'], funnel:100 },
+      { n:2, icon:'🎨', name:'Votre logo', label:'Logo', desc:'Upload PNG/JPG pour broderie ou impression DTF — aperçu position', time:'~90s',
+        req:['Logo ou texte'], opt:['Position','Couleurs broderie'], funnel:79 },
+      { n:3, icon:'👤', name:'Coordonnées', label:'Coordonnées', desc:'Nom, email, tél + retrait boutique ou livraison île', time:'~60s',
+        req:['Nom complet','Email'], opt:['Téléphone','Note'], funnel:64 },
+      { n:4, icon:'💳', name:'Paiement OSB', label:'Paiement', desc:'Tunnel Krypton SDK — CB sécurisée', time:'~60s',
+        req:['Carte bancaire'], opt:[], funnel:49 }
+    ],
+    cfg:[
+      { k:'Worker URL', v:'payzen-hcs.workers.dev', ok:true },
+      { k:'Modèles casquette', v:'Dad Hat · Snapback · Brodée', ok:true },
+      { k:'Broderie vs DTF', v:'Sélection technique', ok:true },
+      { k:'Upload logo client', v:'FileReader base64', ok:true },
+      { k:'Aperçu broderie live', v:'À configurer', ok:false },
+    ],
+    links:[
+      { icon:'🌐', label:'LP Casquette', url:'', ok:false },
+      { icon:'🖼', label:'MockupForge v12', url:'../apps/mockup-forge-v12.html', ok:true },
+      { icon:'🎨', label:'DTF Studio', url:'../apps/dtf-studio.html', ok:true },
+      { icon:'✂️', label:'PicWish Pipeline', url:'../apps/picwish-pipeline.html', ok:true },
+    ],
+    tips:[
+      { i:'🧢', t:'<strong>Broderie vs DTF</strong> — la broderie pour logos simples &lt;3 couleurs, le DTF pour les designs complexes ou photos.' },
+      { i:'📐', t:'<strong>Position logo</strong> — face avant standard + option côté (latéral) pour les casquettes premium.' },
+      { i:'💡', t:'<strong>Pack look total</strong> — proposez casquette + t-shirt assorti en bundle pour doubler le panier moyen.' },
+    ]
+  },
   3:{ color:'#ff6b6b', label:'DTF Originals', priceRange:'2 500 – 6 500 XPF',
     steps:[
       { n:1, icon:'🎨', name:'Design & Couleur', label:'Options', desc:'Choix couleur (6 coloris) + taille (XS→4XL) + visuel', time:'~45s',
@@ -2877,14 +2937,22 @@ async function publishLP(id) {
 
   let generatedHtml = null;
   try {
-    const _orig = window._dl_override;
-    window._dl_override = (name, content) => { generatedHtml = content; };
-    await exportLP(id);
-    window._dl_override = _orig;
+    if (CAMPS[id]?.id === 0) {
+      /* Vdec : appel direct — exportLPVdec retourne le HTML */
+      const _prev = window._dl_override;
+      window._dl_override = () => {}; /* supprime le téléchargement */
+      generatedHtml = exportLPVdec(id);
+      window._dl_override = _prev;
+    } else {
+      const _orig = window._dl_override;
+      window._dl_override = (name, content) => { generatedHtml = content; };
+      await exportLP(id);
+      window._dl_override = _orig;
+    }
   } catch(e) {
     window._dl_override = null;
     hidePublishProgress();
-    showToast('❌ Erreur génération HTML : ' + e.message, true);
+    showToast('❌ Erreur génération HTML : ' + (e?.message || String(e)), true);
     return;
   } finally {
     window._img_url_map = null;
@@ -2892,7 +2960,7 @@ async function publishLP(id) {
 
   if (!generatedHtml) {
     hidePublishProgress();
-    showToast('❌ Erreur génération HTML', true);
+    showToast('❌ Erreur génération HTML (HTML vide)', true);
     return;
   }
 
@@ -4668,6 +4736,7 @@ function vdecTriggerUpload(el){var inp=el.querySelector('input');if(inp)inp.clic
 </body></html>`;
   dl(`vdec-lp-${c.name.replace(/[^\w]/g,'-').toLowerCase()}.html`, html);
   hcsSaveCampaign(id);
+  return html;
 }
 
 function exportLPGeneric(id) {
