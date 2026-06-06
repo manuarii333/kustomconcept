@@ -11499,6 +11499,17 @@ function genSubmitOrder() {
           <!-- Texte -->
           <div class="vdec-ps" id="vdec-section-txt">
             <div class="vdec-ph">✍️ Ajouter du texte</div>
+            <div style="background:rgba(255,150,100,.07);border:1px solid rgba(255,150,100,.18);border-radius:7px;padding:7px 10px;margin-bottom:8px;font-size:.62rem;color:rgba(255,255,255,.6);line-height:1.8">
+              <div style="font-weight:700;color:#ff9966;font-size:.64rem;margin-bottom:3px">Guide étape par étape :</div>
+              <div>① Écris ton texte &amp; choisis la police</div>
+              <div>② Règle la taille &amp; la rotation si besoin</div>
+              <div>③ Clique sur la couleur souhaitée</div>
+              <div>④ Clique <span style="color:#ff9966;font-weight:600">✚ Ajouter ce texte</span></div>
+              <div>⑤ Glisse le texte et positionne-le sur la voiture</div>
+              <div>⑥ Saisis les dimensions réelles (L × H en cm)</div>
+              <div>⑦ Clique <span style="color:#43e97b;font-weight:600">✓ Valider cette vue</span></div>
+              <div>⑧ Clique <span style="color:white;font-weight:600">Suivant →</span></div>
+            </div>
             <input type="text" id="vdec-txt-input" placeholder="Votre texte…" style="width:100%;padding:7px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.28);color:white;font-size:.76rem;outline:none;margin-bottom:6px" oninput="vdecUpdateTxtPreview()">
             <select id="vdec-txt-font" class="vdec-sel" onchange="_vdec.txtFont=this.value;vdecUpdateTxtPreview()"></select>
             <div class="vdec-tf-row">
@@ -11527,6 +11538,7 @@ function genSubmitOrder() {
           </div>
           <!-- Objet sélectionné -->
           <div class="vdec-ps" id="vdec-sel-panel" style="display:none">
+            <div id="vdec-sel-mode-label" class="vdec-ph" style="margin-bottom:5px;font-size:.66rem;color:#ff9966"></div>
             <div class="vdec-ph" style="display:flex;align-items:center;gap:6px;margin-bottom:9px">
               <span id="vdec-sel-icon">🖼️</span>
               <span id="vdec-sel-label" style="flex:1;font-size:.62rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgba(255,255,255,.8)">—</span>
@@ -12063,6 +12075,8 @@ function vdecRemoveLogo(idx) {
   vdecRenderLogoGrid(cfg);
   const panel = document.getElementById('vdec-sel-panel');
   if (panel && !_vdec.selectedObj) panel.style.display = 'none';
+  const addP = document.getElementById('vdec-section-txt');
+  if (addP && !_vdec.selectedObj) addP.style.display = '';
 }
 function vdecRenderLogoList() {
   const list = document.getElementById('vdec-logo-list-active');
@@ -12126,14 +12140,18 @@ function vdecRenderSelectedPanel() {
   const panel = document.getElementById('vdec-sel-panel');
   if (!panel) return;
   const sel = _vdec.selectedObj;
-  if (!sel) { panel.style.display = 'none'; return; }
+  const _addP = document.getElementById('vdec-section-txt');
+  if (!sel) { panel.style.display = 'none'; if (_addP) _addP.style.display = ''; return; }
 
   if (sel.type === 'logo') {
     const lo = _vdec.logos[sel.idx];
-    if (!lo) { panel.style.display = 'none'; return; }
+    if (!lo) { panel.style.display = 'none'; if (_addP) _addP.style.display = ''; return; }
     const _iface = (vdecLoadCfg().interface) || {};
-    if (_iface.showLogo === false) { panel.style.display = 'none'; return; }
+    if (_iface.showLogo === false) { panel.style.display = 'none'; if (_addP) _addP.style.display = ''; return; }
+    if (_addP) _addP.style.display = '';
     panel.style.display = '';
+    const _mL = document.getElementById('vdec-sel-mode-label');
+    if (_mL) _mL.textContent = '🖼️ Logo sélectionné';
     document.getElementById('vdec-sel-icon').textContent = '🖼️';
     document.getElementById('vdec-sel-label').textContent = 'Logo ' + (sel.idx + 1);
     const ss = document.getElementById('vdec-sel-size');
@@ -12148,9 +12166,12 @@ function vdecRenderSelectedPanel() {
     document.getElementById('vdec-sel-op-row').style.display = '';
   } else if (sel.type === 'text') {
     const t = _vdec.texts[sel.idx];
-    if (!t) { panel.style.display = 'none'; return; }
+    if (!t) { panel.style.display = 'none'; if (_addP) _addP.style.display = ''; return; }
+    if (_addP) _addP.style.display = 'none';
     panel.style.display = '';
-    document.getElementById('vdec-sel-icon').textContent = '✍️';
+    const _mL2 = document.getElementById('vdec-sel-mode-label');
+    if (_mL2) _mL2.textContent = '✏️ Modifier le texte sélectionné';
+    document.getElementById('vdec-sel-icon').textContent = '✏️';
     document.getElementById('vdec-sel-label').textContent = '"' + t.text + '"';
     const ss = document.getElementById('vdec-sel-size');
     ss.min = 12; ss.max = 120; ss.value = t.size || 40;
@@ -12307,6 +12328,8 @@ function vdecDeleteText(idx) {
   vdecRenderTxtList();
   const panel = document.getElementById('vdec-sel-panel');
   if (panel && !_vdec.selectedObj) panel.style.display = 'none';
+  const addP = document.getElementById('vdec-section-txt');
+  if (addP && !_vdec.selectedObj) addP.style.display = '';
 }
 function vdecRenderTxtList() {
   const list = document.getElementById('vdec-txt-list');

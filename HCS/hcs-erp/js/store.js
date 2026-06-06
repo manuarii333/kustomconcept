@@ -213,7 +213,27 @@ const Store = (() => {
           localStorage.setItem(LS_KEY, JSON.stringify(dbForStorage));
           console.warn('[Store] Sauvegarde dégradée (images supprimées) après QuotaExceededError');
         } catch (e2) {
-          console.error('[Store] Erreur de sauvegarde :', e2);
+          /* Fallback 2 : stripping agressif — tronquer les grands champs texte + limiter chaque collection */
+          try {
+            for (const col of Object.keys(dbForStorage)) {
+              if (!Array.isArray(dbForStorage[col])) continue;
+              /* Limiter chaque collection à 200 enregistrements max */
+              if (dbForStorage[col].length > 200) {
+                dbForStorage[col] = dbForStorage[col].slice(-200);
+              }
+              dbForStorage[col].forEach(r => {
+                if (typeof r !== 'object' || !r) return;
+                for (const k of Object.keys(r)) {
+                  if (typeof r[k] === 'string' && r[k].length > 2000) r[k] = r[k].slice(0, 200) + '…';
+                }
+              });
+            }
+            dbForStorage.auditLog = [];
+            localStorage.setItem(LS_KEY, JSON.stringify(dbForStorage));
+            console.warn('[Store] Sauvegarde ultra-dégradée (grands champs tronqués) — libérez du localStorage');
+          } catch (e3) {
+            console.error('[Store] Erreur de sauvegarde critique — localStorage saturé :', e3);
+          }
         }
       }
     } catch (e) {
