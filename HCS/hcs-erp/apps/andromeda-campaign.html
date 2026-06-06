@@ -4095,11 +4095,43 @@ function next1(){if(ckCatIdx===null){alert('Choisissez un type de véhicule.');r
 
 var _vdecMockupReady=false;
 var _vdecLogos=[],_vdecTexts=[],_vdecViewsVal={},_vdecViewSnaps={},_vdecCatIdx=null;
+var _VL={left:'◀ Côté gauche',front:'▲ Face avant',back:'▼ Arrière',right:'▶ Côté droit'};
+function _vdSnapGrid(){
+  var vkeys=Object.keys(_vdecViewsVal).filter(function(k){return _vdecViewsVal[k];});
+  if(!vkeys.length)return '';
+  var g='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px">';
+  vkeys.forEach(function(vk){var s=_vdecViewSnaps[vk];if(s)g+='<div style="border:1px solid rgba(67,233,123,.4);border-radius:8px;overflow:hidden"><img src="'+s+'" style="width:100%;display:block"><div style="padding:3px 8px;font-size:.58rem;color:#43e97b;font-weight:700;background:rgba(67,233,123,.07)">✓ '+(_VL[vk]||vk)+'</div></div>';});
+  return g+'</div>';
+}
+function _vdElemsHtml(){
+  var h='';
+  if(_vdecTexts.length){
+    h+='<div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:rgba(79,172,254,.65);margin:8px 0 5px">Textes</div>';
+    _vdecTexts.forEach(function(t){
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:rgba(255,255,255,.04);border-radius:7px;margin-bottom:3px;flex-wrap:wrap">';
+      h+='<span style="font-family:\''+t.font+'\',Impact,sans-serif;color:'+t.color+';font-weight:900;font-size:.85rem">'+t.text+'</span>';
+      h+='<span style="margin-left:auto;font-size:.58rem;color:rgba(255,255,255,.38)">';
+      if(t.w_cm)h+=parseFloat(t.w_cm).toFixed(1)+' × '+parseFloat(t.h_cm||t.w_cm).toFixed(1)+' cm &nbsp;·&nbsp; ';
+      h+=t.font+' &nbsp;·&nbsp; <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:'+t.color+';border:1px solid rgba(255,255,255,.3);vertical-align:middle;margin-right:3px"></span>'+t.color+'</span></div>';
+    });
+  }
+  if(_vdecLogos.length){
+    h+='<div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:rgba(255,150,100,.65);margin:8px 0 5px">Logos</div>';
+    _vdecLogos.forEach(function(l){
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:rgba(255,255,255,.04);border-radius:7px;margin-bottom:3px">';
+      if(l.url)h+='<img src="'+l.url+'" style="height:26px;max-width:46px;object-fit:contain;border-radius:3px;background:rgba(255,255,255,.06)">';
+      h+='<span style="margin-left:auto;font-size:.58rem;color:rgba(255,255,255,.38)">'+(l.w_cm?parseFloat(l.w_cm).toFixed(1)+' × '+parseFloat(l.h_cm||l.w_cm).toFixed(1)+' cm':'—')+'</span></div>';
+    });
+  }
+  return h;
+}
 function renderS2(){
+  var sg=_vdecMockupReady?_vdSnapGrid():'';
+  var el=_vdecMockupReady?_vdElemsHtml():'';
   document.getElementById('ck-body').innerHTML=
     '<div class="ck-section">Personnalisez votre décoration</div>'+
-    (_vdecMockupReady&&ckPhotoUrl?
-      '<div style="text-align:center;margin-bottom:14px"><img src="'+ckPhotoUrl+'" style="max-width:100%;max-height:160px;border-radius:10px;border:2px solid #43e97b;object-fit:contain"></div>'+
+    (_vdecMockupReady?
+      sg+(el?'<div style="margin-bottom:12px">'+el+'</div>':'')+
       '<div style="font-size:.76rem;color:#43e97b;text-align:center;margin-bottom:14px">'+ckDescription+'</div>':
       '<div style="text-align:center;padding:18px 0 20px;color:rgba(255,255,255,.35);font-size:.8rem">Ouvrez le studio pour personnaliser votre décoration</div>')+
     '<button onclick="openMockupStudio()" style="width:100%;padding:13px;background:linear-gradient(135deg,#ff9966,#ff6584);border:none;border-radius:10px;color:white;font-size:.88rem;font-weight:800;cursor:pointer">'+
@@ -4198,6 +4230,11 @@ async function renderS4(){
     '<div class="recap-row"><span>Email</span><span>'+ckContact.email+'</span></div>'+
     '<div class="recap-row"><span>Livraison</span><span>'+(ckDelivery.type==='pickup'?'🏪 Retrait boutique':'🚚 '+(ISLAND_LABELS[ckDelivery.island||'tahiti']||''))+'</span></div>'+
     (ship?'<div class="recap-row"><span>Frais de port</span><span>'+ship.toLocaleString('fr-FR')+' XPF</span></div>':'')+
+    (_vdecMockupReady?
+      '<div style="margin:10px 0 6px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05)">'+
+      '<div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.28);margin-bottom:8px">🎨 Décoration validée</div>'+
+      _vdSnapGrid()+_vdElemsHtml()+
+      '</div>':'')+
     '<div class="recap-row"><span style="font-weight:700">Total estimé</span><span style="font-weight:900;color:${primary};font-size:1.05rem">'+total.toLocaleString('fr-FR')+' XPF</span></div>'+
     '</div>'+
     '<div id="pz-area"></div>'+
@@ -4231,6 +4268,17 @@ async function renderS4(){
     document.getElementById('pz-area').innerHTML='<div style="color:#ff6b6b;text-align:center;padding:14px;font-size:.78rem">❌ '+e.message+'</div><button onclick="renderS4()" style="display:block;margin:8px auto;padding:8px 16px;background:rgba(255,255,255,.08);border:none;border-radius:8px;color:white;cursor:pointer;font-size:.74rem">Réessayer</button>';
   }
 }
+function _vdInjectDesignRecap(){
+  if(document.getElementById('pz-ok-design'))return;
+  var snapHtml=_vdSnapGrid();
+  var elemHtml=_vdElemsHtml();
+  if(!snapHtml&&!elemHtml)return;
+  var d=document.createElement('div');
+  d.id='pz-ok-design';
+  d.style.cssText='margin-top:16px;text-align:left;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:12px';
+  d.innerHTML='<div style="font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:rgba(67,233,123,.65);margin-bottom:8px">🎨 Votre décoration</div>'+snapHtml+elemHtml;
+  document.getElementById('pz-ok').appendChild(d);
+}
 function _vdSaveOrder(){
   var cat=ckCatIdx!==null?CATS[ckCatIdx]:{};
   var sidx=_vdecCatIdx!=null?_vdecCatIdx:ckCatIdx;
@@ -4240,8 +4288,8 @@ function _vdSaveOrder(){
   /* MySQL vdec_commandes — design complet */
   fetch('https://highcoffeeshirts.com/erp/api/vdec_commandes',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':'hcs-erp-2026'},body:JSON.stringify({order_id:ORDER_ID,status:'payé',total_xpf:getTotal(),cat_name:scat.name||'',cat_model:scat.model||'',cat_icon:scat.icon||'🚗',views_validated:_vdecViewsVal,logos:_vdecLogos,texts:_vdecTexts,cat_views:scat.views||{},view_snapshots:_vdecViewSnaps,contact:ckContact,delivery:ckDelivery,created_at:new Date().toISOString()})}).catch(function(){});
 }
-function showOk(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';var b=document.getElementById('pz-back');if(b)b.style.display='none';_vdSaveOrder();}
-function simPay(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';document.getElementById('pz-ok-msg').textContent='Merci '+ckContact.name+' — commande simulée (mode test, non facturé).';var b=document.getElementById('pz-back');if(b)b.style.display='none';}
+function showOk(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';var b=document.getElementById('pz-back');if(b)b.style.display='none';_vdSaveOrder();_vdInjectDesignRecap();}
+function simPay(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';document.getElementById('pz-ok-msg').textContent='Merci '+ckContact.name+' — commande simulée (mode test, non facturé).';var b=document.getElementById('pz-back');if(b)b.style.display='none';_vdSaveOrder();_vdInjectDesignRecap();}
 function vdecTriggerUpload(el){var inp=el.querySelector('input');if(inp)inp.click();}
 <\/script>
 </body></html>`;
