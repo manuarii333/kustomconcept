@@ -102,6 +102,9 @@ class VdecCommandesController {
                 total_xpf      = VALUES(total_xpf),
                 contact        = VALUES(contact),
                 delivery       = VALUES(delivery),
+                logos          = IF(VALUES(logos) IS NULL OR VALUES(logos) = '[]', logos, VALUES(logos)),
+                texts          = IF(VALUES(texts) IS NULL OR VALUES(texts) = '[]', texts, VALUES(texts)),
+                views_json     = IF(VALUES(views_json) IS NULL OR VALUES(views_json) = '{}', views_json, VALUES(views_json)),
                 view_snapshots = COALESCE(VALUES(view_snapshots), view_snapshots),
                 updated_at     = NOW()"
         );
