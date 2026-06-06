@@ -1452,8 +1452,8 @@ window.addEventListener('load', () => {
   loadDemoData();
   loadDemoFournisseurs();
   render();
-  /* Charger depuis MySQL au démarrage — remplace localStorage si données présentes */
-  _MYSQL.pull();
+  /* Charger depuis MySQL puis sync auto des factures réglées/partielles */
+  _MYSQL.pull().then(() => importFacturesVersPlanning());
 });
 
 // ─── DEMO DATA ───
@@ -1567,7 +1567,8 @@ const _MYSQL = (() => {
       lignes:         JSON.stringify(cmd.lignes        || []),
       mockup_urls:    JSON.stringify(cmd.mockupUrls    || []),
       checklist_prod: JSON.stringify(cmd.checklistProd || []),
-      reservation:    JSON.stringify(cmd.reservation   || null),
+      reservation:     JSON.stringify(cmd.reservation   || null),
+      statut_paiement: cmd.statut_paiement || '',
     };
   }
 
@@ -1684,8 +1685,9 @@ const _MYSQL = (() => {
         lignes:        _tryParse(r.lignes,         []),
         mockupUrls:    _tryParse(r.mockup_urls,    []),
         checklistProd: _tryParse(r.checklist_prod, []),
-        reservation:   _tryParse(r.reservation,    null),
-        createdAt:     r.created_at  || new Date().toISOString(),
+        reservation:     _tryParse(r.reservation,    null),
+        createdAt:       r.created_at  || new Date().toISOString(),
+        statut_paiement: r.statut_paiement || '',
       });
       const toFourn = r => ({
         id: r.store_id || String(r.id), _mysql_id: r.id,
@@ -2056,6 +2058,13 @@ function renderCard(c) {
   /* ── Notes de production ── */
   const notesHtml = c.notes ? `<div class="card-notes-prod">${escHtml(c.notes)}</div>` : '';
 
+  /* ── Badge paiement facture ── */
+  const paieBadge = c.statut_paiement === 'regle'
+    ? `<span style="font-size:9px;padding:2px 6px;border-radius:999px;background:rgba(34,197,94,.18);color:var(--green);font-weight:700;margin-left:5px;">✅ Réglée</span>`
+    : c.statut_paiement === 'partiel'
+    ? `<span style="font-size:9px;padding:2px 6px;border-radius:999px;background:rgba(234,179,8,.18);color:var(--yellow);font-weight:700;margin-left:5px;">⚠ Partiel</span>`
+    : '';
+
   /* ── Checklist prod (colonne prod uniquement) ── */
   const checklistHtml = (c.col === 'prod' && c.checklistProd && c.checklistProd.length)
     ? renderCardChecklist(c)
@@ -2064,8 +2073,8 @@ function renderCard(c) {
   return `<div class="cmd-card ${urg}" draggable="true" id="card-${c.id}"
     ondragstart="dragStart('${c.id}')"
     ondragend="dragEnd()">
-    <div class="cmd-ref">${c.ref || 'CMD'} ${c.priority==='urgent'?'🔴':c.priority==='express'?'⚡':''}${typeTag(c.type)}</div>
-    <div class="cmd-client">${c.client}</div>
+    <div class="cmd-ref">${c.ref || 'CMD'} ${c.priority==='urgent'?'🔴':c.priority==='express'?'⚡':''}${typeTag(c.type)}${paieBadge}</div>
+    <div class="cmd-client" style="${c.statut_paiement ? 'font-weight:700;font-size:14px;' : ''}">${c.client}</div>
     ${mockupHtml}
     ${lignesHtml}
     ${notesHtml}
@@ -4823,15 +4832,33 @@ async function importFacturesVersPlanning() {
 
   qualifying.forEach(fac => {
     /* Trouver le devis lié */
-    const devisId = (fac.devisId || fac.devis_id || '').trim();
-    const devis   = devisId ? devisMap[devisId] : null;
+    const devisId  = (fac.devisId || fac.devis_id || '').trim();
+    const devis    = devisId ? devisMap[devisId] : null;
 
-    /* Ref principale = DEV-xxx du devis si dispo, sinon FAC-xxx */
-    const mainRef = ((devis?.ref || fac.ref || fac.numero || '')).trim();
+    /* Ref principale = toujours FAC-xxx (la ref de la facture).
+       Le devis sert uniquement à enrichir la carte (lignes, mockups, client). */
+    const mainRef  = (fac.ref || fac.numero || '').trim();
+    const devisRef = (devis?.ref || '').trim();
     if (!mainRef) return;
 
-    /* Dédupliquer : ref déjà dans planning OU devis déjà traité */
-    if (existingRefs.has(mainRef)) return;
+    /* Déduplication : si une carte existe déjà avec ce ref FAC OU le ref du devis lié */
+    const alreadyByFac   = existingRefs.has(mainRef);
+    const alreadyByDevis = devisRef && existingRefs.has(devisRef);
+
+    if (alreadyByFac || alreadyByDevis) {
+      /* Mettre à jour le client + statut_paiement sur la carte existante */
+      const searchRef = alreadyByFac ? mainRef : devisRef;
+      const exist = commandes.find(c => (c.ref || '').trim() === searchRef);
+      if (exist) {
+        const resolvedNom = _resolveNom(devis, fac);
+        const newStatut   = _estRegle(fac) ? 'regle' : 'partiel';
+        let changed = false;
+        if (!exist.client && resolvedNom)  { exist.client          = resolvedNom; changed = true; }
+        if (!exist.statut_paiement)        { exist.statut_paiement = newStatut;   changed = true; }
+        if (changed) { save(); _MYSQL.upsertCmd(exist); }
+      }
+      return;
+    }
     if (devisId && processedDevisIds.has(devisId)) return;
 
     /* Lignes : préférer celles du devis (plus complètes) */
@@ -4882,9 +4909,10 @@ async function importFacturesVersPlanning() {
       qty,
       deadline,
       priority,
-      notes:      `${statutLabel}${totalTxt ? ' — ' + totalTxt : ''}${payeTxt ? ' — ' + payeTxt : ''}${resteTxt}`,
-      col:        'attente',
-      createdAt:  new Date().toISOString(),
+      notes:           `${statutLabel}${totalTxt ? ' — ' + totalTxt : ''}${payeTxt ? ' — ' + payeTxt : ''}${resteTxt}`,
+      col:             'attente',
+      createdAt:       new Date().toISOString(),
+      statut_paiement: _estRegle(fac) ? 'regle' : 'partiel',
       lignes,
       mockupUrls,
     };
