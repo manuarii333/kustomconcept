@@ -13693,10 +13693,15 @@ function vdecRenderFiche(raw) {
       </div>
     </div>
 
-    <!-- Canvas toutes les vues -->
+    <!-- Vues validées du parcours client -->
     <div class="vdec-fiche-sec">
-      <div class="vdec-fiche-sec-title">🖼️ Aperçu des vues — ${validatedKeys.length} / ${VDEC_VIEWS_DEF.length} validée${validatedKeys.length>1?'s':''}</div>
-      <div class="vdec-fiche-views-grid">${canvasPlaceholders}</div>
+      <div class="vdec-fiche-sec-title" style="display:flex;align-items:center;justify-content:space-between">
+        <span>🖼️ Aperçu des vues</span>
+        <span style="font-size:.68rem;font-weight:700;color:${validatedKeys.length>0?'#43e97b':'rgba(255,255,255,.28)'}">
+          ${validatedKeys.length>0?`✓ ${validatedKeys.length} validée${validatedKeys.length>1?'s':''} / ${VDEC_VIEWS_DEF.length}`:`0 / ${VDEC_VIEWS_DEF.length} validées`}
+        </span>
+      </div>
+      <div>${canvasPlaceholders}</div>
     </div>
 
     <!-- Tableau éléments & dimensions -->
@@ -13709,6 +13714,8 @@ function vdecRenderFiche(raw) {
             <tr style="border-bottom:2px solid rgba(255,255,255,.1)">
               <th style="padding:7px 8px;text-align:left;font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.3);font-weight:700">Réf</th>
               <th style="padding:7px 8px;text-align:left;font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.3);font-weight:700">Contenu</th>
+              <th style="padding:7px 8px;text-align:left;font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:#c4b5fd;font-weight:700">Police</th>
+              <th style="padding:7px 8px;text-align:left;font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:#f9a8d4;font-weight:700">Couleur</th>
               <th style="padding:7px 8px;text-align:left;font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.3);font-weight:700">Position</th>
               <th style="padding:7px 8px;text-align:center;font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:#4facfe;font-weight:700">Largeur</th>
               <th style="padding:7px 8px;text-align:center;font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;color:#43e97b;font-weight:700">Hauteur</th>
