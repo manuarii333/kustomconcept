@@ -8548,6 +8548,97 @@ function renderConfigAdmin(c) {
             </div>
           </div>
         </div>
+  ` : c.id === 8 ? `
+        <div class="ep-section">
+          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Pack Collector DTF</div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">📐 Formats gang sheet proposés</div>
+            <div class="pcfg-body">
+              <div class="pcfg-checks">
+                ${[
+                  {val:'halfyard',label:'½ Yard × 22" (46 × 56 cm) — 12 000 XPF',def:true},
+                  {val:'1yard',   label:'1 Yard × 22" (91 × 56 cm) — 20 000 XPF', def:true},
+                  {val:'multi',   label:'Multi-feuilles — Sur devis',def:false}
+                ].map(f=>`
+                <label class="pcfg-chk">
+                  <input type="checkbox" ${f.def?'checked':''}
+                    onchange="toggleParcoursCfg(${id},'formats','${f.val}',this.checked)">
+                  ${f.label}
+                </label>`).join('')}
+              </div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🖨️ Résolution fichier requise</div>
+            <div class="pcfg-body">
+              <div class="pcfg-checks">
+                <label class="pcfg-chk"><input type="radio" name="dtf8-res-${id}" value="150"
+                  onchange="setParcoursCfg(${id},'resolution','150')"> 150 DPI</label>
+                <label class="pcfg-chk"><input type="radio" name="dtf8-res-${id}" value="300" checked
+                  onchange="setParcoursCfg(${id},'resolution','300')"> 300 DPI <span style="color:#43e97b;font-size:0.6rem">recommandé</span></label>
+              </div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">📎 Formats source acceptés</div>
+            <div class="pcfg-body">
+              <div class="pcfg-checks">
+                ${['PNG','JPG','PDF','PSD','AI','EPS'].map(f=>`
+                <label class="pcfg-chk">
+                  <input type="checkbox" ${['PNG','PDF'].includes(f)?'checked':''}
+                    onchange="toggleParcoursCfg(${id},'fileFormats','${f}',this.checked)">
+                  .${f.toLowerCase()}
+                </label>`).join('')}
+              </div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">📦 Quantité</div>
+            <div class="pcfg-body" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="frow"><label class="flabel">Min</label>
+                <input class="finput" type="number" min="1" value="1" oninput="setParcoursCfg(${id},'qtyMin',+this.value)"></div>
+              <div class="frow"><label class="flabel">Max</label>
+                <input class="finput" type="number" min="1" value="20" oninput="setParcoursCfg(${id},'qtyMax',+this.value)"></div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">📤 Upload fichier client</div>
+            <div class="pcfg-body">
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">Permettre l'upload logos PNG/JPG</span>
+                <label class="pcfg-toggle"><input type="checkbox" checked
+                  onchange="setParcoursCfg(${id},'allowUpload',this.checked)"><span class="pcfg-toggle-slider"></span></label>
+              </div>
+              <div class="frow" style="margin-top:8px"><label class="flabel">Instruction upload</label>
+                <input class="finput" value="Logos PNG fond transparent, min 300 DPI"
+                  oninput="setParcoursCfg(${id},'uploadHint',this.value)"></div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🏷️ Titres des étapes</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:6px">
+              <div class="frow"><label class="flabel">Étape 1</label>
+                <input class="finput" value="Choisir le format" oninput="setParcoursCfg(${id},'label1',this.value)"></div>
+              <div class="frow"><label class="flabel">Étape 2</label>
+                <input class="finput" value="Uploader vos logos" oninput="setParcoursCfg(${id},'label2',this.value)"></div>
+              <div class="frow"><label class="flabel">Étape 3</label>
+                <input class="finput" value="Coordonnées &amp; Paiement" oninput="setParcoursCfg(${id},'label3',this.value)"></div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🧪 Tester l'outil</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:8px">
+              <button class="btn btn-outline" style="font-size:.72rem;background:rgba(212,168,67,.15);border-color:#d4a843;color:#d4a843"
+                onclick="window.open('https://highcoffeeshirts.com/erp/apps/pack-collector-dtf.html','_blank')">
+                🔗 Ouvrir Pack Collector DTF (live)
+              </button>
+              <button class="btn btn-primary" style="font-size:.72rem"
+                onclick="closeBlocConfig();previewLP(${id})">
+                👁️ Prévisualiser le parcours client
+              </button>
+            </div>
+          </div>
+        </div>
   ` : '';
 }
 // CONFIG PARCOURS CLIENT — objets de configuration admin
@@ -8791,6 +8882,7 @@ const _CFG_TABS = [
   {id:5, icon:'🎓', label:'Formation'},
   {id:6, icon:'🎊', label:'Abonnements'},
   {id:7, icon:'✏️', label:'Services Num.'},
+  {id:8, icon:'🎁', label:'Pack Collector DTF'},
   {id:0, icon:'🏷️', label:'Sticker Auto'},
 ];
 let _cfgActiveTab = 1;
