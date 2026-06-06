@@ -2536,6 +2536,14 @@ function exportLPTshirt(id) {
   const prodsJson  = JSON.stringify(c.products.map(p => ({ e:p.e, n:p.n, p:p.p, price:parseInt(p.p.replace(/[^\d]/g,''))||0, couleur:p.couleur||'', couleurHex:p.couleurHex||'', dtfLogoRef:p.dtfLogoRef||'' })));
   const sizesJson  = JSON.stringify(sizes);
   const lpSlug     = `${c.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}-${id}`;
+  const dtfLogosData = c.products.map((_,pi) => {
+    const dtfObj = (tshDtfLogos[id]||{})[pi] || {};
+    return [1,2,3].map(n => dtfObj[n] ? {url:dtfObj[n].url, name:dtfObj[n].name} : null).filter(Boolean);
+  });
+  const dtfLogosJson = JSON.stringify(dtfLogosData);
+  const textCfgJson  = JSON.stringify(pcfg.textCfg || {});
+  const posOptsJson  = JSON.stringify(TSH_POS_OPTS);
+  const fontOptsJson = JSON.stringify(TSH_FONT_OPTS);
 
   const html = `<!DOCTYPE html>
 <html lang="fr"><head>
@@ -2746,6 +2754,12 @@ const EMOJI        = '${emoji}';
 const PICWISH_URL  = 'https://hcs-proxy.highcoffeeshirt.workers.dev/api/picwish';
 const LBL1='${lbl1.replace(/'/g,"\\'")}', LBL2='${lbl2.replace(/'/g,"\\'")}', LBL3='${lbl3.replace(/'/g,"\\'")}';
 const LP_SLUG='${lpSlug}';
+const SHOW_DTF_LOGOS  =${!!pcfg.showDtfLogos};
+const SHOW_CUSTOM_TEXT=${!!pcfg.showCustomText};
+const TEXT_CFG=${textCfgJson};
+const DTF_LOGOS=${dtfLogosJson};
+const POS_OPTS =${posOptsJson};
+const FONT_OPTS=${fontOptsJson};
 
 // Charge les images depuis les éléments <img> cachés dans le HTML (pas de gros JSON dans le script)
 const FACE_IMAGES = Array.from({length:${c.products.length}}, (_,i) => ({
@@ -2753,7 +2767,7 @@ const FACE_IMAGES = Array.from({length:${c.products.length}}, (_,i) => ({
   back:  document.getElementById('fi-'+i+'-b')?.getAttribute('src') || ''
 }));
 
-let flow = { step:1, prodIdx:0, face:'front', logoUrl:null, logoOrigUrl:null, logoName:'', logoDpi:0, logoPwDone:false, logoPwLoading:false, size:'', qty:1, logoPos:{xPct:50,yPct:47,wPct:44} };
+let flow = { step:1, prodIdx:0, face:'front', logoUrl:null, logoOrigUrl:null, logoName:'', logoDpi:0, logoPwDone:false, logoPwLoading:false, size: REQUIRE_SIZE ? '' : 'M', qty:1, logoPos:{xPct:50,yPct:47,wPct:44}, useText:false, customText:'', textColor:(TEXT_CFG&&TEXT_CFG.defaultColor)||'#ffffff', textFont:(TEXT_CFG&&TEXT_CFG.defaultFont)||'Arial, sans-serif', textPos:(TEXT_CFG&&TEXT_CFG.defaultPos)||'front-center', textSize:(TEXT_CFG&&TEXT_CFG.defaultSize)||32 };
 let ckContact = {}, ckDelivery = { type:'pickup' }, ckStep = 1;
 let _dh = {};
 
@@ -2825,7 +2839,7 @@ function flPickProd(i) {
   document.querySelectorAll('.fl-pc').forEach((el,n) => el.classList.toggle('active', n===i));
 }
 
-// ── Step 2 : Logo ─────────────────────────────────────────
+// ── Step 2 : Logo / Texte ─────────────────────────────────
 function flStep2() {
   const { logoUrl, logoOrigUrl, logoDpi, logoPwDone, logoPwLoading } = flow;
   const dpiCls = logoDpi>=300?'fl-dpi-ok':logoDpi>=150?'fl-dpi-warn':logoDpi>0?'fl-dpi-bad':'';
@@ -2860,7 +2874,61 @@ function flStep2() {
       </div>
       <button onclick="flow.logoUrl=flow.logoOrigUrl;flow.logoPwDone=false;flRender()" style="margin-top:8px;padding:4px 12px;border-radius:6px;border:1px solid #2a2a4a;background:#1e1e3a;color:#9090b0;font-size:.65rem;cursor:pointer">↩ Utiliser l'original</button>
     </div>\` : '') : '';
+
+  // Logos DTF prédéfinis (selon config admin)
+  let dtfPickerHtml = '';
+  if (SHOW_DTF_LOGOS) {
+    const dtfLogos = DTF_LOGOS[flow.prodIdx] || [];
+    if (dtfLogos.length) {
+      const cards = dtfLogos.map((logo, n) => {
+        const isSel = logoUrl === logo.url;
+        return \`<div onclick="pickDtfLogo(\${n})" style="cursor:pointer;flex:1;min-width:70px;max-width:90px;display:flex;flex-direction:column;align-items:center;gap:5px;padding:7px 5px;border-radius:10px;border:2px solid \${isSel?'#f6d365':'rgba(246,211,101,.2)'};background:\${isSel?'rgba(246,211,101,.12)':'rgba(246,211,101,.04)'}">
+          <div style="width:56px;height:56px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35)"><img src="\${logo.url}" style="max-width:90%;max-height:90%;object-fit:contain"></div>
+          <div style="font-size:.55rem;color:\${isSel?'#f6d365':'#9090b0'};text-align:center;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">\${logo.name||'Logo DTF '+(n+1)}</div>
+          \${isSel?'<div style="font-size:.5rem;color:#f6d365;font-weight:800">✓ Sélectionné</div>':''}
+        </div>\`;
+      }).join('');
+      dtfPickerHtml = \`<div style="width:100%;border:1px solid rgba(246,211,101,.25);border-radius:12px;padding:10px;background:rgba(246,211,101,.04)">
+        <div style="font-size:.68rem;font-weight:800;color:#f6d365;margin-bottom:8px;text-align:center">🏷️ Logos DTF prédéfinis</div>
+        <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">\${cards}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;width:100%;max-width:280px"><div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div><span style="font-size:.6rem;color:rgba(255,255,255,.3)">ou</span><div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div></div>\`;
+    }
+  }
+
+  // Texte personnalisé (selon config admin)
+  let textPickerHtml = '';
+  if (SHOW_CUSTOM_TEXT) {
+    const tc = TEXT_CFG || {};
+    const availPos = (tc.positions||[]).filter(v => POS_OPTS.find(p=>p.val===v));
+    const availFnt = (tc.fonts||[]).filter(v => FONT_OPTS.find(f=>f.val===v));
+    const swatches = tc.colors||['#ffffff','#000000','#ff3b3b','#4facfe','#f6d365','#43e97b'];
+    const cClr = flow.textColor||tc.defaultColor||'#ffffff';
+    const cFnt = flow.textFont||tc.defaultFont||'Arial, sans-serif';
+    const cPos = flow.textPos||tc.defaultPos||'front-center';
+    const posPills = availPos.map(v => { const opt=POS_OPTS.find(p=>p.val===v); const sel=cPos===v; return \`<button onclick="setTextProp('textPos','\${v}')" style="padding:3px 9px;border-radius:20px;border:1.5px solid \${sel?'#4facfe':'rgba(255,255,255,.15)'};background:\${sel?'rgba(79,172,254,.15)':'transparent'};color:\${sel?'#4facfe':'rgba(255,255,255,.5)'};font-size:.58rem;font-weight:\${sel?700:400};cursor:pointer">\${opt?opt.label:v}</button>\`; }).join('');
+    const fntPills = availFnt.map(v => { const opt=FONT_OPTS.find(f=>f.val===v); const sel=cFnt===v; const esc=v.replace(/\\\\/g,'\\\\\\\\').replace(/'/g,"\\\\'"); return \`<button onclick="setTextProp('textFont','\${esc}')" style="padding:3px 10px;border-radius:20px;border:1.5px solid \${sel?'#a78bfa':'rgba(255,255,255,.15)'};background:\${sel?'rgba(167,139,250,.15)':'transparent'};color:\${sel?'#a78bfa':'rgba(255,255,255,.55)'};font-family:\${v};font-size:.62rem;cursor:pointer">\${opt?opt.label:v}</button>\`; }).join('');
+    const clrDots = swatches.map(c => { const sel=cClr===c; return \`<div onclick="setTextProp('textColor','\${c}')" style="width:20px;height:20px;border-radius:50%;background:\${c};cursor:pointer;border:2px solid \${sel?'#fff':'rgba(255,255,255,.2)'};flex-shrink:0"></div>\`; }).join('');
+    textPickerHtml = \`<div style="width:100%;border:1px solid rgba(79,172,254,.3);border-radius:12px;padding:10px;background:rgba(79,172,254,.04)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:.68rem;font-weight:800;color:#4facfe">✏️ Texte personnalisé</div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.62rem;color:rgba(255,255,255,.6)">
+          <input type="checkbox" \${flow.useText?'checked':''} onchange="setTextProp('useText',this.checked)" style="accent-color:#4facfe"> Activer
+        </label>
+      </div>
+      <div id="fl-text-fields" style="display:\${flow.useText?'flex':'none'};flex-direction:column;gap:7px">
+        <input id="fl-text-input" type="text" maxlength="40" placeholder="Votre texte…" value="\${(flow.customText||'').replace(/"/g,'&quot;')}"
+          oninput="flow.customText=this.value"
+          style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(79,172,254,.35);background:rgba(0,0,0,.3);color:#fff;font-size:.76rem;box-sizing:border-box;outline:none">
+        <div><div style="font-size:.55rem;color:rgba(255,255,255,.4);margin-bottom:3px">Position</div><div style="display:flex;gap:4px;flex-wrap:wrap">\${posPills}</div></div>
+        <div><div style="font-size:.55rem;color:rgba(255,255,255,.4);margin-bottom:3px">Police</div><div style="display:flex;gap:4px;flex-wrap:wrap">\${fntPills}</div></div>
+        <div><div style="font-size:.55rem;color:rgba(255,255,255,.4);margin-bottom:3px">Couleur</div><div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">\${clrDots}<input type="color" value="\${cClr}" oninput="setTextProp('textColor',this.value)" style="width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.2);padding:0;cursor:pointer;background:transparent;flex-shrink:0"></div></div>
+      </div>
+    </div>\`;
+  }
+
   return \`<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 0">
+    \${dtfPickerHtml}
     <div style="text-align:center"><div style="font-size:.82rem;font-weight:800;margin-bottom:4px">Uploadez votre logo</div>
     <div style="font-size:.68rem;color:#9090b0">PNG ou SVG — 300 DPI recommandé · Fond supprimé automatiquement</div></div>
     <div class="fl-logo-preview">\${logoUrl?\`<img src="\${logoUrl}">\`:'<span style="font-size:2rem;opacity:.4">🖼️</span>'}</div>
@@ -2871,7 +2939,23 @@ function flStep2() {
       <input type="file" accept="image/*,.svg" style="display:none" onchange="logoLoad(event)">
     </label>
     <div style="font-size:.62rem;color:#6060a0;text-align:center;max-width:280px;line-height:1.5">Pour un rendu optimal en DTF, utilisez un PNG haute résolution ou un SVG vectoriel.</div>
+    \${textPickerHtml}
   </div>\`;
+}
+function pickDtfLogo(n) {
+  const logo = (DTF_LOGOS[flow.prodIdx]||[])[n];
+  if (!logo) return;
+  flow.logoUrl = logo.url; flow.logoName = logo.name; flow.logoDpi = 999; flow.logoPwDone = false; flow.logoPwLoading = false;
+  flRender();
+}
+function setTextProp(key, val) {
+  flow[key] = val;
+  if (key === 'useText') {
+    const el = document.getElementById('fl-text-fields');
+    if (el) el.style.display = val ? 'flex' : 'none';
+    return;
+  }
+  flRender();
 }
 function logoLoad(e) {
   const file = e.target.files[0]; if (!file) return;
@@ -2926,6 +3010,12 @@ function flStep3() {
         <div class="fl-studio-resize" id="fl-logo-resize"></div>
       </div>\`
     : '';
+  // Overlay texte personnalisé sur le t-shirt
+  const textEl = (flow.useText && flow.customText) ? (()=>{
+    const opt = POS_OPTS.find(p=>p.val===flow.textPos) || POS_OPTS[0];
+    const scaledPx = Math.max(7, Math.round(flow.textSize*0.27));
+    return \`<div style="position:absolute;left:\${opt.x}%;top:\${opt.y}%;transform:translate(-50%,-50%);font-family:\${flow.textFont};font-size:\${scaledPx}px;color:\${flow.textColor};font-weight:700;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.7);pointer-events:none;max-width:88%;overflow:hidden;z-index:4">\${flow.customText}</div>\`;
+  })() : '';
   const faceTabs = SHOW_BACK ? \`<div class="fl-face-tabs">
     <button class="fl-face-tab\${flow.face==='front'?' active':''}" onclick="setFace('front')">🔵 Avant</button>
     <button class="fl-face-tab\${flow.face==='back'?' active':''}" onclick="setFace('back')">🔴 Dos</button>
@@ -2938,7 +3028,7 @@ function flStep3() {
   return \`<div style="display:flex;flex-direction:column;align-items:center;gap:12px">
     <div style="font-size:.72rem;color:#9090b0;text-align:center">🖱 Glissez le logo · Poignée bleue pour redimensionner</div>
     \${faceTabs}
-    <div class="fl-studio-wrap" id="fl-studio-wrap">\${shirtEl}\${logoEl}</div>
+    <div class="fl-studio-wrap" id="fl-studio-wrap">\${shirtEl}\${logoEl}\${textEl}</div>
     \${slider}
     <div style="font-size:.6rem;color:#4040a0;text-align:center">Placement transmis avec votre commande — aperçu indicatif</div>
   </div>\`;
@@ -3016,6 +3106,7 @@ function flStep4() {
       <div style="margin-top:14px;padding:10px;background:rgba(79,172,254,.07);border:1px solid rgba(79,172,254,.2);border-radius:8px;font-size:.72rem">
         <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:#9090b0">Produit</span><span style="font-weight:700">\${p.n}</span></div>
         <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:#9090b0">Logo</span><span style="font-weight:700">\${flow.logoName||'—'}</span></div>
+        \${flow.useText&&flow.customText?'<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:#9090b0">Texte</span><span style="font-weight:700">'+flow.customText+'</span></div>':''}
         \${sizeRecap}
         <div style="display:flex;justify-content:space-between;padding-top:6px;border-top:1px solid rgba(79,172,254,.2)"><span style="font-weight:800">Total</span><span style="font-weight:900;color:\${ACCENT};font-size:.9rem">\${total.toLocaleString('fr-FR')} XPF</span></div>
       </div>
@@ -3165,9 +3256,11 @@ async function ckPayment() {
           logoName:flow.logoName,
           logoPlacement:'x='+Math.round(flow.logoPos.xPct)+'%,y='+Math.round(flow.logoPos.yPct)+'%,w='+Math.round(flow.logoPos.wPct)+'%',
           couleur:p.couleur||'',
+          customText: flow.useText ? flow.customText : '',
+          textPos: flow.useText ? flow.textPos : '',
           client:{name:ckContact.name,email:ckContact.email,phone:ckContact.phone||''},
           delivery:{type:ckDelivery.type,address:ckDelivery.address||'',island:ckDelivery.island||'',shippingFee:ckDelivery.shippingFee||0,pickupDate:ckDelivery.pickupDate||'',slot:ckDelivery.slot||'',deliveryDelay:3},
-          note: [ckContact.note||'', 'Taille:'+flow.size, p.couleur?'Couleur:'+p.couleur:'', 'Logo:'+flow.logoName, 'Face:'+flow.face, 'Placement:x='+Math.round(flow.logoPos.xPct)+'%,y='+Math.round(flow.logoPos.yPct)+'%,w='+Math.round(flow.logoPos.wPct)+'%'].filter(Boolean).join(' | ')
+          note: [ckContact.note||'', 'Taille:'+flow.size, p.couleur?'Couleur:'+p.couleur:'', 'Logo:'+flow.logoName, 'Face:'+flow.face, 'Placement:x='+Math.round(flow.logoPos.xPct)+'%,y='+Math.round(flow.logoPos.yPct)+'%,w='+Math.round(flow.logoPos.wPct)+'%', flow.useText&&flow.customText?'Texte:'+flow.customText+' ['+flow.textPos+']':''].filter(Boolean).join(' | ')
         })
       }).catch(function(_e){console.error('[HCS] Ordre non sauvegardé:',_e);var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_ord-warn')){var _w=document.createElement('p');_w.id='_ord-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
     }
