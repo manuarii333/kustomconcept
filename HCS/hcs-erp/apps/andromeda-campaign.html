@@ -1611,690 +1611,12 @@ function render(id) {
         </div>
 
         <!-- ══ PARCOURS CLIENT — CONFIG ADMIN ══ -->
-        ${c.id === 0 ? `
-        <div class="ep-section">
-          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Sticker Auto</div>
-
-          <!-- Texte -->
-          <div class="pcfg-section">
-            <div class="pcfg-title">✏️ Texte personnalisé</div>
-            <div class="pcfg-body">
-              <div class="frow"><label class="flabel">Placeholder champ texte</label>
-                <input class="finput" id="stk-${id}-cfg-ph" value="MON PRÉNOM · 974"
-                  oninput="stkSetParcours(${id},'placeholder',this.value)"></div>
-              <div class="frow" style="margin-top:6px"><label class="flabel">Message d'aide client</label>
-                <input class="finput" id="stk-${id}-cfg-help" value="Saisissez le texte à imprimer sur votre sticker"
-                  oninput="stkSetParcours(${id},'helpText',this.value)"></div>
-            </div>
-          </div>
-
-          <!-- Polices -->
-          <div class="pcfg-section">
-            <div class="pcfg-title">🔤 Polices disponibles pour le client</div>
-            <div class="pcfg-body">
-              <div class="pcfg-checks">
-                ${[
-                  {val:'Impact',           label:'Impact'},
-                  {val:'Arial Black',      label:'Arial Black'},
-                  {val:"'Bebas Neue',Impact", label:'Bebas Neue'},
-                  {val:'Oswald,sans-serif',   label:'Oswald'},
-                  {val:"'Roboto Condensed',sans-serif", label:'Roboto Condensed'},
-                  {val:"'Montserrat',sans-serif",        label:'Montserrat'}
-                ].map(f=>`
-                <label class="pcfg-chk">
-                  <input type="checkbox" checked data-type="font" data-val="${f.val}"
-                    onchange="stkToggleParcours(${id},'font',this.dataset.val,this.checked)">
-                  <span style="font-family:${f.val}">${f.label}</span>
-                </label>`).join('')}
-              </div>
-              <!-- Polices personnalisées importées -->
-              <div id="stk-${id}-custom-fonts" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px"></div>
-              <div class="pcfg-add-row" style="margin-top:8px">
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 10px;border:1px dashed rgba(167,139,250,0.35);border-radius:8px;flex:1;transition:border-color 0.15s"
-                  onmouseover="this.style.borderColor='#a78bfa'" onmouseout="this.style.borderColor='rgba(167,139,250,0.35)'">
-                  <span style="font-size:1rem">🔤</span>
-                  <span style="font-size:0.68rem;color:var(--text-secondary)">Importer police personnalisée<br><span style="font-size:0.58rem;opacity:0.6">.ttf · .otf · .woff · .woff2</span></span>
-                  <input type="file" accept=".ttf,.otf,.woff,.woff2" style="display:none" onchange="stkLoadCustomFont(event,${id})">
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <!-- Couleurs -->
-          <div class="pcfg-section">
-            <div class="pcfg-title">🎨 Couleurs disponibles pour le client</div>
-            <div class="pcfg-body">
-              <div class="pcfg-checks" id="stk-${id}-cfg-colors">
-                <label class="pcfg-chk">
-                  <input type="checkbox" checked onchange="stkToggleParcours(${id},'color','#ffffff',this.checked)">
-                  <span class="pcfg-color-dot" style="background:#fff;border-color:#aaa"></span> Blanc
-                </label>
-                <label class="pcfg-chk">
-                  <input type="checkbox" checked onchange="stkToggleParcours(${id},'color','#000000',this.checked)">
-                  <span class="pcfg-color-dot" style="background:#000"></span> Noir
-                </label>
-                <label class="pcfg-chk">
-                  <input type="checkbox" checked onchange="stkToggleParcours(${id},'color','#ff6584',this.checked)">
-                  <span class="pcfg-color-dot" style="background:#ff6584"></span> Rouge HCS
-                </label>
-              </div>
-              <div class="pcfg-add-row">
-                <input type="color" id="stk-${id}-newcol" value="#4facfe"
-                  style="width:30px;height:28px;border:none;border-radius:5px;cursor:pointer;flex-shrink:0">
-                <input class="finput" id="stk-${id}-newcol-lbl" placeholder="Nom couleur" style="flex:1">
-                <button class="pcfg-add-btn" onclick="stkAddCustomColor(${id})">+ Ajouter</button>
-              </div>
-              <div class="pcfg-custom-colors" id="stk-${id}-custom-cols"></div>
-            </div>
-          </div>
+        <div class="ep-section" style="padding:10px 14px">
+          <button class="vdec-adm-tab active" style="width:100%;border-radius:8px;font-size:0.75rem;padding:10px 14px;justify-content:center;display:flex;align-items:center;gap:7px"
+            onclick="openBlocConfig(${id})">
+            ⚙️ Config Parcours Client — ${c.name}
+          </button>
         </div>
-        ` : c.id === 1 ? `
-        <div class="ep-section">
-          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — T-Shirt</div>
-
-          <!-- Étapes actives -->
-          <div class="pcfg-section">
-            <div class="pcfg-title">📦 Étapes du parcours</div>
-            <div class="pcfg-body">
-              <div class="pcfg-toggle-row">
-                <span class="pcfg-toggle-lbl">① Choix produit</span>
-                <label class="pcfg-toggle"><input type="checkbox" checked disabled><span class="pcfg-toggle-slider"></span></label>
-              </div>
-              <div class="pcfg-toggle-row">
-                <span class="pcfg-toggle-lbl">② Choix logo <span style="font-size:0.58rem;color:var(--text-secondary)">(peut être sauté)</span></span>
-                <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-step2-on" checked
-                  onchange="tshSetParcours(${id},'showStep2',this.checked)"><span class="pcfg-toggle-slider"></span></label>
-              </div>
-              <div class="pcfg-toggle-row">
-                <span class="pcfg-toggle-lbl">③ Taille obligatoire</span>
-                <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-step3-sz" checked
-                  onchange="tshSetParcours(${id},'requireSize',this.checked)"><span class="pcfg-toggle-slider"></span></label>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tailles disponibles -->
-          <div class="pcfg-section">
-            <div class="pcfg-title">📏 Tailles proposées au client</div>
-            <div class="pcfg-body">
-              <div class="pcfg-size-grid">
-                ${['XS','S','M','L','XL','2XL','3XL','4XL'].map(s=>`
-                <label class="pcfg-size-btn">
-                  <input type="checkbox" ${['XS','S','M','L','XL','2XL','3XL','4XL'].includes(s)?'checked':''}
-                    onchange="tshToggleSize(${id},'${s}',this.checked)">
-                  ${s}
-                </label>`).join('')}
-              </div>
-            </div>
-          </div>
-
-          <!-- Faces T-Shirt proposées -->
-          <div class="pcfg-section">
-            <div class="pcfg-title">🔄 Faces proposées au client</div>
-            <div class="pcfg-body">
-              <div class="pcfg-toggle-row">
-                <span class="pcfg-toggle-lbl">Avant (poitrine) <span style="font-size:0.58rem;color:var(--text-secondary)">toujours actif</span></span>
-                <label class="pcfg-toggle"><input type="checkbox" checked disabled><span class="pcfg-toggle-slider"></span></label>
-              </div>
-              <div class="pcfg-toggle-row">
-                <span class="pcfg-toggle-lbl">Dos</span>
-                <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-face-back"
-                  onchange="tshSetFace(${id},'back',this.checked)"><span class="pcfg-toggle-slider"></span></label>
-              </div>
-            </div>
-          </div>
-
-          <!-- Images produit par face -->
-          <div class="pcfg-section">
-            <div class="pcfg-title">🖼 Images produit par face</div>
-            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:10px">
-              ${c.products.map((p,i) => `
-              <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px">
-                <div style="font-size:0.72rem;font-weight:700;margin-bottom:8px">${p.e} ${p.n}</div>
-
-                <!-- Mockups par face -->
-                <div style="display:flex;gap:8px;margin-bottom:8px">
-                  <label style="flex:1;cursor:pointer">
-                    <div style="font-size:0.6rem;color:var(--text-secondary);margin-bottom:4px">🔵 Mockup Avant</div>
-                    <div class="tsh-face-img-thumb" id="tsh-${id}-fi-front-${i}">
-                      <span style="padding:4px;text-align:center">Utilise l'image LP</span>
-                    </div>
-                    <input type="file" accept="image/*" style="display:none" onchange="tshLoadFaceImg(event,${id},${i},'front')">
-                  </label>
-                  <label class="tsh-face-back-label" id="tsh-${id}-face-back-lbl-${i}" style="flex:1;cursor:pointer;opacity:0.4;pointer-events:none">
-                    <div style="font-size:0.6rem;color:var(--text-secondary);margin-bottom:4px">🔴 Mockup Dos</div>
-                    <div class="tsh-face-img-thumb" id="tsh-${id}-fi-back-${i}">
-                      <span style="padding:4px;text-align:center">+ Ajouter image Dos</span>
-                    </div>
-                    <input type="file" accept="image/*" style="display:none" onchange="tshLoadFaceImg(event,${id},${i},'back')">
-                  </label>
-                </div>
-
-                <!-- Logos DTF prédéfinis (étape 2 désactivée = produit déjà imprimé) -->
-                <div style="border-top:1px solid rgba(255,255,255,.07);padding-top:8px;margin-top:2px">
-                  <div style="font-size:0.6rem;color:#f6d365;font-weight:700;margin-bottom:6px">🏷️ Logos DTF prédéfinis <span style="font-weight:400;color:#9090b0">(si étape 2 désactivée)</span></div>
-                  <div style="display:flex;gap:6px">
-                    ${[1,2,3].map(n => `
-                    <label style="flex:1;cursor:pointer;text-align:center">
-                      <div style="font-size:0.58rem;color:#9090b0;margin-bottom:3px">Logo ${n}</div>
-                      <div class="tsh-face-img-thumb" id="tsh-${id}-dtf-${i}-${n}" style="aspect-ratio:1;background:rgba(246,211,101,.06);border-color:rgba(246,211,101,.2)">
-                        <span style="padding:2px;font-size:0.6rem;color:#9090b0">+ DTF</span>
-                      </div>
-                      <input type="file" accept="image/*" style="display:none" onchange="tshLoadDtfLogo(event,${id},${i},${n})">
-                    </label>`).join('')}
-                  </div>
-                </div>
-
-              </div>`).join('')}
-            </div>
-          </div>
-
-          <!-- Titres des étapes -->
-          <div class="pcfg-section">
-            <div class="pcfg-title">🏷️ Titres des étapes</div>
-            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:6px">
-              <div class="frow"><label class="flabel">Étape 1</label>
-                <input class="finput" id="tsh-${id}-lbl1" value="Choisir le produit"
-                  oninput="tshSetParcours(${id},'label1',this.value)"></div>
-              <div class="frow"><label class="flabel">Étape 2</label>
-                <input class="finput" id="tsh-${id}-lbl2" value="Choisir le logo"
-                  oninput="tshSetParcours(${id},'label2',this.value)"></div>
-              <div class="frow"><label class="flabel">Étape 3</label>
-                <input class="finput" id="tsh-${id}-lbl3" value="Taille &amp; Commander"
-                  oninput="tshSetParcours(${id},'label3',this.value)"></div>
-            </div>
-          </div>
-        </div>
-        ` : c.id === 2 ? `
-        <div class="ep-section">
-          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Casquette</div>
-
-          <!-- Étapes actives -->
-          <div class="pcfg-section">
-            <div class="pcfg-title">📦 Étapes du parcours</div>
-            <div class="pcfg-body">
-              <div class="pcfg-toggle-row">
-                <span class="pcfg-toggle-lbl">① Choix casquette</span>
-                <label class="pcfg-toggle"><input type="checkbox" checked disabled><span class="pcfg-toggle-slider"></span></label>
-              </div>
-              <div class="pcfg-toggle-row">
-                <span class="pcfg-toggle-lbl">② Choix logo</span>
-                <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-step2-on" checked
-                  onchange="tshSetParcours(${id},'showStep2',this.checked)"><span class="pcfg-toggle-slider"></span></label>
-              </div>
-              <div class="pcfg-toggle-row">
-                <span class="pcfg-toggle-lbl">③ Taille obligatoire</span>
-                <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-step3-sz" checked
-                  onchange="tshSetParcours(${id},'requireSize',this.checked)"><span class="pcfg-toggle-slider"></span></label>
-              </div>
-            </div>
-          </div>
-
-          <!-- Images produit -->
-          <div class="pcfg-section">
-            <div class="pcfg-title">🧢 Images casquettes (par produit)</div>
-            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:10px">
-              ${c.products.map((p,i) => `
-              <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px">
-                <div style="font-size:0.72rem;font-weight:700;margin-bottom:8px">${p.e} ${p.n}</div>
-                <label style="display:block;cursor:pointer">
-                  <div class="tsh-face-img-thumb" id="tsh-${id}-fi-front-${i}" style="aspect-ratio:4/3">
-                    <span style="padding:4px;text-align:center;font-size:0.62rem">+ Importer image casquette</span>
-                  </div>
-                  <input type="file" accept="image/*" style="display:none" onchange="tshLoadFaceImg(event,${id},${i},'front')">
-                </label>
-              </div>`).join('')}
-            </div>
-          </div>
-
-          <!-- Tailles disponibles -->
-          <div class="pcfg-section">
-            <div class="pcfg-title">📏 Tailles proposées</div>
-            <div class="pcfg-body">
-              <div class="pcfg-size-grid">
-                ${['XS','S','M','L','XL','2XL'].map(s=>`
-                <label class="pcfg-size-btn">
-                  <input type="checkbox" checked
-                    onchange="tshToggleSize(${id},'${s}',this.checked)">
-                  ${s}
-                </label>`).join('')}
-              </div>
-            </div>
-          </div>
-
-          <!-- Titres des étapes -->
-          <div class="pcfg-section">
-            <div class="pcfg-title">🏷️ Titres des étapes</div>
-            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:6px">
-              <div class="frow"><label class="flabel">Étape 1</label>
-                <input class="finput" id="tsh-${id}-lbl1" value="Choisir la casquette"
-                  oninput="tshSetParcours(${id},'label1',this.value)"></div>
-              <div class="frow"><label class="flabel">Étape 2</label>
-                <input class="finput" id="tsh-${id}-lbl2" value="Choisir le logo"
-                  oninput="tshSetParcours(${id},'label2',this.value)"></div>
-              <div class="frow"><label class="flabel">Étape 3</label>
-                <input class="finput" id="tsh-${id}-lbl3" value="Taille &amp; Commander"
-                  oninput="tshSetParcours(${id},'label3',this.value)"></div>
-            </div>
-          </div>
-        </div>
-        ` : c.id === 3 ? `
-        <div class="ep-section">
-          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — DTF Originals</div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">📦 Étapes du parcours</div>
-            <div class="pcfg-body">
-              <div class="pcfg-toggle-row">
-                <span class="pcfg-toggle-lbl">① Choix design logo <span style="font-size:0.58rem;color:var(--text-secondary)">toujours actif</span></span>
-                <label class="pcfg-toggle"><input type="checkbox" checked disabled><span class="pcfg-toggle-slider"></span></label>
-              </div>
-              <div class="pcfg-toggle-row">
-                <span class="pcfg-toggle-lbl">② Placement logo (studio)</span>
-                <label class="pcfg-toggle"><input type="checkbox" checked
-                  onchange="tshSetParcours(${id},'showStep2',this.checked)"><span class="pcfg-toggle-slider"></span></label>
-              </div>
-              <div class="pcfg-toggle-row">
-                <span class="pcfg-toggle-lbl">③ Taille &amp; Couleur T-shirt</span>
-                <label class="pcfg-toggle"><input type="checkbox" checked
-                  onchange="tshSetParcours(${id},'requireSize',this.checked)"><span class="pcfg-toggle-slider"></span></label>
-              </div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">🎨 Couleurs T-shirts proposées</div>
-            <div class="pcfg-body">
-              <div class="pcfg-checks">
-                ${[
-                  {val:'Blanc',hex:'#f5f5f5',border:true},{val:'Noir',hex:'#111111'},
-                  {val:'Gris chiné',hex:'#9e9e9e'},{val:'Marine',hex:'#1a237e'},
-                  {val:'Vert forêt',hex:'#2e7d32'},{val:'Rouge',hex:'#c62828'}
-                ].map(col=>`
-                <label class="pcfg-chk">
-                  <input type="checkbox" checked
-                    onchange="toggleParcoursCfg(${id},'tshirtColors','${col.val}',this.checked)">
-                  <span class="pcfg-color-dot" style="background:${col.hex}${col.border?';border-color:#aaa':''}"></span> ${col.val}
-                </label>`).join('')}
-              </div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">📏 Tailles proposées au client</div>
-            <div class="pcfg-body">
-              <div class="pcfg-size-grid">
-                ${['XS','S','M','L','XL','2XL','3XL','4XL'].map(s=>`
-                <label class="pcfg-size-btn">
-                  <input type="checkbox" checked onchange="tshToggleSize(${id},'${s}',this.checked)"> ${s}
-                </label>`).join('')}
-              </div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">🔄 Faces proposées</div>
-            <div class="pcfg-body">
-              <div class="pcfg-toggle-row">
-                <span class="pcfg-toggle-lbl">Avant <span style="font-size:0.58rem;color:var(--text-secondary)">toujours actif</span></span>
-                <label class="pcfg-toggle"><input type="checkbox" checked disabled><span class="pcfg-toggle-slider"></span></label>
-              </div>
-              <div class="pcfg-toggle-row">
-                <span class="pcfg-toggle-lbl">Dos</span>
-                <label class="pcfg-toggle"><input type="checkbox"
-                  onchange="tshSetFace(${id},'back',this.checked)"><span class="pcfg-toggle-slider"></span></label>
-              </div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">🖼 Visuels design par logo</div>
-            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:10px">
-              ${c.products.map((p,i)=>`
-              <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px">
-                <div style="font-size:0.72rem;font-weight:700;margin-bottom:6px">${p.e} ${p.n}</div>
-                <label style="display:block;cursor:pointer">
-                  <div class="tsh-face-img-thumb" id="tsh-${id}-fi-front-${i}">
-                    <span style="padding:4px;text-align:center;font-size:0.62rem">+ Importer visuel design</span>
-                  </div>
-                  <input type="file" accept="image/*" style="display:none" onchange="tshLoadFaceImg(event,${id},${i},'front')">
-                </label>
-              </div>`).join('')}
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">🏷️ Titres des étapes</div>
-            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:6px">
-              <div class="frow"><label class="flabel">Étape 1</label>
-                <input class="finput" value="Choisir le design" oninput="setParcoursCfg(${id},'label1',this.value)"></div>
-              <div class="frow"><label class="flabel">Étape 2</label>
-                <input class="finput" value="Placer le logo" oninput="setParcoursCfg(${id},'label2',this.value)"></div>
-              <div class="frow"><label class="flabel">Étape 3</label>
-                <input class="finput" value="Taille, Couleur &amp; Commander" oninput="setParcoursCfg(${id},'label3',this.value)"></div>
-            </div>
-          </div>
-        </div>
-        ` : c.id === 4 ? `
-        <div class="ep-section">
-          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Gang Sheet Builder (4 étapes)</div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">📐 Formats gang sheet proposés</div>
-            <div class="pcfg-body">
-              <div class="pcfg-checks">
-                ${[
-                  {val:'1yard',   label:'1 Yard × 22" (91 × 56 cm) — 15 000 XPF',def:true},
-                  {val:'halfyard',label:'½ Yard × 22" (46 × 56 cm) — 8 500 XPF', def:true},
-                  {val:'22x30cm', label:'22" × 30 cm',def:false},
-                  {val:'22x60cm', label:'22" × 60 cm',def:false},
-                  {val:'22x90cm', label:'22" × 90 cm',def:false},
-                  {val:'A3',      label:'A3 (30 × 42 cm)',def:false},
-                  {val:'A2',      label:'A2 (42 × 60 cm)',def:false}
-                ].map(f=>`
-                <label class="pcfg-chk">
-                  <input type="checkbox" ${f.def?'checked':''}
-                    onchange="toggleParcoursCfg(${id},'formats','${f.val}',this.checked)">
-                  ${f.label}
-                </label>`).join('')}
-              </div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">🖨️ Résolution fichier requise</div>
-            <div class="pcfg-body">
-              <div class="pcfg-checks">
-                <label class="pcfg-chk"><input type="radio" name="dtf4-res-${id}" value="150"
-                  onchange="setParcoursCfg(${id},'resolution','150')"> 150 DPI</label>
-                <label class="pcfg-chk"><input type="radio" name="dtf4-res-${id}" value="300" checked
-                  onchange="setParcoursCfg(${id},'resolution','300')"> 300 DPI <span style="color:#43e97b;font-size:0.6rem">recommandé</span></label>
-              </div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">📎 Formats source acceptés</div>
-            <div class="pcfg-body">
-              <div class="pcfg-checks">
-                ${['PNG','JPG','PDF','PSD','AI','EPS'].map(f=>`
-                <label class="pcfg-chk">
-                  <input type="checkbox" ${['PNG','PDF','PSD'].includes(f)?'checked':''}
-                    onchange="toggleParcoursCfg(${id},'fileFormats','${f}',this.checked)">
-                  .${f.toLowerCase()}
-                </label>`).join('')}
-              </div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">📦 Quantité</div>
-            <div class="pcfg-body" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <div class="frow"><label class="flabel">Min</label>
-                <input class="finput" type="number" min="1" value="1" oninput="setParcoursCfg(${id},'qtyMin',+this.value)"></div>
-              <div class="frow"><label class="flabel">Max</label>
-                <input class="finput" type="number" min="1" value="50" oninput="setParcoursCfg(${id},'qtyMax',+this.value)"></div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">📤 Upload fichier client</div>
-            <div class="pcfg-body">
-              <div class="pcfg-toggle-row">
-                <span class="pcfg-toggle-lbl">Permettre l'upload print-ready</span>
-                <label class="pcfg-toggle"><input type="checkbox" checked
-                  onchange="setParcoursCfg(${id},'allowUpload',this.checked)"><span class="pcfg-toggle-slider"></span></label>
-              </div>
-              <div class="frow" style="margin-top:8px"><label class="flabel">Instruction upload</label>
-                <input class="finput" value="Fichier PNG ou PDF 300 DPI, fond transparent"
-                  oninput="setParcoursCfg(${id},'uploadHint',this.value)"></div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">🏷️ Titres des étapes</div>
-            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:6px">
-              <div class="frow"><label class="flabel">Étape 1</label>
-                <input class="finput" value="Choisir le format" oninput="setParcoursCfg(${id},'label1',this.value)"></div>
-              <div class="frow"><label class="flabel">Étape 2</label>
-                <input class="finput" value="Composer la planche" oninput="setParcoursCfg(${id},'label2',this.value)"></div>
-              <div class="frow"><label class="flabel">Étape 3</label>
-                <input class="finput" value="Coordonnées" oninput="setParcoursCfg(${id},'label3',this.value)"></div>
-              <div style="font-size:.62rem;color:rgba(255,255,255,.3);margin-top:4px">Étape 4 (Payer) est fixe.</div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">🧪 Tester l'outil placement</div>
-            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:8px">
-              <div style="font-size:.67rem;color:rgba(255,255,255,.4);line-height:1.7">Ouvre l'outil directement pour tester sans passer par le LP.</div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn btn-outline" style="font-size:.72rem;background:rgba(108,99,255,.15);border-color:#6c63ff;color:#a78bfa"
-                  onclick="window.open('https://highcoffeeshirts.com/erp/apps/dtf-plaques-transfert.html?gang=1yard','_blank')">
-                  🛠 1 Yard (91×56 cm)
-                </button>
-                <button class="btn btn-outline" style="font-size:.72rem;background:rgba(108,99,255,.15);border-color:#6c63ff;color:#a78bfa"
-                  onclick="window.open('https://highcoffeeshirts.com/erp/apps/dtf-plaques-transfert.html?gang=halfyard','_blank')">
-                  🛠 ½ Yard (46×56 cm)
-                </button>
-              </div>
-              <button class="btn btn-primary" style="font-size:.72rem;width:100%"
-                onclick="previewLP(${id})">
-                👁️ Prévisualiser le parcours client complet
-              </button>
-            </div>
-          </div>
-        </div>
-        ` : c.id === 5 ? `
-        <div class="ep-section">
-          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Formation Textile</div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">📚 Modules disponibles</div>
-            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:10px">
-              ${[
-                {val:'debutant',label:'Débutant',price:'15 000 XPF',desc:'Bases DTF, manipulation, entretien'},
-                {val:'avance',  label:'Avancé',  price:'25 000 XPF',desc:'Techniques pro, couleurs, sérigraphie'},
-                {val:'complet', label:'Complet', price:'35 000 XPF',desc:'Programme intégral débutant → expert'}
-              ].map(m=>`
-              <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-panel)">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                  <label class="pcfg-toggle" style="flex-shrink:0">
-                    <input type="checkbox" checked
-                      onchange="toggleParcoursCfg(${id},'modules','${m.val}',this.checked)">
-                    <span class="pcfg-toggle-slider"></span>
-                  </label>
-                  <div style="flex:1">
-                    <div style="font-size:0.75rem;font-weight:700">${m.label}</div>
-                    <div style="font-size:0.6rem;color:var(--text-secondary)">${m.desc}</div>
-                  </div>
-                  <span style="font-size:0.7rem;color:#f093fb;font-weight:800;white-space:nowrap">${m.price}</span>
-                </div>
-                <div class="frow"><label class="flabel">Prix personnalisé (XPF)</label>
-                  <input class="finput" type="number" placeholder="${m.price.replace(' XPF','').replace(/ /g,'')}"
-                    oninput="setParcoursCfg(${id},'price_${m.val}',this.value||null)"></div>
-              </div>`).join('')}
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">📅 Dates de sessions disponibles</div>
-            <div class="pcfg-body">
-              <textarea class="finput" rows="4" placeholder="15 juin 2026&#10;28 juin 2026&#10;12 juillet 2026"
-                style="resize:vertical;font-size:0.72rem;line-height:1.6"
-                oninput="setParcoursCfg(${id},'dates',this.value)"></textarea>
-              <div style="font-size:0.6rem;color:var(--text-secondary);margin-top:4px">Une date par ligne</div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">🏫 Format &amp; Lieu</div>
-            <div class="pcfg-body">
-              <div class="pcfg-checks">
-                <label class="pcfg-chk"><input type="checkbox" checked
-                  onchange="toggleParcoursCfg(${id},'formats','atelier',this.checked)"> En atelier (Papeete)</label>
-                <label class="pcfg-chk"><input type="checkbox"
-                  onchange="toggleParcoursCfg(${id},'formats','enligne',this.checked)"> En ligne (visio)</label>
-              </div>
-              <div class="frow" style="margin-top:8px"><label class="flabel">Adresse atelier</label>
-                <input class="finput" placeholder="HCS Atelier — Papeete, Tahiti"
-                  oninput="setParcoursCfg(${id},'adresse',this.value)"></div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">👥 Jauge par session</div>
-            <div class="pcfg-body">
-              <div class="frow"><label class="flabel">Nombre de places max</label>
-                <input class="finput" type="number" min="1" value="8"
-                  oninput="setParcoursCfg(${id},'maxPlaces',+this.value)"></div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">🏷️ Titres des étapes</div>
-            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:6px">
-              <div class="frow"><label class="flabel">Étape 1</label>
-                <input class="finput" value="Choisir le module" oninput="setParcoursCfg(${id},'label1',this.value)"></div>
-              <div class="frow"><label class="flabel">Étape 2</label>
-                <input class="finput" value="Choisir la date" oninput="setParcoursCfg(${id},'label2',this.value)"></div>
-              <div class="frow"><label class="flabel">Étape 3</label>
-                <input class="finput" value="Confirmer &amp; Payer" oninput="setParcoursCfg(${id},'label3',this.value)"></div>
-            </div>
-          </div>
-        </div>
-        ` : c.id === 6 ? `
-        <div class="ep-section">
-          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Abonnements</div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">⭐ Plans disponibles</div>
-            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:10px">
-              ${[
-                {val:'starter', label:'Starter', emoji:'🌱', priceM:'1 800', priceA:'18 000', color:'#30cfd0'},
-                {val:'pro',     label:'Pro',     emoji:'⚡', priceM:'3 500', priceA:'35 000', color:'#a18cd1'},
-                {val:'premium', label:'Premium', emoji:'👑', priceM:'5 500', priceA:'55 000', color:'#f6d365'}
-              ].map(p=>`
-              <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-panel)">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                  <label class="pcfg-toggle" style="flex-shrink:0">
-                    <input type="checkbox" checked
-                      onchange="toggleParcoursCfg(${id},'plans','${p.val}',this.checked)">
-                    <span class="pcfg-toggle-slider"></span>
-                  </label>
-                  <span style="font-size:1rem">${p.emoji}</span>
-                  <span style="font-size:0.8rem;font-weight:800;color:${p.color}">${p.label}</span>
-                  <span style="font-size:0.62rem;color:var(--text-secondary);margin-left:auto">${p.priceM} XPF/mois · ${p.priceA}/an</span>
-                </div>
-                <div class="frow"><label class="flabel">Avantages (une ligne par avantage)</label>
-                  <textarea class="finput" rows="2" placeholder="Avantage 1&#10;Avantage 2"
-                    style="resize:vertical;font-size:0.68rem;line-height:1.5"
-                    oninput="setParcoursCfg(${id},'avantages_${p.val}',this.value)"></textarea></div>
-              </div>`).join('')}
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">⏱️ Durées proposées</div>
-            <div class="pcfg-body">
-              <div class="pcfg-checks">
-                <label class="pcfg-chk"><input type="checkbox" checked
-                  onchange="toggleParcoursCfg(${id},'durees','mensuel',this.checked)"> Mensuel</label>
-                <label class="pcfg-chk"><input type="checkbox"
-                  onchange="toggleParcoursCfg(${id},'durees','trimestriel',this.checked)"> Trimestriel <span style="color:#43e97b;font-size:0.6rem">−5%</span></label>
-                <label class="pcfg-chk"><input type="checkbox" checked
-                  onchange="toggleParcoursCfg(${id},'durees','annuel',this.checked)"> Annuel <span style="color:#43e97b;font-size:0.6rem">−15%</span></label>
-              </div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">🔄 Renouvellement auto</div>
-            <div class="pcfg-body">
-              <div class="pcfg-toggle-row">
-                <span class="pcfg-toggle-lbl">Proposer le renouvellement automatique</span>
-                <label class="pcfg-toggle"><input type="checkbox" checked
-                  onchange="setParcoursCfg(${id},'autoRenew',this.checked)"><span class="pcfg-toggle-slider"></span></label>
-              </div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">🏷️ Titres des étapes</div>
-            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:6px">
-              <div class="frow"><label class="flabel">Étape 1</label>
-                <input class="finput" value="Choisir le plan" oninput="setParcoursCfg(${id},'label1',this.value)"></div>
-              <div class="frow"><label class="flabel">Étape 2</label>
-                <input class="finput" value="Choisir la durée" oninput="setParcoursCfg(${id},'label2',this.value)"></div>
-              <div class="frow"><label class="flabel">Étape 3</label>
-                <input class="finput" value="Confirmer &amp; Payer" oninput="setParcoursCfg(${id},'label3',this.value)"></div>
-            </div>
-          </div>
-        </div>
-        ` : c.id === 7 ? `
-        <div class="ep-section">
-          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Graphiques / Vecto IA</div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">🔧 Services proposés</div>
-            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:7px">
-              ${[
-                {val:'vecto',  label:'Vectorisation SVG/AI',          price:'2 500 XPF', icon:'📐'},
-                {val:'detour', label:'Détourage IA (fond transparent)',price:'1 500 XPF', icon:'✂️'},
-                {val:'logo',   label:'Création logo complet',          price:'8 000 XPF', icon:'🎨'},
-                {val:'pack',   label:'Pack graphique (3 services)',     price:'8 000 XPF', icon:'📦'}
-              ].map(s=>`
-              <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-panel)">
-                <label class="pcfg-toggle" style="flex-shrink:0">
-                  <input type="checkbox" checked
-                    onchange="toggleParcoursCfg(${id},'services','${s.val}',this.checked)">
-                  <span class="pcfg-toggle-slider"></span>
-                </label>
-                <span>${s.icon}</span>
-                <span style="font-size:0.72rem;font-weight:600;flex:1">${s.label}</span>
-                <span style="font-size:0.68rem;color:#f6d365;font-weight:700;white-space:nowrap">${s.price}</span>
-              </div>`).join('')}
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">📎 Formats source acceptés</div>
-            <div class="pcfg-body">
-              <div class="pcfg-checks">
-                ${['PNG','JPG','PDF','AI','PSD','EPS'].map(f=>`
-                <label class="pcfg-chk">
-                  <input type="checkbox" ${['PNG','JPG','PDF'].includes(f)?'checked':''}
-                    onchange="toggleParcoursCfg(${id},'fileFormats','${f}',this.checked)">
-                  .${f.toLowerCase()}
-                </label>`).join('')}
-              </div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">⚡ Délais de livraison</div>
-            <div class="pcfg-body">
-              <div class="pcfg-checks">
-                ${[
-                  {val:'24h',  label:'24h'},
-                  {val:'48h',  label:'48h',def:true},
-                  {val:'72h',  label:'72h'},
-                  {val:'devis',label:'Sur devis',def:true}
-                ].map(d=>`
-                <label class="pcfg-chk">
-                  <input type="checkbox" ${d.def?'checked':''}
-                    onchange="toggleParcoursCfg(${id},'delais','${d.val}',this.checked)">
-                  ${d.label}
-                </label>`).join('')}
-              </div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">📤 Champs client activés</div>
-            <div class="pcfg-body">
-              <div class="pcfg-toggle-row">
-                <span class="pcfg-toggle-lbl">Upload fichier source</span>
-                <label class="pcfg-toggle"><input type="checkbox" checked
-                  onchange="setParcoursCfg(${id},'allowUpload',this.checked)"><span class="pcfg-toggle-slider"></span></label>
-              </div>
-              <div class="pcfg-toggle-row" style="margin-top:6px">
-                <span class="pcfg-toggle-lbl">Champ description du besoin</span>
-                <label class="pcfg-toggle"><input type="checkbox" checked
-                  onchange="setParcoursCfg(${id},'allowDesc',this.checked)"><span class="pcfg-toggle-slider"></span></label>
-              </div>
-              <div class="frow" style="margin-top:8px"><label class="flabel">Placeholder description</label>
-                <input class="finput" value="Décrivez votre besoin (couleurs, style, références...)"
-                  oninput="setParcoursCfg(${id},'descPlaceholder',this.value)"></div>
-            </div>
-          </div>
-          <div class="pcfg-section">
-            <div class="pcfg-title">🏷️ Titres des étapes</div>
-            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:6px">
-              <div class="frow"><label class="flabel">Étape 1</label>
-                <input class="finput" value="Choisir le service" oninput="setParcoursCfg(${id},'label1',this.value)"></div>
-              <div class="frow"><label class="flabel">Étape 2</label>
-                <input class="finput" value="Envoyer le fichier source" oninput="setParcoursCfg(${id},'label2',this.value)"></div>
-              <div class="frow"><label class="flabel">Étape 3</label>
-                <input class="finput" value="Description &amp; Valider" oninput="setParcoursCfg(${id},'label3',this.value)"></div>
-            </div>
-          </div>
-        </div>
-        ` : ''}
 
         <div class="ep-section">
           <div class="ep-label">Lien & URL</div>
@@ -8537,6 +7859,697 @@ function stkValidateStudio() {
 }
 
 // ═══════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════
+// RENDU CONFIG ADMIN — Parcours Client par verticale
+// ═══════════════════════════════════════════════════════
+function renderConfigAdmin(c) {
+  const id = c.id;
+  return c.id === 0 ? `
+        <div class="ep-section">
+          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Sticker Auto</div>
+
+          <!-- Texte -->
+          <div class="pcfg-section">
+            <div class="pcfg-title">✏️ Texte personnalisé</div>
+            <div class="pcfg-body">
+              <div class="frow"><label class="flabel">Placeholder champ texte</label>
+                <input class="finput" id="stk-${id}-cfg-ph" value="MON PRÉNOM · 974"
+                  oninput="stkSetParcours(${id},'placeholder',this.value)"></div>
+              <div class="frow" style="margin-top:6px"><label class="flabel">Message d'aide client</label>
+                <input class="finput" id="stk-${id}-cfg-help" value="Saisissez le texte à imprimer sur votre sticker"
+                  oninput="stkSetParcours(${id},'helpText',this.value)"></div>
+            </div>
+          </div>
+
+          <!-- Polices -->
+          <div class="pcfg-section">
+            <div class="pcfg-title">🔤 Polices disponibles pour le client</div>
+            <div class="pcfg-body">
+              <div class="pcfg-checks">
+                ${[
+                  {val:'Impact',           label:'Impact'},
+                  {val:'Arial Black',      label:'Arial Black'},
+                  {val:"'Bebas Neue',Impact", label:'Bebas Neue'},
+                  {val:'Oswald,sans-serif',   label:'Oswald'},
+                  {val:"'Roboto Condensed',sans-serif", label:'Roboto Condensed'},
+                  {val:"'Montserrat',sans-serif",        label:'Montserrat'}
+                ].map(f=>`
+                <label class="pcfg-chk">
+                  <input type="checkbox" checked data-type="font" data-val="${f.val}"
+                    onchange="stkToggleParcours(${id},'font',this.dataset.val,this.checked)">
+                  <span style="font-family:${f.val}">${f.label}</span>
+                </label>`).join('')}
+              </div>
+              <!-- Polices personnalisées importées -->
+              <div id="stk-${id}-custom-fonts" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px"></div>
+              <div class="pcfg-add-row" style="margin-top:8px">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 10px;border:1px dashed rgba(167,139,250,0.35);border-radius:8px;flex:1;transition:border-color 0.15s"
+                  onmouseover="this.style.borderColor='#a78bfa'" onmouseout="this.style.borderColor='rgba(167,139,250,0.35)'">
+                  <span style="font-size:1rem">🔤</span>
+                  <span style="font-size:0.68rem;color:var(--text-secondary)">Importer police personnalisée<br><span style="font-size:0.58rem;opacity:0.6">.ttf · .otf · .woff · .woff2</span></span>
+                  <input type="file" accept=".ttf,.otf,.woff,.woff2" style="display:none" onchange="stkLoadCustomFont(event,${id})">
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Couleurs -->
+          <div class="pcfg-section">
+            <div class="pcfg-title">🎨 Couleurs disponibles pour le client</div>
+            <div class="pcfg-body">
+              <div class="pcfg-checks" id="stk-${id}-cfg-colors">
+                <label class="pcfg-chk">
+                  <input type="checkbox" checked onchange="stkToggleParcours(${id},'color','#ffffff',this.checked)">
+                  <span class="pcfg-color-dot" style="background:#fff;border-color:#aaa"></span> Blanc
+                </label>
+                <label class="pcfg-chk">
+                  <input type="checkbox" checked onchange="stkToggleParcours(${id},'color','#000000',this.checked)">
+                  <span class="pcfg-color-dot" style="background:#000"></span> Noir
+                </label>
+                <label class="pcfg-chk">
+                  <input type="checkbox" checked onchange="stkToggleParcours(${id},'color','#ff6584',this.checked)">
+                  <span class="pcfg-color-dot" style="background:#ff6584"></span> Rouge HCS
+                </label>
+              </div>
+              <div class="pcfg-add-row">
+                <input type="color" id="stk-${id}-newcol" value="#4facfe"
+                  style="width:30px;height:28px;border:none;border-radius:5px;cursor:pointer;flex-shrink:0">
+                <input class="finput" id="stk-${id}-newcol-lbl" placeholder="Nom couleur" style="flex:1">
+                <button class="pcfg-add-btn" onclick="stkAddCustomColor(${id})">+ Ajouter</button>
+              </div>
+              <div class="pcfg-custom-colors" id="stk-${id}-custom-cols"></div>
+            </div>
+          </div>
+        </div>
+        ` : c.id === 1 ? `
+        <div class="ep-section">
+          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — T-Shirt</div>
+
+          <!-- Étapes actives -->
+          <div class="pcfg-section">
+            <div class="pcfg-title">📦 Étapes du parcours</div>
+            <div class="pcfg-body">
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">① Choix produit</span>
+                <label class="pcfg-toggle"><input type="checkbox" checked disabled><span class="pcfg-toggle-slider"></span></label>
+              </div>
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">② Choix logo <span style="font-size:0.58rem;color:var(--text-secondary)">(peut être sauté)</span></span>
+                <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-step2-on" checked
+                  onchange="tshSetParcours(${id},'showStep2',this.checked)"><span class="pcfg-toggle-slider"></span></label>
+              </div>
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">③ Taille obligatoire</span>
+                <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-step3-sz" checked
+                  onchange="tshSetParcours(${id},'requireSize',this.checked)"><span class="pcfg-toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tailles disponibles -->
+          <div class="pcfg-section">
+            <div class="pcfg-title">📏 Tailles proposées au client</div>
+            <div class="pcfg-body">
+              <div class="pcfg-size-grid">
+                ${['XS','S','M','L','XL','2XL','3XL','4XL'].map(s=>`
+                <label class="pcfg-size-btn">
+                  <input type="checkbox" ${['XS','S','M','L','XL','2XL','3XL','4XL'].includes(s)?'checked':''}
+                    onchange="tshToggleSize(${id},'${s}',this.checked)">
+                  ${s}
+                </label>`).join('')}
+              </div>
+            </div>
+          </div>
+
+          <!-- Faces T-Shirt proposées -->
+          <div class="pcfg-section">
+            <div class="pcfg-title">🔄 Faces proposées au client</div>
+            <div class="pcfg-body">
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">Avant (poitrine) <span style="font-size:0.58rem;color:var(--text-secondary)">toujours actif</span></span>
+                <label class="pcfg-toggle"><input type="checkbox" checked disabled><span class="pcfg-toggle-slider"></span></label>
+              </div>
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">Dos</span>
+                <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-face-back"
+                  onchange="tshSetFace(${id},'back',this.checked)"><span class="pcfg-toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Images produit par face -->
+          <div class="pcfg-section">
+            <div class="pcfg-title">🖼 Images produit par face</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:10px">
+              ${c.products.map((p,i) => `
+              <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div style="font-size:0.72rem;font-weight:700;margin-bottom:8px">${p.e} ${p.n}</div>
+
+                <!-- Mockups par face -->
+                <div style="display:flex;gap:8px;margin-bottom:8px">
+                  <label style="flex:1;cursor:pointer">
+                    <div style="font-size:0.6rem;color:var(--text-secondary);margin-bottom:4px">🔵 Mockup Avant</div>
+                    <div class="tsh-face-img-thumb" id="tsh-${id}-fi-front-${i}">
+                      <span style="padding:4px;text-align:center">Utilise l'image LP</span>
+                    </div>
+                    <input type="file" accept="image/*" style="display:none" onchange="tshLoadFaceImg(event,${id},${i},'front')">
+                  </label>
+                  <label class="tsh-face-back-label" id="tsh-${id}-face-back-lbl-${i}" style="flex:1;cursor:pointer;opacity:0.4;pointer-events:none">
+                    <div style="font-size:0.6rem;color:var(--text-secondary);margin-bottom:4px">🔴 Mockup Dos</div>
+                    <div class="tsh-face-img-thumb" id="tsh-${id}-fi-back-${i}">
+                      <span style="padding:4px;text-align:center">+ Ajouter image Dos</span>
+                    </div>
+                    <input type="file" accept="image/*" style="display:none" onchange="tshLoadFaceImg(event,${id},${i},'back')">
+                  </label>
+                </div>
+
+                <!-- Logos DTF prédéfinis (étape 2 désactivée = produit déjà imprimé) -->
+                <div style="border-top:1px solid rgba(255,255,255,.07);padding-top:8px;margin-top:2px">
+                  <div style="font-size:0.6rem;color:#f6d365;font-weight:700;margin-bottom:6px">🏷️ Logos DTF prédéfinis <span style="font-weight:400;color:#9090b0">(si étape 2 désactivée)</span></div>
+                  <div style="display:flex;gap:6px">
+                    ${[1,2,3].map(n => `
+                    <label style="flex:1;cursor:pointer;text-align:center">
+                      <div style="font-size:0.58rem;color:#9090b0;margin-bottom:3px">Logo ${n}</div>
+                      <div class="tsh-face-img-thumb" id="tsh-${id}-dtf-${i}-${n}" style="aspect-ratio:1;background:rgba(246,211,101,.06);border-color:rgba(246,211,101,.2)">
+                        <span style="padding:2px;font-size:0.6rem;color:#9090b0">+ DTF</span>
+                      </div>
+                      <input type="file" accept="image/*" style="display:none" onchange="tshLoadDtfLogo(event,${id},${i},${n})">
+                    </label>`).join('')}
+                  </div>
+                </div>
+
+              </div>`).join('')}
+            </div>
+          </div>
+
+          <!-- Titres des étapes -->
+          <div class="pcfg-section">
+            <div class="pcfg-title">🏷️ Titres des étapes</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:6px">
+              <div class="frow"><label class="flabel">Étape 1</label>
+                <input class="finput" id="tsh-${id}-lbl1" value="Choisir le produit"
+                  oninput="tshSetParcours(${id},'label1',this.value)"></div>
+              <div class="frow"><label class="flabel">Étape 2</label>
+                <input class="finput" id="tsh-${id}-lbl2" value="Choisir le logo"
+                  oninput="tshSetParcours(${id},'label2',this.value)"></div>
+              <div class="frow"><label class="flabel">Étape 3</label>
+                <input class="finput" id="tsh-${id}-lbl3" value="Taille &amp; Commander"
+                  oninput="tshSetParcours(${id},'label3',this.value)"></div>
+            </div>
+          </div>
+        </div>
+        ` : c.id === 2 ? `
+        <div class="ep-section">
+          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Casquette</div>
+
+          <!-- Étapes actives -->
+          <div class="pcfg-section">
+            <div class="pcfg-title">📦 Étapes du parcours</div>
+            <div class="pcfg-body">
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">① Choix casquette</span>
+                <label class="pcfg-toggle"><input type="checkbox" checked disabled><span class="pcfg-toggle-slider"></span></label>
+              </div>
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">② Choix logo</span>
+                <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-step2-on" checked
+                  onchange="tshSetParcours(${id},'showStep2',this.checked)"><span class="pcfg-toggle-slider"></span></label>
+              </div>
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">③ Taille obligatoire</span>
+                <label class="pcfg-toggle"><input type="checkbox" id="tsh-${id}-step3-sz" checked
+                  onchange="tshSetParcours(${id},'requireSize',this.checked)"><span class="pcfg-toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Images produit -->
+          <div class="pcfg-section">
+            <div class="pcfg-title">🧢 Images casquettes (par produit)</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:10px">
+              ${c.products.map((p,i) => `
+              <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div style="font-size:0.72rem;font-weight:700;margin-bottom:8px">${p.e} ${p.n}</div>
+                <label style="display:block;cursor:pointer">
+                  <div class="tsh-face-img-thumb" id="tsh-${id}-fi-front-${i}" style="aspect-ratio:4/3">
+                    <span style="padding:4px;text-align:center;font-size:0.62rem">+ Importer image casquette</span>
+                  </div>
+                  <input type="file" accept="image/*" style="display:none" onchange="tshLoadFaceImg(event,${id},${i},'front')">
+                </label>
+              </div>`).join('')}
+            </div>
+          </div>
+
+          <!-- Tailles disponibles -->
+          <div class="pcfg-section">
+            <div class="pcfg-title">📏 Tailles proposées</div>
+            <div class="pcfg-body">
+              <div class="pcfg-size-grid">
+                ${['XS','S','M','L','XL','2XL'].map(s=>`
+                <label class="pcfg-size-btn">
+                  <input type="checkbox" checked
+                    onchange="tshToggleSize(${id},'${s}',this.checked)">
+                  ${s}
+                </label>`).join('')}
+              </div>
+            </div>
+          </div>
+
+          <!-- Titres des étapes -->
+          <div class="pcfg-section">
+            <div class="pcfg-title">🏷️ Titres des étapes</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:6px">
+              <div class="frow"><label class="flabel">Étape 1</label>
+                <input class="finput" id="tsh-${id}-lbl1" value="Choisir la casquette"
+                  oninput="tshSetParcours(${id},'label1',this.value)"></div>
+              <div class="frow"><label class="flabel">Étape 2</label>
+                <input class="finput" id="tsh-${id}-lbl2" value="Choisir le logo"
+                  oninput="tshSetParcours(${id},'label2',this.value)"></div>
+              <div class="frow"><label class="flabel">Étape 3</label>
+                <input class="finput" id="tsh-${id}-lbl3" value="Taille &amp; Commander"
+                  oninput="tshSetParcours(${id},'label3',this.value)"></div>
+            </div>
+          </div>
+        </div>
+        ` : c.id === 3 ? `
+        <div class="ep-section">
+          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — DTF Originals</div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">📦 Étapes du parcours</div>
+            <div class="pcfg-body">
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">① Choix design logo <span style="font-size:0.58rem;color:var(--text-secondary)">toujours actif</span></span>
+                <label class="pcfg-toggle"><input type="checkbox" checked disabled><span class="pcfg-toggle-slider"></span></label>
+              </div>
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">② Placement logo (studio)</span>
+                <label class="pcfg-toggle"><input type="checkbox" checked
+                  onchange="tshSetParcours(${id},'showStep2',this.checked)"><span class="pcfg-toggle-slider"></span></label>
+              </div>
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">③ Taille &amp; Couleur T-shirt</span>
+                <label class="pcfg-toggle"><input type="checkbox" checked
+                  onchange="tshSetParcours(${id},'requireSize',this.checked)"><span class="pcfg-toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🎨 Couleurs T-shirts proposées</div>
+            <div class="pcfg-body">
+              <div class="pcfg-checks">
+                ${[
+                  {val:'Blanc',hex:'#f5f5f5',border:true},{val:'Noir',hex:'#111111'},
+                  {val:'Gris chiné',hex:'#9e9e9e'},{val:'Marine',hex:'#1a237e'},
+                  {val:'Vert forêt',hex:'#2e7d32'},{val:'Rouge',hex:'#c62828'}
+                ].map(col=>`
+                <label class="pcfg-chk">
+                  <input type="checkbox" checked
+                    onchange="toggleParcoursCfg(${id},'tshirtColors','${col.val}',this.checked)">
+                  <span class="pcfg-color-dot" style="background:${col.hex}${col.border?';border-color:#aaa':''}"></span> ${col.val}
+                </label>`).join('')}
+              </div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">📏 Tailles proposées au client</div>
+            <div class="pcfg-body">
+              <div class="pcfg-size-grid">
+                ${['XS','S','M','L','XL','2XL','3XL','4XL'].map(s=>`
+                <label class="pcfg-size-btn">
+                  <input type="checkbox" checked onchange="tshToggleSize(${id},'${s}',this.checked)"> ${s}
+                </label>`).join('')}
+              </div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🔄 Faces proposées</div>
+            <div class="pcfg-body">
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">Avant <span style="font-size:0.58rem;color:var(--text-secondary)">toujours actif</span></span>
+                <label class="pcfg-toggle"><input type="checkbox" checked disabled><span class="pcfg-toggle-slider"></span></label>
+              </div>
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">Dos</span>
+                <label class="pcfg-toggle"><input type="checkbox"
+                  onchange="tshSetFace(${id},'back',this.checked)"><span class="pcfg-toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🖼 Visuels design par logo</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:10px">
+              ${c.products.map((p,i)=>`
+              <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div style="font-size:0.72rem;font-weight:700;margin-bottom:6px">${p.e} ${p.n}</div>
+                <label style="display:block;cursor:pointer">
+                  <div class="tsh-face-img-thumb" id="tsh-${id}-fi-front-${i}">
+                    <span style="padding:4px;text-align:center;font-size:0.62rem">+ Importer visuel design</span>
+                  </div>
+                  <input type="file" accept="image/*" style="display:none" onchange="tshLoadFaceImg(event,${id},${i},'front')">
+                </label>
+              </div>`).join('')}
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🏷️ Titres des étapes</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:6px">
+              <div class="frow"><label class="flabel">Étape 1</label>
+                <input class="finput" value="Choisir le design" oninput="setParcoursCfg(${id},'label1',this.value)"></div>
+              <div class="frow"><label class="flabel">Étape 2</label>
+                <input class="finput" value="Placer le logo" oninput="setParcoursCfg(${id},'label2',this.value)"></div>
+              <div class="frow"><label class="flabel">Étape 3</label>
+                <input class="finput" value="Taille, Couleur &amp; Commander" oninput="setParcoursCfg(${id},'label3',this.value)"></div>
+            </div>
+          </div>
+        </div>
+        ` : c.id === 4 ? `
+        <div class="ep-section">
+          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Gang Sheet Builder (4 étapes)</div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">📐 Formats gang sheet proposés</div>
+            <div class="pcfg-body">
+              <div class="pcfg-checks">
+                ${[
+                  {val:'1yard',   label:'1 Yard × 22" (91 × 56 cm) — 15 000 XPF',def:true},
+                  {val:'halfyard',label:'½ Yard × 22" (46 × 56 cm) — 8 500 XPF', def:true},
+                  {val:'22x30cm', label:'22" × 30 cm',def:false},
+                  {val:'22x60cm', label:'22" × 60 cm',def:false},
+                  {val:'22x90cm', label:'22" × 90 cm',def:false},
+                  {val:'A3',      label:'A3 (30 × 42 cm)',def:false},
+                  {val:'A2',      label:'A2 (42 × 60 cm)',def:false}
+                ].map(f=>`
+                <label class="pcfg-chk">
+                  <input type="checkbox" ${f.def?'checked':''}
+                    onchange="toggleParcoursCfg(${id},'formats','${f.val}',this.checked)">
+                  ${f.label}
+                </label>`).join('')}
+              </div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🖨️ Résolution fichier requise</div>
+            <div class="pcfg-body">
+              <div class="pcfg-checks">
+                <label class="pcfg-chk"><input type="radio" name="dtf4-res-${id}" value="150"
+                  onchange="setParcoursCfg(${id},'resolution','150')"> 150 DPI</label>
+                <label class="pcfg-chk"><input type="radio" name="dtf4-res-${id}" value="300" checked
+                  onchange="setParcoursCfg(${id},'resolution','300')"> 300 DPI <span style="color:#43e97b;font-size:0.6rem">recommandé</span></label>
+              </div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">📎 Formats source acceptés</div>
+            <div class="pcfg-body">
+              <div class="pcfg-checks">
+                ${['PNG','JPG','PDF','PSD','AI','EPS'].map(f=>`
+                <label class="pcfg-chk">
+                  <input type="checkbox" ${['PNG','PDF','PSD'].includes(f)?'checked':''}
+                    onchange="toggleParcoursCfg(${id},'fileFormats','${f}',this.checked)">
+                  .${f.toLowerCase()}
+                </label>`).join('')}
+              </div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">📦 Quantité</div>
+            <div class="pcfg-body" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="frow"><label class="flabel">Min</label>
+                <input class="finput" type="number" min="1" value="1" oninput="setParcoursCfg(${id},'qtyMin',+this.value)"></div>
+              <div class="frow"><label class="flabel">Max</label>
+                <input class="finput" type="number" min="1" value="50" oninput="setParcoursCfg(${id},'qtyMax',+this.value)"></div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">📤 Upload fichier client</div>
+            <div class="pcfg-body">
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">Permettre l'upload print-ready</span>
+                <label class="pcfg-toggle"><input type="checkbox" checked
+                  onchange="setParcoursCfg(${id},'allowUpload',this.checked)"><span class="pcfg-toggle-slider"></span></label>
+              </div>
+              <div class="frow" style="margin-top:8px"><label class="flabel">Instruction upload</label>
+                <input class="finput" value="Fichier PNG ou PDF 300 DPI, fond transparent"
+                  oninput="setParcoursCfg(${id},'uploadHint',this.value)"></div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🏷️ Titres des étapes</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:6px">
+              <div class="frow"><label class="flabel">Étape 1</label>
+                <input class="finput" value="Choisir le format" oninput="setParcoursCfg(${id},'label1',this.value)"></div>
+              <div class="frow"><label class="flabel">Étape 2</label>
+                <input class="finput" value="Composer la planche" oninput="setParcoursCfg(${id},'label2',this.value)"></div>
+              <div class="frow"><label class="flabel">Étape 3</label>
+                <input class="finput" value="Coordonnées" oninput="setParcoursCfg(${id},'label3',this.value)"></div>
+              <div style="font-size:.62rem;color:rgba(255,255,255,.3);margin-top:4px">Étape 4 (Payer) est fixe.</div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🧪 Tester l'outil placement</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:.67rem;color:rgba(255,255,255,.4);line-height:1.7">Ouvre l'outil directement pour tester sans passer par le LP.</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-outline" style="font-size:.72rem;background:rgba(108,99,255,.15);border-color:#6c63ff;color:#a78bfa"
+                  onclick="window.open('https://highcoffeeshirts.com/erp/apps/dtf-plaques-transfert.html?gang=1yard','_blank')">
+                  🛠 1 Yard (91×56 cm)
+                </button>
+                <button class="btn btn-outline" style="font-size:.72rem;background:rgba(108,99,255,.15);border-color:#6c63ff;color:#a78bfa"
+                  onclick="window.open('https://highcoffeeshirts.com/erp/apps/dtf-plaques-transfert.html?gang=halfyard','_blank')">
+                  🛠 ½ Yard (46×56 cm)
+                </button>
+              </div>
+              <button class="btn btn-primary" style="font-size:.72rem;width:100%"
+                onclick="previewLP(${id})">
+                👁️ Prévisualiser le parcours client complet
+              </button>
+            </div>
+          </div>
+        </div>
+        ` : c.id === 5 ? `
+        <div class="ep-section">
+          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Formation Textile</div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">📚 Modules disponibles</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:10px">
+              ${[
+                {val:'debutant',label:'Débutant',price:'15 000 XPF',desc:'Bases DTF, manipulation, entretien'},
+                {val:'avance',  label:'Avancé',  price:'25 000 XPF',desc:'Techniques pro, couleurs, sérigraphie'},
+                {val:'complet', label:'Complet', price:'35 000 XPF',desc:'Programme intégral débutant → expert'}
+              ].map(m=>`
+              <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-panel)">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                  <label class="pcfg-toggle" style="flex-shrink:0">
+                    <input type="checkbox" checked
+                      onchange="toggleParcoursCfg(${id},'modules','${m.val}',this.checked)">
+                    <span class="pcfg-toggle-slider"></span>
+                  </label>
+                  <div style="flex:1">
+                    <div style="font-size:0.75rem;font-weight:700">${m.label}</div>
+                    <div style="font-size:0.6rem;color:var(--text-secondary)">${m.desc}</div>
+                  </div>
+                  <span style="font-size:0.7rem;color:#f093fb;font-weight:800;white-space:nowrap">${m.price}</span>
+                </div>
+                <div class="frow"><label class="flabel">Prix personnalisé (XPF)</label>
+                  <input class="finput" type="number" placeholder="${m.price.replace(' XPF','').replace(/ /g,'')}"
+                    oninput="setParcoursCfg(${id},'price_${m.val}',this.value||null)"></div>
+              </div>`).join('')}
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">📅 Dates de sessions disponibles</div>
+            <div class="pcfg-body">
+              <textarea class="finput" rows="4" placeholder="15 juin 2026&#10;28 juin 2026&#10;12 juillet 2026"
+                style="resize:vertical;font-size:0.72rem;line-height:1.6"
+                oninput="setParcoursCfg(${id},'dates',this.value)"></textarea>
+              <div style="font-size:0.6rem;color:var(--text-secondary);margin-top:4px">Une date par ligne</div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🏫 Format &amp; Lieu</div>
+            <div class="pcfg-body">
+              <div class="pcfg-checks">
+                <label class="pcfg-chk"><input type="checkbox" checked
+                  onchange="toggleParcoursCfg(${id},'formats','atelier',this.checked)"> En atelier (Papeete)</label>
+                <label class="pcfg-chk"><input type="checkbox"
+                  onchange="toggleParcoursCfg(${id},'formats','enligne',this.checked)"> En ligne (visio)</label>
+              </div>
+              <div class="frow" style="margin-top:8px"><label class="flabel">Adresse atelier</label>
+                <input class="finput" placeholder="HCS Atelier — Papeete, Tahiti"
+                  oninput="setParcoursCfg(${id},'adresse',this.value)"></div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">👥 Jauge par session</div>
+            <div class="pcfg-body">
+              <div class="frow"><label class="flabel">Nombre de places max</label>
+                <input class="finput" type="number" min="1" value="8"
+                  oninput="setParcoursCfg(${id},'maxPlaces',+this.value)"></div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🏷️ Titres des étapes</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:6px">
+              <div class="frow"><label class="flabel">Étape 1</label>
+                <input class="finput" value="Choisir le module" oninput="setParcoursCfg(${id},'label1',this.value)"></div>
+              <div class="frow"><label class="flabel">Étape 2</label>
+                <input class="finput" value="Choisir la date" oninput="setParcoursCfg(${id},'label2',this.value)"></div>
+              <div class="frow"><label class="flabel">Étape 3</label>
+                <input class="finput" value="Confirmer &amp; Payer" oninput="setParcoursCfg(${id},'label3',this.value)"></div>
+            </div>
+          </div>
+        </div>
+        ` : c.id === 6 ? `
+        <div class="ep-section">
+          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Abonnements</div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">⭐ Plans disponibles</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:10px">
+              ${[
+                {val:'starter', label:'Starter', emoji:'🌱', priceM:'1 800', priceA:'18 000', color:'#30cfd0'},
+                {val:'pro',     label:'Pro',     emoji:'⚡', priceM:'3 500', priceA:'35 000', color:'#a18cd1'},
+                {val:'premium', label:'Premium', emoji:'👑', priceM:'5 500', priceA:'55 000', color:'#f6d365'}
+              ].map(p=>`
+              <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg-panel)">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                  <label class="pcfg-toggle" style="flex-shrink:0">
+                    <input type="checkbox" checked
+                      onchange="toggleParcoursCfg(${id},'plans','${p.val}',this.checked)">
+                    <span class="pcfg-toggle-slider"></span>
+                  </label>
+                  <span style="font-size:1rem">${p.emoji}</span>
+                  <span style="font-size:0.8rem;font-weight:800;color:${p.color}">${p.label}</span>
+                  <span style="font-size:0.62rem;color:var(--text-secondary);margin-left:auto">${p.priceM} XPF/mois · ${p.priceA}/an</span>
+                </div>
+                <div class="frow"><label class="flabel">Avantages (une ligne par avantage)</label>
+                  <textarea class="finput" rows="2" placeholder="Avantage 1&#10;Avantage 2"
+                    style="resize:vertical;font-size:0.68rem;line-height:1.5"
+                    oninput="setParcoursCfg(${id},'avantages_${p.val}',this.value)"></textarea></div>
+              </div>`).join('')}
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">⏱️ Durées proposées</div>
+            <div class="pcfg-body">
+              <div class="pcfg-checks">
+                <label class="pcfg-chk"><input type="checkbox" checked
+                  onchange="toggleParcoursCfg(${id},'durees','mensuel',this.checked)"> Mensuel</label>
+                <label class="pcfg-chk"><input type="checkbox"
+                  onchange="toggleParcoursCfg(${id},'durees','trimestriel',this.checked)"> Trimestriel <span style="color:#43e97b;font-size:0.6rem">−5%</span></label>
+                <label class="pcfg-chk"><input type="checkbox" checked
+                  onchange="toggleParcoursCfg(${id},'durees','annuel',this.checked)"> Annuel <span style="color:#43e97b;font-size:0.6rem">−15%</span></label>
+              </div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🔄 Renouvellement auto</div>
+            <div class="pcfg-body">
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">Proposer le renouvellement automatique</span>
+                <label class="pcfg-toggle"><input type="checkbox" checked
+                  onchange="setParcoursCfg(${id},'autoRenew',this.checked)"><span class="pcfg-toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🏷️ Titres des étapes</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:6px">
+              <div class="frow"><label class="flabel">Étape 1</label>
+                <input class="finput" value="Choisir le plan" oninput="setParcoursCfg(${id},'label1',this.value)"></div>
+              <div class="frow"><label class="flabel">Étape 2</label>
+                <input class="finput" value="Choisir la durée" oninput="setParcoursCfg(${id},'label2',this.value)"></div>
+              <div class="frow"><label class="flabel">Étape 3</label>
+                <input class="finput" value="Confirmer &amp; Payer" oninput="setParcoursCfg(${id},'label3',this.value)"></div>
+            </div>
+          </div>
+        </div>
+        ` : c.id === 7 ? `
+        <div class="ep-section">
+          <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Graphiques / Vecto IA</div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🔧 Services proposés</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:7px">
+              ${[
+                {val:'vecto',  label:'Vectorisation SVG/AI',          price:'2 500 XPF', icon:'📐'},
+                {val:'detour', label:'Détourage IA (fond transparent)',price:'1 500 XPF', icon:'✂️'},
+                {val:'logo',   label:'Création logo complet',          price:'8 000 XPF', icon:'🎨'},
+                {val:'pack',   label:'Pack graphique (3 services)',     price:'8 000 XPF', icon:'📦'}
+              ].map(s=>`
+              <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-panel)">
+                <label class="pcfg-toggle" style="flex-shrink:0">
+                  <input type="checkbox" checked
+                    onchange="toggleParcoursCfg(${id},'services','${s.val}',this.checked)">
+                  <span class="pcfg-toggle-slider"></span>
+                </label>
+                <span>${s.icon}</span>
+                <span style="font-size:0.72rem;font-weight:600;flex:1">${s.label}</span>
+                <span style="font-size:0.68rem;color:#f6d365;font-weight:700;white-space:nowrap">${s.price}</span>
+              </div>`).join('')}
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">📎 Formats source acceptés</div>
+            <div class="pcfg-body">
+              <div class="pcfg-checks">
+                ${['PNG','JPG','PDF','AI','PSD','EPS'].map(f=>`
+                <label class="pcfg-chk">
+                  <input type="checkbox" ${['PNG','JPG','PDF'].includes(f)?'checked':''}
+                    onchange="toggleParcoursCfg(${id},'fileFormats','${f}',this.checked)">
+                  .${f.toLowerCase()}
+                </label>`).join('')}
+              </div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">⚡ Délais de livraison</div>
+            <div class="pcfg-body">
+              <div class="pcfg-checks">
+                ${[
+                  {val:'24h',  label:'24h'},
+                  {val:'48h',  label:'48h',def:true},
+                  {val:'72h',  label:'72h'},
+                  {val:'devis',label:'Sur devis',def:true}
+                ].map(d=>`
+                <label class="pcfg-chk">
+                  <input type="checkbox" ${d.def?'checked':''}
+                    onchange="toggleParcoursCfg(${id},'delais','${d.val}',this.checked)">
+                  ${d.label}
+                </label>`).join('')}
+              </div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">📤 Champs client activés</div>
+            <div class="pcfg-body">
+              <div class="pcfg-toggle-row">
+                <span class="pcfg-toggle-lbl">Upload fichier source</span>
+                <label class="pcfg-toggle"><input type="checkbox" checked
+                  onchange="setParcoursCfg(${id},'allowUpload',this.checked)"><span class="pcfg-toggle-slider"></span></label>
+              </div>
+              <div class="pcfg-toggle-row" style="margin-top:6px">
+                <span class="pcfg-toggle-lbl">Champ description du besoin</span>
+                <label class="pcfg-toggle"><input type="checkbox" checked
+                  onchange="setParcoursCfg(${id},'allowDesc',this.checked)"><span class="pcfg-toggle-slider"></span></label>
+              </div>
+              <div class="frow" style="margin-top:8px"><label class="flabel">Placeholder description</label>
+                <input class="finput" value="Décrivez votre besoin (couleurs, style, références...)"
+                  oninput="setParcoursCfg(${id},'descPlaceholder',this.value)"></div>
+            </div>
+          </div>
+          <div class="pcfg-section">
+            <div class="pcfg-title">🏷️ Titres des étapes</div>
+            <div class="pcfg-body" style="display:flex;flex-direction:column;gap:6px">
+              <div class="frow"><label class="flabel">Étape 1</label>
+                <input class="finput" value="Choisir le service" oninput="setParcoursCfg(${id},'label1',this.value)"></div>
+              <div class="frow"><label class="flabel">Étape 2</label>
+                <input class="finput" value="Envoyer le fichier source" oninput="setParcoursCfg(${id},'label2',this.value)"></div>
+              <div class="frow"><label class="flabel">Étape 3</label>
+                <input class="finput" value="Description &amp; Valider" oninput="setParcoursCfg(${id},'label3',this.value)"></div>
+            </div>
+          </div>
+        </div>
+  ` : '';
+}
 // CONFIG PARCOURS CLIENT — objets de configuration admin
 // ═══════════════════════════════════════════════════════
 const STK_FONTS_ALL = [
@@ -8764,6 +8777,52 @@ function toggleParcoursCfg(campId, key, val, checked) {
   if (!Array.isArray(cfg[key])) cfg[key] = [];
   if (checked && !cfg[key].includes(val)) cfg[key].push(val);
   else if (!checked) cfg[key] = cfg[key].filter(v => v !== val);
+}
+
+
+// ═══════════════════════════════════════════════════════
+// BLOC CONFIG ADMIN — Ouverture / Navigation par verticale
+// ═══════════════════════════════════════════════════════
+const _CFG_TABS = [
+  {id:1, icon:'👕', label:'T-Shirt'},
+  {id:2, icon:'🧢', label:'Casquette'},
+  {id:3, icon:'🏄', label:'DTF Original'},
+  {id:4, icon:'📋', label:'Pack Collector'},
+  {id:5, icon:'🎓', label:'Formation'},
+  {id:6, icon:'🎊', label:'Abonnements'},
+  {id:7, icon:'✏️', label:'Services Num.'},
+  {id:0, icon:'🏷️', label:'Sticker Auto'},
+];
+let _cfgActiveTab = 1;
+
+function openBlocConfig(campId) {
+  _cfgActiveTab = campId != null ? campId : 1;
+  document.getElementById('bloc-config-admin').style.display = 'flex';
+  _renderCfgTabs();
+  _renderCfgBody(_cfgActiveTab);
+}
+function closeBlocConfig() {
+  document.getElementById('bloc-config-admin').style.display = 'none';
+}
+function showCfgTab(campId) {
+  _cfgActiveTab = campId;
+  _renderCfgTabs();
+  _renderCfgBody(campId);
+}
+function _renderCfgTabs() {
+  const tabs = document.getElementById('cfg-admin-tabs');
+  if (!tabs) return;
+  tabs.innerHTML = _CFG_TABS.map(function(v) {
+    var a = v.id === _cfgActiveTab;
+    return '<button onclick="showCfgTab(' + v.id + ')" class="vdec-adm-tab' + (a ? ' active' : '') + '" style="white-space:nowrap;flex-shrink:0">' + v.icon + ' ' + v.label + '</button>';
+  }).join('');
+}
+function _renderCfgBody(campId) {
+  var c = CAMPS.find(function(x) { return x.id === campId; });
+  var body = document.getElementById('cfg-admin-body');
+  if (!body) return;
+  if (!c) { body.innerHTML = '<div style="padding:20px;color:var(--text-secondary);font-size:.8rem">Verticale non trouvée.</div>'; return; }
+  body.innerHTML = renderConfigAdmin(c);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -9623,6 +9682,23 @@ function tshBuyConfirm() {
 <!-- ═══════════════════════════════════════════════════════
      PARCOURS CLIENT STICKER AUTO — Modal personnalisation
 ═══════════════════════════════════════════════════════ -->
+
+<!-- ══ BLOC CONFIG ADMIN — Toutes Verticales ══ -->
+<div id="bloc-config-admin" style="display:none;position:fixed;inset:0;z-index:10400;background:rgba(0,0,0,0.8);align-items:center;justify-content:center" onclick="if(event.target===this)closeBlocConfig()">
+  <div class="vdec-adm-box" style="max-width:760px">
+    <div class="vdec-adm-head">
+      <span style="font-size:1.1rem">⚙️</span>
+      <div class="vdec-adm-title">Config Parcours Client — Toutes Verticales</div>
+      <button onclick="closeBlocConfig()" style="background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.6);border-radius:7px;padding:5px 11px;cursor:pointer;font-size:.72rem">✕</button>
+    </div>
+    <div class="vdec-adm-tabs" id="cfg-admin-tabs" style="gap:4px;padding:9px 13px;overflow-x:auto;scrollbar-width:none"></div>
+    <div class="vdec-adm-body" id="cfg-admin-body"></div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0">
+      <button onclick="closeBlocConfig()" class="btn btn-outline" style="font-size:.75rem">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <div id="stk-client-modal">
   <div class="stk-cl-box">
     <div class="stk-cl-head">
@@ -11064,6 +11140,10 @@ function vdecRenderS1() {
 
 function vdecSelectCat(idx) {
   _vdec.catIdx = idx;
+  // Set viewKey to first enabled view of selected category
+  const _cat = vdecLoadCfg().cats[idx];
+  const _enabled = _cat?.enabledViews?.length ? _cat.enabledViews : ['left','front','back','right'];
+  _vdec.viewKey = _enabled[0];
   document.querySelectorAll('.vdec-cat-card').forEach((c, i) => c.classList.toggle('selected', i === idx));
 }
 
@@ -12226,7 +12306,10 @@ async function vdecArchiveOrder(total) {
     if (header)  header.style.display  = 'none';
     document.body.style.background = '#0f0f1a';
     const campId = parseInt(_p.get('camp') || '0');
-    setTimeout(function() { vdecOpenFlow(campId, 0); }, 300);
+    // Sync config from MySQL before opening flow so images/enabledViews are available
+    vdecSyncFromServer().catch(() => {}).finally(function() {
+      setTimeout(function() { vdecOpenFlow(campId, 0); }, 100);
+    });
   });
 })();
 
