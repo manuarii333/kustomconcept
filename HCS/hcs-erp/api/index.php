@@ -32,8 +32,12 @@ header('Content-Type: application/json; charset=utf-8');
 
 $_origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $_allowed = ['https://highcoffeeshirts.com', 'https://www.highcoffeeshirts.com'];
+/* LP publiée : autoriser tous les sous-domaines workers.dev (highcoffeeshirt sans s) */
+$_isWorker = preg_match('#^https://[a-z0-9\-]+\.highcoffeeshirt\.workers\.dev$#', $_origin);
 if (in_array($_origin, $_allowed, true) || (defined('DEV_MODE') && DEV_MODE)) {
     header('Access-Control-Allow-Origin: ' . ($_origin ?: $_allowed[0]));
+} elseif ($_isWorker) {
+    header('Access-Control-Allow-Origin: ' . $_origin);
 } elseif ($_origin === '' || $_origin === 'null' || preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?$#', $_origin)) {
     header('Access-Control-Allow-Origin: *');
 } else {
