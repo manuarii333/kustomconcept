@@ -2725,13 +2725,14 @@ ${_lpPayCss(primary)}
 <div class="ck-overlay" id="ck-overlay">
   <div class="ck-box">
     <div class="ck-head">
-      <span style="font-size:.95rem;font-weight:800" id="ck-title">👤 Vos coordonnées</span>
+      <span style="font-size:.95rem;font-weight:800" id="ck-title">🛒 Mon panier</span>
       <button style="background:none;border:none;color:#9090b0;font-size:1.3rem;cursor:pointer" onclick="closeCk()">✕</button>
     </div>
     <div class="ck-steps">
-      <div class="ck-step active" id="cks1"><div class="ck-dot2">1</div><div class="ck-lbl">Contact</div></div>
-      <div class="ck-step" id="cks2"><div class="ck-dot2">2</div><div class="ck-lbl">Livraison</div></div>
-      <div class="ck-step" id="cks3"><div class="ck-dot2">3</div><div class="ck-lbl">Paiement</div></div>
+      <div class="ck-step active" id="cks1"><div class="ck-dot2">1</div><div class="ck-lbl">Panier</div></div>
+      <div class="ck-step" id="cks2"><div class="ck-dot2">2</div><div class="ck-lbl">Contact</div></div>
+      <div class="ck-step" id="cks3"><div class="ck-dot2">3</div><div class="ck-lbl">Livraison</div></div>
+      <div class="ck-step" id="cks4"><div class="ck-dot2">4</div><div class="ck-lbl">Paiement</div></div>
     </div>
     <div class="ck-body" id="ck-body"></div>
     <div class="ck-foot" id="ck-foot"></div>
@@ -3135,12 +3136,46 @@ function flConfirm() {
 // ── Checkout ─────────────────────────────────────────────
 function closeCk() { document.getElementById('ck-overlay').classList.remove('open'); document.body.style.overflow=''; const _fab=document.getElementById('vdec-fab');if(_fab)_fab.style.display=''; }
 function ckRender() {
-  const titles = {1:'👤 Vos coordonnées',2:'🚚 Livraison',3:'💳 Paiement sécurisé'};
+  const titles = {1:'🛒 Mon panier',2:'👤 Vos coordonnées',3:'🚚 Livraison',4:'💳 Paiement sécurisé'};
   document.getElementById('ck-title').textContent = titles[ckStep];
-  for(let i=1;i<=3;i++){ const el=document.getElementById('cks'+i); el.className='ck-step'+(i<ckStep?' done':i===ckStep?' active':''); }
-  if (ckStep===1) ckContact1();
-  else if (ckStep===2) ckDelivery1();
+  for(let i=1;i<=4;i++){ const el=document.getElementById('cks'+i); if(el) el.className='ck-step'+(i<ckStep?' done':i===ckStep?' active':''); }
+  if (ckStep===1) ckCart();
+  else if (ckStep===2) ckContact1();
+  else if (ckStep===3) ckDelivery1();
   else ckPayment();
+}
+function ckCart() {
+  const p = PRODUCTS[flow.prodIdx];
+  const shirtImg = (FACE_IMAGES[flow.prodIdx]||{}).front || '';
+  document.getElementById('ck-body').innerHTML = \`
+    <div style="background:#16213e;border:2px solid ${primary}44;border-radius:12px;overflow:hidden;margin-bottom:16px;display:flex;gap:12px">
+      <div style="width:90px;min-height:90px;background:#0f0f1a;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden">
+        \${shirtImg ? \`<img src="\${shirtImg}" style="width:100%;height:120px;object-fit:cover;object-position:center top">\` : \`<span style="font-size:36px">\${EMOJI}</span>\`}
+      </div>
+      <div style="padding:12px 12px 12px 0;flex:1">
+        <div style="font-size:.88rem;font-weight:700;margin-bottom:4px">\${p.n}</div>
+        \${flow.size ? \`<div style="font-size:.72rem;color:#9090b0">Taille : <strong style="color:#e8e8f0">\${flow.size}</strong></div>\` : ''}
+        \${flow.logoName ? \`<div style="font-size:.68rem;color:#9090b0;margin-top:2px">Logo : \${flow.logoName}</div>\` : ''}
+        <div style="font-size:1.15rem;font-weight:900;color:${primary};margin-top:8px">\${p.p}</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;background:#1e1e3a;border:1px solid #2a2a4a;border-radius:10px;padding:12px 16px">
+      <span style="font-size:.8rem;color:#9090b0;flex:1">Quantité</span>
+      <button onclick="ckQty(-1)" style="width:30px;height:30px;border-radius:6px;border:1px solid #2a2a4a;background:#16213e;color:#e8e8f0;font-size:1rem;cursor:pointer;font-weight:700">−</button>
+      <span id="ck-qty-val" style="font-size:.9rem;font-weight:700;min-width:20px;text-align:center">\${flow.qty}</span>
+      <button onclick="ckQty(1)" style="width:30px;height:30px;border-radius:6px;border:1px solid #2a2a4a;background:#16213e;color:#e8e8f0;font-size:1rem;cursor:pointer;font-weight:700">+</button>
+    </div>
+    <div style="margin-top:12px;display:flex;justify-content:space-between;font-size:.82rem;padding:0 2px">
+      <span style="color:#9090b0">Total</span>
+      <span id="ck-total-val" style="font-weight:900;color:${primary};font-size:1rem">\${(p.price*flow.qty).toLocaleString('fr-FR')} XPF</span>
+    </div>\`;
+  document.getElementById('ck-foot').innerHTML = \`<button class="btn-next" onclick="ckStep=2;ckRender()">Continuer — Coordonnées →</button>\`;
+}
+function ckQty(d) {
+  flow.qty = Math.max(1, flow.qty + d);
+  const el = document.getElementById('ck-qty-val'); if(el) el.textContent = flow.qty;
+  const p = PRODUCTS[flow.prodIdx];
+  const tel = document.getElementById('ck-total-val'); if(tel) tel.textContent = (p.price*flow.qty).toLocaleString('fr-FR')+' XPF';
 }
 ${_normalizePhoneBlock()}
 function ckContact1() {
@@ -3150,14 +3185,14 @@ function ckContact1() {
     <div class="ck-field"><label>Email *</label><input class="ck-input" id="ck-email" type="email" placeholder="jean@mail.com" value="\${s.email||''}"></div>
     <div class="ck-field"><label>Téléphone</label><input class="ck-input" id="ck-phone" type="tel" placeholder="87 00 00 00" value="\${s.phone||''}"></div>
     <div class="ck-field"><label>Note / instructions</label><textarea class="ck-input ck-textarea" id="ck-note">\${s.note||''}</textarea></div>\`;
-  document.getElementById('ck-foot').innerHTML = \`<button class="btn-next" onclick="ckSaveContact()">Continuer — Livraison →</button>\`;
+  document.getElementById('ck-foot').innerHTML = \`<button class="btn-fl-prev" onclick="ckStep=1;ckRender()">← Retour</button><button class="btn-next" onclick="ckSaveContact()">Continuer — Livraison →</button>\`;
 }
 function ckSaveContact() {
   const name=document.getElementById('ck-name')?.value.trim(), email=document.getElementById('ck-email')?.value.trim();
   if(!name){alert('Saisissez votre nom.');return;}
   if(!email||!email.includes('@')){alert('Email invalide.');return;}
   ckContact={name,email,phone:normalizePhone(document.getElementById('ck-phone')?.value),note:document.getElementById('ck-note')?.value.trim()};
-  ckStep=2; ckRender();
+  ckStep=3; ckRender();
 }
 function ckDelivery1() {
   const d = ckDelivery;
@@ -3190,7 +3225,7 @@ function ckDelivery1() {
         <div id="ship-fee-preview" style="font-size:.73rem;color:#9090b0;margin-top:4px;text-align:right">Frais de port : 1 800 XPF</div>
       </div>
     </div>\`;
-  document.getElementById('ck-foot').innerHTML = \`<button class="btn-prev" onclick="ckStep=1;ckRender()">← Retour</button><button class="btn-next" onclick="ckSaveDelivery()">Continuer — Paiement →</button>\`;
+  document.getElementById('ck-foot').innerHTML = \`<button class="btn-fl-prev" onclick="ckStep=2;ckRender()">← Retour</button><button class="btn-next" onclick="ckSaveDelivery()">Continuer — Paiement →</button>\`;
 }
 function swDlv(t) {
   ckDelivery.type=t;
@@ -3204,7 +3239,7 @@ function ckSaveDelivery() {
   const isPick = ckDelivery.type==='pickup';
   if(!isPick){const addr=document.getElementById('ck-addr')?.value.trim();if(!addr){alert('Saisissez votre adresse.');return;}const isl=document.getElementById('ck-island')?.value||'tahiti';ckDelivery={type:'delivery',address:addr,island:isl,shippingFee:SHIP_RATES[isl]||1800};}
   else{ckDelivery={type:'pickup',pickupDate:document.getElementById('ck-date')?.value,slot:document.getElementById('ck-slot')?.value};}
-  ckStep=3; ckRender();
+  ckStep=4; ckRender();
 }
 async function ckPayment() {
   const p = PRODUCTS[flow.prodIdx];
@@ -3230,7 +3265,7 @@ async function ckPayment() {
     <div class="kr-embedded" id="pz-kr-form" style="display:none"></div>
     <div class="pz-error" id="pz-error"></div>
     <div class="pz-ok" id="pz-ok" style="display:none"><h3 style="font-size:1.2rem;margin-bottom:8px">✅ Paiement accepté !</h3><p style="font-size:.82rem;color:#9090b0;line-height:1.6">Merci <strong>\${ckContact.name}</strong>.<br>Commande <strong>\${orderId}</strong> confirmée.</p></div>\`}\`;
-  document.getElementById('ck-foot').innerHTML = \`<button class="btn-prev" id="pz-back" onclick="ckStep=2;ckRender()">← Retour</button>\`;
+  document.getElementById('ck-foot').innerHTML = \`<button class="btn-fl-prev" id="pz-back" onclick="ckStep=3;ckRender()">← Retour</button>\`;
   if(location.protocol==='file:') return;
   const oldSdk=document.getElementById('pz-sdk'); if(oldSdk) oldSdk.remove();
   if(window.KR){try{KR.removeForms();}catch(_){}}
@@ -3263,6 +3298,8 @@ async function ckPayment() {
           note: [ckContact.note||'', 'Taille:'+flow.size, p.couleur?'Couleur:'+p.couleur:'', 'Logo:'+flow.logoName, 'Face:'+flow.face, 'Placement:x='+Math.round(flow.logoPos.xPct)+'%,y='+Math.round(flow.logoPos.yPct)+'%,w='+Math.round(flow.logoPos.wPct)+'%', flow.useText&&flow.customText?'Texte:'+flow.customText+' ['+flow.textPos+']':''].filter(Boolean).join(' | ')
         })
       }).catch(function(_e){console.error('[HCS] Ordre non sauvegardé:',_e);var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_ord-warn')){var _w=document.createElement('p');_w.id='_ord-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
+      /* MySQL hcs_orders — fiche production ${isCap?'casquette':'tshirt'} */
+      fetch('https://highcoffeeshirts.com/erp/api/hcs_orders',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json','x-api-key':'hcs-erp-2026'},body:JSON.stringify({order_id:orderId,vertical:'${isCap?'casquette':'tshirt'}',status:'payé',total_xpf:total,campaign_name:CAMP_NAME,lp_slug:LP_SLUG,product_icon:p.e||'${emoji}',product_name:p.n||'',contact:ckContact,delivery:ckDelivery,design_data:{product_color:p.couleur||'',product_color_hex:p.couleurHex||'',size:flow.size,qty:flow.qty,face:flow.face,logo_url:flow.logoUrl||'',logo_name:flow.logoName||'',logo_pos:flow.logoPos||{xPct:50,yPct:47,wPct:44},use_text:!!flow.useText,custom_text:flow.useText?flow.customText:'',text_pos:flow.useText?flow.textPos:'',text_font:flow.textFont||'',text_color:flow.textColor||''},snapshots:{face:flow.logoUrl||''},mode:WORKER_MODE,note:['Taille:'+flow.size,p.couleur?'Couleur:'+p.couleur:'','Logo:'+flow.logoName,flow.useText&&flow.customText?'Texte:'+flow.customText:'',ckContact.note||''].filter(Boolean).join(' | ')})}).catch(function(){});
     }
     KR.onSubmit(d=>{if(['PAID','RUNNING','AUTHORISED'].includes(d?.clientAnswer?.orderStatus)){showSuccess();}return false;});
     const krForm=document.querySelector('.kr-embedded');
@@ -4287,6 +4324,8 @@ function _vdSaveOrder(){
   fetch('https://payzen-hcs.highcoffeeshirt.workers.dev/order/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:ORDER_ID,amount:getTotal(),currency:'XPF',campaignName:'Déco Véhicule',lpSlug:'sticker-auto-0',product:(scat.icon||'🚗')+' '+(scat.name||'')+(scat.model?' — '+scat.model:''),client:ckContact,delivery:ckDelivery,note:ckDescription+(ckPhotoUrl?' | [Photo fournie par le client]':''),mode:WORKER_MODE})}).catch(function(_e){var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_vd-warn')){var _w=document.createElement('p');_w.id='_vd-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+ORDER_ID+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
   /* MySQL vdec_commandes — design complet */
   fetch('https://highcoffeeshirts.com/erp/api/vdec_commandes',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':'hcs-erp-2026'},body:JSON.stringify({order_id:ORDER_ID,status:'payé',total_xpf:getTotal(),cat_name:scat.name||'',cat_model:scat.model||'',cat_icon:scat.icon||'🚗',views_validated:_vdecViewsVal,logos:_vdecLogos,texts:_vdecTexts,cat_views:scat.views||{},view_snapshots:_vdecViewSnaps,contact:ckContact,delivery:ckDelivery,created_at:new Date().toISOString()})}).catch(function(){});
+  /* MySQL hcs_orders — commande unifiée toutes verticales */
+  fetch('https://highcoffeeshirts.com/erp/api/hcs_orders',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':'hcs-erp-2026'},body:JSON.stringify({order_id:ORDER_ID,vertical:'vdec',status:'payé',total_xpf:getTotal(),campaign_name:'Déco Véhicule',lp_slug:'vdec-lp-0',product_icon:scat.icon||'🚗',product_name:(scat.name||'')+(scat.model?' — '+scat.model:''),contact:ckContact,delivery:ckDelivery,design_data:{cat_name:scat.name||'',cat_model:scat.model||'',cat_icon:scat.icon||'🚗',views_validated:_vdecViewsVal,logos:_vdecLogos,texts:_vdecTexts,cat_views:scat.views||{},description:ckDescription||'',photo_url:ckPhotoUrl||''},snapshots:_vdecViewSnaps,mode:WORKER_MODE,note:(ckDescription||'')+(ckPhotoUrl?' | [Photo fournie]':'')})}).catch(function(){});
 }
 function showOk(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';var b=document.getElementById('pz-back');if(b)b.style.display='none';_vdSaveOrder();_vdInjectDesignRecap();}
 function simPay(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';document.getElementById('pz-ok-msg').textContent='Merci '+ckContact.name+' — commande simulée (mode test, non facturé).';var b=document.getElementById('pz-back');if(b)b.style.display='none';_vdSaveOrder();_vdInjectDesignRecap();}
@@ -4336,6 +4375,8 @@ function exportLPGeneric(id) {
   const tshSizesJson = id === 3 ? JSON.stringify(tshGetParcours(id).sizes) : '[]';
   const primary      = GEN_COLORS[id] || '#6c63ff';
   const lpSlug       = `${c.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}-${id}`;
+  const _verticalStr = c.id===3?'dtf':c.id===4?'sticker':c.id===5?'formation':c.id===6?'abo':c.id===7?'service':'generic';
+  const _iconStr     = (c.products && c.products[0] && c.products[0].e) ? c.products[0].e : '🛍️';
 
   const html = `<!DOCTYPE html>
 <html lang="fr">
@@ -5546,6 +5587,8 @@ async function renderStep4() {
           note:ckContact.note||''
         })
       }).catch(function(_e){console.error('[HCS] Ordre non sauvegardé:',_e);var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_ord-warn')){var _w=document.createElement('p');_w.id='_ord-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
+      /* MySQL hcs_orders — fiche production ${_verticalStr} */
+      fetch('https://highcoffeeshirts.com/erp/api/hcs_orders',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json','x-api-key':'hcs-erp-2026'},body:JSON.stringify({order_id:orderId,vertical:'${_verticalStr}',status:'payé',total_xpf:total,campaign_name:CAMP_NAME,lp_slug:LP_SLUG,product_icon:p.e||CAMP_ICON||'${_iconStr}',product_name:p.n||p.p||'',contact:ckContact,delivery:ckDelivery,design_data:{product_color:p.couleur||p.color||'',size:_s.size||window._selectedSize||'',qty:_s.qty||window._qty||1,format:_s.format||'',color:_s.color||'',note_client:ckContact.note||'',custom_fields:window._customFields||{}},snapshots:{},mode:WORKER_MODE,note:ckContact.note||''})}).catch(function(){});
       /* Enrichir la confirmation avec fidélité + lien compte client */
       _enrichConfirmation(orderId, total, ckContact, ckDelivery, p?.n || '');
     }
@@ -6250,9 +6293,7 @@ function renderOrdersView(orders, archived=false) {
                     <option value="cancelled" ${o.status==='cancelled' ?'selected':''}>❌ Annulée</option>
                     <option value="archived">🗃️ Archiver</option>
                   </select>
-                  ${(o.campaignName||'').toLowerCase().includes('véhicule')||(o.product||'').includes('🚗')
-                    ? `<button onclick="vdecShowFiche('${o.orderId}')" style="padding:4px 10px;background:rgba(255,150,100,.1);border:1px solid rgba(255,150,100,.4);color:#ff9966;border-radius:6px;font-size:0.68rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s" onmouseover="this.style.background='rgba(255,150,100,.22)'" onmouseout="this.style.background='rgba(255,150,100,.1)'">📋 Fiche</button>`
-                    : ''}
+                  <button onclick="showFicheHCS('${o.orderId}')" style="padding:4px 10px;background:rgba(255,150,100,.1);border:1px solid rgba(255,150,100,.4);color:#ff9966;border-radius:6px;font-size:0.68rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s" onmouseover="this.style.background='rgba(255,150,100,.22)'" onmouseout="this.style.background='rgba(255,150,100,.1)'">📋 Fiche</button>
                   <button class="po-planning-btn" onclick="showPlanning()">📅 Voir Planning</button>
                   <button onclick="deleteOrder('${o.orderId}',${archived})" style="padding:4px 10px;background:rgba(255,77,77,.15);border:1px solid #ff4d4d;color:#ff6b6b;border-radius:6px;font-size:0.68rem;cursor:pointer;white-space:nowrap;transition:all .2s" onmouseover="this.style.background='rgba(255,77,77,.3)'" onmouseout="this.style.background='rgba(255,77,77,.15)'">🗑️ Supprimer</button>
                 </td>
@@ -7119,7 +7160,7 @@ function renderPlanning(orders) {
             <option value="cancelled"  ${o.status==='cancelled' ?'selected':''}>❌ Annuler</option>
             <option value="archived">🗃️ Archiver</option>
           </select>
-          ${isVdec ? `<button onclick="vdecShowFiche('${o.orderId}')" style="width:100%;margin-top:5px;padding:6px;background:rgba(255,150,100,.1);border:1px solid rgba(255,150,100,.35);color:#ff9966;border-radius:7px;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(255,150,100,.22)'" onmouseout="this.style.background='rgba(255,150,100,.1)'">📋 Fiche production</button>` : ''}
+          <button onclick="showFicheHCS('${o.orderId}')" style="width:100%;margin-top:5px;padding:6px;background:rgba(255,150,100,.1);border:1px solid rgba(255,150,100,.35);color:#ff9966;border-radius:7px;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(255,150,100,.22)'" onmouseout="this.style.background='rgba(255,150,100,.1)'">📋 Fiche production</button>
         </div>
       </div>`;
     }).join('');
@@ -13623,6 +13664,180 @@ function vdecAdmToggleInterface(key, val) {
 </div>
 
 <script>
+// ── Fiche Production Unifiée — toutes verticales ─────────
+const HCS_STATUS_FR  = { pending:'En attente', paid:'Payée', payé:'Payée', processing:'En production', ready:'Prête', delivered:'Livrée', cancelled:'Annulée', annulé:'Annulée', 'en cours':'En production', terminé:'Terminée' };
+const HCS_STATUS_COL = { pending:'#f0a030', paid:'#43e97b', payé:'#43e97b', processing:'#4facfe', ready:'#a78bfa', delivered:'#6c808d', cancelled:'#ff6b6b', annulé:'#ff6b6b', 'en cours':'#4facfe', terminé:'#6c808d' };
+
+async function showFicheHCS(orderId) {
+  const modal   = document.getElementById('vdec-fiche-modal');
+  const content = document.getElementById('vdec-fiche-content');
+  document.getElementById('vdec-fiche-subtitle').textContent = orderId;
+  content.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,.3)">⏳ Chargement…</div>';
+  modal.classList.add('open');
+
+  let raw = null;
+
+  /* 1. Cherche dans hcs_orders (table unifiée) */
+  try {
+    const r = await fetch(`${HCS_API_BASE}/hcs_orders/search?q=${encodeURIComponent(orderId)}`, { headers:{'x-api-key':HCS_API_KEY} });
+    if (r.ok) {
+      const d = await r.json();
+      const items = Array.isArray(d) ? d : (d.items || []);
+      raw = items.find(o => o.order_id === orderId) || null;
+    }
+  } catch(_) {}
+
+  /* 2. Fallback : cherche dans vdec_commandes (rétrocompatibilité) */
+  if (!raw) {
+    try {
+      const r = await fetch(`${HCS_API_BASE}/vdec_commandes/search?q=${encodeURIComponent(orderId)}`, { headers:{'x-api-key':HCS_API_KEY} });
+      if (r.ok) {
+        const d = await r.json();
+        const items = Array.isArray(d) ? d : (d.items || []);
+        const vd = items.find(o => o.order_id === orderId) || items[0] || null;
+        if (vd) {
+          raw = { order_id:vd.order_id, vertical:'vdec', status:vd.status, total_xpf:vd.total_xpf,
+            contact:vd.contact, delivery:vd.delivery, campaign_name:'Déco Véhicule',
+            product_icon:vd.cat_icon||'🚗', product_name:(vd.cat_name||'')+(vd.cat_model?' — '+vd.cat_model:''),
+            design_data:{ cat_name:vd.cat_name||'', cat_model:vd.cat_model||'', cat_icon:vd.cat_icon||'🚗',
+              views_validated:vd.views_validated||{}, logos:vd.logos||[], texts:vd.texts||[], cat_views:vd.cat_views||{} },
+            snapshots:vd.view_snapshots||{}, created_at:vd.created_at };
+        }
+      }
+    } catch(_) {}
+  }
+
+  /* 3. Fallback KV */
+  if (!raw) {
+    const kv = [...(_planningOrders||[]),...(ordersData||[])].find(o=>(o.orderId||o.order_id)===orderId);
+    if (kv) raw = { order_id:orderId, vertical:'generic', status:kv.status||'pending',
+      total_xpf:kv.amount||0, campaign_name:kv.campaignName||'', product_icon:'🛍️',
+      product_name:kv.product||'', contact:kv.client||{}, delivery:kv.delivery||{},
+      design_data:{}, snapshots:{}, created_at:kv.createdAt||'' };
+  }
+
+  if (!raw) {
+    content.innerHTML = '<div style="color:#ff6b6b;padding:30px;text-align:center">❌ Commande introuvable</div>';
+    return;
+  }
+
+  const vert = raw.vertical || 'generic';
+  if (vert === 'vdec') { vdecRenderFiche(raw); return; }
+  renderFicheHCS(raw);
+}
+
+function renderFicheHCS(raw) {
+  const content = document.getElementById('vdec-fiche-content');
+  const jp = (v, fb) => { try { return typeof v==='string'?JSON.parse(v||fb):(v||JSON.parse(fb)); } catch(_){ try{return JSON.parse(fb);}catch(_){return fb==='{}'?{}:[];} } };
+
+  const contact  = jp(raw.contact,  '{}');
+  const delivery = jp(raw.delivery, '{}');
+  const design   = jp(raw.design_data, '{}');
+  const snaps    = jp(raw.snapshots, '{}');
+
+  const vert     = raw.vertical || 'generic';
+  const dateStr  = raw.created_at ? new Date(raw.created_at).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+  const statusFr = HCS_STATUS_FR[raw.status] || raw.status || '—';
+  const statusCol= HCS_STATUS_COL[raw.status] || '#9090b0';
+  const ISLANDS  = {'tahiti':'Tahiti','moorea':'Moorea','huahine':'Huahine','bora-bora':'Bora Bora','raiatea':'Raiatea','tahaa':'Tahaa','maupiti':'Maupiti','rangiroa':'Rangiroa','hiva-oa':'Hiva Oa','nuku-hiva':'Nuku Hiva'};
+  const isPickup = delivery.type === 'pickup';
+  const livrHtml = isPickup
+    ? `🏪 Retrait en boutique${delivery.pickupDate?` · <b>${delivery.pickupDate}</b>`:''}${delivery.slot?' · '+(delivery.slot==='08-12'?'08h–12h':'13h–17h'):''}`
+    : `🚚 ${ISLANDS[delivery.island]||delivery.island||'Tahiti'}${delivery.address?` · ${delivery.address}`:''}${delivery.shippingFee?` · ${parseFloat(delivery.shippingFee).toLocaleString('fr-FR')} XPF`:''}`;
+
+  document.getElementById('vdec-fiche-subtitle').textContent = raw.order_id + ' · ' + dateStr;
+
+  /* ── Sections design par verticale ── */
+  function _designSection() {
+    const VERT_ICONS = {tshirt:'👕',casquette:'🧢',dtf:'🖨️',sticker:'🏷️',formation:'🎓',abo:'♾️',service:'🔧',generic:'🛍️'};
+    const vertLabel = {tshirt:'T-Shirt',casquette:'Casquette',dtf:'Transfert DTF',sticker:'Sticker',formation:'Formation',abo:'Abonnement',service:'Service sur-mesure',generic:'Produit'}[vert]||vert;
+    let h = `<div style="margin-bottom:12px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px">
+      <div style="font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.35);margin-bottom:8px">${VERT_ICONS[vert]||'📦'} ${vertLabel}</div>`;
+
+    if (vert === 'tshirt' || vert === 'casquette') {
+      const rows = [
+        ['Produit', raw.product_name||'—'],
+        ['Couleur', design.product_color||(design.product_color_hex?`<span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:${design.product_color_hex};border:1px solid rgba(255,255,255,.3);vertical-align:middle;margin-right:4px"></span>${design.product_color_hex}`:'—')],
+        ['Taille', design.size||'—'],
+        ['Quantité', design.qty||1],
+        ['Face', design.face==='back'?'Dos':'Avant'],
+      ];
+      if (design.use_text && design.custom_text) {
+        rows.push(['Texte', `<span style="font-family:'${design.text_font||'Arial'}',sans-serif;color:${design.text_color||'#fff'};font-weight:700">${design.custom_text}</span>`]);
+        rows.push(['Police', design.text_font||'—']);
+        rows.push(['Couleur texte', design.text_color?`<span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:${design.text_color};border:1px solid rgba(255,255,255,.3);vertical-align:middle;margin-right:4px"></span>${design.text_color}`:'—']);
+        rows.push(['Position texte', design.text_pos||'—']);
+      }
+      if (design.logo_name) rows.push(['Logo', design.logo_name]);
+      if (design.logo_pos && design.logo_pos.xPct !== undefined) rows.push(['Placement logo', `x=${Math.round(design.logo_pos.xPct)}% y=${Math.round(design.logo_pos.yPct)}% w=${Math.round(design.logo_pos.wPct)}%`]);
+      rows.forEach(([k,v]) => { h += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:rgba(255,255,255,.4);font-size:.73rem">${k}</span><span style="font-weight:700;font-size:.75rem;text-align:right;max-width:65%">${v}</span></div>`; });
+      /* Aperçu logo */
+      const snapFace = snaps.face || snaps.front || design.logo_url || '';
+      if (snapFace) h += `<div style="margin-top:10px;text-align:center"><img src="${snapFace}" style="max-height:120px;max-width:100%;border-radius:8px;object-fit:contain;background:rgba(255,255,255,.05)"></div>`;
+
+    } else if (vert === 'dtf') {
+      const rows = [['Produit', raw.product_name||'—'],['Couleur', design.product_color||'—'],['Taille/Format', design.size||design.format||'—'],['Quantité', design.qty||1]];
+      if (design.dtf_logo_ref)  rows.push(['Ref. DTF', design.dtf_logo_ref]);
+      if (design.dtf_logo_name) rows.push(['Fichier', design.dtf_logo_name]);
+      rows.forEach(([k,v]) => { h += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:rgba(255,255,255,.4);font-size:.73rem">${k}</span><span style="font-weight:700;font-size:.75rem">${v}</span></div>`; });
+      if (design.dtf_logo_url || snaps.dtf) h += `<div style="margin-top:10px;text-align:center"><img src="${design.dtf_logo_url||snaps.dtf}" style="max-height:100px;max-width:100%;border-radius:8px;object-fit:contain;background:rgba(255,255,255,.05)"></div>`;
+
+    } else if (vert === 'sticker') {
+      const rows = [['Produit', raw.product_name||'—'],['Texte', design.custom_text||design.text||'—'],['Police', design.text_font||design.font||'—'],['Couleur', design.text_color||design.color||'—'],['Dimensions', design.width_cm?`${design.width_cm} × ${design.height_cm||design.width_cm} cm`:(design.size||'—')],['Finition', design.finish||'—'],['Quantité', design.qty||1]];
+      rows.forEach(([k,v]) => { h += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:rgba(255,255,255,.4);font-size:.73rem">${k}</span><span style="font-weight:700;font-size:.75rem">${v}</span></div>`; });
+
+    } else if (vert === 'formation') {
+      const rows = [['Module', design.module||raw.product_name||'—'],['Format', design.format||'—'],['Date', design.date||'—'],['Lieu', design.place||'—'],['Participants', design.participants||1]];
+      rows.forEach(([k,v]) => { h += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:rgba(255,255,255,.4);font-size:.73rem">${k}</span><span style="font-weight:700;font-size:.75rem">${v}</span></div>`; });
+
+    } else if (vert === 'abo') {
+      const rows = [['Plan', design.plan||raw.product_name||'—'],['Durée', design.duree||'—'],['Renouvellement auto', design.auto_renew?'Oui':'Non']];
+      rows.forEach(([k,v]) => { h += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:rgba(255,255,255,.4);font-size:.73rem">${k}</span><span style="font-weight:700;font-size:.75rem">${v}</span></div>`; });
+
+    } else if (vert === 'service') {
+      const rows = [['Service', design.service||raw.product_name||'—'],['Description', design.description||'—'],['Délai (j)', design.delai_jours||'—'],['Urgence', design.urgency||'normal']];
+      rows.forEach(([k,v]) => { h += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:rgba(255,255,255,.4);font-size:.73rem">${k}</span><span style="font-weight:700;font-size:.75rem;max-width:65%;text-align:right">${v}</span></div>`; });
+      if (design.file_url) h += `<div style="margin-top:6px;font-size:.68rem;color:#4facfe"><a href="${design.file_url}" target="_blank" style="color:#4facfe">📎 Fichier fourni</a></div>`;
+
+    } else {
+      /* Verticale générique : affiche tous les champs design_data */
+      if (raw.product_name) h += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:rgba(255,255,255,.4);font-size:.73rem">Produit</span><span style="font-weight:700;font-size:.75rem">${raw.product_name}</span></div>`;
+      Object.entries(design||{}).forEach(([k,v]) => {
+        if (typeof v !== 'object' && v !== '' && v !== null)
+          h += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:rgba(255,255,255,.4);font-size:.73rem">${k.replace(/_/g,' ')}</span><span style="font-weight:700;font-size:.75rem;text-align:right;max-width:65%">${v}</span></div>`;
+      });
+    }
+    return h + '</div>';
+  }
+
+  const livrInfoHtml = `<div style="margin-bottom:12px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px">
+    <div style="font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.35);margin-bottom:8px">📦 Livraison</div>
+    <div style="font-size:.78rem;color:rgba(255,255,255,.8)">${livrHtml}</div></div>`;
+
+  const noteHtml = raw.note ? `<div style="margin-bottom:12px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px">
+    <div style="font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.35);margin-bottom:4px">📝 Note</div>
+    <div style="font-size:.75rem;color:rgba(255,255,255,.7);line-height:1.5">${raw.note}</div></div>` : '';
+
+  content.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <span style="font-size:1.6rem">${raw.product_icon||'📦'}</span>
+      <div>
+        <div style="font-weight:800;font-size:.9rem">${raw.campaign_name||raw.product_name||'Commande'}</div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,.45)">${raw.product_name||''}</div>
+      </div>
+      <span style="margin-left:auto;padding:3px 10px;border-radius:20px;font-size:.65rem;font-weight:800;background:${statusCol}22;color:${statusCol};border:1px solid ${statusCol}55">${statusFr}</span>
+    </div>
+    <div style="margin-bottom:12px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px">
+      <div style="font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.35);margin-bottom:8px">👤 Client</div>
+      <div style="font-size:.8rem;font-weight:700">${contact.name||'—'}</div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.5)">${contact.email||''} ${contact.phone?'· '+contact.phone:''}</div>
+    </div>
+    ${_designSection()}
+    ${livrInfoHtml}
+    ${noteHtml}
+    <div style="text-align:right;padding-top:8px;font-size:.8rem;font-weight:800;color:#43e97b">${raw.total_xpf?parseFloat(raw.total_xpf).toLocaleString('fr-FR')+' XPF':''}</div>`;
+}
+
 // ── Fiche Production Déco Véhicule ───────────────────────
 const VDEC_VIEW_LABELS = { left:'◀ Côté gauche', front:'▲ Face avant', back:'▼ Arrière', right:'▶ Côté droit' };
 const VDEC_STATUS_FR   = { pending:'En attente', paid:'Payée', processing:'En production', ready:'Prête', delivered:'Livrée', cancelled:'Annulée' };

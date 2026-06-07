@@ -195,6 +195,8 @@ $allowedTables = [
     'fidelite_historique',
     /* Triage & Réception (Agent 1) */
     'triage_messages',
+    /* Commandes unifiées toutes verticales */
+    'hcs_orders',
 ];
 
 if (!$resource || !in_array($resource, $allowedTables, true)) {
