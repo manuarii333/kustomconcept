@@ -811,6 +811,10 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-prim
   <div class="header-divider"></div>
   <div class="campaign-badge">📣 FACEBOOK ADS 2026</div>
   <div class="header-actions">
+    <div id="storage-indicator" style="display:flex;align-items:center;gap:6px;font-size:0.7rem;color:#9090b0;padding:4px 8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px">
+      <span id="storage-bar" title="Taille du stockage local hcs_erp_db">💾 …</span>
+      <button id="btn-sync-free" onclick="syncAndFreeStorage()" title="Pousser vers MySQL et libérer l'espace local" style="display:none;background:linear-gradient(135deg,#43e97b,#38f9d7);border:none;color:#0f0f1a;border-radius:6px;padding:3px 8px;font-size:0.68rem;font-weight:700;cursor:pointer;white-space:nowrap">☁↑ Libérer</button>
+    </div>
     <button class="btn btn-outline" onclick="exportAll()">⬇️ Exporter tout</button>
     <button class="btn btn-primary" onclick="alert('Templates prêts ! Importez dans Facebook Ads Manager.')">🚀 Lancer campagne</button>
     <button class="cart-btn" onclick="openCart()" title="Voir le panier">🛒 Panier <span class="cart-badge" id="cart-badge">0</span></button>
@@ -2377,6 +2381,7 @@ async function publishLP(id) {
 
     hidePublishProgress();
     showPublishSuccess(c.name, data.url);
+    updateStorageIndicator();
   } catch(e) {
     hidePublishProgress();
     showToast('❌ Erreur publication : ' + e.message, true);
@@ -11372,6 +11377,47 @@ function genSubmitOrder() {
   openCart();
   renderStep();
 }
+
+// ═══════════════════════════════════════════════════════
+// INDICATEUR STOCKAGE LOCAL + SYNC-TO-MYSQL
+// ═══════════════════════════════════════════════════════
+function updateStorageIndicator() {
+  const s = (typeof Store !== 'undefined' && Store.getStorageSize) ? Store.getStorageSize() : null;
+  const bar = document.getElementById('storage-bar');
+  const btn = document.getElementById('btn-sync-free');
+  if (!bar || !s) return;
+  const mb = (s.used / 1024 / 1024).toFixed(1);
+  const color = s.percent > 80 ? '#ff6b6b' : s.percent > 60 ? '#f6d365' : '#43e97b';
+  bar.innerHTML = `💾 ${mb}MB <span style="color:${color}">(${s.percent}%)</span>`;
+  if (btn) btn.style.display = s.percent > 60 ? 'inline-block' : 'none';
+}
+
+async function syncAndFreeStorage() {
+  if (typeof Store === 'undefined' || !Store.syncAndFreeSpace) {
+    showToast('⚠️ Store non disponible', true); return;
+  }
+  const btn = document.getElementById('btn-sync-free');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Sync…'; }
+  try {
+    await Store.syncAndFreeSpace(({ step, col }) => {
+      if (btn && col) btn.textContent = `☁↑ ${col}…`;
+    });
+    if (btn) btn.textContent = '✅ Libéré !';
+    setTimeout(() => { if (btn) { btn.textContent = '☁↑ Libérer'; btn.disabled = false; } }, 2500);
+    updateStorageIndicator();
+    showToast('✅ Données synchronisées MySQL — espace local libéré');
+  } catch (e) {
+    if (btn) { btn.textContent = '☁↑ Libérer'; btn.disabled = false; }
+    showToast('❌ Erreur sync : ' + (e?.message || e), true);
+  }
+}
+
+/* Initialiser l'indicateur au chargement */
+document.addEventListener('DOMContentLoaded', () => {
+  updateStorageIndicator();
+  /* Rafraîchir toutes les 30s */
+  setInterval(updateStorageIndicator, 30000);
+});
 </script>
 
 <script src="../hcs-hub-ecosystem/hcs-hub-ecosystem/andromeda-v2-patch.js"></script>

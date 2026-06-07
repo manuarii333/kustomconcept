@@ -233,12 +233,81 @@ const Store = (() => {
             console.warn('[Store] Sauvegarde ultra-dégradée (grands champs tronqués) — libérez du localStorage');
           } catch (e3) {
             console.error('[Store] Erreur de sauvegarde critique — localStorage saturé :', e3);
+            /* Tier 4 : sync MySQL en arrière-plan puis purge nucléaire */
+            syncAndFreeSpace().catch(() => {});
+            try {
+              const minimal = {};
+              for (const col of Object.keys(dbForStorage)) {
+                if (!Array.isArray(dbForStorage[col])) continue;
+                minimal[col] = dbForStorage[col].slice(-10).map(r => {
+                  if (typeof r !== 'object' || !r) return r;
+                  const clean = {};
+                  for (const k of Object.keys(r)) {
+                    const v = r[k];
+                    if (typeof v === 'string' && (v.startsWith('data:') || v.length > 300)) clean[k] = '';
+                    else clean[k] = v;
+                  }
+                  return clean;
+                });
+              }
+              minimal.auditLog = [];
+              localStorage.removeItem(LS_KEY);
+              localStorage.setItem(LS_KEY, JSON.stringify(minimal));
+              console.warn('[Store] Données purgées au minimum — sync MySQL lancée en arrière-plan.');
+            } catch (e4) {
+              localStorage.removeItem(LS_KEY);
+              console.warn('[Store] hcs_erp_db purgé — rechargez et lancez ☁↓ pour resynchroniser.');
+            }
           }
         }
       }
     } catch (e) {
       console.error('[Store] Erreur de sauvegarde :', e);
     }
+  }
+
+  /* ---------- STOCKAGE : TAILLE + LIBÉRATION ---------- */
+
+  /**
+   * Mesure la taille actuelle de hcs_erp_db.
+   * @returns {{ used: number, quota: number, percent: number }}
+   */
+  function getStorageSize() {
+    try {
+      const raw = localStorage.getItem(LS_KEY) || '';
+      const used = new Blob([raw]).size;
+      const QUOTA = 5 * 1024 * 1024;
+      return { used, quota: QUOTA, percent: Math.round(used / QUOTA * 100) };
+    } catch (_) {
+      return { used: 0, quota: 5242880, percent: 0 };
+    }
+  }
+
+  /**
+   * Pousse toutes les collections vers MySQL puis réduit le localStorage
+   * à 100 derniers records par collection pour libérer de l'espace.
+   * @param {Function} [onProgress] - callback({ step, col, done, total })
+   * @returns {Promise<{ pushed: number }>}
+   */
+  async function syncAndFreeSpace(onProgress) {
+    const COLS = ['devis', 'factures', 'commandes', 'contacts', 'produits', 'fournisseurs'];
+    let pushed = 0;
+    for (let i = 0; i < COLS.length; i++) {
+      const col = COLS[i];
+      onProgress?.({ step: 'push', col, done: i, total: COLS.length });
+      try { await syncAllToMySQL(col); pushed++; } catch (_) {}
+    }
+    /* Réduire à 100 derniers records par collection */
+    if (db) {
+      for (const col of Object.keys(db)) {
+        if (!Array.isArray(db[col]) || db[col].length <= 100) continue;
+        db[col] = db[col].slice(-100);
+      }
+      if (db.auditLog) db.auditLog = db.auditLog.slice(-20);
+      save();
+    }
+    onProgress?.({ step: 'done', pushed });
+    return { pushed };
   }
 
   /* ---------- ACCESSEURS ---------- */
@@ -1182,7 +1251,9 @@ const Store = (() => {
     syncFromMySQL,
     pushMissingToMySQL,
     syncAllToMySQL,
-    pullAllFromMySQL
+    pullAllFromMySQL,
+    getStorageSize,
+    syncAndFreeSpace
   };
 })();
 
