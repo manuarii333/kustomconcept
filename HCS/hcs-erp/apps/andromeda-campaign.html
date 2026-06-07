@@ -4091,6 +4091,7 @@ const ISLAND_LABELS = {tahiti:'Tahiti',moorea:'Moorea',huahine:'Huahine','bora-b
 
 var ckStep=1, ckCatIdx=null, ckContact={}, ckDelivery={type:'pickup',shippingFee:0}, ckPhotoUrl='', ckDescription='';
 var ORDER_ID='VDC-'+Date.now();
+var _vdOrderSaved=false;
 
 function getTotal(){
   var base=2500;
@@ -4317,11 +4318,12 @@ function _vdInjectDesignRecap(){
   document.getElementById('pz-ok').appendChild(d);
 }
 function _vdSaveOrder(){
+  if(_vdOrderSaved)return; _vdOrderSaved=true;
   var cat=ckCatIdx!==null?CATS[ckCatIdx]:{};
   var sidx=_vdecCatIdx!=null?_vdecCatIdx:ckCatIdx;
   var scat=sidx!=null&&CATS[sidx]?CATS[sidx]:cat;
   /* Worker KV */
-  fetch('https://payzen-hcs.highcoffeeshirt.workers.dev/order/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:ORDER_ID,amount:getTotal(),currency:'XPF',campaignName:'Déco Véhicule',lpSlug:'sticker-auto-0',product:(scat.icon||'🚗')+' '+(scat.name||'')+(scat.model?' — '+scat.model:''),client:ckContact,delivery:ckDelivery,note:ckDescription+(ckPhotoUrl?' | [Photo fournie par le client]':''),mode:WORKER_MODE})}).catch(function(_e){var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_vd-warn')){var _w=document.createElement('p');_w.id='_vd-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+ORDER_ID+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
+  fetch('https://payzen-hcs.highcoffeeshirt.workers.dev/order/save',{method:'POST',headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SEC},body:JSON.stringify({orderId:ORDER_ID,amount:getTotal(),currency:'XPF',campaignName:'Déco Véhicule',lpSlug:'sticker-auto-0',product:(scat.icon||'🚗')+' '+(scat.name||'')+(scat.model?' — '+scat.model:''),client:ckContact,delivery:ckDelivery,note:ckDescription+(ckPhotoUrl?' | [Photo fournie par le client]':''),mode:WORKER_MODE})}).catch(function(_e){var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_vd-warn')){var _w=document.createElement('p');_w.id='_vd-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+ORDER_ID+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
   /* MySQL vdec_commandes — design complet */
   fetch('https://highcoffeeshirts.com/erp/api/vdec_commandes',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':'hcs-erp-2026'},body:JSON.stringify({order_id:ORDER_ID,status:'payé',total_xpf:getTotal(),cat_name:scat.name||'',cat_model:scat.model||'',cat_icon:scat.icon||'🚗',views_validated:_vdecViewsVal,logos:_vdecLogos,texts:_vdecTexts,cat_views:scat.views||{},view_snapshots:_vdecViewSnaps,contact:ckContact,delivery:ckDelivery,created_at:new Date().toISOString()})}).catch(function(){});
   /* MySQL hcs_orders — commande unifiée toutes verticales */
@@ -4375,7 +4377,7 @@ function exportLPGeneric(id) {
   const tshSizesJson = id === 3 ? JSON.stringify(tshGetParcours(id).sizes) : '[]';
   const primary      = GEN_COLORS[id] || '#6c63ff';
   const lpSlug       = `${c.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}-${id}`;
-  const _verticalStr = c.id===3?'dtf':c.id===4?'sticker':c.id===5?'formation':c.id===6?'abo':c.id===7?'service':'generic';
+  const _verticalStr = c.id===3?'dtf':c.id===4?'dtf':c.id===5?'formation':c.id===6?'abo':c.id===7?'service':'generic';
   const _iconStr     = (c.products && c.products[0] && c.products[0].e) ? c.products[0].e : '🛍️';
 
   const html = `<!DOCTYPE html>
