@@ -1364,6 +1364,17 @@ function switchWorkspaceTab(tab, id) {
 function renderParcoursFn(id, container) {
   var cfg = PARCOURS_CFG[id];
   if (!cfg) { container.innerHTML = '<div style="padding:20px;color:var(--text-secondary);font-size:.8rem">Pas de données parcours pour cette verticale.</div>'; return; }
+
+  // Injecter l'URL publiée depuis localStorage (sans muter PARCOURS_CFG)
+  var _pubUrls = JSON.parse(localStorage.getItem('hcs_published_urls') || '{}');
+  var _pubUrl = _pubUrls[id] || null;
+  var _links = (cfg.links || []).map(function(l) {
+    if (_pubUrl && (l.icon === '🌐' || l.label.includes('LP'))) {
+      return Object.assign({}, l, { url: _pubUrl, ok: true, ext: true });
+    }
+    return l;
+  });
+
   var activeStep = _prcActiveStep[id] || 1;
   var color = cfg.color;
 
@@ -1383,8 +1394,8 @@ function renderParcoursFn(id, container) {
 
   // ── Liens & Accès rapide
   var linksHtml = '';
-  if (cfg.links && cfg.links.length) {
-    var linkBtns = cfg.links.map(function(l) {
+  if (_links.length) {
+    var linkBtns = _links.map(function(l) {
       if (!l.ok || !l.url) {
         return '<span class="prc-link-btn prc-link-warn">'+l.icon+' '+l.label+' <span class="prc-link-ext">⚠ À déployer</span></span>';
       }
