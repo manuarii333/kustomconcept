@@ -2324,7 +2324,37 @@ async function publishLP(id) {
     return;
   }
   if (!adminSecret) {
-    showToast('🔐 Connecte-toi en admin pour publier (section Commandes)', true);
+    const _modal = document.createElement('div');
+    _modal.id = 'pub-admin-modal';
+    _modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center';
+    _modal.innerHTML = `<div style="background:#1a1a2e;border:1px solid #6c63ff;border-radius:16px;padding:28px;max-width:380px;width:90%;text-align:center">
+      <div style="font-size:1.8rem;margin-bottom:10px">🔐</div>
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:6px">Secret admin requis</h3>
+      <p style="font-size:.78rem;color:#9090b0;margin-bottom:16px">Entre ton secret pour publier le LP.</p>
+      <input id="pub-adm-inp" type="password" placeholder="Secret admin" autocomplete="current-password"
+        style="width:100%;padding:10px 14px;background:#0f0f1a;border:1px solid #2a2a4a;border-radius:8px;color:white;font-size:.85rem;margin-bottom:12px">
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button onclick="document.getElementById('pub-admin-modal').remove()"
+          style="padding:9px 16px;background:#1e1e3a;color:#9090b0;border:1px solid #2a2a4a;border-radius:8px;font-size:.82rem;cursor:pointer">Annuler</button>
+        <button id="pub-adm-ok"
+          style="padding:9px 16px;background:#6c63ff;color:white;border:none;border-radius:8px;font-weight:700;font-size:.82rem;cursor:pointer">Publier →</button>
+      </div>
+      <div id="pub-adm-err" style="color:#ff6b6b;font-size:.75rem;margin-top:8px;display:none"></div>
+    </div>`;
+    document.body.appendChild(_modal);
+    const _ok = () => {
+      const val = document.getElementById('pub-adm-inp')?.value.trim();
+      if (!val) return;
+      const btn = document.getElementById('pub-adm-ok');
+      btn.textContent = '…'; btn.disabled = true;
+      fetch(`${WORKER_BASE}/admin/db/orders?archived=0`, { headers: { 'X-Admin-Secret': val } })
+        .then(r => {
+          if (r.ok) { adminSecret = val; sessionStorage.setItem('hcs_admin_secret', val); _modal.remove(); publishLP(id); }
+          else { document.getElementById('pub-adm-err').style.display='block'; document.getElementById('pub-adm-err').textContent='❌ Secret incorrect.'; btn.textContent='Publier →'; btn.disabled=false; }
+        }).catch(() => { btn.textContent='Publier →'; btn.disabled=false; });
+    };
+    document.getElementById('pub-adm-ok').onclick = _ok;
+    document.getElementById('pub-adm-inp').addEventListener('keydown', e => { if (e.key==='Enter') _ok(); });
     return;
   }
   const c = CAMPS[id];
@@ -2393,6 +2423,14 @@ async function publishLP(id) {
     if (!res.ok) throw new Error(data.error || 'Erreur serveur');
 
     const urls = JSON.parse(localStorage.getItem('hcs_published_urls') || '{}');
+    // Supprimer l'ancien LP si slug différent
+    const _oldUrl = urls[id];
+    if (_oldUrl) {
+      const _oldSlug = _oldUrl.split('/lp/').pop().split('?')[0];
+      if (_oldSlug && _oldSlug !== lpSlug) {
+        fetch(`${WORKER_BASE}/lp/${_oldSlug}`, { method:'DELETE', headers:{'X-Admin-Secret':adminSecret} }).catch(()=>{});
+      }
+    }
     urls[id] = data.url;
     localStorage.setItem('hcs_published_urls', JSON.stringify(urls));
 
@@ -2458,10 +2496,24 @@ function showPublishSuccess(name, url) {
         <button onclick="navigator.clipboard.writeText('${url}');showToast('✅ Lien copié !')" style="padding:9px 18px;background:#43e97b;color:#0f0f1a;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.82rem">📋 Copier le lien</button>
         <a href="${url}" target="_blank" style="padding:9px 18px;background:#6c63ff;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.82rem;text-decoration:none">🌐 Ouvrir</a>
         <button onclick="document.getElementById('publish-modal').remove()" style="padding:9px 18px;background:#1e1e3a;color:#9090b0;border:1px solid #2a2a4a;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.82rem">Fermer</button>
+        <button onclick="deleteLpByUrl('${url}');document.getElementById('publish-modal').remove()" style="padding:9px 18px;background:rgba(255,80,80,.15);color:#ff6b6b;border:1px solid rgba(255,80,80,.3);border-radius:8px;font-weight:600;cursor:pointer;font-size:0.82rem">🗑 Supprimer</button>
       </div>
     </div>`;
   document.body.appendChild(div);
   div.addEventListener('click', e => { if (e.target === div) div.remove(); });
+}
+
+function deleteLpByUrl(url) {
+  const slug = url.split('/lp/').pop().split('?')[0];
+  if (!slug || !adminSecret) return;
+  fetch(`${WORKER_BASE}/lp/${slug}`, { method:'DELETE', headers:{'X-Admin-Secret':adminSecret} })
+    .then(r => r.json())
+    .then(() => {
+      showToast(`🗑 LP "${slug}" supprimée`, false);
+      const urls = JSON.parse(localStorage.getItem('hcs_published_urls') || '{}');
+      Object.keys(urls).forEach(k => { if (urls[k] === url) delete urls[k]; });
+      localStorage.setItem('hcs_published_urls', JSON.stringify(urls));
+    }).catch(() => showToast('❌ Erreur suppression LP', true));
 }
 
 function previewLP(id) {
