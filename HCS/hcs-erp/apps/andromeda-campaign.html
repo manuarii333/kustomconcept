@@ -864,7 +864,7 @@ const CAMPS = [
   },
   {
     id:1, icon:'👕', iconBg:'linear-gradient(135deg,#4facfe,#00f2fe)',
-    name:'T-Shirt Classic Mars', tag:'Édition collector', active:false,
+    name:'T-Shirt Classic Mars', tag:'Édition collector', active:true,
     tags:['T-shirt','Mars','Classic'],
     colors:{primary:'#4facfe',badge:'#4facfe',overlay:'rgba(0,10,30,0.5)'},
     gradients:['linear-gradient(135deg,#4facfe,#00f2fe)','linear-gradient(135deg,#0f2027,#4facfe)','linear-gradient(135deg,#1a1a2e,#203a43)'],
@@ -5748,6 +5748,7 @@ async function testPayzen(id) {
     KR.onSubmit(d => {
       if (['PAID','RUNNING','AUTHORISED'].includes(d?.clientAnswer?.orderStatus)) {
         formEl.style.display = 'none';
+        okEl.innerHTML = mode === 'PRODUCTION' ? '✅ Paiement PRODUCTION accepté !' : '✅ Paiement TEST accepté !';
         okEl.style.display = 'block';
       }
       return false;

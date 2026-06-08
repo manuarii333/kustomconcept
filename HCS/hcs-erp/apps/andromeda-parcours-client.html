@@ -157,7 +157,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div class="header-title">Andromeda — Parcours Clients</div>
     <div class="header-sub">Vue opérateur · Illustration des tunnels par verticale</div>
   </div>
-  <div class="header-badge">5 verticales · standalone</div>
+  <div class="header-badge">9 verticales · standalone</div>
 </div>
 
 <div class="layout">
@@ -165,25 +165,41 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <!-- ── Sidebar ── -->
   <nav class="sidebar">
     <div class="sidebar-section">Verticales</div>
-    <button class="camp-btn active" onclick="showCamp(3)" id="btn-3" style="--camp-color:#ff6b6b">
+    <button class="camp-btn active" onclick="showCamp(0)" id="btn-0" style="--camp-color:#ff6584">
+      <span class="camp-emoji">🚗</span>
+      <div><div class="camp-name">Déco Véhicule</div><div class="camp-id">id=0</div></div>
+    </button>
+    <button class="camp-btn" onclick="showCamp(1)" id="btn-1" style="--camp-color:#4facfe">
       <span class="camp-emoji">👕</span>
+      <div><div class="camp-name">T-Shirt Personnalisé</div><div class="camp-id">id=1</div></div>
+    </button>
+    <button class="camp-btn" onclick="showCamp(2)" id="btn-2" style="--camp-color:#43e97b">
+      <span class="camp-emoji">🧢</span>
+      <div><div class="camp-name">Casquette Brodée</div><div class="camp-id">id=2</div></div>
+    </button>
+    <button class="camp-btn" onclick="showCamp(3)" id="btn-3" style="--camp-color:#ff6b6b">
+      <span class="camp-emoji">🏄</span>
       <div><div class="camp-name">DTF Originals</div><div class="camp-id">id=3</div></div>
     </button>
-    <button class="camp-btn" onclick="showCamp(4)" id="btn-4" style="--camp-color:#6c63ff">
-      <span class="camp-emoji">🎨</span>
-      <div><div class="camp-name">Pack Collector DTF</div><div class="camp-id">id=4</div></div>
+    <button class="camp-btn" onclick="showCamp(4)" id="btn-4" style="--camp-color:#a18cd1">
+      <span class="camp-emoji">📋</span>
+      <div><div class="camp-name">Grille DTF 3×3</div><div class="camp-id">id=4</div></div>
     </button>
     <button class="camp-btn" onclick="showCamp(5)" id="btn-5" style="--camp-color:#43e97b">
-      <span class="camp-emoji">📚</span>
-      <div><div class="camp-name">Formation Textile</div><div class="camp-id">id=5</div></div>
+      <span class="camp-emoji">🎓</span>
+      <div><div class="camp-name">Formation DTF</div><div class="camp-id">id=5</div></div>
     </button>
     <button class="camp-btn" onclick="showCamp(6)" id="btn-6" style="--camp-color:#f6d365">
       <span class="camp-emoji">🌟</span>
       <div><div class="camp-name">Abonnements</div><div class="camp-id">id=6</div></div>
     </button>
     <button class="camp-btn" onclick="showCamp(7)" id="btn-7" style="--camp-color:#30cfd0">
-      <span class="camp-emoji">📐</span>
+      <span class="camp-emoji">✏️</span>
       <div><div class="camp-name">Graphiques / Vecto</div><div class="camp-id">id=7</div></div>
+    </button>
+    <button class="camp-btn" onclick="showCamp(8)" id="btn-8" style="--camp-color:#d4a843">
+      <span class="camp-emoji">🎁</span>
+      <div><div class="camp-name">Pack Collector DTF</div><div class="camp-id">id=8</div></div>
     </button>
   </nav>
 
@@ -193,6 +209,150 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 
 <script>
 const CAMPS_DATA = {
+  0: {
+    name:'Déco Véhicule',
+    emoji:'🚗',
+    desc:'Stickers pare-brise & décoration véhicule sur mesure',
+    color:'#ff6584',
+    colorDark:'rgba(255,101,132,.08)',
+    priceRange:'2 500 – 15 000 XPF',
+    steps:[
+      { num:1, icon:'🚗', name:'Type de véhicule', label:'Véhicule',
+        desc:'Sélection catégorie (voiture, camion, moto, bateau…) + modèle.',
+        time:'~30 sec', required:['Catégorie véhicule'],
+        optional:['Modèle précis'],
+        tags:['required','optional'],
+        funnel:100 },
+      { num:2, icon:'🎨', name:'Description décoration', label:'Décoration',
+        desc:'Texte libre + upload visuel/logo de référence (optionnel).',
+        time:'~90 sec', required:['Description'],
+        optional:['Visuel de référence'],
+        tags:['required','optional'],
+        funnel:84 },
+      { num:3, icon:'👤', name:'Coordonnées & Livraison', label:'Coordonnées',
+        desc:'Nom, email, tél + choix retrait boutique ou livraison île.',
+        time:'~90 sec', required:['Nom complet','Email','Mode livraison'],
+        optional:['Téléphone','Date retrait'],
+        tags:['required','required','required','optional','optional'],
+        funnel:71 },
+      { num:4, icon:'💳', name:'Paiement OSB', label:'Paiement',
+        desc:'Récap commande + tunnel Krypton SDK — CB sécurisée.',
+        time:'~60 sec', required:['Carte bancaire'],
+        optional:[],
+        tags:['auto'],
+        funnel:54 }
+    ],
+    config:[
+      { key:'Worker URL', val:'payzen-hcs.workers.dev', ok:true },
+      { key:'Mode paiement', val:'TEST / PROD', ok:true },
+      { key:'Catégories véhicule', val:'Config vdecAdmin', ok:true },
+      { key:'Tarifs par catégorie', val:'Config vdecAdmin', ok:true },
+      { key:'Upload photo client', val:'FileReader base64', ok:true },
+      { key:'LP Déco Véhicule', val:'À publier', warn:true },
+    ],
+    tips:[
+      { icon:'🚗', text:'<strong>Catégories</strong> : configurez les catégories et tarifs dans le panneau Admin Déco Véhicule (sidebar Config).' },
+      { icon:'📸', text:'<strong>Photo référence</strong> : le champ upload est optionnel mais augmente le taux de conversion car le client se projette.' },
+      { icon:'💡', text:'<strong>Tarif minimum</strong> : affichez "À partir de 2 500 XPF" sur le hero pour ancrer la valeur avant l\'entrée dans le parcours.' },
+    ]
+  },
+
+  1: {
+    name:'T-Shirt Personnalisé',
+    emoji:'👕',
+    desc:'T-shirts personnalisés DTF — design sur mesure en 4 étapes',
+    color:'#4facfe',
+    colorDark:'rgba(79,172,254,.08)',
+    priceRange:'3 500 – 6 500 XPF',
+    steps:[
+      { num:1, icon:'👕', name:'Choisir le t-shirt', label:'Options',
+        desc:'Couleur (blanc, noir, gris…) + taille (XS→4XL).',
+        time:'~30 sec', required:['Couleur','Taille'],
+        optional:['Quantité'],
+        tags:['required','required','optional'],
+        funnel:100 },
+      { num:2, icon:'🎨', name:'Votre design', label:'Design',
+        desc:'Upload photo/logo ou sélection galerie — aperçu en temps réel.',
+        time:'~2 min', required:['Visuel ou texte'],
+        optional:['Position','Taille impression'],
+        tags:['required','optional','optional'],
+        funnel:81 },
+      { num:3, icon:'👤', name:'Coordonnées', label:'Coordonnées',
+        desc:'Nom, email, tél + choix retrait boutique ou livraison île.',
+        time:'~60 sec', required:['Nom complet','Email'],
+        optional:['Téléphone','Note'],
+        tags:['required','required','optional','optional'],
+        funnel:68 },
+      { num:4, icon:'💳', name:'Paiement OSB', label:'Paiement',
+        desc:'Récap commande + tunnel Krypton SDK — CB sécurisée.',
+        time:'~60 sec', required:['Carte bancaire'],
+        optional:[],
+        tags:['auto'],
+        funnel:52 }
+    ],
+    config:[
+      { key:'Worker URL', val:'payzen-hcs.workers.dev', ok:true },
+      { key:'Mode paiement', val:'TEST / PROD', ok:true },
+      { key:'Coloris disponibles', val:'6 coloris', ok:true },
+      { key:'Tailles', val:'XS → 4XL', ok:true },
+      { key:'Upload visuel client', val:'FileReader base64', ok:true },
+      { key:'Aperçu mockup live', val:'Mockup Studio', ok:true },
+    ],
+    tips:[
+      { icon:'🖼', text:'<strong>Aperçu live</strong> : le Mockup Studio affiche le visuel client en temps réel sur le t-shirt avant validation.' },
+      { icon:'📐', text:'<strong>Position impression</strong> : proposez face / dos / poche comme options pour augmenter le panier moyen.' },
+      { icon:'🚀', text:'<strong>Upsell quantité</strong> : dégressif à partir de 3 unités — +30% de conversion sur les commandes groupe.' },
+    ]
+  },
+
+  2: {
+    name:'Casquette Brodée / DTF',
+    emoji:'🧢',
+    desc:'Casquettes personnalisées — broderie et impression DTF',
+    color:'#43e97b',
+    colorDark:'rgba(67,233,123,.06)',
+    priceRange:'3 000 – 4 500 XPF',
+    steps:[
+      { num:1, icon:'🧢', name:'Choisir la casquette', label:'Modèle',
+        desc:'Dad Hat · Snapback · Casquette brodée — couleur + taille.',
+        time:'~30 sec', required:['Modèle','Couleur'],
+        optional:['Taille'],
+        tags:['required','required','optional'],
+        funnel:100 },
+      { num:2, icon:'🎨', name:'Votre logo', label:'Logo',
+        desc:'Upload PNG/JPG pour broderie ou impression DTF — aperçu position.',
+        time:'~90 sec', required:['Logo ou texte'],
+        optional:['Position','Couleurs broderie'],
+        tags:['required','optional','optional'],
+        funnel:79 },
+      { num:3, icon:'👤', name:'Coordonnées', label:'Coordonnées',
+        desc:'Nom, email, tél + retrait boutique ou livraison île.',
+        time:'~60 sec', required:['Nom complet','Email'],
+        optional:['Téléphone','Note'],
+        tags:['required','required','optional','optional'],
+        funnel:64 },
+      { num:4, icon:'💳', name:'Paiement OSB', label:'Paiement',
+        desc:'Tunnel Krypton SDK — CB sécurisée.',
+        time:'~60 sec', required:['Carte bancaire'],
+        optional:[],
+        tags:['auto'],
+        funnel:49 }
+    ],
+    config:[
+      { key:'Worker URL', val:'payzen-hcs.workers.dev', ok:true },
+      { key:'Mode paiement', val:'TEST / PROD', ok:true },
+      { key:'Modèles casquette', val:'Dad Hat · Snapback · Brodée', ok:true },
+      { key:'Broderie vs DTF', val:'Sélection technique', ok:true },
+      { key:'Upload logo client', val:'FileReader base64', ok:true },
+      { key:'Aperçu broderie live', val:'À configurer', warn:true },
+    ],
+    tips:[
+      { icon:'🧢', text:'<strong>Broderie vs DTF</strong> : la broderie pour logos simples &lt;3 couleurs, le DTF pour les designs complexes ou photos.' },
+      { icon:'📐', text:'<strong>Position logo</strong> : face avant standard + option côté (latéral) pour les casquettes premium.' },
+      { icon:'💡', text:'<strong>Pack look total</strong> : proposez casquette + t-shirt assorti en bundle pour doubler le panier moyen.' },
+    ]
+  },
+
   3: {
     name:'DTF Originals',
     emoji:'👕',
@@ -406,6 +566,54 @@ const CAMPS_DATA = {
       { icon:'📁', text:'<strong>Upload fichier</strong> : le champ upload est optionnel au moment du paiement — le client peut envoyer le fichier par email après.' },
       { icon:'💡', text:'<strong>Délai affiché</strong> : indiquer "livraison 24h ouvrées" réduit l\'anxiété client et augmente la conversion du pack.' },
       { icon:'🔗', text:'<strong>Workflow n8n</strong> : connecter la réception de commande à un ticket PicWish Pipeline pour traitement automatique.' },
+    ]
+  },
+
+  8: {
+    name:'Pack Collector DTF',
+    emoji:'🎁',
+    desc:'Planches gang sheet personnalisées — upload logos, composition, livraison 48h',
+    color:'#d4a843',
+    colorDark:'rgba(212,168,67,.07)',
+    priceRange:'12 000 – 20 000 XPF',
+    steps:[
+      { num:1, icon:'📐', name:'Format de la planche', label:'Options',
+        desc:'½ Yard 56×46 cm (12 000 XPF) ou 1 Yard 56×91 cm (20 000 XPF).',
+        time:'~20 sec', required:['Format (½ yard / 1 yard)'],
+        optional:[],
+        tags:['required'],
+        funnel:100 },
+      { num:2, icon:'🖼️', name:'Upload & composition logos', label:'Logos',
+        desc:'Canvas inline — upload PNG/JPG, glisser-déposer sur la planche, validation.',
+        time:'~3 min', required:['1 logo min','Validation planche'],
+        optional:['Logos supplémentaires'],
+        tags:['required','required','optional'],
+        funnel:80 },
+      { num:3, icon:'👤', name:'Coordonnées & quantité', label:'Coordonnées',
+        desc:'Nombre de feuilles + informations client.',
+        time:'~60 sec', required:['Nom complet','Email'],
+        optional:['Téléphone','Note'],
+        tags:['required','required','optional','optional'],
+        funnel:66 },
+      { num:4, icon:'💳', name:'Paiement OSB', label:'Paiement',
+        desc:'Tunnel Krypton SDK — CB sécurisée, livraison 48h.',
+        time:'~60 sec', required:['Carte bancaire'],
+        optional:[],
+        tags:['auto'],
+        funnel:51 }
+    ],
+    config:[
+      { key:'Worker URL', val:'payzen-hcs.workers.dev', ok:true },
+      { key:'Mode paiement', val:'TEST / PROD', ok:true },
+      { key:'Format ½ Yard', val:'12 000 XPF', ok:true },
+      { key:'Format 1 Yard', val:'20 000 XPF', ok:true },
+      { key:'Canvas placement logos', val:'pack-collector-dtf.html', ok:true },
+      { key:'Vidéo tuto placement', val:'À ajouter LP', warn:true },
+    ],
+    tips:[
+      { icon:'🎯', text:'<strong>Drop-off étape 2</strong> : le canvas peut dérouter les nouveaux clients. Ajoutez une vidéo tuto 15 sec sur la LP.' },
+      { icon:'📏', text:'<strong>Guide dimensions</strong> : affichez un repère visuel cm×cm pour que le client visualise la taille réelle de la planche.' },
+      { icon:'⚡', text:'<strong>Upsell multi-feuilles</strong> : proposer "3 feuilles = -10%" sur la LP augmente la valeur panier sans friction.' },
     ]
   }
 };
@@ -635,7 +843,7 @@ function renderCamp(id) {
 }
 
 // Init
-renderCamp(3);
+renderCamp(0);
 </script>
 </body>
 </html>
