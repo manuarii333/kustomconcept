@@ -2426,6 +2426,16 @@ async function publishLP(id) {
     hidePublishProgress();
     showPublishSuccess(c.name, data.url);
     updateStorageIndicator();
+
+    // Re-render parcours pane so LP link activates immediately après publication
+    const _pp = document.getElementById('ws-parcours-pane-' + id);
+    if (_pp) {
+      _pp.dataset.rendered = '';
+      if (_pp.style.display !== 'none') {
+        renderParcoursFn(id, _pp);
+        _pp.dataset.rendered = '1';
+      }
+    }
   } catch(e) {
     hidePublishProgress();
     showToast('❌ Erreur publication : ' + e.message, true);
