@@ -185,15 +185,15 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
       <span class="camp-emoji">📋</span>
       <div><div class="camp-name">Grille DTF 3×3</div><div class="camp-id">id=4</div></div>
     </button>
-    <button class="camp-btn" onclick="showCamp(5)" id="btn-5" style="--camp-color:#43e97b">
+    <button class="camp-btn" onclick="showCamp(5)" id="btn-5" style="--camp-color:#f093fb">
       <span class="camp-emoji">🎓</span>
       <div><div class="camp-name">Formation DTF</div><div class="camp-id">id=5</div></div>
     </button>
-    <button class="camp-btn" onclick="showCamp(6)" id="btn-6" style="--camp-color:#f6d365">
+    <button class="camp-btn" onclick="showCamp(6)" id="btn-6" style="--camp-color:#30cfd0">
       <span class="camp-emoji">🌟</span>
       <div><div class="camp-name">Abonnements</div><div class="camp-id">id=6</div></div>
     </button>
-    <button class="camp-btn" onclick="showCamp(7)" id="btn-7" style="--camp-color:#30cfd0">
+    <button class="camp-btn" onclick="showCamp(7)" id="btn-7" style="--camp-color:#f6d365">
       <span class="camp-emoji">✏️</span>
       <div><div class="camp-name">Graphiques / Vecto</div><div class="camp-id">id=7</div></div>
     </button>
@@ -396,50 +396,44 @@ const CAMPS_DATA = {
   },
 
   4: {
-    name:'Pack Collector DTF',
-    emoji:'🎨',
-    desc:'Gang sheets personnalisées — placement de logos sur planche',
-    color:'#6c63ff',
-    colorDark:'rgba(108,99,255,.08)',
-    priceRange:'12 000 – 20 000 XPF',
+    name:'Grille DTF 3×3 Collector',
+    emoji:'📋',
+    desc:'Gang sheet sur mesure — placez vos logos sur la planche, impression DTF',
+    color:'#a18cd1',
+    colorDark:'rgba(161,140,209,.08)',
+    priceRange:'8 500 – 20 000 XPF',
     steps:[
-      { num:1, icon:'📐', name:'Format gang sheet', label:'Options',
-        desc:'Choix 1 Yard × 22" (55×91 cm) ou ½ Yard × 22" (55×46 cm).',
-        time:'~20 sec', required:['Format (1yard / ½yard)'],
-        optional:[],
-        tags:['required'],
+      { num:1, icon:'📐', name:'Format & Planche', label:'Planche',
+        desc:'Choisir le format (A3/A2/½ Yard/1 Yard) puis ouvrir le canvas de placement logos.',
+        time:'~3 min', required:['Format planche','Logos placés (≥1)','Confirmation planche'],
+        optional:['Logos supplémentaires'],
+        tags:['required','required','required','optional'],
         funnel:100 },
-      { num:2, icon:'🖼', name:'Placer mes logos', label:'Options',
-        desc:'Canvas inline — upload logos, glisser-déposer, validation planche.',
-        time:'~3 min', required:['1 logo min','Validation planche'],
-        optional:['Logos supplémentaires (multi-upload)'],
-        tags:['required','required','optional'],
-        funnel:78 },
-      { num:3, icon:'👤', name:'Coordonnées', label:'Coordonnées',
-        desc:'Quantité de feuilles + informations client.',
+      { num:2, icon:'👤', name:'Quantité & Coordonnées', label:'Coordonnées',
+        desc:'Nombre de planches + informations client (nom, email, tél, note).',
         time:'~60 sec', required:['Nom complet','Email'],
         optional:['Téléphone','Note'],
         tags:['required','required','optional','optional'],
-        funnel:64 },
-      { num:4, icon:'💳', name:'Paiement', label:'Paiement',
-        desc:'Tunnel OSB Krypton — paiement sécurisé XPF.',
+        funnel:74 },
+      { num:3, icon:'💳', name:'Paiement', label:'Payer',
+        desc:'Tunnel OSB Krypton — CB sécurisée, livraison 48h.',
         time:'~60 sec', required:['Carte bancaire'],
         optional:[],
         tags:['auto'],
-        funnel:49 }
+        funnel:57 }
     ],
     config:[
       { key:'Worker URL', val:'payzen-hcs.workers.dev', ok:true },
-      { key:'Mode paiement', val:'TEST / PROD', ok:true },
-      { key:'Format 1 yard', val:'20 000 XPF', ok:true },
-      { key:'Format ½ yard', val:'12 000 XPF', ok:true },
-      { key:'Canvas placement', val:'Inline (genDtf*)', ok:true },
-      { key:'Multi-upload logos', val:'Activé', ok:true },
+      { key:'Format A3', val:'9 000 XPF', ok:true },
+      { key:'Format A2', val:'14 000 XPF', ok:true },
+      { key:'Format ½ Yard', val:'12 000 XPF', ok:true },
+      { key:'Format 1 Yard', val:'20 000 XPF', ok:true },
+      { key:'Canvas placement logos', val:'Inline (genDtf*)', ok:true },
     ],
     tips:[
-      { icon:'🎯', text:'<strong>Drop-off étape 2</strong> : le canvas peut dérouter les nouveaux clients. Ajoutez une vidéo tuto 15 sec sur la LP.' },
-      { icon:'💡', text:'<strong>Dimension guide</strong> : affichez un guide visuel cm/cm pour que le client visualise la taille réelle de sa planche.' },
-      { icon:'⚡', text:'<strong>Accélérateur</strong> : permettre de pré-charger des logos depuis l\'historique client (feature future) réduirait le temps étape 2 de 3min → 40 sec.' },
+      { icon:'📋', text:'<strong>Grille 3×3</strong> : guidez le client avec un aperçu visuel de la taille de chaque format avant qu\'il choisisse.' },
+      { icon:'🎨', text:'<strong>Canvas</strong> : le client place lui-même ses logos — ajoutez une vidéo tuto 15 sec sur la LP pour réduire le drop-off étape 1.' },
+      { icon:'💡', text:'<strong>Format recommandé</strong> : le ½ Yard (12 000 XPF) est le meilleur rapport quantité/prix pour 4-8 logos.' },
     ]
   },
 
@@ -447,8 +441,8 @@ const CAMPS_DATA = {
     name:'Formation Textile DTF',
     emoji:'📚',
     desc:'Ateliers formation — Débutant, Avancé, Complet',
-    color:'#43e97b',
-    colorDark:'rgba(67,233,123,.06)',
+    color:'#f093fb',
+    colorDark:'rgba(240,147,251,.06)',
     priceRange:'15 000 – 35 000 XPF',
     steps:[
       { num:1, icon:'📗', name:'Choisir module', label:'Options',
@@ -489,8 +483,8 @@ const CAMPS_DATA = {
     name:'Abonnements HCS',
     emoji:'🌟',
     desc:'Plans fidélité mensuel/annuel — Starter, Pro, Premium',
-    color:'#f6d365',
-    colorDark:'rgba(246,211,101,.06)',
+    color:'#30cfd0',
+    colorDark:'rgba(48,207,208,.06)',
     priceRange:'1 800 – 5 500 XPF/mois',
     steps:[
       { num:1, icon:'💎', name:'Choisir plan', label:'Options',
@@ -531,8 +525,8 @@ const CAMPS_DATA = {
     name:'Graphiques / Vecto IA',
     emoji:'📐',
     desc:'Services graphiques — vectorisation, détourage, logo, pack',
-    color:'#30cfd0',
-    colorDark:'rgba(48,207,208,.06)',
+    color:'#f6d365',
+    colorDark:'rgba(246,211,101,.06)',
     priceRange:'1 500 – 8 000 XPF',
     steps:[
       { num:1, icon:'🎯', name:'Choisir service', label:'Options',
@@ -577,30 +571,24 @@ const CAMPS_DATA = {
     colorDark:'rgba(212,168,67,.07)',
     priceRange:'12 000 – 20 000 XPF',
     steps:[
-      { num:1, icon:'📐', name:'Format de la planche', label:'Options',
-        desc:'½ Yard 56×46 cm (12 000 XPF) ou 1 Yard 56×91 cm (20 000 XPF).',
-        time:'~20 sec', required:['Format (½ yard / 1 yard)'],
-        optional:[],
-        tags:['required'],
+      { num:1, icon:'📐', name:'Format + Upload logos', label:'Format',
+        desc:'½ Yard 56×46 cm (12 000 XPF) ou 1 Yard 56×91 cm (20 000 XPF) + upload PNG optionnel.',
+        time:'~45 sec', required:['Format (½ yard / 1 yard)'],
+        optional:['Upload logos PNG fond transparent'],
+        tags:['required','optional'],
         funnel:100 },
-      { num:2, icon:'🖼️', name:'Upload & composition logos', label:'Logos',
-        desc:'Canvas inline — upload PNG/JPG, glisser-déposer sur la planche, validation.',
-        time:'~3 min', required:['1 logo min','Validation planche'],
-        optional:['Logos supplémentaires'],
-        tags:['required','required','optional'],
-        funnel:80 },
-      { num:3, icon:'👤', name:'Coordonnées & quantité', label:'Coordonnées',
-        desc:'Nombre de feuilles + informations client.',
+      { num:2, icon:'👤', name:'Quantité & Coordonnées', label:'Vos logos',
+        desc:'Nombre de planches + informations client (nom, email, tél, note).',
         time:'~60 sec', required:['Nom complet','Email'],
-        optional:['Téléphone','Note'],
-        tags:['required','required','optional','optional'],
-        funnel:66 },
-      { num:4, icon:'💳', name:'Paiement OSB', label:'Paiement',
+        optional:['Téléphone','Note','Quantité planches'],
+        tags:['required','required','optional','optional','optional'],
+        funnel:72 },
+      { num:3, icon:'💳', name:'Paiement OSB', label:'Paiement',
         desc:'Tunnel Krypton SDK — CB sécurisée, livraison 48h.',
         time:'~60 sec', required:['Carte bancaire'],
         optional:[],
         tags:['auto'],
-        funnel:51 }
+        funnel:55 }
     ],
     config:[
       { key:'Worker URL', val:'payzen-hcs.workers.dev', ok:true },

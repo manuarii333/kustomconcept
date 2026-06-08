@@ -4650,6 +4650,7 @@ function closeFlow() { document.getElementById('fl-overlay').classList.remove('o
 function gfStepLabels() {
   if (CAMP_ID===0) return [CFG.label1||'Sticker', CFG.label2||'Coordonnées', 'Payer'];
   if (CAMP_ID===4) return [CFG.label1||'Planche', CFG.label2||'Coordonnées', 'Payer'];
+  if (CAMP_ID===8) return [CFG.label1||'Format', CFG.label2||'Vos logos', CFG.label3||'Paiement'];
   return [CFG.label1||'Options', CFG.label2||'Coordonnées', CFG.label3||'Paiement'];
 }
 
@@ -4696,6 +4697,7 @@ function gfValidate() {
     if (CAMP_ID===5&&!_s.module)  msg='Veuillez choisir un module de formation.';
     if (CAMP_ID===6&&!_s.plan)    msg='Veuillez choisir un plan.';
     if (CAMP_ID===7&&!_s.service) msg='Veuillez choisir un service.';
+    if (CAMP_ID===8&&!_s.format)  msg='Veuillez choisir un format de planche.';
   }
   var isContactStep = _s.step===2;
   if (isContactStep) {
@@ -4805,6 +4807,28 @@ function gfStep1HTML() {
     var sc=svcs.filter(function(s){return SVC[s];}).map(function(s){return '<div class="fl-svc-card'+(_s.service===s?' selected':'')+'" onclick="gfSetService(\\''+s+'\\')"><span class="fl-svc-icon">'+SVC[s].icon+'</span><div style="flex:1"><div class="fl-svc-label">'+SVC[s].label+'</div><div style="font-size:.62rem;color:rgba(255,255,255,.4);margin-top:2px">'+SVC[s].desc+'</div></div><span class="fl-svc-price">'+SVC[s].price.toLocaleString('fr-FR')+' XPF</span></div>';}).join('');
     return prodLine+lbl('Choisir le service')+sc;
   }
+  if (CAMP_ID===8) {
+    var fmtMap8={'halfyard':'½ Yard × 22"','1yard':'1 Yard × 22"','multi':'Multi-feuilles'};
+    var fmtDim8={'halfyard':'46×56 cm','1yard':'91×56 cm','multi':'Sur devis'};
+    var fmtP8={'halfyard':12000,'1yard':20000,'multi':0};
+    var formats8=CFG.formats||['halfyard','1yard'];
+    var fb8=formats8.map(function(f){
+      var sel=_s.format===f;
+      return '<div class="fl-fmt-btn'+(sel?' selected':'')+'" onclick="gfSetFormat(\''+f+'\')" style="text-align:left;padding:11px 13px">'
+        +'<div style="font-size:.82rem;font-weight:800">'+(fmtMap8[f]||f)+'</div>'
+        +'<div style="font-size:.62rem;color:rgba(255,255,255,'+(sel?'.65':'.38')+')">'+(fmtDim8[f]||'')+(fmtP8[f]?'&nbsp;&mdash;&nbsp;'+fmtP8[f].toLocaleString('fr-FR')+' XPF':'&nbsp;&mdash;&nbsp;Sur devis')+'</div>'
+        +'</div>';
+    }).join('');
+    var pb8=(_s.format&&fmtP8[_s.format])?'<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 2px;margin-top:4px"><span style="font-size:.68rem;color:rgba(255,255,255,.4)">Prix</span><span class="fl-price-row" id="fl-price-row">'+((fmtP8[_s.format]||0)*(_s.qty||1)).toLocaleString('fr-FR')+' XPF</span></div>':'';
+    var hasF8=!!_s.fileB64;
+    var uploadHint8=CFG.uploadHint||'Logos PNG fond transparent, min 300 DPI';
+    var uploadZone8=CFG.allowUpload!==false?
+      lbl('Uploader vos logos (optionnel)')
+      +'<label><div class="fl-upload-zone'+(hasF8?' has-file':'')+'" id="gf-uzone">'
+      +(hasF8?'<img src="'+_s.fileB64+'" alt="">':'<div style="color:rgba(255,255,255,.4)"><div style="font-size:1.8rem">🖼️</div><div style="font-size:.7rem;margin-top:4px">'+uploadHint8+'</div></div>')
+      +'</div><input type="file" accept="image/*,.pdf" style="display:none" onchange="gfFileLoad(event)"></label>':'';
+    return prodLine+lbl('Choisir votre format')+'<div class="fl-fmt-grid" style="flex-direction:column;gap:8px">'+fb8+'</div>'+pb8+uploadZone8;
+  }
   return '';
 }
 
@@ -4854,6 +4878,11 @@ function gfStep2HTML() {
     var pm={mensuel:inf.priceM.toLocaleString('fr-FR')+' XPF/mois',trimestriel:Math.round(inf.priceM*3*.95).toLocaleString('fr-FR')+' XPF/trim.',annuel:inf.priceA.toLocaleString('fr-FR')+' XPF/an'};
     var dc=dur.map(function(d){return '<div class="fl-plan-card'+(_s.duree===d?' selected':'')+'" onclick="gfSetDuree(\\''+d+'\\')"><div class="fl-plan-head"><span class="fl-plan-name" style="text-transform:capitalize">'+d+'</span><span class="fl-plan-price">'+(pm[d]||'')+'</span></div>'+(d!=='mensuel'?'<div class="fl-plan-av" style="color:#43e97b">'+(d==='trimestriel'?'✓ Économisez 5%':'✓ Économisez 15%')+'</div>':'')+'</div>';}).join('');
     extra='<div style="margin-bottom:14px">'+lbl('Durée')+dc+'</div>';
+  }
+  if (CAMP_ID===8) {
+    var fP8b={'halfyard':12000,'1yard':20000,'multi':0};
+    var base8=fP8b[_s.format]||12000;
+    extra='<div style="margin-bottom:14px">'+lbl('Nombre de planches')+'<div class="fl-qty-row"><button class="fl-qty-btn" onclick="gfChgQty(-1)">−</button><span class="fl-qty-val" id="gf-qty-val">'+_s.qty+'</span><button class="fl-qty-btn" onclick="gfChgQty(1)">+</button><span class="fl-price-row" id="fl-price-row">'+(base8>0?(base8*_s.qty).toLocaleString('fr-FR')+' XPF':'Sur devis')+'</span></div></div>';
   }
   if (CAMP_ID===7&&CFG.allowUpload!==false) {
     var hasF=!!_s.fileB64;
@@ -4964,6 +4993,7 @@ function gfGetPrice() {
   if (CAMP_ID===5){var M={debutant:+(CFG.price_debutant||15000),avance:+(CFG.price_avance||25000),complet:+(CFG.price_complet||35000)};return M[_s.module]||base;}
   if (CAMP_ID===6){var PL={starter:{priceM:1800,priceA:18000},pro:{priceM:3500,priceA:35000},premium:{priceM:5500,priceA:55000}};var inf=PL[_s.plan]||{priceM:base,priceA:base*10};if(_s.duree==='annuel')return inf.priceA;if(_s.duree==='trimestriel')return Math.round(inf.priceM*3*.95);return inf.priceM;}
   if (CAMP_ID===7){var SV={vecto:2500,detour:1500,logo:8000,pack:8000};return SV[_s.service]||base;}
+  if (CAMP_ID===8){var F8={'halfyard':12000,'1yard':20000,'multi':0};var p8=F8[_s.format];if(p8===0)return 0;return(p8||base)*(_s.qty||1);}
   return base*(_s.qty||1);
 }
 
@@ -10707,7 +10737,7 @@ document.addEventListener('keydown', e => {
 // Priorité moyenne : validation progressive + calculateur prix
 // Priorité basse : galerie visuelle + indicateur stock
 // ═══════════════════════════════════════════════════════
-const GEN_COLORS = { 3:'#fa709a', 4:'#a18cd1', 5:'#f093fb', 6:'#30cfd0', 7:'#f6d365' };
+const GEN_COLORS = { 3:'#fa709a', 4:'#a18cd1', 5:'#f093fb', 6:'#30cfd0', 7:'#f6d365', 8:'#d4a843' };
 
 let genFlow = {
   campId:3, prodIdx:0, step:1,
