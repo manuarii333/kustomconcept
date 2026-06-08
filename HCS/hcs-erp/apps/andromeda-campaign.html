@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Andromeda Campaign Builder — HCS</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>🚀</text></svg>">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' *.highcoffeeshirt.workers.dev *.highcoffeeshirts.com highcoffeeshirts.com *.osb.pf *.googleapis.com *.gstatic.com *.dropboxapi.com *.dropbox.com *.n8n.cloud data: blob: 'unsafe-inline' 'unsafe-eval';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' *.highcoffeeshirt.workers.dev *.highcoffeeshirts.com highcoffeeshirts.com *.osb.pf *.googleapis.com *.gstatic.com *.dropboxapi.com *.dropbox.com *.n8n.cloud data: blob: 'unsafe-inline';">
 
 <style>
 :root {
@@ -1197,34 +1197,34 @@ const PARCOURS_CFG = {
       { i:'🚀', t:'<strong>Upsell</strong> — proposez un "Pack famille ×3" à prix dégressif pour augmenter le panier moyen.' },
     ]
   },
-  4:{ color:'#6c63ff', label:'Pack Collector DTF', priceRange:'12 000 – 20 000 XPF',
+  4:{ color:'#a18cd1', label:'Grille DTF 3×3 Collector', priceRange:'8 500 – 18 000 XPF',
     steps:[
-      { n:1, icon:'📐', name:'Format gang sheet', label:'Options', desc:'1 Yard × 22" (55×91 cm) ou ½ Yard × 22" (55×46 cm)', time:'~20s',
-        req:['Format (1yard / ½yard)'], opt:[], funnel:100 },
-      { n:2, icon:'🖼', name:'Placer logos (canvas)', label:'Options', desc:'Upload logos, glisser-déposer sur la planche, validation', time:'~3 min',
-        req:['1 logo min','Validation planche'], opt:['Logos supplémentaires'], funnel:78 },
-      { n:3, icon:'👤', name:'Coordonnées', label:'Coordonnées', desc:'Quantité de feuilles + nom, email, tél', time:'~60s',
-        req:['Nom complet','Email'], opt:['Téléphone','Note'], funnel:64 },
+      { n:1, icon:'📋', name:'Choisir le pack', label:'Options', desc:'Pack Grille 3×3 (8 500 XPF) · Grille + Impression (12 000 XPF) · Pack Complet DTF (18 000 XPF)', time:'~20s',
+        req:['Format pack'], opt:[], funnel:100 },
+      { n:2, icon:'🖼️', name:'Sélection des 9 logos', label:'Designs', desc:'Sélection ou upload des 9 designs à inclure dans la grille', time:'~3 min',
+        req:['9 visuels minimum'], opt:['Logos supplémentaires'], funnel:75 },
+      { n:3, icon:'👤', name:'Coordonnées', label:'Coordonnées', desc:'Nom, email, tél + note pour instructions spécifiques', time:'~60s',
+        req:['Nom complet','Email'], opt:['Téléphone','Note'], funnel:60 },
       { n:4, icon:'💳', name:'Paiement OSB', label:'Paiement', desc:'Tunnel Krypton SDK — paiement sécurisé XPF', time:'~60s',
-        req:['Carte bancaire'], opt:[], funnel:49 }
+        req:['Carte bancaire'], opt:[], funnel:46 }
     ],
     cfg:[
       { k:'Worker URL', v:'payzen-hcs.workers.dev', ok:true },
-      { k:'Format 1 yard', v:'20 000 XPF', ok:true },
-      { k:'Format ½ yard', v:'12 000 XPF', ok:true },
-      { k:'Canvas placement', v:'Inline (genDtf*)', ok:true },
-      { k:'Tuto placement client', v:'À ajouter LP', ok:false },
+      { k:'Pack Grille 3×3', v:'8 500 XPF', ok:true },
+      { k:'Grille + Impression', v:'12 000 XPF', ok:true },
+      { k:'Pack Complet DTF', v:'18 000 XPF', ok:true },
+      { k:'LP Grille 3×3', v:'À créer', ok:false },
     ],
     links:[
-      { icon:'🌐', label:'Pack Collector (live)', url:'https://highcoffeeshirts.com/erp/apps/pack-collector-dtf.html', ok:true, ext:true },
-      { icon:'🎁', label:'Atelier Pack Collector', url:'../apps/hcs-atelier-pack-collector.html', ok:true },
-      { icon:'📐', label:'DTF Gang Sheet', url:'../apps/dtf-gang-sheet.html', ok:true },
+      { icon:'🌐', label:'LP Grille DTF 3×3', url:'', ok:false },
       { icon:'📋', label:'DTF Laize 1 Yard', url:'../apps/dtf-laize-1yard-22po.html', ok:true },
+      { icon:'📐', label:'DTF Gang Sheet', url:'../apps/dtf-gang-sheet.html', ok:true },
+      { icon:'🎨', label:'DTF Studio', url:'../apps/dtf-studio.html', ok:true },
     ],
     tips:[
-      { i:'🎯', t:'<strong>Drop-off étape 2</strong> — le canvas peut dérouter les nouveaux clients. Ajoutez une vidéo tuto 15 s sur la LP.' },
-      { i:'📏', t:'<strong>Guide dimensions</strong> — affichez un repère cm/cm pour que le client visualise la taille réelle de sa planche.' },
-      { i:'⚡', t:'<strong>Futur</strong> — permettre de pré-charger les logos depuis l\'historique client réduirait le temps étape 2 de 3 min → 40 s.' },
+      { i:'🎯', t:'<strong>9 logos distincts</strong> — proposez un pack de base avec 9 designs populaires pour simplifier le choix.' },
+      { i:'📏', t:'<strong>Présenter en grille</strong> — montrez une preview visuelle de la grille 3×3 sur la LP pour que le client visualise le rendu.' },
+      { i:'⚡', t:'<strong>Bundle</strong> — proposez Grille + Impression en bundle avec remise 10% pour augmenter le panier moyen.' },
     ]
   },
   5:{ color:'#43e97b', label:'Formation Textile', priceRange:'15 000 – 35 000 XPF',
@@ -1309,6 +1309,36 @@ const PARCOURS_CFG = {
       { i:'📁', t:'<strong>Upload optionnel</strong> — le client peut envoyer le fichier par email après paiement, pas d\'obligation au checkout.' },
       { i:'💡', t:'<strong>Délai affiché</strong> — "livraison 24h ouvrées" réduit l\'anxiété client et augmente la conversion du pack.' },
       { i:'🔗', t:'<strong>Automatisation</strong> — connecter la réception commande à un ticket PicWish Pipeline pour traitement automatique.' },
+    ]
+  },
+  8:{ color:'#d4a843', label:'Pack Collector DTF', priceRange:'12 000 – 20 000 XPF',
+    steps:[
+      { n:1, icon:'📐', name:'Format de la planche', label:'Options', desc:'½ Yard 56×46 cm (12 000 XPF) ou 1 Yard 56×91 cm (20 000 XPF)', time:'~20s',
+        req:['Format (½ yard / 1 yard)'], opt:[], funnel:100 },
+      { n:2, icon:'🖼️', name:'Upload & composition logos', label:'Logos', desc:'Upload PNG/JPG, glisser-déposer sur le canvas, validation de la planche', time:'~3 min',
+        req:['1 logo min','Validation planche'], opt:['Logos supplémentaires'], funnel:80 },
+      { n:3, icon:'👤', name:'Coordonnées & quantité', label:'Coordonnées', desc:'Nombre de feuilles + nom, email, tél', time:'~60s',
+        req:['Nom complet','Email'], opt:['Téléphone','Note'], funnel:66 },
+      { n:4, icon:'💳', name:'Paiement OSB', label:'Paiement', desc:'Tunnel Krypton SDK — CB sécurisée, livraison 48h', time:'~60s',
+        req:['Carte bancaire'], opt:[], funnel:51 }
+    ],
+    cfg:[
+      { k:'Worker URL', v:'payzen-hcs.workers.dev', ok:true },
+      { k:'Format ½ Yard', v:'12 000 XPF', ok:true },
+      { k:'Format 1 Yard', v:'20 000 XPF', ok:true },
+      { k:'Canvas placement logos', v:'pack-collector-dtf.html', ok:true },
+      { k:'Vidéo tuto placement', v:'À ajouter LP', ok:false },
+    ],
+    links:[
+      { icon:'🌐', label:'Pack Collector (live)', url:'https://highcoffeeshirts.com/erp/apps/pack-collector-dtf.html', ok:true, ext:true },
+      { icon:'🎁', label:'Atelier Pack Collector', url:'../apps/hcs-atelier-pack-collector.html', ok:true },
+      { icon:'📐', label:'DTF Gang Sheet', url:'../apps/dtf-gang-sheet.html', ok:true },
+      { icon:'📋', label:'DTF Laize 1 Yard', url:'../apps/dtf-laize-1yard-22po.html', ok:true },
+    ],
+    tips:[
+      { i:'🎯', t:'<strong>Drop-off étape 2</strong> — le canvas peut dérouter les nouveaux clients. Ajoutez une vidéo tuto 15 s sur la LP.' },
+      { i:'📏', t:'<strong>Guide dimensions</strong> — affichez un repère visuel cm×cm pour que le client visualise la taille réelle de la planche.' },
+      { i:'⚡', t:'<strong>Upsell multi-feuilles</strong> — proposer "3 feuilles = -10%" sur la LP augmente la valeur panier sans friction.' },
     ]
   }
 };
@@ -1671,7 +1701,7 @@ function render(id) {
         <div class="ep-section">
           <div class="ep-label">💳 Paiement PayZen / Lyra</div>
           <div class="frow"><label class="flabel">Montant (XPF)</label>
-            <input class="finput" type="number" min="0" placeholder="ex: 2500" id="pz-amount-${id}"></div>
+            <input class="finput" type="number" min="100" max="999999" step="1" placeholder="ex: 2500" id="pz-amount-${id}" oninput="this.value=Math.max(0,parseInt(this.value)||0)"></div>
           <div class="frow"><label class="flabel">URL Worker PayZen</label>
             <input class="finput" placeholder="https://worker.workers.dev/payzen-token" value="https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token" id="pz-worker-${id}"></div>
           <div class="frow"><label class="flabel">Secret Worker</label>
@@ -2085,8 +2115,11 @@ function loadLogo(e, id) {
       document.onmousemove = em => {
         dx = x - em.clientX; dy = y - em.clientY;
         x = em.clientX; y = em.clientY;
-        img.style.left = (img.offsetLeft - dx)+'px';
-        img.style.top  = (img.offsetTop  - dy)+'px';
+        const p = img.parentElement;
+        const maxL = p ? p.offsetWidth  - img.offsetWidth  : 9999;
+        const maxT = p ? p.offsetHeight - img.offsetHeight : 9999;
+        img.style.left   = Math.max(0, Math.min(maxL, img.offsetLeft - dx)) + 'px';
+        img.style.top    = Math.max(0, Math.min(maxT, img.offsetTop  - dy)) + 'px';
         img.style.bottom = 'auto'; img.style.right = 'auto';
       };
       document.onmouseup = () => { document.onmousemove = null; document.onmouseup = null; };
@@ -4858,7 +4891,7 @@ async function gfInitKrypton(amount) {
       _tb.style.display='none';
       var kf=document.getElementById('gf-pz-kr-form');
       kf.style.display='block';
-      kf.innerHTML='<div style="text-align:center;padding:24px"><div style="font-size:2.5rem;margin-bottom:8px">✅</div><div style="font-size:1rem;font-weight:800;color:#43e97b">Paiement confirmé !</div><div style="font-size:.72rem;color:rgba(255,255,255,.5);margin-top:6px">Merci '+(_s.name?_s.name.split(' ')[0]:'')+(', votre commande est enregistrée (mode test).')+'</div></div>';
+      kf.innerHTML='<div style="text-align:center;padding:24px"><div style="font-size:2.5rem;margin-bottom:8px">✅</div><div style="font-size:1rem;font-weight:800;color:#43e97b">Paiement confirmé !</div><div style="font-size:.72rem;color:rgba(255,255,255,.5);margin-top:6px">Merci '+(_s.name?_esc(_s.name).split(' ')[0]:'')+(', votre commande est enregistrée (mode test).')+'</div></div>';
       setTimeout(closeFlow,2800);
     };
     var ld=document.getElementById('gf-pz-loading');
@@ -4910,7 +4943,7 @@ async function gfInitKrypton(amount) {
             note:optParts.join(' | ')
           })
         }).catch(function(_e){console.error('[HCS] Ordre non sauvegardé:',_e);var _gf=document.getElementById('gf-pz-kr-form');if(_gf&&!document.getElementById('_gf-warn')){var _w=document.createElement('p');_w.id='_gf-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:8px;text-align:center';_w.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si pas de confirmation.';_gf.appendChild(_w);}});
-        document.getElementById('gf-pz-kr-form').innerHTML='<div style="text-align:center;padding:24px"><div style="font-size:2.5rem;margin-bottom:8px">✅</div><div style="font-size:1rem;font-weight:800;color:#43e97b">Paiement confirmé !</div><div style="font-size:.72rem;color:rgba(255,255,255,.5);margin-top:6px">Merci '+(_s.name?_s.name.split(' ')[0]:'')+(', votre commande est enregistrée.')+'</div></div>';
+        document.getElementById('gf-pz-kr-form').innerHTML='<div style="text-align:center;padding:24px"><div style="font-size:2.5rem;margin-bottom:8px">✅</div><div style="font-size:1rem;font-weight:800;color:#43e97b">Paiement confirmé !</div><div style="font-size:.72rem;color:rgba(255,255,255,.5);margin-top:6px">Merci '+(_s.name?_esc(_s.name).split(' ')[0]:'')+(', votre commande est enregistrée.')+'</div></div>';
         try{_enrichConfirmation(orderId,total,{name:_s.name||'',email:_s.email||'',phone:_s.phone||''},{type:'pickup',pickupDate:_s.date||''},prod.n||'');}catch(e){}
         setTimeout(closeFlow,2800);
       }
@@ -7031,8 +7064,8 @@ async function loadPlanning() {
         amount: parseFloat(o.total_xpf) || 0, currency: 'XPF',
         campaignName: 'Déco Véhicule',
         product: `🚗 ${o.cat_name||'Véhicule'}${o.cat_model ? ' — ' + o.cat_model : ''}`,
-        client: typeof o.contact === 'string' ? JSON.parse(o.contact||'{}') : (o.contact || {}),
-        delivery: typeof o.delivery === 'string' ? JSON.parse(o.delivery||'{}') : (o.delivery || { type:'pickup' }),
+        client: typeof o.contact === 'string' ? (() => { try { return JSON.parse(o.contact||'{}'); } catch(_){return {};} })() : (o.contact || {}),
+        delivery: typeof o.delivery === 'string' ? (() => { try { return JSON.parse(o.delivery||'{}'); } catch(_){return {type:'pickup'};} })() : (o.delivery || { type:'pickup' }),
         note: o.note || '',
         createdAt: o.created_at || '',
         _src: 'mysql_vdec', _mysqlId: o.id, _mysqlTable: 'vdec_commandes'
@@ -7289,6 +7322,13 @@ async function deleteOrderPlanning(orderId) {
 }
 
 // ═══════════════════════════════════════════════════════
+// UTILITAIRES
+// ═══════════════════════════════════════════════════════
+function _esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════════════════
 // TOASTS & ALERTES
 // ═══════════════════════════════════════════════════════
 function showToast(msg, isAlert=false) {
@@ -7479,14 +7519,13 @@ function saveCamps(id) {
         couleurHex: p.couleurHex || '',
         dtfLogoRef: p.dtfLogoRef || '',
       })),
-      // PayZen (lus depuis le DOM si disponible)
+      // PayZen (lus depuis le DOM si disponible) — pzSecret jamais persisté
       pzAmount: document.getElementById(`pz-amount-${id}`)?.value || _memState[id]?.pzAmount || '',
       pzWorker: document.getElementById(`pz-worker-${id}`)?.value || _memState[id]?.pzWorker || '',
-      pzSecret: document.getElementById(`pz-secret-${id}`)?.value || _memState[id]?.pzSecret || '',
       pzMode:   document.getElementById(`pz-mode-${id}`)?.value   || _memState[id]?.pzMode   || 'TEST',
     };
     localStorage.setItem(CAMPS_STORE, JSON.stringify(all));
-  } catch(e) { console.warn('saveCamps:', e.message); }
+  } catch(e) { showToast('⚠️ Stockage local plein — campagne non sauvegardée.', true); }
 }
 
 // Debounce autosave — évite de spammer localStorage à chaque frappe
@@ -7495,6 +7534,9 @@ function debounceSaveCamps(id) {
   clearTimeout(_saveCampsTimers[id]);
   _saveCampsTimers[id] = setTimeout(() => saveCamps(id), 800);
 }
+window.addEventListener('beforeunload', () => {
+  Object.values(_saveCampsTimers).forEach(t => clearTimeout(t));
+});
 
 // Restaure les champs texte + PayZen depuis localStorage dans CAMPS[] et _memState
 function restoreCamps() {
@@ -7524,7 +7566,7 @@ function restoreCamps() {
       if (!_memState[id]) _memState[id] = {};
       if (data.pzAmount) _memState[id].pzAmount = data.pzAmount;
       if (data.pzWorker) _memState[id].pzWorker = data.pzWorker;
-      if (data.pzSecret) _memState[id].pzSecret = data.pzSecret;
+      // pzSecret intentionnellement non restauré depuis localStorage
       if (data.pzMode)   _memState[id].pzMode   = data.pzMode;
     });
   } catch(e) { console.warn('restoreCamps:', e.message); }
@@ -7549,7 +7591,7 @@ function saveState(id) {
     }),
     pzAmount: document.getElementById(`pz-amount-${id}`)?.value || '',
     pzWorker: document.getElementById(`pz-worker-${id}`)?.value || '',
-    pzSecret: document.getElementById(`pz-secret-${id}`)?.value || '',
+    pzSecret: document.getElementById(`pz-secret-${id}`)?.value || '', // _memState uniquement, jamais localStorage
     pzMode:   document.getElementById(`pz-mode-${id}`)?.value   || 'TEST',
   };
 
@@ -7561,7 +7603,7 @@ function saveState(id) {
     all[id].prods = _memState[id].prods;
     localStorage.setItem(IMG_STORE, JSON.stringify(all));
   } catch(e) {
-    console.warn('⚠️ localStorage plein — images non sauvegardées:', e.message);
+    showToast('⚠️ Stockage local plein — images non sauvegardées. Exportez vos campagnes.', true);
   }
 
   // 3. Persister les champs texte + PayZen
@@ -7576,14 +7618,22 @@ function saveBg(id, dataUrl) {
     if (!all[id]) all[id] = {};
     all[id].bgDataUrl = dataUrl;
     localStorage.setItem(IMG_STORE, JSON.stringify(all));
-  } catch(e) { console.warn('⚠️ saveBg localStorage plein:', e.message); }
+  } catch(e) { showToast('⚠️ Stockage local plein — fond non sauvegardé.', true); }
 }
 
 function _attachLogoDrag(img) {
   let dx=0,dy=0,x=0,y=0;
   img.addEventListener('mousedown', ev2 => {
     ev2.stopPropagation(); x=ev2.clientX; y=ev2.clientY;
-    document.onmousemove = em => { dx=x-em.clientX; dy=y-em.clientY; x=em.clientX; y=em.clientY; img.style.left=(img.offsetLeft-dx)+'px'; img.style.top=(img.offsetTop-dy)+'px'; img.style.bottom='auto'; img.style.right='auto'; };
+    document.onmousemove = em => {
+      dx=x-em.clientX; dy=y-em.clientY; x=em.clientX; y=em.clientY;
+      const p=img.parentElement;
+      const maxL=p?p.offsetWidth -img.offsetWidth :9999;
+      const maxT=p?p.offsetHeight-img.offsetHeight:9999;
+      img.style.left  =Math.max(0,Math.min(maxL,img.offsetLeft-dx))+'px';
+      img.style.top   =Math.max(0,Math.min(maxT,img.offsetTop -dy))+'px';
+      img.style.bottom='auto'; img.style.right='auto';
+    };
     document.onmouseup = () => { document.onmousemove=null; document.onmouseup=null; };
   });
 }
@@ -7661,7 +7711,7 @@ function restoreState(onlyId = null) {
       const modEl  = document.getElementById(`pz-mode-${id}`);
       if (amtEl && mem.pzAmount) amtEl.value  = mem.pzAmount;
       if (wrkEl && mem.pzWorker) wrkEl.value  = mem.pzWorker;
-      if (secEl && mem.pzSecret) secEl.value  = mem.pzSecret;
+      // pzSecret intentionnellement non restauré depuis localStorage
       if (modEl && mem.pzMode)   modEl.value  = mem.pzMode;
     });
   } catch(e) { console.warn('Restore error:', e); }
