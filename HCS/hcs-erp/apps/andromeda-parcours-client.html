@@ -620,7 +620,7 @@ function renderFunnelBar(pct, color) {
 }
 
 function showCamp(id) {
-  // Update sidebar active state
+  _currentCampId = id;
   document.querySelectorAll('.camp-btn').forEach(b => b.classList.remove('active'));
   const btn = document.getElementById('btn-'+id);
   if (btn) btn.classList.add('active');
@@ -855,8 +855,6 @@ function renderCamp(id) {
 
 // Init
 let _currentCampId = 0;
-const _origShowCamp = showCamp;
-function showCamp(id) { _currentCampId = id; _origShowCamp(id); }
 
 renderCamp(0);
 
