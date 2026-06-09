@@ -678,7 +678,10 @@ function renderCamp(id) {
   // ── Métriques
   const totalSteps = d.steps.length;
   const convFinal = d.steps[totalSteps-1].funnel;
-  const avgTime = d.steps.reduce((a, s) => a + (parseInt(s.time) || 1), 0);
+  const avgTime = d.steps.reduce((a, s) => {
+    const n = parseFloat(s.time.replace('~','')) || 0;
+    return a + (s.time.includes('min') ? Math.round(n * 60) : n);
+  }, 0);
   const metricsHTML = `
     <div class="metrics-row">
       <div class="metric-card">
@@ -692,7 +695,7 @@ function renderCamp(id) {
         <div class="metric-trend up">↑ cible &gt; 50%</div>
       </div>
       <div class="metric-card">
-        <div class="metric-val" style="color:${d.color}">${avgTime}s</div>
+        <div class="metric-val" style="color:${d.color}">${avgTime >= 60 ? Math.floor(avgTime/60)+'min'+(avgTime%60?(' '+avgTime%60+'s'):'') : avgTime+'s'}</div>
         <div class="metric-label">Durée estimée</div>
         <div class="metric-trend neutral">temps client</div>
       </div>
@@ -741,7 +744,7 @@ function renderCamp(id) {
   const illusCards = d.steps.map((s, i) => {
     const n = i + 1;
     const isActiveIllus = n === currentStep;
-    return `<div class="cs-illus${isActiveIllus ? ' active-illus' : ''}" style="${isActiveIllus ? '--camp-color:'+d.color : ''}" onclick="setActiveStep(${id},${n})" style="cursor:pointer">
+    return `<div class="cs-illus${isActiveIllus ? ' active-illus' : ''}" style="${isActiveIllus ? '--camp-color:'+d.color+';' : ''}cursor:pointer" onclick="setActiveStep(${id},${n})">
       <div class="cs-illus-icon">${s.icon}</div>
       <div class="cs-illus-name">${s.name}</div>
       <div class="cs-illus-detail">${s.required.slice(0,2).join(' · ')}</div>

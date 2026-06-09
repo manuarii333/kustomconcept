@@ -816,6 +816,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-prim
       <button id="btn-sync-free" onclick="syncAndFreeStorage()" title="Pousser vers MySQL et libérer l'espace local" style="display:none;background:linear-gradient(135deg,#43e97b,#38f9d7);border:none;color:#0f0f1a;border-radius:6px;padding:3px 8px;font-size:0.68rem;font-weight:700;cursor:pointer;white-space:nowrap">☁↑ Libérer</button>
     </div>
     <button class="btn btn-outline" onclick="exportAll()">⬇️ Exporter tout</button>
+    <button class="btn btn-outline" onclick="document.getElementById('lp-tokens-modal').style.display='flex'" title="Gérer les tokens LP exportées" style="font-size:0.78rem">🔑 Tokens LP</button>
     <button class="btn btn-primary" onclick="alert('Templates prêts ! Importez dans Facebook Ads Manager.')">🚀 Lancer campagne</button>
     <button class="cart-btn" onclick="openCart()" title="Voir le panier">🛒 Panier <span class="cart-badge" id="cart-badge">0</span></button>
   </div>
@@ -839,6 +840,28 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-prim
 </div>
 
 <div class="app-body">
+<!-- MODAL TOKENS LP -->
+<div id="lp-tokens-modal" onclick="if(event.target===this)this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:24px;width:min(520px,95vw);max-height:80vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:1rem;font-weight:700;color:#fff">🔑 Tokens LP — Gestion accès</div>
+      <button onclick="document.getElementById('lp-tokens-modal').style.display='none'" style="background:rgba(255,255,255,.08);border:none;color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:.85rem">✕</button>
+    </div>
+    <div style="font-size:.72rem;color:#9090b0;background:rgba(255,255,255,.04);border-radius:8px;padding:10px;margin-bottom:16px;line-height:1.5">
+      Chaque export LP génère un token unique <code style="color:#f6d365">X-Lp-Token</code> stocké dans KV Cloudflare. Saisissez l'<code style="color:#f6d365">ADMIN_SECRET</code> du Worker pour synchroniser les opérations révoquer/enregistrer.
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+      <input id="worker-admin-secret" type="password" placeholder="ADMIN_SECRET Worker (pour sync KV)" oninput="localStorage.setItem('hcs_admin_secret',this.value)" style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:6px 10px;color:#fff;font-size:.75rem;outline:none">
+      <button onclick="document.getElementById('worker-admin-secret').type=(document.getElementById('worker-admin-secret').type==='password'?'text':'password')" style="background:rgba(255,255,255,.08);border:none;color:#9090b0;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.75rem">👁</button>
+    </div>
+    <div id="lp-token-panel"></div>
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="if(confirm('Révoquer TOUS les tokens ?')){localStorage.removeItem('hcs_lp_tokens');_renderLpTokenPanel()}" style="background:rgba(255,80,80,.15);color:#ff8080;border:1px solid rgba(255,80,80,.3);border-radius:8px;padding:6px 14px;font-size:.75rem;cursor:pointer">⚠️ Tout révoquer</button>
+      <button onclick="document.getElementById('lp-tokens-modal').style.display='none'" style="background:rgba(255,255,255,.08);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:.75rem;cursor:pointer">Fermer</button>
+    </div>
+  </div>
+</div>
+
   <aside class="sidebar">
     <div class="sidebar-label">9 Campagnes</div>
     <div id="sidebarList"></div>
@@ -1717,6 +1740,7 @@ function render(id) {
             <input class="finput" placeholder="https://worker.workers.dev/payzen-token" value="https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token" id="pz-worker-${id}"></div>
           <div class="frow"><label class="flabel">Secret Worker</label>
             <input class="finput" type="password" placeholder="votre_secret (requis pour l'export)" id="pz-secret-${id}"></div>
+          <div style="font-size:0.62rem;color:#f6a35a;background:rgba(246,163,90,0.1);border:1px solid rgba(246,163,90,0.3);border-radius:6px;padding:6px 8px;margin-top:4px">⚠️ Ce secret sera visible dans le source HTML de la LP publiée. Utilisez un secret dédié par LP — ne réutilisez pas votre secret principal. Mettez à jour le Worker pour valider par slug LP (Cloudflare KV).</div>
           <div class="frow"><label class="flabel">Mode</label>
             <select class="finput" id="pz-mode-${id}" style="background:var(--bg-panel);color:var(--text)">
               <option value="TEST">TEST</option>
@@ -2004,7 +2028,7 @@ function stkCalcCustom(campId) {
 }
 
 function fmtSwitch(btn, ratio, id) {
-  document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
+  (btn.closest('.preview-tabs') || document).querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   const cv = document.getElementById('cv-'+id);
   if (cv) cv.style.aspectRatio = ratio;
@@ -2627,6 +2651,7 @@ function exportLPTshirt(id) {
 
   const workerUrl    = g('pz-worker-'+id)?.value?.trim() || 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
   const workerSecret = g('pz-secret-'+id)?.value?.trim() || '';
+  const lpToken      = crypto.randomUUID();
   const workerMode   = g('pz-mode-'+id)?.value || 'TEST';
 
   const faces    = pcfg.faces || ['front'];
@@ -2857,7 +2882,8 @@ const SHOW_BACK    = ${showBack};
 const SHOW_STEP2   = ${pcfg.showStep2};
 const REQUIRE_SIZE = ${pcfg.requireSize};
 const WORKER_URL   = '${workerUrl}';
-const WORKER_SECRET= '${workerSecret}';
+const WORKER_SECRET= ''; /* secret géré côté Worker via Origin auth */
+const LP_TOKEN     = '${lpToken}';
 const WORKER_MODE  = '${workerMode}';
 const ACCENT       = '${primary}';
 const SHIP_RATES   = {tahiti:1800,moorea:1500,huahine:2500,'bora-bora':2500,raiatea:2500,tahaa:2500,maupiti:3500,rangiroa:3000,makemo:4000,tubuai:4000,'hiva-oa':5000,'nuku-hiva':5000};
@@ -3381,7 +3407,7 @@ async function ckPayment() {
   const oldSdk=document.getElementById('pz-sdk'); if(oldSdk) oldSdk.remove();
   if(window.KR){try{KR.removeForms();}catch(_){}}
   try {
-    const res = await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET},body:JSON.stringify({amount:total,currency:'XPF',orderId,mode:WORKER_MODE,customerEmail:ckContact.email})});
+    const res = await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET,'X-Lp-Token':LP_TOKEN},body:JSON.stringify({amount:total,currency:'XPF',orderId,mode:WORKER_MODE,customerEmail:ckContact.email})});
     if(!res.ok){const e=await res.json();throw new Error(e.error||'Erreur serveur');}
     const {formToken,publicKey} = await res.json();
     document.getElementById('pz-loading').style.display='none';
@@ -3393,7 +3419,7 @@ async function ckPayment() {
       const bk=document.getElementById('pz-back'); if(bk) bk.style.display='none';
       _enrichConfirmation(orderId, total, ckContact, ckDelivery, p?.n || '');
       fetch(WORKER_URL.replace('/payzen-token','/order/save'),{
-        method:'POST',keepalive:true,headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET},
+        method:'POST',keepalive:true,headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET,'X-Lp-Token':LP_TOKEN},
         body:JSON.stringify({
           orderId, status:'paid', amount:total, currency:'XPF',
           campaignName:CAMP_NAME, product:p.n,
@@ -3409,8 +3435,7 @@ async function ckPayment() {
           note: [ckContact.note||'', 'Taille:'+flow.size, p.couleur?'Couleur:'+p.couleur:'', 'Logo:'+flow.logoName, 'Face:'+flow.face, 'Placement:x='+Math.round(flow.logoPos.xPct)+'%,y='+Math.round(flow.logoPos.yPct)+'%,w='+Math.round(flow.logoPos.wPct)+'%', flow.useText&&flow.customText?'Texte:'+flow.customText+' ['+flow.textPos+']':''].filter(Boolean).join(' | ')
         })
       }).catch(function(_e){console.error('[HCS] Ordre non sauvegardé:',_e);var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_ord-warn')){var _w=document.createElement('p');_w.id='_ord-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
-      /* MySQL hcs_orders — fiche production ${isCap?'casquette':'tshirt'} */
-      fetch('https://highcoffeeshirts.com/erp/api/hcs_orders',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json','x-api-key':'hcs-erp-2026'},body:JSON.stringify({order_id:orderId,vertical:'${isCap?'casquette':'tshirt'}',status:'payé',total_xpf:total,campaign_name:CAMP_NAME,lp_slug:LP_SLUG,product_icon:p.e||'${emoji}',product_name:p.n||'',contact:ckContact,delivery:ckDelivery,design_data:{product_color:p.couleur||'',product_color_hex:p.couleurHex||'',size:flow.size,qty:flow.qty,face:flow.face,logo_url:flow.logoUrl||'',logo_name:flow.logoName||'',logo_pos:flow.logoPos||{xPct:50,yPct:47,wPct:44},use_text:!!flow.useText,custom_text:flow.useText?flow.customText:'',text_pos:flow.useText?flow.textPos:'',text_font:flow.textFont||'',text_color:flow.textColor||''},snapshots:{face:flow.logoUrl||''},mode:WORKER_MODE,note:['Taille:'+flow.size,p.couleur?'Couleur:'+p.couleur:'','Logo:'+flow.logoName,flow.useText&&flow.customText?'Texte:'+flow.customText:'',ckContact.note||''].filter(Boolean).join(' | ')})}).catch(function(){});
+      /* hcs_orders — données incluses dans le payload Worker /order/save (clé API côté serveur uniquement) */
     }
     KR.onSubmit(d=>{if(['PAID','RUNNING','AUTHORISED'].includes(d?.clientAnswer?.orderStatus)){showSuccess();}return false;});
     const krForm=document.querySelector('.kr-embedded');
@@ -3424,6 +3449,7 @@ document.addEventListener('keydown', e => { if(e.key==='Escape'){closeFlow();clo
 <\/script>
 </body></html>`;
 
+  _registerLpToken(id, lpSlug, lpToken);
   dl(`andromeda-lp-${c.id}-${c.name.replace(/[^\w]/g,'-').toLowerCase()}.html`, html);
   // Sauvegarde dans HCS ERP (T-Shirt / Casquette)
   hcsSaveCampaign(id);
@@ -3688,7 +3714,7 @@ footer{text-align:center;padding:28px;color:rgba(255,255,255,.4);font-size:.82re
 <script>
 const PRODUCTS = ${prodsJson};
 const WORKER_URL    = '${workerUrl}';
-const WORKER_SECRET = '${workerSecret}';
+const WORKER_SECRET = ''; /* secret géré côté Worker via Origin auth */
 const WORKER_MODE   = '${workerMode}';
 const ACCENT        = '${primary}';
 
@@ -3938,7 +3964,7 @@ async function renderStep4() {
   try {
     const res = await fetch(WORKER_URL, {
       method:'POST',
-      headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET},
+      headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET,'X-Lp-Token':LP_TOKEN},
       body:JSON.stringify({ amount:total, currency:'XPF', orderId, mode:WORKER_MODE, customerEmail:ckContact.email })
     });
     if (!res.ok) { const e=await res.json(); throw new Error(e.error||'Erreur serveur'); }
@@ -3977,7 +4003,7 @@ async function renderStep4() {
       if (backEl) backEl.style.display = 'none';
       fetch(WORKER_URL.replace('/payzen-token','/order/save'), {
         method:'POST',
-        headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET},
+        headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET,'X-Lp-Token':LP_TOKEN},
         body:JSON.stringify({
           orderId, status:'paid', amount:total, currency:'XPF',
           campaignName:'${c.name}', product:p.n,
@@ -4060,6 +4086,8 @@ function exportLPVdec(id) {
   const ovColor    = c.colors.overlay || 'rgba(0,0,0,.55)';
   const workerUrl  = g('pz-worker-'+id)?.value?.trim()  || 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
   const workerSec  = g('pz-secret-'+id)?.value?.trim()  || '';
+  const lpToken    = crypto.randomUUID();
+  const lpSlug     = `vdec-${c.name.replace(/[^a-zA-Z0-9]/g,'-').toLowerCase()}-${id}`;
   const workerMode = g('pz-mode-'+id)?.value || 'TEST';
   const publicKey  = workerMode === 'PRODUCTION'
     ? '41545085:publickey_IzNDzp5XcAadriFpCh08meZmg8Ri6WbYIG6TIQ9mpu2NA'
@@ -4193,7 +4221,8 @@ footer{text-align:center;padding:28px;color:rgba(255,255,255,.4);font-size:.82re
 const CATS = ${catsJson};
 const TARIFS = ${tarifsJson};
 const WORKER_URL = '${workerUrl}';
-const WORKER_SEC = '${workerSec}';
+const WORKER_SEC = ''; /* secret géré côté Worker via Origin auth */
+const LP_TOKEN   = '${lpToken}';
 const _urlMode=new URLSearchParams(location.search).get('mode');
 const WORKER_MODE=_urlMode==='test'?'TEST':_urlMode==='prod'?'PRODUCTION':'${workerMode}';
 const PUBLIC_KEY=WORKER_MODE==='PRODUCTION'?'41545085:publickey_IzNDzp5XcAadriFpCh08meZmg8Ri6WbYIG6TIQ9mpu2NA':'41545085:testpublickey_HJw0fXMbbvOAzJuN1BXImXIu5U16qkSHv2eQVjSu0YftA';
@@ -4400,7 +4429,7 @@ async function renderS4(){
   }
   document.getElementById('pz-area').innerHTML='<div class="pz-loading">🔒 Connexion sécurisée OSB…</div><div class="kr-embedded" id="pz-kr-form" style="display:none"></div>';
   try {
-    var res=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SEC},body:JSON.stringify({amount:total,currency:'XPF',orderId:ORDER_ID,mode:WORKER_MODE,customerEmail:ckContact.email})});
+    var res=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SEC,'X-Lp-Token':LP_TOKEN},body:JSON.stringify({amount:total,currency:'XPF',orderId:ORDER_ID,mode:WORKER_MODE,customerEmail:ckContact.email})});
     if(!res.ok) throw new Error('Erreur worker ('+res.status+')');
     var data=await res.json();
     var formToken=data.formToken,pubKey=data.publicKey||PUBLIC_KEY;
@@ -4433,18 +4462,15 @@ function _vdSaveOrder(){
   var cat=ckCatIdx!==null?CATS[ckCatIdx]:{};
   var sidx=_vdecCatIdx!=null?_vdecCatIdx:ckCatIdx;
   var scat=sidx!=null&&CATS[sidx]?CATS[sidx]:cat;
-  /* Worker KV */
-  fetch('https://payzen-hcs.highcoffeeshirt.workers.dev/order/save',{method:'POST',headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SEC},body:JSON.stringify({orderId:ORDER_ID,amount:getTotal(),currency:'XPF',campaignName:'Déco Véhicule',lpSlug:'sticker-auto-0',product:(scat.icon||'🚗')+' '+(scat.name||'')+(scat.model?' — '+scat.model:''),client:ckContact,delivery:ckDelivery,note:ckDescription+(ckPhotoUrl?' | [Photo fournie par le client]':''),mode:WORKER_MODE})}).catch(function(_e){var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_vd-warn')){var _w=document.createElement('p');_w.id='_vd-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+ORDER_ID+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
-  /* MySQL vdec_commandes — design complet */
-  fetch('https://highcoffeeshirts.com/erp/api/vdec_commandes',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':'hcs-erp-2026'},body:JSON.stringify({order_id:ORDER_ID,status:'payé',total_xpf:getTotal(),cat_name:scat.name||'',cat_model:scat.model||'',cat_icon:scat.icon||'🚗',views_validated:_vdecViewsVal,logos:_vdecLogos,texts:_vdecTexts,cat_views:scat.views||{},view_snapshots:_vdecViewSnaps,contact:ckContact,delivery:ckDelivery,created_at:new Date().toISOString()})}).catch(function(){});
-  /* MySQL hcs_orders — commande unifiée toutes verticales */
-  fetch('https://highcoffeeshirts.com/erp/api/hcs_orders',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':'hcs-erp-2026'},body:JSON.stringify({order_id:ORDER_ID,vertical:'vdec',status:'payé',total_xpf:getTotal(),campaign_name:'Déco Véhicule',lp_slug:'vdec-lp-0',product_icon:scat.icon||'🚗',product_name:(scat.name||'')+(scat.model?' — '+scat.model:''),contact:ckContact,delivery:ckDelivery,design_data:{cat_name:scat.name||'',cat_model:scat.model||'',cat_icon:scat.icon||'🚗',views_validated:_vdecViewsVal,logos:_vdecLogos,texts:_vdecTexts,cat_views:scat.views||{},description:ckDescription||'',photo_url:ckPhotoUrl||''},snapshots:_vdecViewSnaps,mode:WORKER_MODE,note:(ckDescription||'')+(ckPhotoUrl?' | [Photo fournie]':'')})}).catch(function(){});
+  /* Worker KV — inclut vdec_details (clé API ERP côté serveur uniquement) */
+  fetch('https://payzen-hcs.highcoffeeshirt.workers.dev/order/save',{method:'POST',headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SEC,'X-Lp-Token':LP_TOKEN},body:JSON.stringify({orderId:ORDER_ID,amount:getTotal(),currency:'XPF',campaignName:'Déco Véhicule',lpSlug:'sticker-auto-0',product:(scat.icon||'🚗')+' '+(scat.name||'')+(scat.model?' — '+scat.model:''),client:ckContact,delivery:ckDelivery,note:ckDescription+(ckPhotoUrl?' | [Photo fournie par le client]':''),mode:WORKER_MODE,vdec_details:{cat_name:scat.name||'',cat_model:scat.model||'',cat_icon:scat.icon||'🚗',views_validated:_vdecViewsVal,logos:_vdecLogos,texts:_vdecTexts,cat_views:scat.views||{},view_snapshots:_vdecViewSnaps,description:ckDescription||'',photo_url:ckPhotoUrl||''}})}).catch(function(_e){var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_vd-warn')){var _w=document.createElement('p');_w.id='_vd-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+ORDER_ID+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
 }
 function showOk(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';var b=document.getElementById('pz-back');if(b)b.style.display='none';_vdSaveOrder();_vdInjectDesignRecap();}
 function simPay(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';document.getElementById('pz-ok-msg').textContent='Merci '+ckContact.name+' — commande simulée (mode test, non facturé).';var b=document.getElementById('pz-back');if(b)b.style.display='none';_vdSaveOrder();_vdInjectDesignRecap();}
 function vdecTriggerUpload(el){var inp=el.querySelector('input');if(inp)inp.click();}
 <\/script>
 </body></html>`;
+  _registerLpToken(id, lpSlug, lpToken);
   dl(`vdec-lp-${c.name.replace(/[^\w]/g,'-').toLowerCase()}.html`, html);
   hcsSaveCampaign(id);
   return html;
@@ -4465,6 +4491,7 @@ function exportLPGeneric(id) {
   const logoSrc   = logoEl?.src || '';
   const workerUrl = g('pz-worker-'+id)?.value || 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
   const workerSec = g('pz-secret-'+id)?.value || '';
+  const lpToken   = crypto.randomUUID();
   const mode      = g('pz-mode-'+id)?.value   || 'TEST';
   const publicKey = mode === 'PRODUCTION'
     ? '41545085:publickey_IzNDzp5XcAadriFpCh08meZmg8Ri6WbYIG6TIQ9mpu2NA'
@@ -4666,7 +4693,8 @@ var CFG        = ${cfgJson};
 var FACE_IMGS  = ${faceImgsJson};
 var TSH_SIZES  = ${tshSizesJson};
 var WORKER_URL = '${workerUrl.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}';
-var WORKER_SEC = '${workerSec.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}';
+var WORKER_SEC = ''; /* secret géré côté Worker via Origin auth */
+var LP_TOKEN   = '${lpToken}';
 var WORKER_MODE = '${mode}';
 var PUBLIC_KEY  = '${publicKey}';
 var PRIMARY    = '${primary}';
@@ -5003,7 +5031,7 @@ async function gfInitKrypton(amount) {
   try {
     var resp = await fetch(WORKER_URL, {
       method:'POST',
-      headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SEC},
+      headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SEC,'X-Lp-Token':LP_TOKEN},
       body:JSON.stringify({amount:amount*100,currency:'953',mode:WORKER_MODE})
     });
     var data; try { data=await resp.json(); } catch(e){ throw new Error(await resp.text()); }
@@ -5032,7 +5060,7 @@ async function gfInitKrypton(amount) {
         var sizeField=_s.size||_s.format||_s.module||_s.plan||_s.service||'';
         fetch(WORKER_URL.replace('/payzen-token','/order/save'),{
           method:'POST',
-          headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SEC},
+          headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SEC,'X-Lp-Token':LP_TOKEN},
           body:JSON.stringify({
             orderId:orderId,status:'paid',amount:total,currency:'XPF',
             campaignName:CAMP_NAME,product:prod.n,
@@ -5192,6 +5220,7 @@ window.addEventListener('message', function(e) {
 </body>
 </html>`;
 
+  _registerLpToken(id, lpSlug, lpToken);
   dl(`andromeda-lp-${c.id}-${c.name.replace(/[^\w]/g,'-').toLowerCase()}.html`, html);
   hcsSaveCampaign(id);
 }
@@ -5225,6 +5254,7 @@ function exportAd(id) {
 
   const workerUrl    = g('pz-worker-'+id)?.value?.trim() || 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
   const workerSecret = g('pz-secret-'+id)?.value?.trim() || '';
+  const lpToken      = crypto.randomUUID();
   const workerMode   = g('pz-mode-'+id)?.value || 'TEST';
   const primary      = c.colors.primary;
   const badge2       = c.colors.badge;
@@ -5455,7 +5485,8 @@ ${_lpPayCss(primary)}
 <script>
 const PRODUCTS = ${prodsJson};
 const WORKER_URL    = '${workerUrl}';
-const WORKER_SECRET = '${workerSecret}';
+const WORKER_SECRET = ''; /* secret géré côté Worker via Origin auth */
+const LP_TOKEN      = '${lpToken}';
 const WORKER_MODE   = '${workerMode}';
 const ACCENT        = '${primary}';
 const SHIP_RATES    = {tahiti:1800,moorea:1500,huahine:2500,'bora-bora':2500,raiatea:2500,tahaa:2500,maupiti:3500,rangiroa:3000,makemo:4000,tubuai:4000,'hiva-oa':5000,'nuku-hiva':5000};
@@ -5682,7 +5713,7 @@ async function renderStep4() {
   try {
     const res = await fetch(WORKER_URL, {
       method:'POST',
-      headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET},
+      headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET,'X-Lp-Token':LP_TOKEN},
       body:JSON.stringify({ amount:total, currency:'XPF', orderId, mode:WORKER_MODE, customerEmail:ckContact.email })
     });
     if (!res.ok) { const e=await res.json(); throw new Error(e.error||'Erreur serveur'); }
@@ -5721,7 +5752,7 @@ async function renderStep4() {
       if (backEl) backEl.style.display = 'none';
       fetch(WORKER_URL.replace('/payzen-token','/order/save'), {
         method:'POST',
-        headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET},
+        headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET,'X-Lp-Token':LP_TOKEN},
         body:JSON.stringify({
           orderId, status:'paid', amount:total, currency:'XPF',
           campaignName:'${c.name}', product:p.n,
@@ -5730,8 +5761,7 @@ async function renderStep4() {
           note:ckContact.note||''
         })
       }).catch(function(_e){console.error('[HCS] Ordre non sauvegardé:',_e);var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_ord-warn')){var _w=document.createElement('p');_w.id='_ord-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
-      /* MySQL hcs_orders — fiche production ${_verticalStr} */
-      fetch('https://highcoffeeshirts.com/erp/api/hcs_orders',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json','x-api-key':'hcs-erp-2026'},body:JSON.stringify({order_id:orderId,vertical:'${_verticalStr}',status:'payé',total_xpf:total,campaign_name:CAMP_NAME,lp_slug:LP_SLUG,product_icon:p.e||CAMP_ICON||'${_iconStr}',product_name:p.n||p.p||'',contact:ckContact,delivery:ckDelivery,design_data:{product_color:p.couleur||p.color||'',size:_s.size||window._selectedSize||'',qty:_s.qty||window._qty||1,format:_s.format||'',color:_s.color||'',note_client:ckContact.note||'',custom_fields:window._customFields||{}},snapshots:{},mode:WORKER_MODE,note:ckContact.note||''})}).catch(function(){});
+      /* hcs_orders — données incluses dans le payload Worker /order/save (clé API côté serveur uniquement) */
       /* Enrichir la confirmation avec fidélité + lien compte client */
       _enrichConfirmation(orderId, total, ckContact, ckDelivery, p?.n || '');
     }
@@ -5767,6 +5797,7 @@ document.getElementById('modal-overlay').addEventListener('click', e => { if (e.
 <\/script>
 </body></html>`;
 
+  _registerLpToken(id, `ad-${c.name.replace(/[^a-zA-Z0-9]/g,'-').toLowerCase()}-${id}`, lpToken);
   dl(`andromeda-ad-${c.id}-${c.name.replace(/[^\w]/g,'-').toLowerCase()}.html`, html);
 }
 
@@ -5881,6 +5912,64 @@ function dl(name, content, type='text/html') {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+}
+
+function _getWorkerAdminUrl() {
+  const base = 'https://payzen-hcs.highcoffeeshirt.workers.dev';
+  return base + '/admin/lp-token';
+}
+
+function _registerLpToken(campId, slug, token) {
+  const all = JSON.parse(localStorage.getItem('hcs_lp_tokens') || '{}');
+  all[slug] = { token, campId, exportedAt: new Date().toISOString() };
+  localStorage.setItem('hcs_lp_tokens', JSON.stringify(all));
+  _renderLpTokenPanel();
+  // Synchroniser avec le Worker KV (nécessite ADMIN_SECRET dans le champ admin)
+  const adminSecret = document.getElementById('worker-admin-secret')?.value?.trim() || localStorage.getItem('hcs_admin_secret') || '';
+  if (!adminSecret) return;
+  fetch(_getWorkerAdminUrl(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminSecret },
+    body: JSON.stringify({ token, slug, campId })
+  }).catch(() => {});
+}
+
+function _revokeLpToken(slug) {
+  const all = JSON.parse(localStorage.getItem('hcs_lp_tokens') || '{}');
+  const entry = all[slug];
+  delete all[slug];
+  localStorage.setItem('hcs_lp_tokens', JSON.stringify(all));
+  _renderLpTokenPanel();
+  if (!entry?.token) return;
+  const adminSecret = document.getElementById('worker-admin-secret')?.value?.trim() || localStorage.getItem('hcs_admin_secret') || '';
+  if (!adminSecret) return;
+  fetch(_getWorkerAdminUrl(), {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminSecret },
+    body: JSON.stringify({ token: entry.token, slug })
+  }).catch(() => {});
+}
+
+function _renderLpTokenPanel() {
+  const panel = document.getElementById('lp-token-panel');
+  if (!panel) return;
+  const all = JSON.parse(localStorage.getItem('hcs_lp_tokens') || '{}');
+  const keys = Object.keys(all);
+  if (!keys.length) {
+    panel.innerHTML = '<p style="color:#888;font-size:.75rem;text-align:center;padding:12px">Aucune LP exportée — les tokens apparaîtront ici après chaque export.</p>';
+    return;
+  }
+  panel.innerHTML = keys.map(slug => {
+    const e = all[slug];
+    const d = new Date(e.exportedAt).toLocaleDateString('fr-FR', {day:'2-digit',month:'short',year:'numeric'});
+    const short = e.token.split('-')[0];
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.04);margin-bottom:4px">
+      <span style="font-size:.8rem;flex:1;color:#d0d0d0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${slug}">${slug}</span>
+      <span style="font-size:.7rem;color:#888;flex-shrink:0">${d}</span>
+      <code style="font-size:.65rem;color:#f6d365;background:rgba(246,211,101,.1);padding:2px 6px;border-radius:4px;flex-shrink:0">${short}…</code>
+      <button onclick="_revokeLpToken('${slug}')" style="background:rgba(255,80,80,.15);color:#ff8080;border:none;border-radius:6px;padding:3px 8px;font-size:.7rem;cursor:pointer;flex-shrink:0">Révoquer</button>
+    </div>`;
+  }).join('');
 }
 
 
@@ -11571,6 +11660,12 @@ document.addEventListener('DOMContentLoaded', () => {
   updateStorageIndicator();
   /* Rafraîchir toutes les 30s */
   setInterval(updateStorageIndicator, 30000);
+  _renderLpTokenPanel();
+  const _savedAdminSec = localStorage.getItem('hcs_admin_secret');
+  if (_savedAdminSec) {
+    const _el = document.getElementById('worker-admin-secret');
+    if (_el) _el.value = _savedAdminSec;
+  }
 });
 </script>
 
