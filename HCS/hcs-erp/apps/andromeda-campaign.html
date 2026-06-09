@@ -4055,6 +4055,8 @@ async function renderStep4() {
 document.addEventListener('keydown', e => { if (e.key==='Escape') closeCheckout(); });
 // Fermer en cliquant l'overlay
 document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target===e.currentTarget) closeCheckout(); });
+// Auto-sélection du premier produit au chargement
+if (PRODUCTS.length > 0) selectProd(0);
 <\/script>
 </body></html>`;
   dl(`andromeda-lp-${c.id}-${c.name.replace(/[^\w]/g,'-').toLowerCase()}.html`, html);
@@ -5794,6 +5796,8 @@ async function renderStep4() {
 
 document.addEventListener('keydown', e => { if (e.key==='Escape') closeCheckout(); });
 document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target===e.currentTarget) closeCheckout(); });
+// Auto-sélection du premier produit au chargement
+if (PRODUCTS.length > 0) selectProd(0);
 <\/script>
 </body></html>`;
 
