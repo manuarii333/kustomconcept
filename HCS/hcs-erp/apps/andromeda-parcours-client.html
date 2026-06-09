@@ -638,7 +638,21 @@ function renderCamp(id) {
   if (!d) return;
   const main = document.getElementById('main-area');
 
-  // ── Camp header
+  // ── URLs publiées depuis Andromeda
+  const _pubUrls = JSON.parse(localStorage.getItem('hcs_published_urls') || '{}');
+  const _lpUrl   = _pubUrls[id] || null;
+
+  // ── Accès rapide LP
+  const _quickAccess = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      ${_lpUrl
+        ? `<a href="${_lpUrl}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:${d.color};color:#fff;border-radius:8px;font-size:.75rem;font-weight:700;text-decoration:none">🌐 Ouvrir la LP ↗</a>`
+        : `<span style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.35);border-radius:8px;font-size:.75rem;border:1px dashed rgba(255,255,255,.15)">🌐 LP non publiée — exporter depuis Andromeda</span>`
+      }
+      <a href="../apps/andromeda-campaign.html" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);border-radius:8px;font-size:.75rem;text-decoration:none;border:1px solid rgba(255,255,255,.1)">📣 Andromeda</a>
+    </div>`;
+
+  // Camp header
   const campHeader = `
     <div class="camp-header" style="${colorCss(d)}">
       <div class="camp-header-icon" style="background:${d.colorDark};border:1px solid rgba(255,255,255,.1)">${d.emoji}</div>
@@ -714,13 +728,19 @@ function renderCamp(id) {
       <div class="funnel-pct">${s.funnel}%</div>
     </div>`).join('');
 
-  // ── Config
-  const configRows = d.config.map(c => `
-    <div class="config-row">
+  // ── Config (LP row activée dynamiquement si URL publiée)
+  const configRows = d.config.map(c => {
+    let val = c.val, status = c.ok ? 'ok' : c.warn ? 'warn' : 'na', icon = c.ok ? '✓' : c.warn ? '!' : '—';
+    if (c.warn && _lpUrl) {
+      val = `<a href="${_lpUrl}" target="_blank" rel="noopener" style="color:#43e97b;text-decoration:none;font-weight:600">${_lpUrl.length > 32 ? _lpUrl.slice(0,32)+'…' : _lpUrl} ↗</a>`;
+      status = 'ok'; icon = '✓';
+    }
+    return `<div class="config-row">
       <div class="config-key">${c.key}</div>
-      <div class="config-val">${c.val}</div>
-      <div class="config-status ${c.ok ? 'ok' : c.warn ? 'warn' : 'na'}">${c.ok ? '✓' : c.warn ? '!' : '—'}</div>
-    </div>`).join('');
+      <div class="config-val">${val}</div>
+      <div class="config-status ${status}">${icon}</div>
+    </div>`;
+  }).join('');
 
   // ── Tips
   const tipsHTML = d.tips.map(t => `
@@ -753,7 +773,7 @@ function renderCamp(id) {
 
   const activeStepData = d.steps.find(s => s.num === currentStep) || d.steps[0];
 
-  main.innerHTML = campHeader + `
+  main.innerHTML = campHeader + _quickAccess + `
 
     <!-- ── OPTION B ── -->
     <div class="section-head" style="margin-bottom:14px">
@@ -834,7 +854,16 @@ function renderCamp(id) {
 }
 
 // Init
+let _currentCampId = 0;
+const _origShowCamp = showCamp;
+function showCamp(id) { _currentCampId = id; _origShowCamp(id); }
+
 renderCamp(0);
+
+// Mise à jour automatique si une LP est publiée dans un autre onglet
+window.addEventListener('storage', e => {
+  if (e.key === 'hcs_published_urls') renderCamp(_currentCampId);
+});
 </script>
 </body>
 </html>
