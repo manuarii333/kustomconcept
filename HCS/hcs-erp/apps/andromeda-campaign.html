@@ -4289,7 +4289,7 @@ function _vdElemsHtml(){
     h+='<div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:rgba(79,172,254,.65);margin:8px 0 5px">Textes</div>';
     _vdecTexts.forEach(function(t){
       h+='<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:rgba(255,255,255,.04);border-radius:7px;margin-bottom:3px;flex-wrap:wrap">';
-      h+='<span style="font-family:\''+t.font+'\',Impact,sans-serif;color:'+t.color+';font-weight:900;font-size:.85rem">'+t.text+'</span>';
+      h+='<span style="font-family:\\''+t.font+'\\',Impact,sans-serif;color:'+t.color+';font-weight:900;font-size:.85rem">'+t.text+'</span>';
       h+='<span style="margin-left:auto;font-size:.58rem;color:rgba(255,255,255,.38)">';
       if(t.w_cm)h+=parseFloat(t.w_cm).toFixed(1)+' × '+parseFloat(t.h_cm||t.w_cm).toFixed(1)+' cm &nbsp;·&nbsp; ';
       h+=t.font+' &nbsp;·&nbsp; <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:'+t.color+';border:1px solid rgba(255,255,255,.3);vertical-align:middle;margin-right:3px"></span>'+t.color+'</span></div>';
