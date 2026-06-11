@@ -1764,6 +1764,7 @@ function render(id) {
           <button class="btn btn-outline" style="font-size:0.7rem;padding:5px 10px;background:rgba(167,139,250,.15);border-color:#a78bfa;color:#a78bfa" onclick="previewLP(${id})">👁️ Prévisualiser</button>
           <button class="btn btn-outline" style="font-size:0.7rem;padding:5px 10px;background:rgba(246,211,101,.15);border-color:#f6d365;color:#f6d365" onclick="exportLPImage(${id})">🖼️ Exporter PNG</button>
           <button class="btn btn-primary" style="font-size:0.7rem;padding:5px 10px" onclick="exportLP(${id})">📤 Exporter HTML</button>
+          <button class="btn btn-outline" style="font-size:0.7rem;padding:5px 10px;background:rgba(255,107,107,.12);border-color:#ff6b6b;color:#ff6b6b" onclick="deleteLPFromCamp(${id})">🗑️ Supprimer LP</button>
         </div>
       </div>
       <div class="lp-body">${renderLP(c)}</div>
@@ -4338,7 +4339,7 @@ function openMockupStudio(){
     '<span style="color:#ff9966;font-weight:800;font-size:.88rem">🎨 Studio Mockup</span>'+
     '<button onclick="vdecCloseStudio()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:.74rem">✕ Fermer</button>'+
     '</div>'+
-    '<iframe src="https://highcoffeeshirts.com/erp/apps/andromeda-campaign.html?vdec=1&camp=0" style="flex:1;border:none;width:100%" allow="clipboard-read;clipboard-write"></iframe>';
+    '<iframe src="https://highcoffeeshirts.com/erp/apps/andromeda-campaign.html?vdec=1&camp=0'+(ckCatIdx!==null?'&catIdx='+ckCatIdx:'')+'" style="flex:1;border:none;width:100%" allow="clipboard-read;clipboard-write"></iframe>';
   document.body.appendChild(ol);
   window.addEventListener('message',_vdecMsgHandler);
 }
@@ -6679,9 +6680,23 @@ function renderLPs(pages) {
 async function deleteLP(slug) {
   if (!confirm(`Supprimer la LP "${slug}" ?`)) return;
   try {
-    await fetch(`${WORKER_BASE}/lp/${slug}`, { method:'DELETE', headers:{'X-Admin-Secret':adminSecret} });
+    const r = await fetch(`${WORKER_BASE}/lp/${slug}`, { method:'DELETE', headers:{'X-Admin-Secret':adminSecret} });
+    if (!r.ok && r.status === 404) { showToast(`⚠️ LP "${slug}" introuvable (déjà supprimée ?)`, true); return; }
     showToast(`🗑️ LP "${slug}" supprimée`);
     loadLPs();
+  } catch(e) { showToast('❌ ' + e.message, true); }
+}
+
+async function deleteLPFromCamp(campId) {
+  const c = CAMPS.find(x => x.id === campId);
+  if (!c) return;
+  const slug = c.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  if (!confirm(`Supprimer la LP publiée "${slug}" ?\nCette action est irréversible.`)) return;
+  try {
+    const r = await fetch(`${WORKER_BASE}/lp/${slug}`, { method:'DELETE', headers:{'X-Admin-Secret':adminSecret} });
+    if (r.status === 404) { showToast(`⚠️ LP "${slug}" non trouvée (pas encore publiée ?)`, true); return; }
+    if (!r.ok) throw new Error(`Erreur ${r.status}`);
+    showToast(`🗑️ LP "${slug}" supprimée`);
   } catch(e) { showToast('❌ ' + e.message, true); }
 }
 
@@ -12254,9 +12269,9 @@ let _vdec = {
   orderId:''
 };
 
-function vdecOpenFlow(campId, prodIdx) {
+function vdecOpenFlow(campId, prodIdx, preCatIdx = null) {
   const saved = (() => { try { return JSON.parse(localStorage.getItem('hcs_vdec_contact')||'null'); } catch(_) { return null; } })();
-  _vdec = { step:1, catIdx:null, viewKey:'left', campId, prodIdx,
+  _vdec = { step: preCatIdx !== null ? 2 : 1, catIdx: preCatIdx !== null ? preCatIdx : null, viewKey:'left', campId, prodIdx,
     logos:[], texts:[],
     viewsValidated:{ left:false, front:false, back:false, right:false },
     viewSnapshots:{},
@@ -13538,9 +13553,10 @@ async function vdecArchiveOrder(total) {
     if (header)  header.style.display  = 'none';
     document.body.style.background = '#0f0f1a';
     const campId = parseInt(_p.get('camp') || '0');
+    const _ci = _p.get('catIdx'); const _preCatIdx = _ci !== null && _ci !== '' ? parseInt(_ci) : null;
     // Sync config from MySQL before opening flow so images/enabledViews are available
     vdecSyncFromServer().catch(() => {}).finally(function() {
-      setTimeout(function() { vdecOpenFlow(campId, 0); }, 100);
+      setTimeout(function() { vdecOpenFlow(campId, 0, !isNaN(_preCatIdx) ? _preCatIdx : null); }, 100);
     });
   });
 })();

@@ -1268,7 +1268,8 @@ const Sales = (() => {
       _openClientModal(null, toolbar, area);
     });
 
-    _drawClientsList('', toolbar, area);
+    const q0 = (typeof AppState !== 'undefined' ? AppState.searchQuery : '') || '';
+    _drawClientsList(q0, toolbar, area);
   }
 
   /* Filtre actif sur la liste clients */
