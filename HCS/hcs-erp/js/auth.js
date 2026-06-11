@@ -669,8 +669,9 @@ window._couleurAvatar     = _couleurAvatar;
 (function () {
   const session = Auth.getSession();
   if (session) {
-    /* Renouveler le jeton API si le hash est disponible en session */
-    _fetchApiToken(session.login, sessionStorage.getItem('hcs_mdp_hash') || '');
+    /* Renouveler le jeton API uniquement si le hash mdp est disponible (évite le 401 à chaque rechargement) */
+    const _storedHash = sessionStorage.getItem('hcs_mdp_hash');
+    if (_storedHash) _fetchApiToken(session.login, _storedHash);
     showApp();
   } else {
     renderLoginScreen();

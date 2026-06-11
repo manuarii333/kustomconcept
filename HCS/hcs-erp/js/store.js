@@ -157,10 +157,10 @@ const Store = (() => {
    */
   function save() {
     try {
-      /* Purge proactive : si >70% plein, vider base64 + limiter à 50 records/col AVANT save */
+      /* Purge proactive : si >50% plein, vider base64 + limiter à 50 records/col AVANT save */
       try {
         const _raw = localStorage.getItem(LS_KEY) || '';
-        if (_raw.length > 3500000) { /* ~3.5MB sur 5MB = 70% */
+        if (_raw.length > 2500000) { /* ~2.5MB sur 5MB = 50% */
           localStorage.removeItem(LS_KEY);
           if (db) {
             for (const col of Object.keys(db)) {
@@ -784,6 +784,9 @@ const Store = (() => {
     'planning_atelier', 'taches_agents'
   ]);
 
+  /* Timers de debounce par "collection/storeId" pour éviter les 429 */
+  const _updateTimers = {};
+
   /**
    * Envoie une création vers MySQL.
    * Stocke l'ID MySQL retourné dans le record Store (_mysql_id).
@@ -807,31 +810,36 @@ const Store = (() => {
   }
 
   /**
-   * Envoie une mise à jour vers MySQL.
+   * Envoie une mise à jour vers MySQL — avec debounce 800ms pour éviter les 429.
    * Si _mysql_id absent (ex: produits seed) → upsert complet via store_id.
    */
-  async function _syncMySQLUpdate(collection, storeId, updates) {
+  function _syncMySQLUpdate(collection, storeId, updates) {
     if (!window.MYSQL || !MYSQL_TABLES.has(collection)) return;
-    try {
-      const record = (db[collection] || []).find(r => r.id === storeId);
-      if (!record) return;
-      if (!record._mysql_id) {
-        /* Fallback upsert : envoie l'enregistrement complet avec store_id.
-           base.php utilise INSERT … ON DUPLICATE KEY UPDATE → idempotent. */
-        const payload = _buildMySQLPayload(record);
-        const created = await window.MYSQL.create(collection, payload);
-        if (created && created.id) {
-          record._mysql_id = created.id;
-          try { localStorage.setItem(LS_KEY, JSON.stringify(db)); } catch (_) {}
-          console.info(`[Store] MySQL upsert ${collection}/${storeId} → mysql_id=${created.id}`);
+    const key = `${collection}/${storeId}`;
+    clearTimeout(_updateTimers[key]);
+    _updateTimers[key] = setTimeout(async () => {
+      delete _updateTimers[key];
+      try {
+        const record = (db[collection] || []).find(r => r.id === storeId);
+        if (!record) return;
+        if (!record._mysql_id) {
+          /* Fallback upsert : envoie l'enregistrement complet avec store_id.
+             base.php utilise INSERT … ON DUPLICATE KEY UPDATE → idempotent. */
+          const payload = _buildMySQLPayload(record);
+          const created = await window.MYSQL.create(collection, payload);
+          if (created && created.id) {
+            record._mysql_id = created.id;
+            try { localStorage.setItem(LS_KEY, JSON.stringify(db)); } catch (_) {}
+            console.info(`[Store] MySQL upsert ${collection}/${storeId} → mysql_id=${created.id}`);
+          }
+          return;
         }
-        return;
+        const payload = _buildMySQLPayload(record);
+        await window.MYSQL.update(collection, record._mysql_id, payload);
+      } catch (e) {
+        console.warn(`[Store] MySQL update ${collection} échoué:`, e.message);
       }
-      const payload = _buildMySQLPayload(updates);
-      await window.MYSQL.update(collection, record._mysql_id, payload);
-    } catch (e) {
-      console.warn(`[Store] MySQL update ${collection} échoué:`, e.message);
-    }
+    }, 800);
   }
 
   /**
