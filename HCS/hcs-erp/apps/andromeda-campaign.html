@@ -6655,7 +6655,7 @@ function renderLPs(pages) {
         <div style="display:flex;gap:6px;margin-top:auto">
           <a href="${p.url}" target="_blank" style="flex:1;text-align:center;padding:6px;background:#6c63ff;color:white;border-radius:6px;font-size:0.7rem;font-weight:700;text-decoration:none">🌐 Ouvrir</a>
           <button onclick="navigator.clipboard.writeText('${p.url}');showToast('✅ Copié !')" style="flex:1;padding:6px;background:#1e1e3a;border:1px solid #2a2a4a;color:#ccc;border-radius:6px;font-size:0.7rem;cursor:pointer">📋 Copier</button>
-          <button onclick="deleteLP('${p.slug}')" style="padding:6px 10px;background:rgba(255,107,107,.15);border:1px solid #ff6b6b;color:#ff6b6b;border-radius:6px;font-size:0.7rem;cursor:pointer">🗑️</button>
+          <button onclick="deleteLP('${p.slug}')" style="flex:1;padding:6px;background:rgba(255,107,107,.15);border:1px solid #ff6b6b;color:#ff6b6b;border-radius:6px;font-size:0.7rem;font-weight:700;cursor:pointer">🗑️ Supprimer</button>
         </div>
         <button onclick="showLoyalty()" style="width:100%;padding:5px;background:rgba(246,211,101,.1);border:1px solid #f6d36566;color:#f6d365;border-radius:6px;font-size:0.68rem;cursor:pointer;margin-top:2px">⭐ Programme Fidélité</button>
       </div>
