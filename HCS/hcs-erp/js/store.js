@@ -157,6 +157,29 @@ const Store = (() => {
    */
   function save() {
     try {
+      /* Purge proactive : si >70% plein, vider base64 + limiter à 50 records/col AVANT save */
+      try {
+        const _raw = localStorage.getItem(LS_KEY) || '';
+        if (_raw.length > 3500000) { /* ~3.5MB sur 5MB = 70% */
+          localStorage.removeItem(LS_KEY);
+          if (db) {
+            for (const col of Object.keys(db)) {
+              if (!Array.isArray(db[col])) continue;
+              db[col] = db[col].slice(-50).map(r => {
+                if (typeof r !== 'object' || !r) return r;
+                const c = {};
+                for (const k of Object.keys(r)) {
+                  const v = r[k];
+                  c[k] = (typeof v === 'string' && (v.startsWith('data:') || v.length > 1000)) ? '' : v;
+                }
+                return c;
+              });
+            }
+            if (db.auditLog) db.auditLog = db.auditLog.slice(-20);
+          }
+        }
+      } catch(_) {}
+
       /* Extraire les dataUrl des mockups dans hcs_erp_mockups (clé séparée)
          pour éviter QuotaExceededError — les images base64 peuvent dépasser 5 MB */
       const mockupsStore = {};
@@ -955,9 +978,12 @@ const Store = (() => {
     let synced = 0;
     const errors = [];
 
+    const SYNC_LIMITS = { contacts: 5000, produits: 2000, fournisseurs: 1000 };
+
     for (const col of SYNC_COLS) {
       try {
-        const rows = await window.MYSQL.getAll(col, { limit: 2000 });
+        const colLimit = SYNC_LIMITS[col] || 200;
+        const rows = await window.MYSQL.getAll(col, { limit: colLimit, sort: 'id', order: 'desc' });
         if (!Array.isArray(rows) || !rows.length) continue;
 
         /* Double index : par _mysql_id et par store_id (= id local) */
@@ -986,6 +1012,12 @@ const Store = (() => {
           }
 
           const record = _mysqlRowToLocal(col, row);
+          /* Strip base64 / large strings avant stockage localStorage */
+          for (const k of Object.keys(record)) {
+            if (typeof record[k] === 'string' && (record[k].startsWith('data:') || record[k].length > 3000)) {
+              record[k] = '';
+            }
+          }
           if (!db[col]) db[col] = [];
           db[col].push(record);
           synced++;
