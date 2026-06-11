@@ -294,6 +294,14 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-prim
 .pcfg-chk input { width:12px; height:12px; accent-color:#a78bfa; cursor:pointer; }
 .pcfg-color-dot { width:11px; height:11px; border-radius:50%; border:1px solid rgba(255,255,255,0.2); flex-shrink:0; }
 .pcfg-add-row { display:flex; gap:6px; align-items:center; margin-top:8px; }
+/* ── LP Parcours picker ─────────────────────────────── */
+.lp-pck-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:10px; border:1px solid var(--border); background:var(--bg-panel); cursor:pointer; transition:all 0.15s; }
+.lp-pck-item:hover { border-color:#6c63ff; background:rgba(108,99,255,0.08); }
+.lp-pck-item.sel { border-color:#6c63ff; background:rgba(108,99,255,0.12); box-shadow:0 0 0 2px rgba(108,99,255,0.3); }
+.lp-pck-name { font-size:0.78rem; font-weight:700; flex:1; }
+.lp-pck-pub { padding:2px 8px; border-radius:8px; font-size:0.6rem; font-weight:700; }
+.lp-pck-pub.on { background:rgba(67,233,123,0.15); color:#43e97b; border:1px solid rgba(67,233,123,0.3); }
+.lp-pck-pub.off { background:rgba(144,144,176,0.08); color:var(--text-secondary); border:1px solid var(--border); }
 .pcfg-add-btn { padding:5px 12px; border-radius:8px; border:1px solid rgba(167,139,250,0.4); background:rgba(167,139,250,0.1); color:#a78bfa; font-size:0.7rem; font-weight:700; cursor:pointer; white-space:nowrap; }
 .pcfg-add-btn:hover { background:rgba(167,139,250,0.2); }
 .pcfg-custom-colors { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
@@ -1130,6 +1138,11 @@ const PARCOURS_CFG = {
       { i:'🚗', t:'<strong>Catégories</strong> — configurez les catégories et tarifs dans le panneau Déco Véhicule (sidebar Config).' },
       { i:'📸', t:'<strong>Photo référence</strong> — le champ upload est optionnel mais augmente le taux de conversion car le client se projette.' },
       { i:'💡', t:'<strong>Tarif minimum</strong> — affichez "À partir de 2 500 XPF" sur le hero pour ancrer la valeur avant l\'entrée dans le parcours.' },
+    ],
+    parcoursList:[
+      { name:'Standard', slug:'standard' },
+      { name:'Promo Flash', slug:'promo-flash' },
+      { name:'Pro & Flottes', slug:'pro-flottes' },
     ]
   },
   1:{ color:'#4facfe', label:'T-Shirt Personnalisé', priceRange:'3 500 – 6 500 XPF',
@@ -1160,6 +1173,12 @@ const PARCOURS_CFG = {
       { i:'🖼', t:'<strong>Aperçu live</strong> — le Mockup Studio affiche le visuel client en temps réel sur le t-shirt avant validation.' },
       { i:'📐', t:'<strong>Position impression</strong> — proposez face / dos / poche comme options pour augmenter le panier moyen.' },
       { i:'🚀', t:'<strong>Upsell quantité</strong> — dégressif à partir de 3 unités : +30% de conversion sur les commandes groupe.' },
+    ],
+    parcoursList:[
+      { name:'Standard', slug:'standard' },
+      { name:'Upload Logo', slug:'upload-logo' },
+      { name:'Texte Personnalisé', slug:'texte-perso' },
+      { name:'Pack Groupe', slug:'pack-groupe' },
     ]
   },
   2:{ color:'#43e97b', label:'Casquette Brodée / DTF', priceRange:'3 000 – 4 500 XPF',
@@ -1190,6 +1209,11 @@ const PARCOURS_CFG = {
       { i:'🧢', t:'<strong>Broderie vs DTF</strong> — la broderie pour logos simples &lt;3 couleurs, le DTF pour les designs complexes ou photos.' },
       { i:'📐', t:'<strong>Position logo</strong> — face avant standard + option côté (latéral) pour les casquettes premium.' },
       { i:'💡', t:'<strong>Pack look total</strong> — proposez casquette + t-shirt assorti en bundle pour doubler le panier moyen.' },
+    ],
+    parcoursList:[
+      { name:'Standard', slug:'standard' },
+      { name:'Broderie Pro', slug:'broderie-pro' },
+      { name:'Pack Entreprise', slug:'pack-entreprise' },
     ]
   },
   3:{ color:'#ff6b6b', label:'DTF Originals', priceRange:'2 500 – 6 500 XPF',
@@ -1218,6 +1242,11 @@ const PARCOURS_CFG = {
       { i:'💡', t:'<strong>Galerie logos</strong> — renseignez les visuels face/dos dans la config pour que le client visualise le rendu avant achat.' },
       { i:'📊', t:'<strong>Tailles populaires</strong> — M et L représentent ~60% des ventes. Affichez-les en premier dans le picker.' },
       { i:'🚀', t:'<strong>Upsell</strong> — proposez un "Pack famille ×3" à prix dégressif pour augmenter le panier moyen.' },
+    ],
+    parcoursList:[
+      { name:'Standard', slug:'standard' },
+      { name:'Promo Été', slug:'promo-ete' },
+      { name:'Drop Collector', slug:'drop-collector' },
     ]
   },
   4:{ color:'#a18cd1', label:'Grille DTF 3×3 Collector', priceRange:'8 500 – 18 000 XPF',
@@ -1248,6 +1277,11 @@ const PARCOURS_CFG = {
       { i:'🎯', t:'<strong>9 logos distincts</strong> — proposez un pack de base avec 9 designs populaires pour simplifier le choix.' },
       { i:'📏', t:'<strong>Présenter en grille</strong> — montrez une preview visuelle de la grille 3×3 sur la LP pour que le client visualise le rendu.' },
       { i:'⚡', t:'<strong>Bundle</strong> — proposez Grille + Impression en bundle avec remise 10% pour augmenter le panier moyen.' },
+    ],
+    parcoursList:[
+      { name:'Standard', slug:'standard' },
+      { name:'Pack Business', slug:'pack-business' },
+      { name:'Edition Limitée', slug:'edition-limitee' },
     ]
   },
   5:{ color:'#43e97b', label:'Formation Textile', priceRange:'15 000 – 35 000 XPF',
@@ -1276,6 +1310,11 @@ const PARCOURS_CFG = {
       { i:'📅', t:'<strong>Dates dynamiques</strong> — configurez les prochaines sessions dans Andromeda. Les dates épuisées disparaissent automatiquement.' },
       { i:'💡', t:'<strong>Social proof</strong> — "12 participants formés ce mois" sur la LP augmente la conversion module Complet.' },
       { i:'🎯', t:'<strong>Upsell post-formation</strong> — proposer Avancé à -20% après Débutant via email n8n automatique.' },
+    ],
+    parcoursList:[
+      { name:'Module Débutant', slug:'module-debutant' },
+      { name:'Module Avancé', slug:'module-avance' },
+      { name:'Module Complet', slug:'module-complet' },
     ]
   },
   6:{ color:'#f6d365', label:'Abonnements HCS', priceRange:'1 800 – 5 500 XPF/mois',
@@ -1304,6 +1343,11 @@ const PARCOURS_CFG = {
       { i:'🌟', t:'<strong>Ancrage annuel</strong> — afficher "économisez X XPF" plutôt que le taux de remise est plus concret.' },
       { i:'💡', t:'<strong>Comparatif</strong> — le tableau avantages côte-à-côte est le format qui convertit le mieux pour les abonnements.' },
       { i:'🔗', t:'<strong>Post-paiement</strong> — connecter n8n pour créer la fiche fidélité ERP + envoyer welcome email automatique.' },
+    ],
+    parcoursList:[
+      { name:'Plan Starter', slug:'plan-starter' },
+      { name:'Plan Pro', slug:'plan-pro' },
+      { name:'Plan Premium', slug:'plan-premium' },
     ]
   },
   7:{ color:'#30cfd0', label:'Graphiques / Vecto IA', priceRange:'1 500 – 8 000 XPF',
@@ -1332,6 +1376,11 @@ const PARCOURS_CFG = {
       { i:'📁', t:'<strong>Upload optionnel</strong> — le client peut envoyer le fichier par email après paiement, pas d\'obligation au checkout.' },
       { i:'💡', t:'<strong>Délai affiché</strong> — "livraison 24h ouvrées" réduit l\'anxiété client et augmente la conversion du pack.' },
       { i:'🔗', t:'<strong>Automatisation</strong> — connecter la réception commande à un ticket PicWish Pipeline pour traitement automatique.' },
+    ],
+    parcoursList:[
+      { name:'Standard', slug:'standard' },
+      { name:'Pack Logo', slug:'pack-logo' },
+      { name:'Pack Graphique', slug:'pack-graphique' },
     ]
   },
   8:{ color:'#d4a843', label:'Pack Collector DTF', priceRange:'12 000 – 20 000 XPF',
@@ -1362,6 +1411,11 @@ const PARCOURS_CFG = {
       { i:'🎯', t:'<strong>Drop-off étape 2</strong> — le canvas peut dérouter les nouveaux clients. Ajoutez une vidéo tuto 15 s sur la LP.' },
       { i:'📏', t:'<strong>Guide dimensions</strong> — affichez un repère visuel cm×cm pour que le client visualise la taille réelle de la planche.' },
       { i:'⚡', t:'<strong>Upsell multi-feuilles</strong> — proposer "3 feuilles = -10%" sur la LP augmente la valeur panier sans friction.' },
+    ],
+    parcoursList:[
+      { name:'Standard', slug:'standard' },
+      { name:'½ Yard', slug:'demi-yard' },
+      { name:'1 Yard Complet', slug:'1-yard' },
     ]
   }
 };
@@ -1427,6 +1481,25 @@ function renderParcoursFn(id, container) {
       return '<a class="prc-link-btn prc-link-ok" href="'+l.url+'"'+target+'>'+l.icon+' '+l.label+extBadge+'</a>';
     }).join('');
     linksHtml = '<div class="prc-panel" style="margin-bottom:16px"><div class="prc-panel-title">🔗 Liens & Accès rapide</div><div class="prc-links">'+linkBtns+'</div></div>';
+  }
+
+  // ── LPs publiées multi-parcours
+  var _allPubLPs = _getPublishedLPs(id);
+  var _pubEntries = Object.keys(_allPubLPs).map(function(k){return[k,_allPubLPs[k]];});
+  if (_pubEntries.length > 0) {
+    var _pubLpRows = _pubEntries.map(function(entry){
+      var slug=entry[0], info=entry[1];
+      var dateStr=info.publishedAt?new Date(info.publishedAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
+      var safeUrl=encodeURIComponent(info.url||'');
+      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(67,233,123,.04);border:1px solid rgba(67,233,123,.18);border-radius:8px;margin-bottom:4px">'
+        +'<div style="flex:1;min-width:0"><div style="font-size:.72rem;font-weight:800;color:#43e97b">🌐 '+(info.name||slug)+'</div>'+(dateStr?'<div style="font-size:.55rem;color:var(--text-secondary);margin-top:1px">'+dateStr+'</div>':'')+'</div>'
+        +'<a href="'+(info.url||'')+'" target="_blank" rel="noopener" style="padding:3px 9px;background:#43e97b;color:#0f0f1a;border-radius:6px;font-size:.6rem;font-weight:800;text-decoration:none;flex-shrink:0">Ouvrir ↗</a>'
+        +'<button onclick="navigator.clipboard.writeText(decodeURIComponent(\''+safeUrl+'\'));showToast(\'✅ Copié !\')" style="padding:3px 9px;background:#1e1e3a;border:1px solid #2a2a4a;color:#9090b0;border-radius:6px;font-size:.6rem;cursor:pointer;flex-shrink:0">📋</button>'
+        +'</div>';
+    }).join('');
+    linksHtml += '<div class="prc-panel" style="margin-bottom:16px;border-color:rgba(67,233,123,.25)">'
+      +'<div class="prc-panel-title" style="color:#43e97b">🚀 LPs publiées — '+_pubEntries.length+' parcours en ligne</div>'
+      +_pubLpRows+'</div>';
   }
 
   // ── Option B — Flow opérateur
@@ -2384,7 +2457,12 @@ async function publishLP(id) {
   }
   const c = CAMPS[id];
 
-  const lpSlug = `${c.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}-${id}`;
+  /* Sélection du parcours à publier (anti-doublon) */
+  const _pck = await _showParcoursPicker(id);
+  if (!_pck) return;
+
+  const _baseName = c.name.replace(/[^a-zA-Z0-9]/g,'-').toLowerCase().replace(/-+/g,'-').replace(/^-|-$/g,'');
+  const lpSlug = `${_baseName}-${id}-${_pck.slug}`;
 
   /* Étape 1 — Upload images produits */
   showPublishProgress(1, 4, '🖼️ Upload des images produits…');
@@ -2447,16 +2525,10 @@ async function publishLP(id) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erreur serveur');
 
+    /* Enregistrer ce parcours (multi-LP par verticale) */
+    _savePublishedLP(id, _pck.slug, { url: data.url, name: _pck.name, publishedAt: new Date().toISOString() });
     const urls = JSON.parse(localStorage.getItem('hcs_published_urls') || '{}');
-    // Supprimer l'ancien LP si slug différent
-    const _oldUrl = urls[id];
-    if (_oldUrl) {
-      const _oldSlug = _oldUrl.split('/lp/').pop().split('?')[0];
-      if (_oldSlug && _oldSlug !== lpSlug) {
-        fetch(`${WORKER_BASE}/lp/${_oldSlug}`, { method:'DELETE', headers:{'X-Admin-Secret':adminSecret} }).catch(()=>{});
-      }
-    }
-    urls[id] = data.url;
+    urls[id] = data.url; /* référence rapide = dernier publié */
     localStorage.setItem('hcs_published_urls', JSON.stringify(urls));
 
     /* Étape 4 — Vignette */
@@ -2538,7 +2610,186 @@ function deleteLpByUrl(url) {
       const urls = JSON.parse(localStorage.getItem('hcs_published_urls') || '{}');
       Object.keys(urls).forEach(k => { if (urls[k] === url) delete urls[k]; });
       localStorage.setItem('hcs_published_urls', JSON.stringify(urls));
+      /* sync hcs_published_lps */
+      try {
+        const all = JSON.parse(localStorage.getItem('hcs_published_lps')||'{}');
+        Object.keys(all).forEach(cid => { Object.keys(all[cid]||{}).forEach(ps => { if((all[cid][ps].url||'')===url) delete all[cid][ps]; }); });
+        localStorage.setItem('hcs_published_lps', JSON.stringify(all));
+      } catch(_){}
     }).catch(() => showToast('❌ Erreur suppression LP', true));
+}
+
+/* ══ Multi-LP : stockage par parcours ════════════════════════════ */
+function _getPublishedLPs(campId) {
+  try { return (JSON.parse(localStorage.getItem('hcs_published_lps')||'{}')[campId])||{}; } catch(_){return{};}
+}
+function _savePublishedLP(campId, pSlug, info) {
+  try {
+    var all=JSON.parse(localStorage.getItem('hcs_published_lps')||'{}');
+    if(!all[campId])all[campId]={};
+    all[campId][pSlug]=info;
+    localStorage.setItem('hcs_published_lps',JSON.stringify(all));
+  } catch(_){}
+}
+function _removePublishedLP(campId, pSlug) {
+  try {
+    var all=JSON.parse(localStorage.getItem('hcs_published_lps')||'{}');
+    if(all[campId])delete all[campId][pSlug];
+    localStorage.setItem('hcs_published_lps',JSON.stringify(all));
+  } catch(_){}
+}
+
+/* Affiche le sélecteur de parcours · retourne Promise<{slug,name}|null> */
+function _showParcoursPicker(campId) {
+  return new Promise(function(resolve) {
+    var cfg=PARCOURS_CFG[campId]||{};
+    var predefined=cfg.parcoursList||[{name:'Standard',slug:'standard'}];
+    var published=_getPublishedLPs(campId);
+    var customs=[];
+    try{customs=JSON.parse(localStorage.getItem('hcs_parcours_custom_'+campId)||'[]');}catch(_){}
+    var allPresets=predefined.concat(customs.filter(function(c){return !predefined.find(function(p){return p.slug===c.slug;});}));
+    var selSlug=null, selName=null;
+
+    var overlay=document.createElement('div');
+    overlay.id='lp-pck-modal';
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:10000;display:flex;align-items:center;justify-content:center';
+
+    var box=document.createElement('div');
+    box.style.cssText='background:#1a1a2e;border:1px solid #6c63ff;border-radius:16px;padding:28px;max-width:440px;width:92%;max-height:82vh;display:flex;flex-direction:column;gap:14px';
+
+    var hdr=document.createElement('div');
+    hdr.style.cssText='display:flex;align-items:center;gap:10px';
+    hdr.innerHTML='<span style="font-size:1.4rem">🗺️</span><div><div style="font-size:.95rem;font-weight:800">Choisir le parcours LP</div><div style="font-size:.68rem;color:#9090b0;margin-top:2px">Chaque parcours = une URL distincte · pas de doublon</div></div>';
+
+    var listWrap=document.createElement('div');
+    listWrap.style.cssText='overflow-y:auto;max-height:260px;padding-right:4px;display:flex;flex-direction:column;gap:5px';
+
+    var okBtn=document.createElement('button');
+    okBtn.textContent='Publier ce parcours →';
+    okBtn.disabled=true;
+    okBtn.style.cssText='padding:8px 16px;background:#43e97b;color:#0f0f1a;border:none;border-radius:8px;font-weight:700;font-size:.78rem;cursor:pointer;opacity:.5;transition:opacity .15s';
+
+    function buildItems(){
+      listWrap.innerHTML='';
+      allPresets.forEach(function(p){
+        var pub=published[p.slug];
+        var item=document.createElement('div');
+        item.className='lp-pck-item';
+        item.dataset.slug=p.slug;
+        item.innerHTML='<span class="lp-pck-name">'+p.name+'</span>'+(pub?'<span class="lp-pck-pub on">✓ Publié</span>':'<span class="lp-pck-pub off">Non publié</span>');
+        item.addEventListener('click',function(){
+          listWrap.querySelectorAll('.lp-pck-item').forEach(function(i){i.classList.remove('sel');});
+          item.classList.add('sel');
+          selSlug=p.slug; selName=p.name;
+          okBtn.disabled=false; okBtn.style.opacity='1';
+        });
+        listWrap.appendChild(item);
+      });
+    }
+    buildItems();
+
+    var cRow=document.createElement('div');
+    cRow.style.cssText='border-top:1px solid #2a2a4a;padding-top:10px';
+    var cLbl=document.createElement('div');
+    cLbl.style.cssText='font-size:.65rem;color:#9090b0;margin-bottom:6px';
+    cLbl.textContent='+ Nouveau parcours personnalisé';
+    var cInp=document.createElement('input');
+    cInp.placeholder='Ex : Promo Noël, Pack VIP…';
+    cInp.style.cssText='flex:1;padding:8px 12px;background:#0f0f1a;border:1px solid #2a2a4a;border-radius:8px;color:white;font-size:.78rem;min-width:0';
+    var cBtn=document.createElement('button');
+    cBtn.textContent='+ Créer';
+    cBtn.style.cssText='padding:8px 14px;background:#6c63ff;border:none;border-radius:8px;color:white;font-weight:700;font-size:.78rem;cursor:pointer;white-space:nowrap;flex-shrink:0';
+    cBtn.addEventListener('click',function(){
+      var val=cInp.value.trim(); if(!val)return;
+      var slug=val.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||('c-'+Date.now());
+      if(!allPresets.find(function(p){return p.slug===slug;})){
+        allPresets.push({name:val,slug:slug});
+        try{var arr=JSON.parse(localStorage.getItem('hcs_parcours_custom_'+campId)||'[]');arr.push({name:val,slug:slug});localStorage.setItem('hcs_parcours_custom_'+campId,JSON.stringify(arr));}catch(_){}
+      }
+      buildItems();
+      var ni=listWrap.querySelector('[data-slug="'+slug+'"]');
+      if(ni)ni.click();
+      cInp.value=''; listWrap.scrollTop=listWrap.scrollHeight;
+    });
+    cInp.addEventListener('keydown',function(e){if(e.key==='Enter')cBtn.click();});
+    var cFlex=document.createElement('div');
+    cFlex.style.cssText='display:flex;gap:8px';
+    cFlex.appendChild(cInp); cFlex.appendChild(cBtn);
+    cRow.appendChild(cLbl); cRow.appendChild(cFlex);
+
+    var foot=document.createElement('div');
+    foot.style.cssText='display:flex;gap:8px;justify-content:flex-end';
+    var cancelBtn=document.createElement('button');
+    cancelBtn.textContent='Annuler';
+    cancelBtn.style.cssText='padding:8px 16px;background:#1e1e3a;color:#9090b0;border:1px solid #2a2a4a;border-radius:8px;font-size:.78rem;cursor:pointer';
+    cancelBtn.addEventListener('click',function(){overlay.remove();resolve(null);});
+    okBtn.addEventListener('click',function(){
+      if(!selSlug)return;
+      var pub=published[selSlug];
+      if(pub){if(!confirm('⚠️ La LP "'+selName+'" est déjà publiée.\nMettre à jour ? (l\'ancienne sera remplacée)'))return;}
+      overlay.remove(); resolve({slug:selSlug,name:selName});
+    });
+    foot.appendChild(cancelBtn); foot.appendChild(okBtn);
+    box.appendChild(hdr); box.appendChild(listWrap); box.appendChild(cRow); box.appendChild(foot);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click',function(e){if(e.target===overlay){overlay.remove();resolve(null);}});
+  });
+}
+
+/* Modal supprimer une LP parmi plusieurs */
+function _showDeleteLPPicker(campId, published) {
+  var div=document.createElement('div');
+  div.id='del-lp-picker';
+  div.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:10000;display:flex;align-items:center;justify-content:center';
+  var box=document.createElement('div');
+  box.style.cssText='background:#1a1a2e;border:1px solid #ff6b6b;border-radius:16px;padding:24px;max-width:420px;width:92%;max-height:80vh;overflow-y:auto';
+  var title=document.createElement('div');
+  title.innerHTML='<div style="font-size:.95rem;font-weight:800;margin-bottom:4px">🗑️ Supprimer une LP publiée</div><div style="font-size:.68rem;color:#9090b0;margin-bottom:14px">Choisissez la LP à supprimer</div>';
+  box.appendChild(title);
+  Object.entries(published).forEach(function(entry){
+    var slug=entry[0], info=entry[1];
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,107,107,.07);border:1px solid rgba(255,107,107,.25);border-radius:10px;margin-bottom:6px';
+    var txt=document.createElement('div');
+    txt.style.cssText='flex:1;min-width:0';
+    txt.innerHTML='<div style="font-size:.78rem;font-weight:700">'+(info.name||slug)+'</div><code style="font-size:.55rem;color:#ff6b6b;word-break:break-all">'+(info.url||slug)+'</code>';
+    var delBtn=document.createElement('button');
+    delBtn.textContent='🗑️';
+    delBtn.style.cssText='padding:6px 12px;background:rgba(255,107,107,.15);border:1px solid #ff6b6b;color:#ff6b6b;border-radius:7px;font-size:.78rem;cursor:pointer;flex-shrink:0';
+    delBtn.addEventListener('click',(function(s,i){return function(){
+      if(!confirm('Supprimer la LP "'+(i.name||s)+'" ?'))return;
+      div.remove(); _deleteLPBySlug(campId,s,i.url||'');
+    };})(slug,info));
+    row.appendChild(txt); row.appendChild(delBtn);
+    box.appendChild(row);
+  });
+  var closeBtn=document.createElement('button');
+  closeBtn.textContent='Fermer';
+  closeBtn.style.cssText='margin-top:10px;width:100%;padding:8px;background:#1e1e3a;border:1px solid #2a2a4a;color:#9090b0;border-radius:8px;font-size:.78rem;cursor:pointer';
+  closeBtn.addEventListener('click',function(){div.remove();});
+  box.appendChild(closeBtn);
+  div.appendChild(box);
+  document.body.appendChild(div);
+  div.addEventListener('click',function(e){if(e.target===div)div.remove();});
+}
+
+/* Supprime une LP spécifique par slug+url */
+async function _deleteLPBySlug(campId, parcoursSlug, url) {
+  var fullSlug=url?url.split('/lp/').pop().split('?')[0]:parcoursSlug;
+  if(!adminSecret){showToast('❌ Secret admin requis pour supprimer',true);return;}
+  try{
+    var r=await fetch(WORKER_BASE+'/lp/'+fullSlug,{method:'DELETE',headers:{'X-Admin-Secret':adminSecret}});
+    if(r.status===404){showToast('⚠️ LP introuvable (déjà supprimée ?)',true);}
+    else if(!r.ok){throw new Error('Erreur '+r.status);}
+    else{showToast('🗑️ LP "'+parcoursSlug+'" supprimée');}
+    _removePublishedLP(campId,parcoursSlug);
+    var urls=JSON.parse(localStorage.getItem('hcs_published_urls')||'{}');
+    if(urls[campId]===url){delete urls[campId];localStorage.setItem('hcs_published_urls',JSON.stringify(urls));}
+    updateStorageIndicator();
+    var _pp=document.getElementById('ws-parcours-pane-'+campId);
+    if(_pp&&_pp.style.display!=='none'){_pp.dataset.rendered='';renderParcoursFn(campId,_pp);_pp.dataset.rendered='1';}
+  }catch(e){showToast('❌ '+e.message,true);}
 }
 
 function previewLP(id) {
@@ -2632,6 +2883,7 @@ function exportLPTshirt(id) {
   const c      = CAMPS[id];
   const isCap  = c.id === 2;
   const pcfg   = tshGetParcours(id);
+  console.log('[HCS] exportLPTshirt config baked:', JSON.stringify({ showStep2: pcfg.showStep2, requireSize: pcfg.requireSize, showDtfLogos: pcfg.showDtfLogos, showCustomText: pcfg.showCustomText, faces: pcfg.faces, sizes: pcfg.sizes }));
   const g      = el => document.getElementById(el);
 
   const headline  = g('hl-'+id)?.textContent || c.headline;
@@ -2672,7 +2924,7 @@ function exportLPTshirt(id) {
   }).join('');
   const prodsJson  = JSON.stringify(c.products.map(p => ({ e:p.e, n:p.n, p:p.p, price:parseInt(p.p.replace(/[^\d]/g,''))||0, couleur:p.couleur||'', couleurHex:p.couleurHex||'', dtfLogoRef:p.dtfLogoRef||'' })));
   const sizesJson  = JSON.stringify(sizes);
-  const lpSlug     = `${c.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}-${id}`;
+  const lpSlug     = c.name.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase().replace(/^-|-$/g, '');
   const dtfLogosData = c.products.map((_,pi) => {
     const dtfObj = (tshDtfLogos[id]||{})[pi] || {};
     return [1,2,3].map(n => dtfObj[n] ? {url:dtfObj[n].url, name:dtfObj[n].name} : null).filter(Boolean);
@@ -4101,7 +4353,7 @@ function exportLPVdec(id) {
   const workerUrl  = g('pz-worker-'+id)?.value?.trim()  || 'https://payzen-hcs.highcoffeeshirt.workers.dev/payzen-token';
   const workerSec  = g('pz-secret-'+id)?.value?.trim()  || '';
   const lpToken    = crypto.randomUUID();
-  const lpSlug     = `vdec-${c.name.replace(/[^a-zA-Z0-9]/g,'-').toLowerCase()}-${id}`;
+  const lpSlug     = 'vdec-' + c.name.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase().replace(/^-|-$/g, '');
   const workerMode = g('pz-mode-'+id)?.value || 'TEST';
   const publicKey  = workerMode === 'PRODUCTION'
     ? '41545085:publickey_IzNDzp5XcAadriFpCh08meZmg8Ri6WbYIG6TIQ9mpu2NA'
@@ -4528,7 +4780,7 @@ function exportLPGeneric(id) {
   })();
   const tshSizesJson = id === 3 ? JSON.stringify(tshGetParcours(id).sizes) : '[]';
   const primary      = GEN_COLORS[id] || '#6c63ff';
-  const lpSlug       = `${c.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}-${id}`;
+  const lpSlug       = c.name.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase().replace(/^-|-$/g, '');
   const _verticalStr = c.id===3?'dtf':c.id===4?'dtf':c.id===5?'formation':c.id===6?'abo':c.id===7?'service':'generic';
   const _iconStr     = (c.products && c.products[0] && c.products[0].e) ? c.products[0].e : '🛍️';
 
@@ -6688,16 +6940,20 @@ async function deleteLP(slug) {
 }
 
 async function deleteLPFromCamp(campId) {
-  const c = CAMPS.find(x => x.id === campId);
-  if (!c) return;
-  const slug = c.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-  if (!confirm(`Supprimer la LP publiée "${slug}" ?\nCette action est irréversible.`)) return;
-  try {
-    const r = await fetch(`${WORKER_BASE}/lp/${slug}`, { method:'DELETE', headers:{'X-Admin-Secret':adminSecret} });
-    if (r.status === 404) { showToast(`⚠️ LP "${slug}" non trouvée (pas encore publiée ?)`, true); return; }
-    if (!r.ok) throw new Error(`Erreur ${r.status}`);
-    showToast(`🗑️ LP "${slug}" supprimée`);
-  } catch(e) { showToast('❌ ' + e.message, true); }
+  const published = _getPublishedLPs(campId);
+  const slugs = Object.keys(published);
+  if (slugs.length === 0) {
+    showToast('⚠️ Aucune LP publiée pour cette verticale', true);
+    return;
+  }
+  if (slugs.length === 1) {
+    const ps = slugs[0];
+    const info = published[ps];
+    if (!confirm(`Supprimer la LP "${info.name||ps}" ?\nCette action est irréversible.`)) return;
+    await _deleteLPBySlug(campId, ps, info.url||'');
+    return;
+  }
+  _showDeleteLPPicker(campId, published);
 }
 
 function exportOrdersCSV() {
@@ -8569,6 +8825,16 @@ function renderConfigAdmin(c) {
             </div>
           </div>
 
+          <!-- Config résumé + reset -->
+          <div class="pcfg-section" style="background:rgba(108,99,255,.07);border:1px solid rgba(108,99,255,.2)">
+            <div class="pcfg-title" style="color:#9090b0;font-size:0.65rem;letter-spacing:.05em">⚙️ CONFIG ACTIVE (sera baked dans le LP)</div>
+            <div class="pcfg-body" id="tsh-${id}-cfg-summary" style="font-size:0.7rem;color:#9090b0;font-family:monospace;white-space:pre-wrap"></div>
+            <div style="padding:6px 0 2px;display:flex;gap:8px">
+              <button onclick="tshResetParcours(${id})" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(255,80,80,.4);border-radius:6px;color:#ff6b6b;font-size:0.68rem;cursor:pointer">🔄 Réinitialiser config</button>
+              <button onclick="tshRefreshSummary(${id})" style="padding:5px 10px;background:#1e1e3a;border:1px solid #2a2a4a;border-radius:6px;color:#9090b0;font-size:0.68rem;cursor:pointer">↻ Actualiser</button>
+            </div>
+          </div>
+
           <!-- Tailles disponibles -->
           <div class="pcfg-section">
             <div class="pcfg-title">📏 Tailles proposées au client</div>
@@ -9716,6 +9982,33 @@ function tshToggleSize(campId, size, checked) {
   if (checked) { if (!conf.sizes.includes(size)) conf.sizes.push(size); conf.sizes.sort((a,b)=>order.indexOf(a)-order.indexOf(b)); }
   else conf.sizes = conf.sizes.filter(s => s !== size);
   try { localStorage.setItem('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave('✓ Taille mise à jour'); } catch(_) {}
+}
+function tshResetParcours(campId) {
+  if (!confirm('Réinitialiser toute la config parcours de cette verticale ?')) return;
+  localStorage.removeItem('hcs_tsh_cfg_' + campId);
+  delete tshParcours[campId];
+  _quickSave('✓ Config réinitialisée — defaults appliqués');
+  // Rerender la section config
+  const isCap = campId === 2;
+  const chk2 = document.getElementById('tsh-' + campId + '-step2-on');
+  const chkSz = document.getElementById('tsh-' + campId + '-step3-sz');
+  if (chk2) chk2.checked = true;
+  if (chkSz) chkSz.checked = true;
+  tshRefreshSummary(campId);
+}
+function tshRefreshSummary(campId) {
+  const el = document.getElementById('tsh-' + campId + '-cfg-summary');
+  if (!el) return;
+  const cfg = tshGetParcours(campId);
+  el.textContent = [
+    'showStep2   : ' + cfg.showStep2,
+    'requireSize : ' + cfg.requireSize,
+    'DTF logos   : ' + cfg.showDtfLogos,
+    'Custom text : ' + cfg.showCustomText,
+    'faces       : ' + JSON.stringify(cfg.faces || ['front']),
+    'sizes       : ' + JSON.stringify(cfg.sizes),
+  ].join('\n');
+  el.style.color = (!cfg.showStep2) ? '#ff6b6b' : '#43e97b';
 }
 
 // ═══════════════════════════════════════════════════════
