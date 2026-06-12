@@ -160,15 +160,26 @@ const Store = (() => {
     if (_saving) return; // anti-réentrance
     _saving = true;
     try {
-      /* Purge proactive : si >50% plein, vider base64 + limiter à 50 records/col AVANT save */
+      /* Purge proactive MySQL-aware : si >2.5 MB, éviction intelligente AVANT save.
+         Priorité : virer les records déjà dans MySQL, préserver les non-synchronisés. */
       try {
         const _raw = localStorage.getItem(LS_KEY) || '';
-        if (_raw.length > 2500000) { /* ~2.5MB sur 5MB = 50% */
-          localStorage.removeItem(LS_KEY);
-          if (db) {
-            for (const col of Object.keys(db)) {
-              if (!Array.isArray(db[col])) continue;
-              db[col] = db[col].slice(-50).map(r => {
+        if (_raw.length > 2500000 && db) {
+          const ARCHIVABLE = ['devis','factures','commandes','contacts','produits',
+                              'fournisseurs','logos','assets','calculs','bonsAchat','employes'];
+          let _freed = 0;
+          for (const col of ARCHIVABLE) {
+            if (!Array.isArray(db[col])) continue;
+            const withMySQL    = db[col].filter(r => r && r._mysql_id);
+            const withoutMySQL = db[col].filter(r => r && !r._mysql_id);
+            if (withMySQL.length > 10) {
+              /* Garder les 10 plus récents parmi les synced + tous les non-synced */
+              const before = db[col].length;
+              db[col] = [...withoutMySQL, ...withMySQL.slice(-10)];
+              _freed += before - db[col].length;
+            } else if (db[col].length > 40) {
+              /* Fallback : strip base64 + limiter à 30 */
+              db[col] = db[col].slice(-30).map(r => {
                 if (typeof r !== 'object' || !r) return r;
                 const c = {};
                 for (const k of Object.keys(r)) {
@@ -178,8 +189,10 @@ const Store = (() => {
                 return c;
               });
             }
-            if (db.auditLog) db.auditLog = db.auditLog.slice(-20);
           }
+          if (db.auditLog) db.auditLog = db.auditLog.slice(-20);
+          if (db.messages) db.messages = (db.messages || []).slice(-50);
+          if (_freed > 0) console.info(`[Store] Éviction pré-save : ${_freed} enreg. MySQL purgés du cache.`);
         }
       } catch(_) {}
 
@@ -379,6 +392,36 @@ const Store = (() => {
    */
   function getById(collection, id) {
     return getAll(collection).find(item => item.id === id) || null;
+  }
+
+  /**
+   * Cherche un enregistrement en localStorage, puis MySQL si absent.
+   * Permet d'accéder à l'historique sans importer toute la collection.
+   * @param {string} collection
+   * @param {string} id  — store_id local
+   * @returns {Promise<object|null>}
+   */
+  async function getFromMySQL(collection, id) {
+    /* 1. Chercher dans le cache local */
+    const local = getById(collection, id);
+    if (local) return local;
+    /* 2. Chercher dans MySQL via search par store_id */
+    if (!window.MYSQL) return null;
+    try {
+      const result = await fetch(
+        `https://highcoffeeshirts.com/erp/api/${collection}/search?q=${encodeURIComponent(id)}`,
+        { headers: { 'x-api-key': 'hcs-erp-2026' } }
+      );
+      if (!result.ok) return null;
+      const data = await result.json();
+      const items = data.items || data;
+      const row = items.find(r => r.store_id === id || String(r.id) === id);
+      if (!row) return null;
+      return _mysqlRowToLocal(collection, row);
+    } catch (e) {
+      console.warn(`[Store] getFromMySQL ${collection}/${id}:`, e.message);
+      return null;
+    }
   }
 
   /* ---------- MUTATIONS ---------- */
@@ -1350,7 +1393,8 @@ const Store = (() => {
     syncAllToMySQL,
     pullAllFromMySQL,
     getStorageSize,
-    syncAndFreeSpace
+    syncAndFreeSpace,
+    getFromMySQL
   };
 })();
 
