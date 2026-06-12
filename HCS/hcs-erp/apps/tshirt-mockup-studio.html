@@ -427,6 +427,7 @@ canvas#export-canvas { display: none; }
         <div class="mock-logo-wrap" id="mlogo-1-b"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">B1</span></div>
         <div class="mock-empty" id="mempty-1-b"><span class="e">👕</span><span class="t">B1</span></div>
         <div class="mock-lbl">B1</div><div class="mock-check">✓</div>
+        <div class="mock-mask-ind">MASK</div>
         <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(1,'b')">⬇</button>
       </div>
       <div class="mock-cell" id="mock-1-c" onclick="selectMockup(1,'c')">
@@ -434,6 +435,7 @@ canvas#export-canvas { display: none; }
         <div class="mock-logo-wrap" id="mlogo-1-c"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">C1</span></div>
         <div class="mock-empty" id="mempty-1-c"><span class="e">👕</span><span class="t">C1</span></div>
         <div class="mock-lbl">C1</div><div class="mock-check">✓</div>
+        <div class="mock-mask-ind">MASK</div>
         <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(1,'c')">⬇</button>
       </div>
       <div class="mock-cell" id="mock-2-a" onclick="selectMockup(2,'a')">
@@ -441,6 +443,7 @@ canvas#export-canvas { display: none; }
         <div class="mock-logo-wrap" id="mlogo-2-a"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">A2</span></div>
         <div class="mock-empty" id="mempty-2-a"><span class="e">👕</span><span class="t">A2</span></div>
         <div class="mock-lbl">A2</div><div class="mock-check">✓</div>
+        <div class="mock-mask-ind">MASK</div>
         <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(2,'a')">⬇</button>
       </div>
       <div class="mock-cell" id="mock-2-b" onclick="selectMockup(2,'b')">
@@ -448,6 +451,7 @@ canvas#export-canvas { display: none; }
         <div class="mock-logo-wrap" id="mlogo-2-b"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">B2</span></div>
         <div class="mock-empty" id="mempty-2-b"><span class="e">👕</span><span class="t">B2</span></div>
         <div class="mock-lbl">B2</div><div class="mock-check">✓</div>
+        <div class="mock-mask-ind">MASK</div>
         <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(2,'b')">⬇</button>
       </div>
       <div class="mock-cell" id="mock-2-c" onclick="selectMockup(2,'c')">
@@ -455,6 +459,7 @@ canvas#export-canvas { display: none; }
         <div class="mock-logo-wrap" id="mlogo-2-c"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">C2</span></div>
         <div class="mock-empty" id="mempty-2-c"><span class="e">👕</span><span class="t">C2</span></div>
         <div class="mock-lbl">C2</div><div class="mock-check">✓</div>
+        <div class="mock-mask-ind">MASK</div>
         <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(2,'c')">⬇</button>
       </div>
       <div class="mock-cell" id="mock-3-a" onclick="selectMockup(3,'a')">
@@ -462,6 +467,7 @@ canvas#export-canvas { display: none; }
         <div class="mock-logo-wrap" id="mlogo-3-a"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">A3</span></div>
         <div class="mock-empty" id="mempty-3-a"><span class="e">👕</span><span class="t">A3</span></div>
         <div class="mock-lbl">A3</div><div class="mock-check">✓</div>
+        <div class="mock-mask-ind">MASK</div>
         <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(3,'a')">⬇</button>
       </div>
       <div class="mock-cell" id="mock-3-b" onclick="selectMockup(3,'b')">
@@ -469,6 +475,7 @@ canvas#export-canvas { display: none; }
         <div class="mock-logo-wrap" id="mlogo-3-b"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">B3</span></div>
         <div class="mock-empty" id="mempty-3-b"><span class="e">👕</span><span class="t">B3</span></div>
         <div class="mock-lbl">B3</div><div class="mock-check">✓</div>
+        <div class="mock-mask-ind">MASK</div>
         <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(3,'b')">⬇</button>
       </div>
       <div class="mock-cell" id="mock-3-c" onclick="selectMockup(3,'c')">
@@ -476,6 +483,7 @@ canvas#export-canvas { display: none; }
         <div class="mock-logo-wrap" id="mlogo-3-c"><span style="font-size:0.5rem;color:rgba(255,255,255,0.2)">C3</span></div>
         <div class="mock-empty" id="mempty-3-c"><span class="e">👕</span><span class="t">C3</span></div>
         <div class="mock-lbl">C3</div><div class="mock-check">✓</div>
+        <div class="mock-mask-ind">MASK</div>
         <button class="mock-dl-btn" onclick="event.stopPropagation();downloadCell(3,'c')">⬇</button>
       </div>
     </div>
@@ -675,7 +683,7 @@ async function clearIDB() {
 
 function saveState() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ cellConfig, activeProd }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ cellConfig, activeProd, logoMode }));
   } catch(e) { console.warn('saveState erreur', e); }
 }
 
@@ -691,6 +699,12 @@ function loadState() {
       [0,1,2].forEach(pi => document.getElementById(`prod-panel-${pi}`)?.classList.toggle('active', pi === activeProd));
       document.getElementById('active-prod-lbl').textContent = `Produit ${activeProd+1}`;
       document.getElementById('grid-prod-lbl').textContent = `Produit ${activeProd+1}`;
+    }
+    if (state.logoMode) {
+      logoMode = state.logoMode;
+      document.querySelectorAll('.logo-tab').forEach(b => b.classList.toggle('active', b.textContent.trim().startsWith(logoMode === '9' ? '9' : '3')));
+      document.getElementById('logos-mode-9').style.display = logoMode === '9' ? '' : 'none';
+      document.getElementById('logos-mode-3').style.display = logoMode === '3' ? '' : 'none';
     }
   } catch(e) { console.warn('loadState erreur', e); }
 }
@@ -1175,24 +1189,6 @@ function drawImg(ctx, src, x, y, w, h, mode) {
   });
 }
 
-function drawImgContain(ctx, src, x, y, maxW, maxH) {
-  return new Promise(res => {
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.min(maxW/img.width, maxH/img.height);
-      const w = img.width * scale;
-      const h = img.height * scale;
-      const dx = x + (maxW - w) / 2;
-      const dy = y + (maxH - h) / 2;
-      ctx.shadowColor = 'rgba(0,0,0,0.6)';
-      ctx.shadowBlur = 12;
-      ctx.drawImage(img, dx, dy, w, h);
-      ctx.shadowBlur = 0;
-      res();
-    };
-    img.src = src;
-  });
-}
 
 async function downloadCell(row, col) {
   const canvas = await renderToCanvas(row, col, activeProd, exportPx);
