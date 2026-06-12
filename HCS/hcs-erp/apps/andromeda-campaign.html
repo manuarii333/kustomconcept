@@ -1435,6 +1435,7 @@ function switchWorkspaceTab(tab, id) {
     bPane.style.display = 'none'; pPane.style.display = '';
     bTab.classList.remove('active'); pTab.classList.add('active');
     if (!pPane.dataset.rendered) { pPane.dataset.rendered = '1'; renderParcoursFn(id, pPane); }
+    if (typeof tshRefreshSummary === 'function') { setTimeout(() => tshRefreshSummary(id), 60); }
   }
 }
 
@@ -2463,6 +2464,7 @@ async function publishLP(id) {
 
   const _baseName = c.name.replace(/[^a-zA-Z0-9]/g,'-').toLowerCase().replace(/-+/g,'-').replace(/^-|-$/g,'');
   const lpSlug = `${_baseName}-${id}-${_pck.slug}`;
+  window._parcours_slug_override = lpSlug;
 
   /* Étape 1 — Upload images produits */
   showPublishProgress(1, 4, '🖼️ Upload des images produits…');
@@ -2559,6 +2561,7 @@ async function publishLP(id) {
     } catch(_) { /* non-bloquant */ }
 
     hidePublishProgress();
+    delete window._parcours_slug_override;
     showPublishSuccess(c.name, data.url);
     updateStorageIndicator();
 
@@ -2573,6 +2576,7 @@ async function publishLP(id) {
     }
   } catch(e) {
     hidePublishProgress();
+    delete window._parcours_slug_override;
     showToast('❌ Erreur publication : ' + e.message, true);
   }
 }
@@ -2924,7 +2928,8 @@ function exportLPTshirt(id) {
   }).join('');
   const prodsJson  = JSON.stringify(c.products.map(p => ({ e:p.e, n:p.n, p:p.p, price:parseInt(p.p.replace(/[^\d]/g,''))||0, couleur:p.couleur||'', couleurHex:p.couleurHex||'', dtfLogoRef:p.dtfLogoRef||'' })));
   const sizesJson  = JSON.stringify(sizes);
-  const lpSlug     = c.name.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase().replace(/^-|-$/g, '');
+  const _baseLpSlug = c.name.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase().replace(/^-|-$/g, '');
+  const lpSlug      = window._parcours_slug_override || _baseLpSlug;
   const dtfLogosData = c.products.map((_,pi) => {
     const dtfObj = (tshDtfLogos[id]||{})[pi] || {};
     return [1,2,3].map(n => dtfObj[n] ? {url:dtfObj[n].url, name:dtfObj[n].name} : null).filter(Boolean);
@@ -4780,7 +4785,8 @@ function exportLPGeneric(id) {
   })();
   const tshSizesJson = id === 3 ? JSON.stringify(tshGetParcours(id).sizes) : '[]';
   const primary      = GEN_COLORS[id] || '#6c63ff';
-  const lpSlug       = c.name.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase().replace(/^-|-$/g, '');
+  const _baseLpSlugG = c.name.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase().replace(/^-|-$/g, '');
+  const lpSlug       = window._parcours_slug_override || _baseLpSlugG;
   const _verticalStr = c.id===3?'dtf':c.id===4?'dtf':c.id===5?'formation':c.id===6?'abo':c.id===7?'service':'generic';
   const _iconStr     = (c.products && c.products[0] && c.products[0].e) ? c.products[0].e : '🛍️';
 
@@ -7976,11 +7982,16 @@ function renderMysqlLPsView(lps) {
 async function deleteMysqlLP(mysqlId, slug) {
   if (!confirm(`Supprimer la LP "${slug}" ?\nSupprime MySQL + KV Worker.`)) return;
   try {
-    // MySQL
-    const r = await fetch(`${HCS_API_BASE}/lp_publiees/${mysqlId}`, {
-      method: 'DELETE', headers: { 'x-api-key': HCS_API_KEY }
-    });
-    if (!r.ok) throw new Error(`MySQL ${r.status}`);
+    // Si l'id MySQL est absent, chercher par slug
+    let idToDelete = mysqlId;
+    if (!idToDelete) {
+      const sr = await fetch(`${HCS_API_BASE}/lp_publiees/search?q=${encodeURIComponent(slug)}`, { headers: { 'x-api-key': HCS_API_KEY } });
+      if (sr.ok) { const sd = await sr.json(); idToDelete = (sd.items || sd)[0]?.id; }
+    }
+    if (idToDelete) {
+      const r = await fetch(`${HCS_API_BASE}/lp_publiees/${idToDelete}`, { method: 'DELETE', headers: { 'x-api-key': HCS_API_KEY } });
+      if (!r.ok && r.status !== 404) throw new Error(`MySQL ${r.status}`);
+    }
     // KV Worker (best-effort)
     if (slug && adminSecret) {
       await fetch(`${WORKER_BASE}/lp/${slug}`, { method: 'DELETE', headers: { 'X-Admin-Secret': adminSecret } }).catch(() => {});
@@ -8860,7 +8871,7 @@ function renderConfigAdmin(c) {
               <div class="pcfg-size-grid">
                 ${['XS','S','M','L','XL','2XL','3XL','4XL'].map(s=>`
                 <label class="pcfg-size-btn">
-                  <input type="checkbox" ${['XS','S','M','L','XL','2XL','3XL','4XL'].includes(s)?'checked':''}
+                  <input type="checkbox" ${tshGetParcours(id).sizes.includes(s)?'checked':''}
                     onchange="tshToggleSize(${id},'${s}',this.checked)">
                   ${s}
                 </label>`).join('')}
@@ -9916,7 +9927,7 @@ function tshSetFace(campId, face, enabled) {
       el.style.opacity = '0.4'; el.style.pointerEvents = 'none';
     });
   }
-  try { localStorage.setItem('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave('✓ Face mise à jour'); } catch(_) {}
+  _lsSet('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave('✓ Face mise à jour');
 }
 
 // ── Constantes texte personnalisé ────────────────────────
@@ -9972,6 +9983,25 @@ function tshGetParcours(campId) {
   }
   return tshParcours[campId];
 }
+function _lsSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch(e) {
+    if (e.name === 'QuotaExceededError' || e.code === 22) {
+      // Nettoyer les gros éléments régénérables
+      ['hcs_lp_preview','hcs_lp_preview_b','hcs_lp_preview_vdec'].forEach(k => { try { localStorage.removeItem(k); } catch(_) {} });
+      try {
+        for (const k of Object.keys(localStorage)) {
+          if ((localStorage.getItem(k) || '').length > 80000) { localStorage.removeItem(k); }
+        }
+      } catch(_) {}
+      // Réessayer
+      try { localStorage.setItem(key, value); return true; } catch(_) {}
+    }
+    return false;
+  }
+}
 function _quickSave(msg) {
   const id = '_qs_badge';
   let el = document.getElementById(id);
@@ -9992,14 +10022,14 @@ function tshSetParcours(campId, key, val) {
   else if (key === 'label2') conf.labels[2] = val;
   else if (key === 'label3') conf.labels[3] = val;
   else conf[key] = val;
-  try { localStorage.setItem('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave(); } catch(_) {}
+  _lsSet('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave();
 }
 function tshToggleSize(campId, size, checked) {
   const conf = tshGetParcours(campId);
   const order = ['XS','S','M','L','XL','2XL','3XL','4XL'];
   if (checked) { if (!conf.sizes.includes(size)) conf.sizes.push(size); conf.sizes.sort((a,b)=>order.indexOf(a)-order.indexOf(b)); }
   else conf.sizes = conf.sizes.filter(s => s !== size);
-  try { localStorage.setItem('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave('✓ Taille mise à jour'); } catch(_) {}
+  _lsSet('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave('✓ Taille mise à jour');
 }
 function tshResetParcours(campId) {
   if (!confirm('Réinitialiser toute la config parcours de cette verticale ?')) return;
