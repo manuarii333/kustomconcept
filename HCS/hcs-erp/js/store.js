@@ -1008,7 +1008,42 @@ const Store = (() => {
     let synced = 0;
     const errors = [];
 
-    const SYNC_LIMITS = { contacts: 150, produits: 150, fournisseurs: 100 };
+    /* Archivage automatique : si localStorage > 3 MB, supprimer les enregistrements
+       déjà archivés dans MySQL (_mysql_id présent) pour libérer de la place.
+       Les enregistrements sans _mysql_id (non-synchronisés) sont conservés. */
+    try {
+      let used = 0;
+      for (const k of Object.keys(localStorage)) used += (localStorage.getItem(k) || '').length;
+      if (used > 3_000_000) {
+        /* Étape 1 : vider les clés lourdes non-critiques */
+        ['hcs_lp_preview','hcs_lp_preview_b','hcs_lp_preview_vdec','hcs_erp_mockups',
+         'hcs_tsh_cfg_1','hcs_tsh_cfg_2','hcs_bg_thumbs_v1','hcs_published_urls'].forEach(k => {
+          try { localStorage.removeItem(k); } catch(_) {}
+        });
+        /* Étape 2 : dans hcs_erp_db, virer uniquement les records déjà dans MySQL */
+        try {
+          const cur = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+          let freed = 0;
+          const ARCHIVABLE = ['devis','factures','commandes','contacts','produits','fournisseurs','logos','assets','calculs'];
+          for (const col of ARCHIVABLE) {
+            if (!Array.isArray(cur[col])) continue;
+            const before = cur[col].length;
+            /* Garder : non-MySQL OU les 10 plus récents même si MySQL */
+            const withMySQL   = cur[col].filter(r => r._mysql_id);
+            const withoutMySQL = cur[col].filter(r => !r._mysql_id);
+            if (withMySQL.length > 10) {
+              cur[col] = [...withoutMySQL, ...withMySQL.slice(-10)];
+              freed += before - cur[col].length;
+            }
+          }
+          if (cur.auditLog) cur.auditLog = cur.auditLog.slice(-30);
+          localStorage.setItem(LS_KEY, JSON.stringify(cur));
+          if (freed > 0) console.info(`[Store] Archivage localStorage : ${freed} enreg. MySQL supprimés localement (données conservées dans MySQL).`);
+        } catch(_) {}
+      }
+    } catch(_) {}
+
+    const SYNC_LIMITS = { contacts: 40, produits: 60, fournisseurs: 30 };
 
     for (const col of SYNC_COLS) {
       try {
