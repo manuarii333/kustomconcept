@@ -414,22 +414,19 @@ function toggleMdpVisibility() {
 }
 
 /* ================================================================
-   JETON API HMAC — récupéré silencieusement après connexion
-   Stocké dans sessionStorage (effacé à la fermeture du navigateur).
-   Si l'API est inaccessible, l'ERP continue en mode localStorage-only.
-
-   ⚠️  ROUTE NON IMPLÉMENTÉE côté PHP : api/token n'existe pas dans
-   allowedTables (index.php). La fonction retourne silencieusement sans
-   erreur. La clé statique 'hcs-erp-2026' (mysql-api.js) reste active.
-   À FAIRE : ajouter le contrôleur api/controllers/token.php et
-   enregistrer 'token' dans allowedTables de index.php.
+   JETON API HMAC — désactivé jusqu'à implémentation de token.php
+   La clé statique 'hcs-erp-2026' (mysql-api.js) reste active.
+   À FAIRE : ajouter api/controllers/token.php + 'token' dans allowedTables.
    ================================================================ */
-async function _fetchApiToken(login, mdpHash) {
+async function _fetchApiToken(_login, _mdpHash) {
+  /* Route non implémentée côté PHP — désactivé pour éviter le 401 console */
+  return;
+  /* eslint-disable no-unreachable */
   try {
     const res = await fetch('https://highcoffeeshirts.com/erp/api/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ login, mdpHash })
+      body: JSON.stringify({ login: _login, mdpHash: _mdpHash })
     });
     if (!res.ok) return;
     const data = await res.json();

@@ -155,7 +155,10 @@ const Store = (() => {
    * Persiste la base dans localStorage.
    * Appelé automatiquement après chaque mutation CRUD.
    */
+  let _saving = false;
   function save() {
+    if (_saving) return; // anti-réentrance
+    _saving = true;
     try {
       /* Purge proactive : si >50% plein, vider base64 + limiter à 50 records/col AVANT save */
       try {
@@ -278,14 +281,24 @@ const Store = (() => {
               localStorage.setItem(LS_KEY, JSON.stringify(minimal));
               console.warn('[Store] Données purgées au minimum — sync MySQL lancée en arrière-plan.');
             } catch (e4) {
+              // Nettoyage agressif : items externes volumineux + hcs_erp_db
+              ['hcs_lp_preview','hcs_lp_preview_b','hcs_lp_preview_vdec','hcs_erp_mockups',
+               'hcs_tsh_cfg_1','hcs_tsh_cfg_2'].forEach(k => { try { localStorage.removeItem(k); } catch(_) {} });
+              try {
+                for (const k of Object.keys(localStorage)) {
+                  if (k !== LS_KEY && (localStorage.getItem(k)||'').length > 50000) localStorage.removeItem(k);
+                }
+              } catch(_) {}
               localStorage.removeItem(LS_KEY);
-              console.warn('[Store] hcs_erp_db purgé — rechargez et lancez ☁↓ pour resynchroniser.');
+              console.warn('[Store] hcs_erp_db purgé + items externes nettoyés. Rechargez et lancez ☁↓.');
             }
           }
         }
       }
     } catch (e) {
       console.error('[Store] Erreur de sauvegarde :', e);
+    } finally {
+      _saving = false;
     }
   }
 
@@ -320,13 +333,22 @@ const Store = (() => {
       onProgress?.({ step: 'push', col, done: i, total: COLS.length });
       try { await syncAllToMySQL(col); pushed++; } catch (_) {}
     }
-    /* Réduire à 100 derniers records par collection */
+    /* Purge agressive : réduire à 30 records max + strip champs volumineux */
     if (db) {
       for (const col of Object.keys(db)) {
-        if (!Array.isArray(db[col]) || db[col].length <= 100) continue;
-        db[col] = db[col].slice(-100);
+        if (!Array.isArray(db[col])) continue;
+        db[col] = db[col].slice(-30).map(r => {
+          if (typeof r !== 'object' || !r) return r;
+          const clean = {};
+          for (const k of Object.keys(r)) {
+            const v = r[k];
+            clean[k] = (typeof v === 'string' && (v.startsWith('data:') || v.length > 500)) ? '' : v;
+          }
+          return clean;
+        });
       }
-      if (db.auditLog) db.auditLog = db.auditLog.slice(-20);
+      if (db.auditLog) db.auditLog = [];
+      if (db.messages) db.messages = (db.messages || []).slice(-20);
       save();
     }
     onProgress?.({ step: 'done', pushed });
@@ -986,11 +1008,11 @@ const Store = (() => {
     let synced = 0;
     const errors = [];
 
-    const SYNC_LIMITS = { contacts: 5000, produits: 2000, fournisseurs: 1000 };
+    const SYNC_LIMITS = { contacts: 150, produits: 150, fournisseurs: 100 };
 
     for (const col of SYNC_COLS) {
       try {
-        const colLimit = SYNC_LIMITS[col] || 200;
+        const colLimit = SYNC_LIMITS[col] || 100;
         const rows = await window.MYSQL.getAll(col, { limit: colLimit, sort: 'id', order: 'desc' });
         if (!Array.isArray(rows) || !rows.length) continue;
 
