@@ -7949,9 +7949,10 @@ function renderMysqlLPsView(lps) {
         <code style="font-size:0.62rem;color:#43e97b">${lp.url||'—'}</code>
         <div style="font-size:0.65rem;color:var(--text-secondary);margin-top:2px">Publié : ${lp.published_at?lp.published_at.slice(0,16):'—'} · ${lp.html_size?(lp.html_size/1024).toFixed(0)+' Ko':'—'}</div>
       </div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
+      <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
         ${lp.url?`<a href="${lp.url}" target="_blank" style="padding:5px 10px;background:#6c63ff;color:white;border-radius:6px;font-size:0.68rem;font-weight:700;text-decoration:none">🌐</a>`:''}
         <span style="padding:4px 8px;border-radius:8px;font-size:0.65rem;font-weight:700;background:${lp.status==='active'?'rgba(67,233,123,.15)':'rgba(255,107,107,.15)'};color:${lp.status==='active'?'#43e97b':'#ff6b6b'};border:1px solid ${lp.status==='active'?'#43e97b44':'#ff6b6b44'}">${lp.status||'—'}</span>
+        <button onclick="deleteMysqlLP(${lp.id},'${lp.slug}')" style="padding:5px 10px;background:rgba(255,107,107,.15);border:1px solid #ff6b6b;color:#ff6b6b;border-radius:6px;font-size:0.68rem;font-weight:700;cursor:pointer">🗑️ Supprimer</button>
       </div>
     </div>`).join('');
 
@@ -7970,6 +7971,23 @@ function renderMysqlLPsView(lps) {
       ? `<div style="text-align:center;color:var(--text-secondary);padding:60px">Aucune LP dans MySQL. Les LPs apparaissent ici après publication via 🚀 Publier.</div>`
       : `<div style="display:flex;flex-direction:column;gap:10px;padding:4px 0">${rows}</div>`}
   </div>`;
+}
+
+async function deleteMysqlLP(mysqlId, slug) {
+  if (!confirm(`Supprimer la LP "${slug}" ?\nSupprime MySQL + KV Worker.`)) return;
+  try {
+    // MySQL
+    const r = await fetch(`${HCS_API_BASE}/lp_publiees/${mysqlId}`, {
+      method: 'DELETE', headers: { 'x-api-key': HCS_API_KEY }
+    });
+    if (!r.ok) throw new Error(`MySQL ${r.status}`);
+    // KV Worker (best-effort)
+    if (slug && adminSecret) {
+      await fetch(`${WORKER_BASE}/lp/${slug}`, { method: 'DELETE', headers: { 'X-Admin-Secret': adminSecret } }).catch(() => {});
+    }
+    showToast(`🗑️ LP "${slug}" supprimée`);
+    showMysqlLPs();
+  } catch(e) { showToast('❌ ' + e.message, true); }
 }
 
 // ═══════════════════════════════════════════════════════
