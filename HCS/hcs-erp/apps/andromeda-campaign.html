@@ -14067,22 +14067,45 @@ function vdecAdmPickImg(ci, viewKey) {
   const inp = document.createElement('input'); inp.type='file'; inp.accept='image/*';
   inp.onchange = async e => {
     const file = e.target.files[0]; if (!file) return;
-    /* Affichage temporaire base64 pendant l'upload */
+    /* Compresser l'image et stocker en base64 immédiatement (pas de dépendance serveur) */
     const reader = new FileReader();
-    reader.onload = ev => {
-      /* Aperçu immédiat en mémoire sans stocker le base64 dans localStorage (quota) */
-      const div = document.getElementById(`vdec-view-${ci}-${viewKey}`);
-      if (div) div.innerHTML = `<img src="${ev.target.result}" alt="${viewKey}"><button class="vdec-view-del" onclick="event.stopPropagation();vdecAdmDelImg(${ci},'${viewKey}')">✕</button>`;
-    };
-    reader.readAsDataURL(file);
-    /* Upload réel vers le serveur */
-    try {
-      const url = await vdecUploadImage(file, 'vehicules');
+    reader.onload = async ev => {
+      /* Redimensionner à max 800×450 et compresser (≈30-60 Ko par vue) */
+      const b64 = await (function(src) {
+        return new Promise(res => {
+          const imgEl = new Image();
+          imgEl.onload = () => {
+            const MAX_W = 800, MAX_H = 450;
+            let w = imgEl.width, h = imgEl.height;
+            if (w > MAX_W || h > MAX_H) {
+              const r = Math.min(MAX_W / w, MAX_H / h);
+              w = Math.round(w * r); h = Math.round(h * r);
+            }
+            const cv = document.createElement('canvas');
+            cv.width = w; cv.height = h;
+            cv.getContext('2d').drawImage(imgEl, 0, 0, w, h);
+            res(cv.toDataURL('image/jpeg', 0.75));
+          };
+          imgEl.src = src;
+        });
+      })(ev.target.result);
+      /* Sauvegarder en localStorage immédiatement */
       const cfg = vdecLoadCfg();
-      cfg.cats[ci].views[viewKey] = url;
+      cfg.cats[ci].views[viewKey] = b64;
       vdecSaveCfg(cfg);
       vdecAdmRenderCats();
-    } catch(err) { showToast('❌ Upload image véhicule échoué : ' + err.message, true); }
+      /* Aperçu dans la cellule admin */
+      const div = document.getElementById(`vdec-view-${ci}-${viewKey}`);
+      if (div) div.innerHTML = `<img src="${b64}" alt="${viewKey}"><button class="vdec-view-del" onclick="event.stopPropagation();vdecAdmDelImg(${ci},'${viewKey}')">✕</button>`;
+      /* Tenter upload serveur en arrière-plan pour remplacer la base64 par une URL */
+      try {
+        const url = await vdecUploadImage(file, 'vehicules');
+        const cfg2 = vdecLoadCfg();
+        cfg2.cats[ci].views[viewKey] = url;
+        vdecSaveCfg(cfg2);
+      } catch(_) { /* upload optionnel — base64 déjà sauvegardée */ }
+    };
+    reader.readAsDataURL(file);
   };
   inp.click();
 }
