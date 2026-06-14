@@ -2477,21 +2477,20 @@ async function publishLP(id) {
   showPublishProgress(2, 4, '📄 Génération du HTML…');
 
   let generatedHtml = null;
+  const _origDlOverride = window._dl_override;
   try {
     if (CAMPS[id]?.id === 0) {
       /* Vdec : appel direct — exportLPVdec retourne le HTML */
-      const _prev = window._dl_override;
       window._dl_override = () => {}; /* supprime le téléchargement */
       generatedHtml = exportLPVdec(id);
-      window._dl_override = _prev;
+      window._dl_override = _origDlOverride;
     } else {
-      const _orig = window._dl_override;
       window._dl_override = (name, content) => { generatedHtml = content; };
       await exportLP(id);
-      window._dl_override = _orig;
+      window._dl_override = _origDlOverride;
     }
   } catch(e) {
-    window._dl_override = null;
+    window._dl_override = _origDlOverride;
     hidePublishProgress();
     showToast('❌ Erreur génération HTML : ' + (e?.message || String(e)), true);
     return;
@@ -4282,7 +4281,7 @@ async function renderStep4() {
         })
       }).catch(function(_e){console.error('[HCS] Ordre non sauvegardé:',_e);var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_ord-warn')){var _w=document.createElement('p');_w.id='_ord-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
       /* Enrichir la confirmation avec fidélité + lien compte client */
-      _enrichConfirmation(orderId, total, ckContact, ckDelivery, p?.n || '');
+      try { _enrichConfirmation(orderId, total, ckContact, ckDelivery, p?.n || ''); } catch(_) {}
     }
 
     // Méthode 1 : callback SDK
@@ -4513,7 +4512,7 @@ function getTotal(){
 
 function openCk(){ckStep=1;document.getElementById('ck-overlay').classList.add('open');document.body.style.overflow='hidden';render();}
 function closeCk(){document.getElementById('ck-overlay').classList.remove('open');document.body.style.overflow='';}
-document.getElementById('ck-overlay').addEventListener('click',function(e){if(e.target===e.currentTarget)closeCk();});
+document.addEventListener('DOMContentLoaded',function(){var _ovl=document.getElementById('ck-overlay');if(_ovl)_ovl.addEventListener('click',function(e){if(e.target===e.currentTarget)closeCk();});});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeCk();});
 
 var STEP_TITLES={1:'🚗 Votre véhicule',2:'🎨 Votre décoration',3:'👤 Vos coordonnées',4:'💳 Paiement sécurisé'};
@@ -4711,8 +4710,9 @@ async function renderS4(){
     if(!window.KR){await new Promise(function(res2,rej){var s=document.createElement('script');s.id='pz-sdk';s.src='https://static.osb.pf/static/js/krypton-client/V4.0/stable/kr-payment-form.min.js';s.setAttribute('kr-public-key',pubKey);s.setAttribute('kr-language','fr-FR');s.onload=res2;s.onerror=function(){rej(new Error('SDK OSB indisponible'));};document.head.appendChild(s);});}
     await KR.setFormConfig({'kr-public-key':pubKey,'kr-language':'fr-FR'});
     await KR.setFormToken(formToken);
-    KR.onSubmit(function(d){if(['PAID','AUTHORISED','RUNNING'].includes(d?.clientAnswer?.orderStatus)){showOk();}return false;});
-    new MutationObserver(function(){if(document.querySelector('.kr-payment-success')){showOk();}}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+    var _pzDone=false;function _showOkOnce(){if(_pzDone)return;_pzDone=true;showOk();}
+    KR.onSubmit(function(d){if(['PAID','AUTHORISED','RUNNING'].includes(d?.clientAnswer?.orderStatus)){_showOkOnce();}return false;});
+    new MutationObserver(function(){if(document.querySelector('.kr-payment-success')){_showOkOnce();}}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
   } catch(e){
     document.getElementById('pz-area').innerHTML='<div style="color:#ff6b6b;text-align:center;padding:14px;font-size:.78rem">❌ '+e.message+'</div><button onclick="renderS4()" style="display:block;margin:8px auto;padding:8px 16px;background:rgba(255,255,255,.08);border:none;border-radius:8px;color:white;cursor:pointer;font-size:.74rem">Réessayer</button>';
   }
@@ -5304,7 +5304,7 @@ async function gfInitKrypton(amount) {
     var resp = await fetch(WORKER_URL, {
       method:'POST',
       headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SEC,'X-Lp-Token':LP_TOKEN},
-      body:JSON.stringify({amount:amount*100,currency:'953',mode:WORKER_MODE})
+      body:JSON.stringify({amount:amount,currency:'XPF',mode:WORKER_MODE})
     });
     var data; try { data=await resp.json(); } catch(e){ throw new Error(await resp.text()); }
     if (!data.formToken) throw new Error(data.errorMessage||'Token introuvable');
@@ -6035,7 +6035,7 @@ async function renderStep4() {
       }).catch(function(_e){console.error('[HCS] Ordre non sauvegardé:',_e);var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_ord-warn')){var _w=document.createElement('p');_w.id='_ord-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
       /* hcs_orders — données incluses dans le payload Worker /order/save (clé API côté serveur uniquement) */
       /* Enrichir la confirmation avec fidélité + lien compte client */
-      _enrichConfirmation(orderId, total, ckContact, ckDelivery, p?.n || '');
+      try { _enrichConfirmation(orderId, total, ckContact, ckDelivery, p?.n || ''); } catch(_) {}
     }
 
     // Méthode 1 : callback SDK
@@ -6607,7 +6607,7 @@ async function renderStep4() {
       _payBtn.textContent = '💳 Payer';
     }
 
-    KR.onSubmit(async d => {
+    KR.onSubmit(d => {
       if (['PAID','RUNNING','AUTHORISED'].includes(d.clientAnswer.orderStatus)) {
         document.getElementById('pz-kr-form').style.display='none';
         document.getElementById('pz-ok').style.display='block';
@@ -6616,20 +6616,17 @@ async function renderStep4() {
         const s4 = document.getElementById('ck-s4');
         if (s4) s4.className = 'ck-step done';
         _enrichConfirmation(orderId, total, contact, delivery, items);
-        // Sauvegarder commande
-        try {
-          await fetch(_wUrl.replace('/payzen-token','/order/save'), {
-            method:'POST', headers:{'Content-Type':'application/json','X-Worker-Secret':_wSecret},
-            body:JSON.stringify({
-              orderId, status:'paid', amount:total, currency:'XPF',
-              campaignName:CART.map(x=>x.camp).join(', '), product:items,
-              client:{ name:contact.name, email:contact.email, phone:contact.phone||'' },
-              delivery:{ type:delivery.type, address:delivery.address||'', island:delivery.island||'', shippingFee:delivery.shippingFee||0, pickupDate:delivery.pickupDate||'', slot:delivery.slot||'', deliveryDelay:3 },
-              note:contact.note||''
-            })
-          });
-        } catch(e){ console.error('[HCS] Ordre non sauvegardé:',e);var _oe=document.getElementById('pz-ok');if(_oe&&!document.getElementById('_stk-warn')){var _sw=document.createElement('p');_sw.id='_stk-warn';_sw.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px';_sw.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si pas de confirmation.';_oe.appendChild(_sw);} }
-        CART=[]; updateBadge();
+        fetch(_wUrl.replace('/payzen-token','/order/save'), {
+          method:'POST', headers:{'Content-Type':'application/json','X-Worker-Secret':_wSecret},
+          body:JSON.stringify({
+            orderId, status:'paid', amount:total, currency:'XPF',
+            campaignName:CART.map(x=>x.camp).join(', '), product:items,
+            client:{ name:contact.name, email:contact.email, phone:contact.phone||'' },
+            delivery:{ type:delivery.type, address:delivery.address||'', island:delivery.island||'', shippingFee:delivery.shippingFee||0, pickupDate:delivery.pickupDate||'', slot:delivery.slot||'', deliveryDelay:3 },
+            note:contact.note||''
+          })
+        }).catch(e => { console.error('[HCS] Ordre non sauvegardé:',e);var _oe=document.getElementById('pz-ok');if(_oe&&!document.getElementById('_stk-warn')){var _sw=document.createElement('p');_sw.id='_stk-warn';_sw.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px';_sw.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si pas de confirmation.';_oe.appendChild(_sw);} })
+        .finally(() => { CART=[]; updateBadge(); });
       }
       return false;
     });
@@ -6654,7 +6651,18 @@ async function renderStep4() {
         const s4 = document.getElementById('ck-s4');
         if (s4) s4.className = 'ck-step done';
         _enrichConfirmation(orderId, total, contact, delivery, items);
-        CART=[]; updateBadge();
+        const _campNames = CART.map(x=>x.camp).join(', ');
+        fetch(_wUrl.replace('/payzen-token','/order/save'), {
+          method:'POST', headers:{'Content-Type':'application/json','X-Worker-Secret':_wSecret},
+          body:JSON.stringify({
+            orderId, status:'pending_instore', amount:total, currency:'XPF',
+            campaignName:_campNames, product:items,
+            client:{ name:contact.name, email:contact.email, phone:contact.phone||'' },
+            delivery:{ type:delivery.type, address:delivery.address||'', island:delivery.island||'', shippingFee:delivery.shippingFee||0, pickupDate:delivery.pickupDate||'', slot:delivery.slot||'', deliveryDelay:3 },
+            note:(contact.note||'')+' [règlement en boutique]'
+          })
+        }).catch(e => console.error('[HCS] Ordre boutique non sauvegardé:',e))
+        .finally(() => { CART=[]; updateBadge(); });
       };
     }
   }
@@ -7013,13 +7021,13 @@ async function trackOrder() {
     const statusIcons = {pending:'⏳',paid:'✅',processing:'🔄',delivered:'📦',cancelled:'❌'};
     const statusLabels = {pending:'En attente',paid:'Payée',processing:'En cours',delivered:'Livrée',cancelled:'Annulée'};
     resultEl.innerHTML = `
-      <div class="track-row"><span class="track-label">Référence</span><span class="track-val" style="color:var(--accent)">${o.orderId}</span></div>
+      <div class="track-row"><span class="track-label">Référence</span><span class="track-val" style="color:var(--accent)">${_esc(o.orderId)}</span></div>
       <div class="track-row"><span class="track-label">Date</span><span class="track-val">${new Date(o.createdAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}</span></div>
-      <div class="track-row"><span class="track-label">Produit</span><span class="track-val">${o.product||'—'}</span></div>
-      <div class="track-row"><span class="track-label">Montant</span><span class="track-val" style="color:var(--accent-3)">${(o.amount||0).toLocaleString('fr-FR')} ${o.currency||'XPF'}</span></div>
-      <div class="track-row"><span class="track-label">Statut</span><span class="track-val"><span class="status-badge s-${o.status}">${statusIcons[o.status]||''} ${statusLabels[o.status]||o.status}</span></span></div>
-      <div class="track-row"><span class="track-label">Livraison</span><span class="track-val">${o.delivery?.type==='pickup'?'Retrait en boutique':'Livraison'}${o.delivery?.pickupDate?' · '+o.delivery.pickupDate:''}</span></div>`;
-  } catch(e) { resultEl.innerHTML=`<div style="color:#ff6b6b;padding:14px;text-align:center;font-size:0.8rem">Erreur : ${e.message}</div>`; }
+      <div class="track-row"><span class="track-label">Produit</span><span class="track-val">${_esc(o.product||'—')}</span></div>
+      <div class="track-row"><span class="track-label">Montant</span><span class="track-val" style="color:var(--accent-3)">${(o.amount||0).toLocaleString('fr-FR')} ${_esc(o.currency||'XPF')}</span></div>
+      <div class="track-row"><span class="track-label">Statut</span><span class="track-val"><span class="status-badge s-${_esc(o.status)}">${statusIcons[o.status]||''} ${_esc(statusLabels[o.status]||o.status)}</span></span></div>
+      <div class="track-row"><span class="track-label">Livraison</span><span class="track-val">${o.delivery?.type==='pickup'?'Retrait en boutique':'Livraison'}${o.delivery?.pickupDate?' · '+_esc(o.delivery.pickupDate):''}</span></div>`;
+  } catch(e) { resultEl.innerHTML=`<div style="color:#ff6b6b;padding:14px;text-align:center;font-size:0.8rem">Erreur : ${_esc(e.message)}</div>`; }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -7060,8 +7068,8 @@ async function showLoyalty() {
     const rows = clients.map(c => `
       <tr style="border-bottom:1px solid rgba(255,255,255,.05)">
         <td style="padding:10px 12px">
-          <div style="font-weight:600;font-size:0.85rem">${c.name||'—'}</div>
-          <div style="font-size:0.65rem;color:var(--text-secondary)">${c.email}</div>
+          <div style="font-weight:600;font-size:0.85rem">${_esc(c.name||'—')}</div>
+          <div style="font-size:0.65rem;color:var(--text-secondary)">${_esc(c.email)}</div>
         </td>
         <td style="padding:10px 12px;text-align:center">${loyaltyTierBadge(c.tier||'Rookie')}</td>
         <td style="padding:10px 12px;text-align:right;font-weight:700;color:#f6d365;font-size:1rem">${(c.points||0).toLocaleString('fr-FR')}</td>
@@ -7106,7 +7114,7 @@ async function loyaltyDetail(email) {
     const hist = (c.history||[]).slice(0,10).map(h => `
       <tr style="border-bottom:1px solid rgba(255,255,255,.05)">
         <td style="padding:6px 10px;font-size:0.72rem">${h.date?new Date(h.date).toLocaleDateString('fr-FR'):'—'}</td>
-        <td style="padding:6px 10px;font-size:0.72rem;color:var(--text-secondary)">${h.orderId}</td>
+        <td style="padding:6px 10px;font-size:0.72rem;color:var(--text-secondary)">${_esc(h.orderId)}</td>
         <td style="padding:6px 10px;text-align:right;font-size:0.72rem">${(h.amount||0).toLocaleString('fr-FR')} XPF</td>
         <td style="padding:6px 10px;text-align:right;font-weight:700;color:#f6d365;font-size:0.78rem">+${h.pointsEarned||0} pts</td>
       </tr>`).join('');
@@ -7115,8 +7123,8 @@ async function loyaltyDetail(email) {
     modal.innerHTML=`<div style="background:#1a1a2e;border-radius:14px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <div>
-          <div style="font-weight:700;font-size:1rem">${c.name||c.email}</div>
-          <div style="font-size:0.7rem;color:var(--text-secondary)">${c.email}</div>
+          <div style="font-weight:700;font-size:1rem">${_esc(c.name||c.email)}</div>
+          <div style="font-size:0.7rem;color:var(--text-secondary)">${_esc(c.email)}</div>
         </div>
         <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:#9090b0;font-size:1.2rem;cursor:pointer">✕</button>
       </div>
@@ -11832,7 +11840,7 @@ async function genInitKrypton(amount, workerUrl, workerSec, publicKey, mode) {
   try {
     const resp = await fetch(workerUrl, {
       method:'POST', headers:{'Content-Type':'application/json','X-Worker-Secret':workerSec},
-      body: JSON.stringify({ amount: amount*100, currency:'953', mode })
+      body: JSON.stringify({ amount: amount, currency:'XPF', mode })
     });
     let data; try { data = await resp.json(); } catch { throw new Error(await resp.text()); }
     if (!data.formToken) throw new Error(data.errorMessage || 'Token introuvable');
@@ -11850,12 +11858,12 @@ async function genInitKrypton(amount, workerUrl, workerSec, publicKey, mode) {
     }
     await KR.setFormConfig({'kr-public-key': publicKey, 'kr-language':'fr-FR'});
     await KR.setFormToken(data.formToken);
-    KR.onSubmit(async (r) => {
+    KR.onSubmit((r) => {
       const status = r.clientAnswer?.orderStatus;
       if (['PAID','AUTHORISED','RUNNING'].includes(status)) {
         document.getElementById('gen-pz-kr-form').innerHTML =
           `<div style="text-align:center;padding:24px"><div style="font-size:2.5rem;margin-bottom:8px">✅</div><div style="font-size:1rem;font-weight:800;color:#43e97b">Paiement confirmé !</div><div style="font-size:0.72rem;color:var(--text-secondary);margin-top:6px">Merci, votre commande est enregistrée.</div></div>`;
-        // Sauvegarde commande Worker KV + WhatsApp
+        // Sauvegarde commande Worker KV + WhatsApp (fire-and-forget)
         try {
           const _gc = CAMPS[genFlow.campId]; const _gp = _gc.products[genFlow.prodIdx]; const _gs = genFlow.selections;
           const _gOpts = [_gs.color,_gs.size,_gs.format,_gs.module,_gs.plan,_gs.service,_gs.description,_gs.contactNote].filter(Boolean).join(' | ');
@@ -11874,7 +11882,7 @@ async function genInitKrypton(amount, workerUrl, workerSec, publicKey, mode) {
         } catch(_) {}
         setTimeout(closeGenericFlow, 2800);
       }
-      return true;
+      return false;
     });
   } catch(err) {
     document.getElementById('gen-pz-loading').style.display = 'none';
@@ -12062,7 +12070,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<script src="../hcs-hub-ecosystem/hcs-hub-ecosystem/andromeda-v2-patch.js"></script>
+<script src="../../hcs-hub-ecosystem/hcs-hub-ecosystem/andromeda-v2-patch.js"></script>
 
 <!-- ═══════════════════════════════════════════════════════
      VEHICLE DECORATION FLOW — Parcours client 4 étapes
@@ -12561,7 +12569,7 @@ function vdecDefaultCfg() {
   };
 }
 function vdecSaveCfg(cfg) {
-  try { localStorage.setItem(VDEC_KEY, JSON.stringify(cfg)); } catch(e) { console.warn('vdec save err', e); }
+  try { localStorage.setItem(VDEC_KEY, JSON.stringify(cfg)); } catch(e) { console.warn('vdec save err', e); if(e.name==='QuotaExceededError'||e.code===22) showToast('⚠️ Stockage plein — config véhicule non sauvegardée localement', true); }
   vdecSyncToServer(cfg);
 }
 
@@ -12571,7 +12579,8 @@ function vdecSyncToServer(cfg) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': VDEC_API_KEY },
     body: JSON.stringify(cfg)
-  }).catch(e => showToast('⚠️ Config véhicule non synchronisée : ' + e.message, true));
+  }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); })
+    .catch(e => showToast('⚠️ Config véhicule non synchronisée : ' + e.message, true));
 }
 
 async function vdecSyncFromServer() {
@@ -12648,7 +12657,7 @@ function vdecRender() {
     el.style.display = 'none';
   });
   const cur = document.getElementById('vdec-s' + _vdec.step);
-  if (cur) cur.style.display = _vdec.step === 2 ? 'flex' : 'flex';
+  if (cur) cur.style.display = 'flex';
 
   // Step dots
   [1,2,3,4].forEach(s => {
@@ -13871,15 +13880,13 @@ async function vdecArchiveOrder(total) {
       })
     });
   } catch(e) { showToast('⚠️ Planning non mis à jour (Worker KV)', true); }
-  /* Webhook n8n → emails client + admin (no-cors : n8n cloud ne renvoie pas Access-Control-Allow-Origin) */
-  try {
-    await fetch(VDEC_N8N_WEBHOOK, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ ...order, emailClient: _vdec.contact.email, emailAdmin: VDEC_ADMIN_EMAIL })
-    });
-  } catch(e) { showToast('⚠️ Webhook n8n échoué — vérifiez le workflow', true); }
+  /* Webhook n8n — fire-and-forget (no-cors : réponse opaque, ne pas await) */
+  fetch(VDEC_N8N_WEBHOOK, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ ...order, emailClient: _vdec.contact.email, emailAdmin: VDEC_ADMIN_EMAIL })
+  }).catch(e => console.warn('[HCS] n8n webhook échoué:', e));
 }
 
 /* ── Mode intégré LP : ?vdec=1 → auto-ouvre le studio ── */
@@ -13948,8 +13955,6 @@ function vdecAdmSaveAndClose() {
     /* Les polices sont déjà sauvegardées à chaque modification (onchange) */
   }
   closeVDecAdmin();
-  /* Lance le parcours utilisateur après fermeture de la config admin */
-  vdecOpenFlow(0, 0);
 }
 function vdecAdmTab(tab, btn) {
   _vdecAdmTab = tab;
