@@ -12581,10 +12581,18 @@ function vdecSyncToServer(cfg) {
 
 async function vdecSyncFromServer() {
   try {
-    const res  = await fetch(VDEC_API + '/vdec_config', { headers: { 'x-api-key': VDEC_API_KEY } });
+    const res  = await fetch(VDEC_API + '/vdec_config?sort=id&order=DESC&limit=1', { headers: { 'x-api-key': VDEC_API_KEY } });
     const json = await res.json();
-    if (json.ok && json.data) {
-      localStorage.setItem(VDEC_KEY, JSON.stringify(json.data));
+    if (json.ok && json.data && json.data.length > 0) {
+      /* Reconstruire l'objet cfg depuis les colonnes de la row (valeurs JSON-stringifiées) */
+      const row = json.data[0];
+      const cfg = {};
+      ['cats','logos','fonts','tarifs','interface'].forEach(k => {
+        if (row[k] !== undefined) {
+          try { cfg[k] = typeof row[k] === 'string' ? JSON.parse(row[k]) : row[k]; } catch(_) { cfg[k] = row[k]; }
+        }
+      });
+      if (cfg.cats && cfg.cats.length) localStorage.setItem(VDEC_KEY, JSON.stringify(cfg));
     }
   } catch(e) { console.warn('[vdec] load server err:', e); }
 }
@@ -12615,7 +12623,7 @@ let _vdec = {
   orderId:''
 };
 
-function vdecOpenFlow(campId, prodIdx, preCatIdx = null) {
+async function vdecOpenFlow(campId, prodIdx, preCatIdx = null) {
   const saved = (() => { try { return JSON.parse(localStorage.getItem('hcs_vdec_contact')||'null'); } catch(_) { return null; } })();
   _vdec = { step: preCatIdx !== null ? 2 : 1, catIdx: preCatIdx !== null ? preCatIdx : null, viewKey:'left', campId, prodIdx,
     logos:[], texts:[],
@@ -12628,6 +12636,7 @@ function vdecOpenFlow(campId, prodIdx, preCatIdx = null) {
     orderId:'VDC-' + Date.now()
   };
   document.getElementById('vdec-modal').classList.add('open');
+  await vdecSyncFromServer().catch(() => {});
   vdecLoadFonts();
   vdecRender();
 }
