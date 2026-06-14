@@ -2458,12 +2458,8 @@ async function publishLP(id) {
   }
   const c = CAMPS[id];
 
-  /* Sélection du parcours à publier (anti-doublon) */
-  const _pck = await _showParcoursPicker(id);
-  if (!_pck) return;
-
   const _baseName = c.name.replace(/[^a-zA-Z0-9]/g,'-').toLowerCase().replace(/-+/g,'-').replace(/^-|-$/g,'');
-  const lpSlug = `${_baseName}-${id}-${_pck.slug}`;
+  const lpSlug = `${_baseName}-${id}`;
   window._parcours_slug_override = lpSlug;
 
   /* Étape 1 — Upload images produits */
@@ -2526,8 +2522,8 @@ async function publishLP(id) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erreur serveur');
 
-    /* Enregistrer ce parcours (multi-LP par verticale) */
-    _savePublishedLP(id, _pck.slug, { url: data.url, name: _pck.name, publishedAt: new Date().toISOString() });
+    /* Enregistrer ce LP */
+    _savePublishedLP(id, 'current', { url: data.url, name: c.name, publishedAt: new Date().toISOString() });
     const urls = JSON.parse(localStorage.getItem('hcs_published_urls') || '{}');
     urls[id] = data.url; /* référence rapide = dernier publié */
     localStorage.setItem('hcs_published_urls', JSON.stringify(urls));
