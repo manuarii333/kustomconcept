@@ -5032,10 +5032,11 @@ function openFlow(idx) {
 function closeFlow() { document.getElementById('fl-overlay').classList.remove('open'); }
 
 function gfStepLabels() {
-  if (CAMP_ID===0) return [CFG.label1||'Sticker', CFG.label2||'Coordonnées', 'Payer'];
-  if (CAMP_ID===4) return [CFG.label1||'Planche', CFG.label2||'Coordonnées', 'Payer'];
-  if (CAMP_ID===8) return [CFG.label1||'Format', CFG.label2||'Vos logos', CFG.label3||'Paiement'];
-  return [CFG.label1||'Options', CFG.label2||'Coordonnées', CFG.label3||'Paiement'];
+  var p0=CFG.label0||'Produit';
+  if (CAMP_ID===0) return [p0, CFG.label1||'Sticker', CFG.label2||'Coordonnées', 'Payer'];
+  if (CAMP_ID===4) return [p0, CFG.label1||'Planche', CFG.label2||'Coordonnées', 'Payer'];
+  if (CAMP_ID===8) return [p0, CFG.label1||'Format', CFG.label2||'Vos logos', 'Paiement'];
+  return [p0, CFG.label1||'Options', CFG.label2||'Coordonnées', 'Paiement'];
 }
 
 function gfRender() {
@@ -5051,8 +5052,9 @@ function gfRender() {
   }
   document.getElementById('fl-step-bar').innerHTML = barHtml;
   var bodyEl = document.getElementById('fl-body');
-  if (step===1) bodyEl.innerHTML=gfStep1HTML();
-  else if (step===2) bodyEl.innerHTML=gfStep2HTML();
+  if (step===1) bodyEl.innerHTML=gfStep0HTML();
+  else if (step===2) bodyEl.innerHTML=gfStep1HTML();
+  else if (step===3) bodyEl.innerHTML=gfStep2HTML();
   else { bodyEl.innerHTML=gfStep3HTML(); setTimeout(function(){ gfInitKrypton(gfGetPrice()); },80); }
   var prevBtn=document.getElementById('fl-btn-prev');
   var nextBtn=document.getElementById('fl-btn-next');
@@ -5073,9 +5075,13 @@ function gfPrev() { if(_s.step>1){_s.step--;gfRender();} }
 function gfValidate() {
   var msg='';
   if (_s.step===1) {
+    if (PRODS.length>1&&(_s.prodIdx===null||_s.prodIdx===undefined||_s.prodIdx<0)) msg='Veuillez sélectionner un produit.';
+  }
+  if (_s.step===2) {
     if (CAMP_ID===0&&!_s.stickerCat) msg='Veuillez choisir un type de sticker.';
     if (CAMP_ID===0&&_s.stickerCat&&_s.stickerCat!=='custom'&&!_s.stickerSize) msg='Veuillez choisir une taille.';
     if (CAMP_ID===3&&!_s.color)   msg='Veuillez choisir une couleur de T-shirt.';
+    if (CAMP_ID===3&&TSH_SIZES.length>0&&!_s.size) msg='Veuillez choisir une taille.';
     if (CAMP_ID===4&&!_s.format)  msg='Veuillez choisir un format gang sheet.';
     if (CAMP_ID===4&&_s.format&&!_s.plateConfirmed) msg='Ouvrez l\\'outil, placez vos logos, puis cliquez ✅ J\\'ai placé mes logos.';
     if (CAMP_ID===5&&!_s.module)  msg='Veuillez choisir un module de formation.';
@@ -5083,11 +5089,12 @@ function gfValidate() {
     if (CAMP_ID===7&&!_s.service) msg='Veuillez choisir un service.';
     if (CAMP_ID===8&&!_s.format)  msg='Veuillez choisir un format de planche.';
   }
-  var isContactStep = _s.step===2;
+  var isContactStep = _s.step===3;
   if (isContactStep) {
+    if (CAMP_ID===5&&CFG.dates&&CFG.dates.trim()&&!_s.date) msg='Veuillez choisir une date de session.';
     var n=document.getElementById('gf-name')?document.getElementById('gf-name').value.trim():'';
     var e=document.getElementById('gf-email')?document.getElementById('gf-email').value.trim():'';
-    if (!n||!e) msg='Prénom / Nom et email sont obligatoires.';
+    if (!n||!e) msg=msg||'Prénom / Nom et email sont obligatoires.';
     else { _s.name=n; _s.email=e;
       _s.phone=document.getElementById('gf-phone')?document.getElementById('gf-phone').value.trim():'';
       _s.note=document.getElementById('gf-note')?document.getElementById('gf-note').value.trim():''; }
@@ -5099,6 +5106,22 @@ function gfValidate() {
   }
   if (errEl) errEl.classList.remove('visible');
   return true;
+}
+
+function gfStep0HTML() {
+  var cards=PRODS.map(function(p,i){
+    var sel=(_s.prodIdx===i);
+    var hasFi=FACE_IMGS[i]&&FACE_IMGS[i].front;
+    var imgEl=hasFi
+      ?'<img src="'+FACE_IMGS[i].front+'" style="width:100%;height:100%;object-fit:cover;object-position:center top">'
+      :'<span style="font-size:2rem">'+(p.e||'📦')+'</span>';
+    return '<div class="fl-pc'+(sel?' active':'')+'" onclick="gfSelProd('+i+')">'
+      +'<div class="fl-pc-img">'+imgEl+'<div class="fl-pc-check">✓</div></div>'
+      +'<div class="fl-pc-info"><div class="fl-pc-name">'+p.n+'</div><div class="fl-pc-price">'+p.p+'</div></div>'
+      +'</div>';
+  }).join('');
+  return '<div class="fl-prod-cards">'+cards+'</div>'
+    +'<p style="text-align:center;font-size:.72rem;color:rgba(255,255,255,.4);margin-top:12px">Sélectionnez votre produit puis appuyez sur Suivant</p>';
 }
 
 function gfStep1HTML() {
@@ -5181,20 +5204,20 @@ function gfStep1HTML() {
   }
   if (CAMP_ID===6) {
     var plans=CFG.plans||['starter','pro','premium'];
-    var PLAN={starter:{label:'Starter',emoji:'🌱',priceM:1800,priceA:18000,color:'#30cfd0',av:'Points bonus HCS\\nAccès offres prioritaires'},pro:{label:'Pro',emoji:'⚡',priceM:3500,priceA:35000,color:'#a18cd1',av:'Points bonus ×2\\nLogos offerts (2/mois)\\nRemise 10%'},premium:{label:'Premium',emoji:'👑',priceM:5500,priceA:55000,color:'#f6d365',av:'Points bonus ×3\\nLogos offerts (5/mois)\\nRemise 20%\\nConseil personnalisé'}};
+    var PLAN={starter:{label:'Starter',emoji:'🌱',priceM:+(CFG.price_starter_m||1800),priceA:+(CFG.price_starter_a||18000),color:'#30cfd0',av:'Points bonus HCS\\nAccès offres prioritaires'},pro:{label:'Pro',emoji:'⚡',priceM:+(CFG.price_pro_m||3500),priceA:+(CFG.price_pro_a||35000),color:'#a18cd1',av:'Points bonus ×2\\nLogos offerts (2/mois)\\nRemise 10%'},premium:{label:'Premium',emoji:'👑',priceM:+(CFG.price_premium_m||5500),priceA:+(CFG.price_premium_a||55000),color:'#f6d365',av:'Points bonus ×3\\nLogos offerts (5/mois)\\nRemise 20%\\nConseil personnalisé'}};
     var pc=plans.filter(function(p){return PLAN[p];}).map(function(p){var av=(CFG['avantages_'+p]||PLAN[p].av).split('\\n').filter(Boolean).map(function(a){return '✓ '+a;}).join('<br>');return '<div class="fl-plan-card'+(_s.plan===p?' selected':'')+'" onclick="gfSetPlan(\\''+p+'\\')"><div class="fl-plan-head"><span class="fl-plan-emoji">'+PLAN[p].emoji+'</span><span class="fl-plan-name" style="color:'+PLAN[p].color+'">'+PLAN[p].label+'</span><span class="fl-plan-price" style="color:'+PLAN[p].color+'">'+PLAN[p].priceM.toLocaleString('fr-FR')+' XPF/mois</span></div><div class="fl-plan-av">'+av+'</div></div>';}).join('');
     return lbl('Choisir votre plan')+pc;
   }
   if (CAMP_ID===7) {
     var svcs=CFG.services||['vecto','detour','logo','pack'];
-    var SVC={vecto:{label:'Vectorisation SVG/AI',icon:'📐',price:2500,desc:'Conversion vectoriel haute qualité'},detour:{label:'Détourage IA',icon:'✂️',price:1500,desc:'Fond transparent — PNG optimisé'},logo:{label:'Création logo complet',icon:'🎨',price:8000,desc:'Logo pro livré en vectoriel'},pack:{label:'Pack graphique',icon:'📦',price:8000,desc:'Vectorisation + Détourage + Retouches'}};
+    var SVC={vecto:{label:'Vectorisation SVG/AI',icon:'📐',price:+(CFG.price_vecto||2500),desc:'Conversion vectoriel haute qualité'},detour:{label:'Détourage IA',icon:'✂️',price:+(CFG.price_detour||1500),desc:'Fond transparent — PNG optimisé'},logo:{label:'Création logo complet',icon:'🎨',price:+(CFG.price_logo||8000),desc:'Logo pro livré en vectoriel'},pack:{label:'Pack graphique',icon:'📦',price:+(CFG.price_pack||8000),desc:'Vectorisation + Détourage + Retouches'}};
     var sc=svcs.filter(function(s){return SVC[s];}).map(function(s){return '<div class="fl-svc-card'+(_s.service===s?' selected':'')+'" onclick="gfSetService(\\''+s+'\\')"><span class="fl-svc-icon">'+SVC[s].icon+'</span><div style="flex:1"><div class="fl-svc-label">'+SVC[s].label+'</div><div style="font-size:.62rem;color:rgba(255,255,255,.4);margin-top:2px">'+SVC[s].desc+'</div></div><span class="fl-svc-price">'+SVC[s].price.toLocaleString('fr-FR')+' XPF</span></div>';}).join('');
     return prodLine+lbl('Choisir le service')+sc;
   }
   if (CAMP_ID===8) {
     var fmtMap8={'halfyard':'½ Yard × 22"','1yard':'1 Yard × 22"','multi':'Multi-feuilles'};
     var fmtDim8={'halfyard':'46×56 cm','1yard':'91×56 cm','multi':'Sur devis'};
-    var fmtP8={'halfyard':12000,'1yard':20000,'multi':0};
+    var fmtP8={'halfyard':+(CFG.price_halfyard||12000),'1yard':+(CFG.price_1yard||20000),'multi':0};
     var formats8=CFG.formats||['halfyard','1yard'];
     var fb8=formats8.map(function(f){
       var sel=_s.format===f;
