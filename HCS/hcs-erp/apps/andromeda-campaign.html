@@ -6,8 +6,15 @@
 <title>Andromeda Campaign Builder — HCS</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>🚀</text></svg>">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' *.highcoffeeshirt.workers.dev *.highcoffeeshirts.com highcoffeeshirts.com *.osb.pf *.googleapis.com *.gstatic.com *.dropboxapi.com *.dropbox.com *.n8n.cloud data: blob: 'unsafe-inline';">
+<!-- Masquage immédiat de l'UI Andromeda quand chargé en mode ?vdec=1 (iframe LP) -->
+<script>if(new URLSearchParams(location.search).get('vdec')==='1')document.documentElement.classList.add('vdec-embed-mode');</script>
 
 <style>
+html.vdec-embed-mode .app-body,
+html.vdec-embed-mode .app-header,
+html.vdec-embed-mode header,
+html.vdec-embed-mode nav { display: none !important; }
+html.vdec-embed-mode body { background: #0f0f1a !important; overflow: hidden; }
 :root {
   --bg-primary: #0f0f1a;
   --bg-secondary: #1a1a2e;
@@ -3697,7 +3704,8 @@ async function ckPayment() {
           note: [ckContact.note||'', 'Taille:'+flow.size, p.couleur?'Couleur:'+p.couleur:'', 'Logo:'+flow.logoName, 'Face:'+(flow.face||'front'), 'Placement:x='+Math.round(flow.logoPos.xPct)+'%,y='+Math.round(flow.logoPos.yPct)+'%,w='+Math.round(flow.logoPos.wPct)+'%', flow.useText&&flow.customText?'Texte:'+flow.customText+' ['+flow.textPos+']':'', flow.useText&&flow.textFont?'Police:'+flow.textFont:'', flow.useText&&flow.textColor?'CouleurTexte:'+flow.textColor:'', flow.useText&&flow.textSize?'TailleTexte:'+flow.textSize+'px':''].filter(Boolean).join(' | ')
         })
       }).catch(function(_e){console.error('[HCS] Ordre non sauvegardé:',_e);var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_ord-warn')){var _w=document.createElement('p');_w.id='_ord-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
-      /* hcs_orders — données incluses dans le payload Worker /order/save (clé API côté serveur uniquement) */
+      /* hcs_orders — save MySQL direct pour fiche de production */
+      fetch('https://highcoffeeshirts.com/erp/api/hcs_orders',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json','x-api-key':'hcs-erp-2026'},body:JSON.stringify({order_id:orderId,vertical:'tshirt',status:'payé',total_xpf:total,campaign_name:CAMP_NAME,lp_slug:LP_SLUG,product_icon:'👕',product_name:p.n,contact:{name:ckContact.name,email:ckContact.email,phone:ckContact.phone||''},delivery:ckDelivery,design_data:{size:flow.size,qty:flow.qty,product_color:p.couleur||'',face:flow.face||'front',logo_name:flow.logoName||'',logo_pos:flow.logoPos||null,use_text:flow.useText||false,custom_text:flow.useText?flow.customText:'',text_font:flow.useText?flow.textFont:'',text_color:flow.useText?flow.textColor:'',text_pos:flow.useText?flow.textPos:'',text_size:flow.useText?flow.textSize||0:0},snapshots:{face:_mockupSnapshot||''},mode:WORKER_MODE,created_at:new Date().toISOString()})}).catch(function(){});
     }
     KR.onSubmit(d=>{if(['PAID','RUNNING','AUTHORISED'].includes(d?.clientAnswer?.orderStatus)){showSuccess();}return false;});
     const krForm=document.querySelector('.kr-embedded');
@@ -4498,11 +4506,12 @@ const ISLAND_LABELS = {tahiti:'Tahiti',moorea:'Moorea',huahine:'Huahine','bora-b
 var ckStep=1, ckCatIdx=null, ckContact={}, ckDelivery={type:'pickup',shippingFee:0}, ckPhotoUrl='', ckDescription='';
 var ORDER_ID='VDC-'+Date.now();
 var _vdOrderSaved=false;
+var _vdecTotalPrice=0;
 
 function getTotal(){
-  var base=2500;
-  var f=(TARIFS.forfaits||[]).find(function(f){return ckCatIdx!==null&&f.cat===CATS[ckCatIdx]?.id;});
-  if(f&&f.prix) base=f.prix;
+  var fArr=TARIFS.forfaits||[];
+  var catF=ckCatIdx!==null?fArr[ckCatIdx]:undefined;
+  var base=(catF&&catF.price_xpf)||(fArr[0]&&fArr[0].price_xpf)||_vdecTotalPrice||2500;
   return base+(ckDelivery.shippingFee||0);
 }
 
@@ -4608,6 +4617,7 @@ function _vdecMsgHandler(e){
   _vdecViewsVal=e.data.views_validated||{};
   _vdecViewSnaps=e.data.view_snapshots||{};
   _vdecCatIdx=e.data.catIdx!=null?e.data.catIdx:null;
+  _vdecTotalPrice=e.data.total_xpf||0;
   renderS2();
 }
 function next2(){
@@ -4731,6 +4741,8 @@ function _vdSaveOrder(){
   var scat=sidx!=null&&CATS[sidx]?CATS[sidx]:cat;
   /* Worker KV — inclut vdec_details (clé API ERP côté serveur uniquement) */
   fetch('https://payzen-hcs.highcoffeeshirt.workers.dev/order/save',{method:'POST',headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SEC,'X-Lp-Token':LP_TOKEN},body:JSON.stringify({orderId:ORDER_ID,amount:getTotal(),currency:'XPF',campaignName:'Déco Véhicule',lpSlug:'sticker-auto-0',product:(scat.icon||'🚗')+' '+(scat.name||'')+(scat.model?' — '+scat.model:''),client:ckContact,delivery:ckDelivery,note:ckDescription+(ckPhotoUrl?' | [Photo fournie par le client]':''),mode:WORKER_MODE,vdec_details:{cat_name:scat.name||'',cat_model:scat.model||'',cat_icon:scat.icon||'🚗',views_validated:_vdecViewsVal,logos:_vdecLogos,texts:_vdecTexts,cat_views:scat.views||{},view_snapshots:_vdecViewSnaps,description:ckDescription||'',photo_url:ckPhotoUrl||''}})}).catch(function(_e){var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_vd-warn')){var _w=document.createElement('p');_w.id='_vd-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+ORDER_ID+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
+  /* MySQL vdec_commandes — fiche de production Andromeda */
+  fetch('https://highcoffeeshirts.com/erp/api/vdec_commandes',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':'hcs-erp-2026'},body:JSON.stringify({order_id:ORDER_ID,status:'payé',total_xpf:getTotal(),cat_name:scat.name||'',cat_model:scat.model||'',cat_icon:scat.icon||'🚗',views_validated:_vdecViewsVal,logos:_vdecLogos,texts:_vdecTexts,cat_views:scat.views||{},view_snapshots:_vdecViewSnaps,contact:ckContact,delivery:ckDelivery,created_at:new Date().toISOString()})}).catch(function(){});
 }
 function showOk(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';var b=document.getElementById('pz-back');if(b)b.style.display='none';_vdSaveOrder();_vdInjectDesignRecap();}
 function simPay(){document.getElementById('pz-area').style.display='none';document.getElementById('pz-ok').style.display='block';document.getElementById('pz-ok-msg').textContent='Merci '+ckContact.name+' — commande simulée (mode test, non facturé).';var b=document.getElementById('pz-back');if(b)b.style.display='none';_vdSaveOrder();_vdInjectDesignRecap();}
@@ -12581,18 +12593,11 @@ function vdecSyncToServer(cfg) {
 
 async function vdecSyncFromServer() {
   try {
-    const res  = await fetch(VDEC_API + '/vdec_config?sort=id&order=DESC&limit=1', { headers: { 'x-api-key': VDEC_API_KEY } });
+    const res  = await fetch(VDEC_API + '/vdec_config', { headers: { 'x-api-key': VDEC_API_KEY } });
     const json = await res.json();
-    if (json.ok && json.data && json.data.length > 0) {
-      /* Reconstruire l'objet cfg depuis les colonnes de la row (valeurs JSON-stringifiées) */
-      const row = json.data[0];
-      const cfg = {};
-      ['cats','logos','fonts','tarifs','interface'].forEach(k => {
-        if (row[k] !== undefined) {
-          try { cfg[k] = typeof row[k] === 'string' ? JSON.parse(row[k]) : row[k]; } catch(_) { cfg[k] = row[k]; }
-        }
-      });
-      if (cfg.cats && cfg.cats.length) localStorage.setItem(VDEC_KEY, JSON.stringify(cfg));
+    /* VdecConfigController retourne { ok, data: <cfg object> } — data est la config directement */
+    if (json.ok && json.data && json.data.cats && json.data.cats.length) {
+      localStorage.setItem(VDEC_KEY, JSON.stringify(json.data));
     }
   } catch(e) { console.warn('[vdec] load server err:', e); }
 }
@@ -12625,7 +12630,10 @@ let _vdec = {
 
 async function vdecOpenFlow(campId, prodIdx, preCatIdx = null) {
   const saved = (() => { try { return JSON.parse(localStorage.getItem('hcs_vdec_contact')||'null'); } catch(_) { return null; } })();
-  _vdec = { step: preCatIdx !== null ? 2 : 1, catIdx: preCatIdx !== null ? preCatIdx : null, viewKey:'left', campId, prodIdx,
+  const _preCfg = preCatIdx !== null ? vdecLoadCfg().cats[preCatIdx] : null;
+  const _preEnabled = _preCfg?.enabledViews?.length ? _preCfg.enabledViews : ['left','front','back','right'];
+  const _preViewKey = _preCfg ? (_preEnabled.find(v => _preCfg?.views?.[v]) || _preEnabled[0]) : 'left';
+  _vdec = { step: preCatIdx !== null ? 2 : 1, catIdx: preCatIdx !== null ? preCatIdx : null, viewKey: _preViewKey, campId, prodIdx,
     logos:[], texts:[],
     viewsValidated:{ left:false, front:false, back:false, right:false },
     viewSnapshots:{},
@@ -12636,9 +12644,11 @@ async function vdecOpenFlow(campId, prodIdx, preCatIdx = null) {
     orderId:'VDC-' + Date.now()
   };
   document.getElementById('vdec-modal').classList.add('open');
-  await vdecSyncFromServer().catch(() => {});
   vdecLoadFonts();
-  vdecRender();
+  vdecRender(); // render immédiatement depuis localStorage
+  const _cfgBefore = localStorage.getItem(VDEC_KEY);
+  await vdecSyncFromServer().catch(() => {});
+  if (localStorage.getItem(VDEC_KEY) !== _cfgBefore) { vdecLoadFonts(); vdecRender(); }
 }
 
 function vdecClose() {
@@ -12710,10 +12720,10 @@ function vdecRenderS1() {
 
 function vdecSelectCat(idx) {
   _vdec.catIdx = idx;
-  // Set viewKey to first enabled view of selected category
   const _cat = vdecLoadCfg().cats[idx];
   const _enabled = _cat?.enabledViews?.length ? _cat.enabledViews : ['left','front','back','right'];
-  _vdec.viewKey = _enabled[0];
+  // Prendre la première vue qui a une image, sinon la première vue activée
+  _vdec.viewKey = _enabled.find(v => _cat?.views?.[v]) || _enabled[0];
   document.querySelectorAll('.vdec-cat-card').forEach((c, i) => c.classList.toggle('selected', i === idx));
 }
 
@@ -13311,7 +13321,9 @@ function vdecValidateView() {
   /* Re-render tabs proprement */
   vdecRenderViewTabs();
   /* Capturer snapshot de la vue courante puis mettre à jour les vignettes */
-  vdecCaptureSnapshot(vk).then(() => vdecUpdateValidatedThumbs());
+  const nextBtn = document.getElementById('vdec-next-btn');
+  if (nextBtn) nextBtn.disabled = true;
+  vdecCaptureSnapshot(vk).then(() => { vdecUpdateValidatedThumbs(); if (nextBtn) nextBtn.disabled = false; });
 }
 
 /* Affiche les vignettes des vues validées sous le bouton "Valider" */
@@ -13750,13 +13762,13 @@ async function vdecInitPZ(total) {
 }
 
 // ── Navigation ─────────────────────────────────────────
-function vdecNext() {
+async function vdecNext() {
   if (_vdec.step === 1) {
     if (_vdec.catIdx === null) { alert('Veuillez choisir un type de véhicule.'); return; }
     const _cfgNav = vdecLoadCfg();
     const _catNav = _cfgNav.cats[_vdec.catIdx];
     const _enabledNav = _catNav?.enabledViews?.length ? _catNav.enabledViews : ['left','front','back','right'];
-    _vdec.viewKey = _enabledNav[0] || 'left';
+    _vdec.viewKey = _enabledNav.find(v => _catNav?.views?.[v]) || _enabledNav[0] || 'left';
     _vdec.step = 2;
   } else if (_vdec.step === 2) {
     /* Vérifier qu'au moins une vue a des éléments, et que toutes les vues utilisées sont validées */
@@ -13773,6 +13785,10 @@ function vdecNext() {
     /* Mode intégré LP (iframe avec ?vdec=1) → envoyer résultats au parent LP puis fermer */
     const _isLPFrame = window.parent !== window && new URLSearchParams(location.search).get('vdec') === '1';
     if (_isLPFrame) {
+      const pending = Object.entries(_vdec.viewsValidated)
+        .filter(([k, v]) => v && !_vdec.viewSnapshots[k])
+        .map(([k]) => vdecCaptureSnapshot(k));
+      await Promise.all(pending);
       const firstSnap = Object.values(_vdec.viewSnapshots || {}).find(s => s) || null;
       const validatedLabels = VDEC_VIEWS_DEF.filter(v => _vdec.viewsValidated[v.key]).map(v => v.label).join(', ');
       window.parent.postMessage({
@@ -13784,7 +13800,8 @@ function vdecNext() {
         texts: _vdec.texts,
         views_validated: _vdec.viewsValidated,
         view_snapshots: _vdec.viewSnapshots,
-        catIdx: _vdec.catIdx
+        catIdx: _vdec.catIdx,
+        total_xpf: _vdec.totalPrice || 0
       }, '*');
       return;
     }
@@ -13907,10 +13924,7 @@ async function vdecArchiveOrder(total) {
     document.body.style.background = '#0f0f1a';
     const campId = parseInt(_p.get('camp') || '0');
     const _ci = _p.get('catIdx'); const _preCatIdx = _ci !== null && _ci !== '' ? parseInt(_ci) : null;
-    // Sync config from MySQL before opening flow so images/enabledViews are available
-    vdecSyncFromServer().catch(() => {}).finally(function() {
-      setTimeout(function() { vdecOpenFlow(campId, 0, !isNaN(_preCatIdx) ? _preCatIdx : null); }, 100);
-    });
+    vdecOpenFlow(campId, 0, !isNaN(_preCatIdx) ? _preCatIdx : null);
   });
 })();
 
@@ -14427,9 +14441,10 @@ async function showFicheHCS(orderId) {
           raw = { order_id:vd.order_id, vertical:'vdec', status:vd.status, total_xpf:vd.total_xpf,
             contact:vd.contact, delivery:vd.delivery, campaign_name:'Déco Véhicule',
             product_icon:vd.cat_icon||'🚗', product_name:(vd.cat_name||'')+(vd.cat_model?' — '+vd.cat_model:''),
-            design_data:{ cat_name:vd.cat_name||'', cat_model:vd.cat_model||'', cat_icon:vd.cat_icon||'🚗',
-              views_validated:vd.views_validated||{}, logos:vd.logos||[], texts:vd.texts||[], cat_views:vd.cat_views||{} },
-            snapshots:vd.view_snapshots||{}, created_at:vd.created_at };
+            cat_name:vd.cat_name||'', cat_model:vd.cat_model||'', cat_icon:vd.cat_icon||'🚗',
+            views_validated:vd.views_validated||{}, logos:vd.logos||[], texts:vd.texts||[],
+            cat_views:vd.cat_views||{}, view_snapshots:vd.view_snapshots||{},
+            created_at:vd.created_at };
         }
       }
     } catch(_) {}
@@ -14438,10 +14453,22 @@ async function showFicheHCS(orderId) {
   /* 3. Fallback KV */
   if (!raw) {
     const kv = [...(_planningOrders||[]),...(ordersData||[])].find(o=>(o.orderId||o.order_id)===orderId);
-    if (kv) raw = { order_id:orderId, vertical:'generic', status:kv.status||'pending',
-      total_xpf:kv.amount||0, campaign_name:kv.campaignName||'', product_icon:'🛍️',
-      product_name:kv.product||'', contact:kv.client||{}, delivery:kv.delivery||{},
-      design_data:{}, snapshots:{}, created_at:kv.createdAt||'' };
+    if (kv) {
+      const vd = kv.vdec_details || {};
+      const isVdec = !!(kv.vdec_details) || (kv.campaignName||'').toLowerCase().includes('véhicule') || (kv.campaignName||'').toLowerCase().includes('vdec');
+      raw = { order_id:orderId,
+        vertical: isVdec ? 'vdec' : 'generic',
+        status: kv.status||'pending',
+        total_xpf: kv.amount||0,
+        campaign_name: kv.campaignName||'',
+        product_icon: vd.cat_icon || '🛍️',
+        product_name: isVdec ? `${vd.cat_icon||'🚗'} ${vd.cat_name||''}${vd.cat_model?' — '+vd.cat_model:''}` : (kv.product||''),
+        contact: kv.client||{}, delivery: kv.delivery||{},
+        cat_name: vd.cat_name||'', cat_model: vd.cat_model||'', cat_icon: vd.cat_icon||'🚗',
+        views_validated: vd.views_validated||{}, logos: vd.logos||[], texts: vd.texts||[],
+        cat_views: vd.cat_views||{}, view_snapshots: vd.view_snapshots||{},
+        created_at: kv.createdAt||'' };
+    }
   }
 
   if (!raw) {
