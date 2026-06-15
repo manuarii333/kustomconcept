@@ -4897,6 +4897,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .fl-finput:focus{border-color:${primary};background:rgba(255,255,255,.07)}
 .fl-coords{display:flex;flex-direction:column;gap:8px}
 .fl-field label{font-size:.65rem;color:rgba(255,255,255,.45);display:block;margin-bottom:3px}
+.fl-prod-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(max-width:360px){.fl-prod-cards{grid-template-columns:repeat(2,1fr)}}
+.fl-pc{border:2px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.03);position:relative}
+.fl-pc:hover{border-color:${primary}}
+.fl-pc.active{border-color:${primary};box-shadow:0 0 0 3px ${primary}33}
+.fl-pc-img{aspect-ratio:2/3;position:relative;overflow:hidden;background:rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:2.5rem}
+.fl-pc-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
+.fl-pc-check{position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:50%;background:${primary};color:#fff;font-size:.6rem;font-weight:900;display:none;align-items:center;justify-content:center;z-index:3}
+.fl-pc.active .fl-pc-check{display:flex}
+.fl-pc-info{padding:7px 8px}
+.fl-pc-name{font-size:.72rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-pc-price{font-size:.68rem;color:${primary};font-weight:700;margin-top:2px}
 .fl-prod-line{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;margin-bottom:14px}
 .fl-error{background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.25);border-radius:8px;padding:8px 12px;color:#ff6b6b;font-size:.73rem;margin-top:8px;display:none}
 .fl-error.visible{display:block}
