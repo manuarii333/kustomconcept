@@ -3174,7 +3174,7 @@ function _captureMockupSync(){try{var _cv=document.createElement('canvas');_cv.w
 // ── Flow ─────────────────────────────────────────────────
 function openFlow(i) {
   try {
-    flow = { step:1, prodIdx:i, face:'front', logoUrl:null, logoOrigUrl:null, logoName:'', logoDpi:0, logoPwDone:false, logoPwLoading:false, size: REQUIRE_SIZE ? '' : 'M', qty:1, logoPos:{xPct:50,yPct:47,wPct:44} };
+    flow = { step:1, prodIdx:i, face:'front', logoUrl:null, logoOrigUrl:null, logoName:'', logoDpi:0, logoPwDone:false, logoPwLoading:false, size: REQUIRE_SIZE ? '' : 'M', qty:1, logoPos:{xPct:50,yPct:47,wPct:44}, useText:false, customText:'', textColor:(TEXT_CFG&&TEXT_CFG.defaultColor)||'#ffffff', textFont:(TEXT_CFG&&TEXT_CFG.defaultFont)||'Arial, sans-serif', textPos:(TEXT_CFG&&TEXT_CFG.defaultPos)||'front-center', textSize:(TEXT_CFG&&TEXT_CFG.defaultSize)||32 };
     document.getElementById('fl-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
     flRender();
