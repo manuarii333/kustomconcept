@@ -2808,24 +2808,22 @@ async function _deleteLPBySlug(campId, parcoursSlug, url) {
 function previewLP(id) {
   const c = CAMPS[id];
   if (c.id === 0) { vdecOpenFlow(id, 0); return; }
-  /* Priorité : LP publiée sur Workers → ouvrir dans overlay iframe */
-  const _pubUrl = (JSON.parse(localStorage.getItem('hcs_published_urls') || '{}'))[id] || null;
-  if (_pubUrl) {
-    const ol = document.createElement('div');
-    ol.id = '_lp-preview-ol';
-    ol.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#0f0f1a;display:flex;flex-direction:column';
-    ol.innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:#16162a;border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0">
-        <span style="font-size:.8rem;font-weight:700;color:#43e97b">🌐 LP publiée — ${c.name}</span>
-        <a href="${_pubUrl}" target="_blank" rel="noopener" style="padding:4px 10px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);border-radius:5px;font-size:.7rem;text-decoration:none">Ouvrir dans un onglet ↗</a>
-        <button onclick="document.getElementById('_lp-preview-ol').remove()" style="margin-left:auto;padding:5px 14px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);border-radius:6px;font-size:.75rem;cursor:pointer">✕ Fermer</button>
-      </div>
-      <iframe src="${_pubUrl}" style="flex:1;border:none;width:100%" allow="payment"></iframe>`;
-    document.body.appendChild(ol);
-    return;
-  }
-  /* Fallback : pas encore publiée → génération preview depuis config locale */
-  previewLPInline(id);
+  /* Construire le slug LP (même formule que publishLP) */
+  const _baseName = c.name.replace(/[^a-zA-Z0-9]/g,'-').toLowerCase().replace(/-+/g,'-').replace(/^-|-$/g,'');
+  const _slug = `${_baseName}-${id}`;
+  /* Préférer URL stockée en localStorage, sinon construire depuis slug */
+  const _pubUrl = (JSON.parse(localStorage.getItem('hcs_published_urls') || '{}'))[id] || (`${WORKER_BASE}/lp/${_slug}`);
+  const ol = document.createElement('div');
+  ol.id = '_lp-preview-ol';
+  ol.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#0f0f1a;display:flex;flex-direction:column';
+  ol.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:#16162a;border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0">
+      <span style="font-size:.8rem;font-weight:700;color:#43e97b">🌐 LP — ${c.name}</span>
+      <a href="${_pubUrl}" target="_blank" rel="noopener" style="padding:4px 10px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);border-radius:5px;font-size:.7rem;text-decoration:none">Ouvrir dans un onglet ↗</a>
+      <button onclick="document.getElementById('_lp-preview-ol').remove()" style="margin-left:auto;padding:5px 14px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);border-radius:6px;font-size:.75rem;cursor:pointer">✕ Fermer</button>
+    </div>
+    <iframe src="${_pubUrl}" style="flex:1;border:none;width:100%" allow="payment"></iframe>`;
+  document.body.appendChild(ol);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2938,7 +2936,7 @@ function exportLPTshirt(id, previewOnly) {
   }).join('');
   const prodsJson  = JSON.stringify(c.products.map(p => ({ e:p.e, n:p.n, p:p.p, price:parseInt(p.p.replace(/[^\d]/g,''))||0, couleur:p.couleur||'', couleurHex:p.couleurHex||'', dtfLogoRef:p.dtfLogoRef||'' })));
   const sizesJson  = JSON.stringify(sizes);
-  const _baseLpSlug = c.name.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase().replace(/^-|-$/g, '');
+  const _baseLpSlug = c.name.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase().replace(/^-|-$/g, '') + '-' + id;
   const lpSlug      = window._parcours_slug_override || _baseLpSlug;
   _restoreTshFaceImgs(id);
   _restoreTshDtfLogos(id);
@@ -3203,8 +3201,13 @@ function _buildProdsHTML() {
         var grid = document.getElementById('prods-grid');
         if (grid) grid.innerHTML = _buildProdsHTML();
       }
+      /* Rafraîchir le flow si déjà ouvert (timing : fetch plus lent que l'ouverture) */
+      if (typeof flRender === 'function' && document.getElementById('fl-overlay') && document.getElementById('fl-overlay').classList.contains('open')) {
+        try { flRender(); } catch(_) {}
+      }
     })
-    .catch(function(){});
+    .catch(function(){})
+    .finally(function() { window._lpCfgLoaded = true; if (window._lpAutoOpen) { window._lpAutoOpen(); window._lpAutoOpen = null; } });
 })();
 
 // Charge les images depuis les éléments <img> cachés dans le HTML (pas de gros JSON dans le script)
@@ -3218,6 +3221,29 @@ let ckContact = {}, ckDelivery = { type:'pickup' }, ckStep = 1;
 let _dh = {};
 let _mockupSnapshot = null;
 function _captureMockupSync(){try{var _cv=document.createElement('canvas');_cv.width=400;_cv.height=600;var _ctx=_cv.getContext('2d');var _si=document.getElementById('fl-shirt-img');if(_si&&_si.complete&&_si.naturalWidth)_ctx.drawImage(_si,0,0,400,600);var _ld=document.getElementById('fl-logo-drag');var _li=_ld&&_ld.querySelector('img');if(_li&&_li.complete&&_li.naturalWidth){var _p=flow.logoPos,_lw=(_p.wPct/100)*400,_lh=(_li.naturalHeight/_li.naturalWidth)*_lw;_ctx.drawImage(_li,(_p.xPct/100)*400-_lw/2,(_p.yPct/100)*600-_lh/2,_lw,_lh);}return _cv.toDataURL('image/jpeg',0.65);}catch(_e){return null;}}
+
+/* ── Auto-ouverture parcours au chargement (comportement par défaut) ──
+   Attend la fin du fetch MySQL (config live) OU 800ms max, puis ouvre.
+   ?noflow=1 pour voir la hero sans ouvrir le flow (test design)
+   ?flow=N   pour forcer un produit spécifique (ex: ?flow=2 → produit 3)  ── */
+(function() {
+  var _params = new URLSearchParams(location.search);
+  if (_params.get('noflow') === '1') return;
+  var _fi = Math.max(0, Math.min(parseInt(_params.get('flow')) || 0, PRODUCTS.length - 1));
+  function _doOpen() {
+    if (document.getElementById('fl-overlay') && document.getElementById('fl-overlay').classList.contains('open')) return;
+    if (typeof openFlow === 'function') openFlow(_fi);
+  }
+  if (window._lpCfgLoaded) {
+    /* fetch déjà terminé (serveur rapide) */
+    if (document.readyState === 'loading') { window.addEventListener('DOMContentLoaded', function(){ setTimeout(_doOpen,80); }, {once:true}); }
+    else { setTimeout(_doOpen, 80); }
+  } else {
+    /* attendre le fetch ou 800ms max */
+    window._lpAutoOpen = _doOpen;
+    setTimeout(function(){ if(window._lpAutoOpen){ window._lpAutoOpen=null; _doOpen(); } }, 800);
+  }
+})();
 
 // ── Flow ─────────────────────────────────────────────────
 function openFlow(i) {
@@ -3244,10 +3270,20 @@ function flRender() {
   if (d2) { d2.style.display = SHOW_STEP2 ? '' : 'none'; const l2 = d2.previousElementSibling; if (l2) l2.style.display = SHOW_STEP2 ? '' : 'none'; }
   const d3 = document.getElementById('fd3');
   if (d3) { d3.style.display = SHOW_STEP2 ? '' : 'none'; const l3 = d3.previousElementSibling; if (l3) l3.style.display = SHOW_STEP2 ? '' : 'none'; }
+  /* Renuméroter fd4 : "2" quand SHOW_STEP2=false + masquer ligne entre fd3 et fd4 */
+  const d4num = document.getElementById('fd4');
+  if (d4num) {
+    d4num.textContent = SHOW_STEP2 ? '4' : '2';
+    const l4 = d4num.previousElementSibling;
+    if (l4) l4.style.display = SHOW_STEP2 ? '' : 'none';
+  }
   [1,2,3,4].forEach(n => {
     const d = document.getElementById('fd'+n);
-    if (!d) return;
-    d.className = 'fl-dot' + (n < flow.step ? ' done' : n === flow.step ? ' active' : '');
+    if (!d || d.style.display === 'none') return;
+    /* Normaliser flow.step pour la numérotation visuelle quand SHOW_STEP2=false */
+    var _vs = SHOW_STEP2 ? flow.step : (flow.step >= 4 ? 2 : 1);
+    var _vn = SHOW_STEP2 ? n : (n === 4 ? 2 : 1);
+    d.className = 'fl-dot' + (_vn < _vs ? ' done' : _vn === _vs ? ' active' : '');
   });
   const prev = document.getElementById('fl-foot');
   const body = document.getElementById('fl-body');
@@ -3257,7 +3293,7 @@ function flRender() {
   else { body.innerHTML = flStep4(); prev.innerHTML = \`<button class="btn-fl-prev" onclick="flBack()">← Retour</button><button class="btn-fl-next" onclick="flConfirm()" style="background:linear-gradient(135deg,#43e97b,#38f9d7);color:#0f0f1a">🛒 Commander & Payer</button>\`; }
 }
 function flBack() {
-  if ((flow.step === 3 || flow.step === 4) && !SHOW_STEP2) { flow.step = 1; }
+  if (!SHOW_STEP2 && flow.step > 1) { flow.step = 1; }
   else if (flow.step > 1) { flow.step--; }
   flRender();
 }
@@ -3398,6 +3434,9 @@ function pickDtfLogo(n) {
   flRender();
 }
 function setTextProp(key, val) {
+  /* Sauvegarder le texte en cours de saisie avant le re-render (évite perte de focus) */
+  const _ti = document.getElementById('fl-text-input');
+  if (_ti) flow.customText = _ti.value;
   flow[key] = val;
   if (key === 'useText') {
     const el = document.getElementById('fl-text-fields');
@@ -3554,7 +3593,7 @@ function flStep4() {
       </div>
       <div style="margin-top:14px;padding:10px;background:rgba(79,172,254,.07);border:1px solid rgba(79,172,254,.2);border-radius:8px;font-size:.72rem">
         <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:#9090b0">Produit</span><span style="font-weight:700">\${p.n}</span></div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:#9090b0">Logo</span><span style="font-weight:700">\${flow.logoName||'—'}</span></div>
+        \${flow.logoName ? '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:#9090b0">Logo</span><span style="font-weight:700">'+flow.logoName+'</span></div>' : ''}
         \${flow.useText&&flow.customText?'<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:#9090b0">Texte</span><span style="font-weight:700">'+flow.customText+'</span></div>':''}
         \${sizeRecap}
         <div style="display:flex;justify-content:space-between;padding-top:6px;border-top:1px solid rgba(79,172,254,.2)"><span style="font-weight:800">Total</span><span style="font-weight:900;color:\${ACCENT};font-size:.9rem">\${total.toLocaleString('fr-FR')} XPF</span></div>
@@ -3650,7 +3689,7 @@ function ckDelivery1() {
       <div class="dlv-opt \${d.type==='delivery'?'sel':''}" id="opt-d" onclick="swDlv('delivery')"><div style="font-size:24px;margin-bottom:6px">🚚</div><div style="font-size:.82rem;font-weight:700">Livraison</div><div style="font-size:.65rem;color:#9090b0">3–5 jours ouvrés</div></div>
     </div>
     <div id="f-pickup" style="\${d.type==='pickup'?'':'display:none'}">
-      <div class="ck-field"><label>Date de retrait souhaitée (délai 10 j min — transferts DTF)</label><input class="ck-input" id="ck-date" type="date" value="\${d.pickupDate||''}" min="\${new Date(Date.now()+864e6*10).toISOString().slice(0,10)}"></div>
+      <div class="ck-field"><label>Date de retrait souhaitée (délai 10 j min — transferts DTF)</label><input class="ck-input" id="ck-date" type="date" value="\${d.pickupDate||''}" min="\${new Date(Date.now()+864e5*10).toISOString().slice(0,10)}"></div>
       <div class="ck-field"><label>Créneau</label><select class="ck-input" id="ck-slot"><option value="08-12" \${d.slot==='08-12'?'selected':''}>08h00–12h00</option><option value="13-17" \${d.slot==='13-17'?'selected':''}>13h00–17h00</option></select></div>
     </div>
     <div id="f-delivery" style="\${d.type==='delivery'?'':'display:none'}">
@@ -3725,12 +3764,14 @@ async function ckPayment() {
     document.getElementById('pz-kr-form').style.display='block';
     ${_krSdkBlock('publicKey', 'formToken')}
     var _pb=document.getElementById('pz-pay-btn');if(_pb){_pb.disabled=false;_pb.style.opacity='1';_pb.style.cursor='pointer';_pb.textContent='💳 Payer';_pb.onclick=function(){var _b=document.querySelector('.kr-payment-button');if(_b)_b.click();};}
+    var _successDone=false;
     function showSuccess(){
+      if(_successDone)return; _successDone=true;
       document.getElementById('pz-kr-form').style.display='none';
       const ok=document.getElementById('pz-ok'); if(ok){ok.removeAttribute('style');ok.style.cssText='display:block!important';}
       const bk=document.getElementById('pz-back'); if(bk) bk.style.display='none';
       var _pbh=document.getElementById('pz-pay-btn');if(_pbh)_pbh.style.display='none';
-      _enrichConfirmation(orderId, total, ckContact, ckDelivery, p?.n || '');
+      try { _enrichConfirmation(orderId, total, ckContact, ckDelivery, p?.n || ''); } catch(_) {}
       fetch(WORKER_URL.replace('/payzen-token','/order/save'),{
         method:'POST',keepalive:true,headers:{'Content-Type':'application/json','X-Worker-Secret':WORKER_SECRET,'X-Lp-Token':LP_TOKEN},
         body:JSON.stringify({
@@ -4185,7 +4226,7 @@ function renderStep3() {
     </div>
     <div id="fields-pickup" style="\${d.type==='pickup'?'':'display:none'}">
       <div class="ck-field"><label>Date de retrait souhaitée (délai 10 j min — transferts DTF)</label>
-        <input class="ck-input" id="ck-date" type="date" value="\${d.pickupDate||''}" min="\${new Date(Date.now()+864e6*10).toISOString().slice(0,10)}"></div>
+        <input class="ck-input" id="ck-date" type="date" value="\${d.pickupDate||''}" min="\${new Date(Date.now()+864e5*10).toISOString().slice(0,10)}"></div>
       <div class="ck-field"><label>Créneau</label>
         <select class="ck-input" id="ck-slot">
           <option value="08-12" \${d.slot==='08-12'?'selected':''}>08h00 – 12h00</option>
@@ -4677,7 +4718,7 @@ function next2(){
 
 function renderS3(){
   var d=ckDelivery;
-  var minDate=new Date(Date.now()+864e6*10).toISOString().slice(0,10);
+  var minDate=new Date(Date.now()+864e5*10).toISOString().slice(0,10);
   var islandOpts=Object.keys(SHIP_RATES).map(function(k){return '<option value="'+k+'"'+(d.island===k?' selected':'')+'>'+ISLAND_LABELS[k]+' — '+SHIP_RATES[k].toLocaleString('fr-FR')+' XPF</option>';}).join('');
   document.getElementById('ck-body').innerHTML=
     '<div class="ck-section">Vos coordonnées</div>'+
@@ -6014,7 +6055,7 @@ function renderStep3() {
     </div>
     <div id="fields-pickup" style="\${d.type==='pickup'?'':'display:none'}">
       <div class="ck-field"><label>Date de retrait souhaitée (délai 10 j min — transferts DTF)</label>
-        <input class="ck-input" id="ck-date" type="date" value="\${d.pickupDate||''}" min="\${new Date(Date.now()+864e6*10).toISOString().slice(0,10)}"></div>
+        <input class="ck-input" id="ck-date" type="date" value="\${d.pickupDate||''}" min="\${new Date(Date.now()+864e5*10).toISOString().slice(0,10)}"></div>
       <div class="ck-field"><label>Créneau</label>
         <select class="ck-input" id="ck-slot">
           <option value="08-12" \${d.slot==='08-12'?'selected':''}>08h00 – 12h00</option>
@@ -6583,7 +6624,7 @@ function renderStep3() {
     </div>
     <div id="dlv-pickup-fields" style="${saved.type==='pickup'?'':'display:none'}">
       <div class="ck-field"><label>Date de retrait souhaitée (délai 10 j min — transferts DTF)</label>
-        <input class="ck-finput" id="ck-pickup-date" type="date" value="${saved.pickupDate||''}" min="${new Date(Date.now()+864e6*10).toISOString().slice(0,10)}"></div>
+        <input class="ck-finput" id="ck-pickup-date" type="date" value="${saved.pickupDate||''}" min="${new Date(Date.now()+864e5*10).toISOString().slice(0,10)}"></div>
       <div class="ck-field"><label>Créneau</label>
         <select class="ck-finput" id="ck-pickup-slot">
           <option ${saved.slot==='08-12'?'selected':''} value="08-12">08h00 – 12h00</option>

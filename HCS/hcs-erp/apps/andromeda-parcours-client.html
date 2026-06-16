@@ -208,6 +208,18 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 </div>
 
 <script>
+const WORKER_BASE = 'https://payzen-hcs.highcoffeeshirt.workers.dev';
+
+/* Construit le slug LP (même formule que publishLP dans andromeda-campaign.html) */
+function _campLpUrl(campId) {
+  try {
+    const all = JSON.parse(localStorage.getItem('hcs_camps_v1') || '{}');
+    const campName = (all[campId] && all[campId].name) || CAMPS_DATA[campId]?.name || String(campId);
+    const base = campName.replace(/[^a-zA-Z0-9]/g,'-').toLowerCase().replace(/-+/g,'-').replace(/^-|-$/g,'');
+    return `${WORKER_BASE}/lp/${base}-${campId}`;
+  } catch(_) { return null; }
+}
+
 const CAMPS_DATA = {
   0: {
     name:'Déco Véhicule',
@@ -821,9 +833,9 @@ function renderCamp(id) {
   const steps = liveSteps || d.steps;
   const isLive = !!liveSteps;
 
-  // ── URLs publiées depuis Andromeda
+  // ── URLs publiées depuis Andromeda (fallback : construire depuis slug)
   const _pubUrls = JSON.parse(localStorage.getItem('hcs_published_urls') || '{}');
-  const _lpUrl   = _pubUrls[id] || null;
+  const _lpUrl   = _pubUrls[id] || _campLpUrl(id);
 
   // ── Accès rapide LP
   const _liveBadge = isLive
@@ -1049,22 +1061,20 @@ function openFlowPreview(campId) {
   const existing = document.getElementById('_flow-preview-ol');
   if (existing) existing.remove();
 
-  // Priorité 1 : LP publiée → vrai parcours client
+  /* Construire l'URL LP (depuis localStorage ou depuis slug) */
   const _pubUrls = JSON.parse(localStorage.getItem('hcs_published_urls') || '{}');
-  const lpUrl = _pubUrls[campId] || null;
+  const lpUrl = _pubUrls[campId] || (campId === 0 ? null : _campLpUrl(campId));
 
   const ol = document.createElement('div');
   ol.id = '_flow-preview-ol';
   ol.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#0f0f1a;display:flex;flex-direction:column';
 
-  /* Priorité : LP publiée → vrai parcours Workers */
-  const iframeSrc = lpUrl
-    ? lpUrl
-    : (campId === 0
-        ? '../apps/andromeda-campaign.html?vdec=1&camp=0'
-        : `../apps/andromeda-campaign.html?lpPreview=1&camp=${campId}`);
+  /* VDec (camp 0) : parcours iframe interne. Autres : vraie LP Workers (auto-ouvre le flow) */
+  const iframeSrc = campId === 0
+    ? '../apps/andromeda-campaign.html?vdec=1&camp=0'
+    : (lpUrl || `../apps/andromeda-campaign.html?lpPreview=1&camp=${campId}`);
 
-  const badge = lpUrl
+  const badge = (campId !== 0 && lpUrl)
     ? `<span style="font-size:.68rem;padding:2px 8px;background:rgba(67,233,123,.13);color:#43e97b;border-radius:20px;border:1px solid rgba(67,233,123,.28)">🌐 LP publiée</span>`
     : `<span style="font-size:.68rem;padding:2px 8px;background:rgba(255,200,60,.1);color:#ffd23f;border-radius:20px;border:1px solid rgba(255,200,60,.25)">⚡ Config locale (non publiée)</span>`;
 
