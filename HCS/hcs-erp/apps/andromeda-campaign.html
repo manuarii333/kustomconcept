@@ -2451,12 +2451,26 @@ async function publishLP(id) {
       const val = document.getElementById('pub-adm-inp')?.value.trim();
       if (!val) return;
       const btn = document.getElementById('pub-adm-ok');
+      const _errEl = document.getElementById('pub-adm-err');
       btn.textContent = '…'; btn.disabled = true;
       fetch(`${WORKER_BASE}/admin/db/orders?archived=0`, { headers: { 'X-Admin-Secret': val } })
         .then(r => {
-          if (r.ok) { adminSecret = val; sessionStorage.setItem('hcs_admin_secret', val); localStorage.setItem('hcs_admin_secret', val); _modal.remove(); publishLP(id); }
-          else { document.getElementById('pub-adm-err').style.display='block'; document.getElementById('pub-adm-err').textContent='❌ Secret incorrect.'; btn.textContent='Publier →'; btn.disabled=false; }
-        }).catch(() => { btn.textContent='Publier →'; btn.disabled=false; });
+          if (r.ok) {
+            adminSecret = val;
+            sessionStorage.setItem('hcs_admin_secret', val);
+            localStorage.setItem('hcs_admin_secret', val);
+            _modal.remove();
+            publishLP(id).catch(e => { hidePublishProgress(); showToast('❌ Erreur publication : ' + (e?.message || String(e)), true); });
+          } else {
+            _errEl.style.display='block';
+            _errEl.textContent='❌ Secret incorrect (réponse '+r.status+').';
+            btn.textContent='Publier →'; btn.disabled=false;
+          }
+        }).catch(err => {
+          _errEl.style.display='block';
+          _errEl.textContent='❌ Erreur réseau — essayez de publier depuis le site ERP en ligne.';
+          btn.textContent='Publier →'; btn.disabled=false;
+        });
     };
     document.getElementById('pub-adm-ok').onclick = _ok;
     document.getElementById('pub-adm-inp').addEventListener('keydown', e => { if (e.key==='Enter') _ok(); });
@@ -3022,6 +3036,10 @@ footer{text-align:center;padding:24px 16px;color:rgba(255,255,255,.4);font-size:
 .fl-face-tabs{display:flex;gap:6px;justify-content:center;margin-bottom:10px}
 .fl-face-tab{padding:5px 14px;border-radius:20px;border:1px solid #2a2a4a;background:#16213e;color:#9090b0;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .15s}
 .fl-face-tab.active{background:rgba(79,172,254,.15);border-color:${primary};color:${primary}}
+/* Studio Split — range slider */
+.fl-sl{-webkit-appearance:none;width:100%;height:3px;border-radius:2px;background:rgba(255,255,255,.15);outline:none;cursor:pointer;display:block;margin:0}
+.fl-sl::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:${primary};cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.fl-sl::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:${primary};cursor:pointer;border:none}
 /* Step 4 — size */
 .fl-size-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .fl-sz-btn{padding:9px 4px;border:2px solid #2a2a4a;border-radius:8px;background:#16213e;color:#9090b0;font-size:.72rem;font-weight:700;cursor:pointer;text-align:center;transition:all .15s}
@@ -3260,47 +3278,47 @@ function closeFlow() {
   document.body.style.overflow = '';
 }
 function flRender() {
-  const titles = ['', LBL1, LBL2, '🖱 Positionner le logo', LBL3];
-  document.getElementById('fl-title').textContent = titles[flow.step];
-  const d2 = document.getElementById('fd2');
-  if (d2) { d2.style.display = SHOW_STEP2 ? '' : 'none'; const l2 = d2.previousElementSibling; if (l2) l2.style.display = SHOW_STEP2 ? '' : 'none'; }
-  const d3 = document.getElementById('fd3');
-  if (d3) { d3.style.display = SHOW_STEP2 ? '' : 'none'; const l3 = d3.previousElementSibling; if (l3) l3.style.display = SHOW_STEP2 ? '' : 'none'; }
-  /* Renuméroter fd4 : "2" quand SHOW_STEP2=false + masquer ligne entre fd3 et fd4 */
-  const d4num = document.getElementById('fd4');
-  if (d4num) {
-    d4num.textContent = SHOW_STEP2 ? '4' : '2';
-    const l4 = d4num.previousElementSibling;
-    if (l4) l4.style.display = SHOW_STEP2 ? '' : 'none';
-  }
-  [1,2,3,4].forEach(n => {
-    const d = document.getElementById('fd'+n);
-    if (!d || d.style.display === 'none') return;
-    /* Normaliser flow.step pour la numérotation visuelle quand SHOW_STEP2=false */
-    var _vs = SHOW_STEP2 ? flow.step : (flow.step >= 4 ? 2 : 1);
-    var _vn = SHOW_STEP2 ? n : (n === 4 ? 2 : 1);
-    d.className = 'fl-dot' + (_vn < _vs ? ' done' : _vn === _vs ? ' active' : '');
+  document.getElementById('fl-title').textContent = flow.step===4?LBL3:(flow.step===2?LBL2:LBL1);
+  /* Dots : toujours 3 étapes (fd1, fd2=Studio, fd4=Commander). fd3 toujours masqué. */
+  var _d3=document.getElementById('fd3'); if(_d3){_d3.style.display='none';var _l3=_d3.previousElementSibling;if(_l3)_l3.style.display='none';}
+  var _d2=document.getElementById('fd2'); if(_d2){_d2.style.display=SHOW_STEP2?'':'none';var _l2=_d2.previousElementSibling;if(_l2)_l2.style.display=SHOW_STEP2?'':'none';}
+  var _d4n=document.getElementById('fd4'); if(_d4n){_d4n.textContent=SHOW_STEP2?'3':'2';var _l4=_d4n.previousElementSibling;if(_l4)_l4.style.display=SHOW_STEP2?'':'none';}
+  [[1,1],[2,2],[4,3]].forEach(function(pair){
+    var n=pair[0],vn=pair[1],d=document.getElementById('fd'+n);
+    if(!d||d.style.display==='none')return;
+    var av=flow.step===1?1:flow.step===2?2:3;
+    d.className='fl-dot'+(vn<av?' done':vn===av?' active':'');
   });
-  const prev = document.getElementById('fl-foot');
-  const body = document.getElementById('fl-body');
-  if (flow.step === 1) { body.innerHTML = flStep1(); PRODUCTS.forEach(function(_,i){var el=document.getElementById('fl-pi-'+i);var cs=document.getElementById('fi-'+i+'-f');if(el&&cs)el.src=cs.src;}); prev.innerHTML = \`<button class="btn-fl-next" onclick="flNext()">Suivant →</button>\`; }
-  else if (flow.step === 2) { body.innerHTML = flStep2(); prev.innerHTML = \`<button class="btn-fl-prev" onclick="flBack()">← Retour</button><button class="btn-fl-next" onclick="flNext()">Suivant →</button>\`; }
-  else if (flow.step === 3) { body.innerHTML = flStep3(); initDrag(); prev.innerHTML = \`<button class="btn-fl-prev" onclick="flBack()">← Retour</button><button class="btn-fl-next" onclick="flNext()" style="background:linear-gradient(135deg,#6c63ff,#4facfe)">Valider ce placement →</button>\`; }
-  else { body.innerHTML = flStep4(); prev.innerHTML = \`<button class="btn-fl-prev" onclick="flBack()">← Retour</button><button class="btn-fl-next" onclick="flConfirm()" style="background:linear-gradient(135deg,#43e97b,#38f9d7);color:#0f0f1a">🛒 Commander & Payer</button>\`; }
+  var prev=document.getElementById('fl-foot');
+  var body=document.getElementById('fl-body');
+  body.style.padding=flow.step===2?'10px 12px':'';
+  if(flow.step===1){
+    body.innerHTML=flStep1();
+    PRODUCTS.forEach(function(_,i){var el=document.getElementById('fl-pi-'+i);var cs=document.getElementById('fi-'+i+'-f');if(el&&cs)el.src=cs.src;});
+    prev.innerHTML=\`<button class="btn-fl-next" onclick="flNext()">Suivant →</button>\`;
+  } else if(flow.step===2){
+    body.innerHTML=flStep2();
+    initDrag();
+    prev.innerHTML=\`<button class="btn-fl-prev" onclick="flBack()">← Retour</button><button class="btn-fl-next" onclick="flNext()" style="background:linear-gradient(135deg,#6c63ff,#4facfe)">Valider →</button>\`;
+  } else {
+    body.innerHTML=flStep4();
+    prev.innerHTML=\`<button class="btn-fl-prev" onclick="flBack()">← Retour</button><button class="btn-fl-next" onclick="flConfirm()" style="background:linear-gradient(135deg,#43e97b,#38f9d7);color:#0f0f1a">🛒 Commander & Payer</button>\`;
+  }
 }
 function flBack() {
-  if (!SHOW_STEP2 && flow.step > 1) { flow.step = 1; }
-  else if (flow.step > 1) { flow.step--; }
+  if(flow.step===4){ flow.step=SHOW_STEP2?2:1; }
+  else if(flow.step>1){ flow.step--; }
   flRender();
 }
 function flNext() {
-  if (flow.step === 1) { flow.step = SHOW_STEP2 ? 2 : 4; flRender(); }
-  else if (flow.step === 2) {
-    if (!flow.logoUrl) { alert('Veuillez uploader votre logo.'); return; }
-    if (flow.logoPwLoading) { alert('Détourage en cours, veuillez patienter quelques secondes.'); return; }
-    if (!flow.logoPwDone && flow.logoDpi < 150 && !confirm(\`⚠️ Résolution insuffisante — \${flow.logoDpi} DPI estimés (minimum 150 DPI recommandé).\n\nEn cliquant sur OK, vous acceptez et reconnaissez que la qualité d'impression ne sera pas optimale en raison de la résolution insuffisante de votre logo. HCS ne pourra être tenu responsable du résultat obtenu.\n\nVoulez-vous continuer malgré tout ?\`)) return;
-    flow.step = 3; flRender();
-  } else if (flow.step === 3) { _mockupSnapshot = _captureMockupSync(); flow.step = 4; flRender(); }
+  if(flow.step===1){ flow.step=SHOW_STEP2?2:4; flRender(); return; }
+  if(flow.step===2){
+    if(!flow.logoUrl&&!flow.useText){ alert('Veuillez uploader votre logo ou activer le texte personnalisé.'); return; }
+    if(flow.logoPwLoading){ alert('Détourage en cours, veuillez patienter quelques secondes.'); return; }
+    if(flow.logoUrl&&!flow.logoPwDone&&flow.logoDpi>0&&flow.logoDpi<150&&!confirm(\`⚠️ Résolution insuffisante — \${flow.logoDpi} DPI estimés (minimum 150 DPI recommandé).\n\nEn cliquant OK vous acceptez que la qualité d'impression ne sera pas optimale. HCS ne pourra être tenu responsable.\n\nContinuer malgré tout ?\`))return;
+    _mockupSnapshot=_captureMockupSync();
+    flow.step=4; flRender();
+  }
 }
 
 // ── Step 1 : Produit ─────────────────────────────────────
@@ -3320,108 +3338,99 @@ function flPickProd(i) {
   document.querySelectorAll('.fl-pc').forEach((el,n) => el.classList.toggle('active', n===i));
 }
 
-// ── Step 2 : Logo / Texte ─────────────────────────────────
+// ── Step 2 : Studio Split — Logo & Position & Texte ───────
 function flStep2() {
-  const { logoUrl, logoOrigUrl, logoDpi, logoPwDone, logoPwLoading } = flow;
-  const dpiCls = logoDpi>=300?'fl-dpi-ok':logoDpi>=150?'fl-dpi-warn':logoDpi>0?'fl-dpi-bad':'';
-  const dpiTxt = logoDpi>=300?\`✅ Excellente qualité — \${logoDpi} DPI\`:logoDpi>=150?\`⚠️ Qualité acceptable — \${logoDpi} DPI\`:logoDpi>0?\`❌ Résolution insuffisante — \${logoDpi} DPI\`:'';
-  const lowDpiWarning = (logoDpi>0 && logoDpi<150) ? \`
-    <div style="background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.3);border-radius:10px;padding:12px;text-align:center;max-width:300px">
-      <div style="font-size:.75rem;font-weight:700;color:#ff6b6b;margin-bottom:6px">⚠️ Résolution trop faible pour la DTF</div>
-      <div style="font-size:.68rem;color:rgba(255,255,255,.6);line-height:1.5;margin-bottom:8px">Votre logo est à \${logoDpi} DPI — minimum recommandé 150 DPI.</div>
-      <div style="font-size:.68rem;color:#4facfe;font-weight:700">💡 Nos Services IA HCS peuvent vectoriser votre logo pour un rendu parfait.</div>
-      <div style="margin-top:10px;background:rgba(255,80,80,.15);border-radius:8px;padding:8px 10px;font-size:.67rem;color:#ffb3b3;line-height:1.55;text-align:left">
-        ⚠️ <strong>En cliquant sur "Suivant" vous acceptez et reconnaissez</strong> que la qualité d'impression ne sera pas optimale en raison de la résolution insuffisante de votre logo. HCS ne pourra être tenu responsable du résultat obtenu.
-      </div>
-    </div>\` : '';
-  const pwSection = logoUrl ? (logoPwLoading ? \`
-    <div style="text-align:center;padding:8px">
-      <div style="font-size:1.4rem;margin-bottom:6px">✂️</div>
-      <div style="font-size:.78rem;font-weight:700;color:#4facfe">Détourage IA en cours…</div>
-      <div style="font-size:.65rem;color:#9090b0;margin-top:4px">Suppression du fond par PicWish</div>
-    </div>\` : logoPwDone ? \`
-    <div style="text-align:center">
-      <div style="font-size:.72rem;font-weight:700;color:#43e97b;margin-bottom:8px">✅ Fond supprimé automatiquement</div>
-      <div style="display:flex;gap:8px;align-items:flex-start;justify-content:center">
-        <div style="text-align:center">
-          <div style="font-size:.6rem;color:#9090b0;margin-bottom:4px">Avant</div>
-          <div style="width:80px;height:80px;border-radius:8px;overflow:hidden;border:1px solid #2a2a4a;background:#1e1e3a;display:flex;align-items:center;justify-content:center"><img src="\${logoOrigUrl}" style="max-width:100%;max-height:100%;object-fit:contain"></div>
-        </div>
-        <div style="font-size:1rem;color:${primary};font-weight:900;align-self:center">→</div>
-        <div style="text-align:center">
-          <div style="font-size:.6rem;color:#43e97b;margin-bottom:4px;font-weight:700">Après</div>
-          <div style="width:80px;height:80px;border-radius:8px;overflow:hidden;border:1px solid rgba(67,233,123,.4);background:repeating-conic-gradient(#2a2a4a 0% 25%,transparent 0% 50%) 0 0/8px 8px;display:flex;align-items:center;justify-content:center"><img src="\${logoUrl}" style="max-width:100%;max-height:100%;object-fit:contain"></div>
-        </div>
-      </div>
-      <button onclick="flow.logoUrl=flow.logoOrigUrl;flow.logoPwDone=false;flRender()" style="margin-top:8px;padding:4px 12px;border-radius:6px;border:1px solid #2a2a4a;background:#1e1e3a;color:#9090b0;font-size:.65rem;cursor:pointer">↩ Utiliser l'original</button>
-    </div>\` : '') : '';
+  var _fi = FACE_IMAGES[flow.prodIdx];
+  var _src = _fi ? (flow.face==='back'&&_fi.back?_fi.back:(_fi.front||'')) : '';
+  var _pos = flow.logoPos;
+  var _emo = (PRODUCTS&&PRODUCTS[flow.prodIdx])?PRODUCTS[flow.prodIdx].e:'👕';
 
-  // Logos DTF prédéfinis (selon config admin)
-  let dtfPickerHtml = '';
+  var _shirtEl = _src
+    ? '<img class="fl-studio-shirt" id="fl-shirt-img" src="'+_src+'" draggable="false">'
+    : '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:52px">'+_emo+'</div>';
+
+  var _logoEl = flow.logoUrl
+    ? '<div class="fl-studio-logo" id="fl-logo-drag" style="left:'+_pos.xPct+'%;top:'+_pos.yPct+'%;width:'+_pos.wPct+'%"><img src="'+flow.logoUrl+'" draggable="false"><div class="fl-studio-resize" id="fl-logo-resize"></div></div>'
+    : '';
+
+  var _hintEl = !flow.logoUrl
+    ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:3"><div style="text-align:center;background:rgba(0,0,0,.45);padding:8px 14px;border-radius:12px"><div style="font-size:1.4rem;margin-bottom:3px">🖼️</div><div style="font-size:.52rem;color:rgba(255,255,255,.55)">Logo ici</div></div></div>'
+    : '';
+
+  var _faceTabsEl = '';
+  if (SHOW_BACK) {
+    var _ft=function(f,lbl){return '<button onclick="setFace(\''+f+'\')" style="padding:3px 9px;border-radius:10px;border:1.5px solid '+(flow.face===f?ACCENT:'rgba(255,255,255,.2)')+';background:'+(flow.face===f?'rgba(79,172,254,.15)':'rgba(0,0,0,.5)')+';color:'+(flow.face===f?ACCENT:'rgba(255,255,255,.45)')+';font-size:.52rem;font-weight:700;cursor:pointer">'+lbl+'</button>';};
+    _faceTabsEl='<div style="position:absolute;bottom:7px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:10">'+_ft('front','Avant')+_ft('back','Dos')+'</div>';
+  }
+
+  var _dpiBadge = flow.logoDpi>0
+    ? '<div class="fl-dpi-badge '+(flow.logoDpi>=300?'fl-dpi-ok':flow.logoDpi>=150?'fl-dpi-warn':'fl-dpi-bad')+'" style="font-size:.56rem;padding:2px 8px;text-align:center">'+(flow.logoDpi>=300?'✅ '+flow.logoDpi+' DPI':flow.logoDpi>=150?'⚠️ '+flow.logoDpi+' DPI':'❌ '+flow.logoDpi+' DPI')+'</div>'
+    : '';
+
+  var _pwSt = flow.logoPwLoading
+    ? '<div style="font-size:.6rem;color:#4facfe;text-align:center">✂️ Détourage…</div>'
+    : (flow.logoPwDone?'<div style="font-size:.58rem;color:#43e97b;text-align:center">✅ Fond supprimé</div>':'');
+
+  var _sizeEl = flow.logoUrl
+    ? ('<div><div style="display:flex;justify-content:space-between;font-size:.6rem;color:#9090b0;margin-bottom:4px"><span>Taille logo</span><span id="fl-sz-val" style="color:#fff;font-weight:700">'+Math.round(_pos.wPct||30)+'%</span></div>'
+      +'<input type="range" class="fl-sl" min="8" max="75" value="'+Math.round(_pos.wPct||30)+'" oninput="flow.logoPos.wPct=+this.value;var sv=document.getElementById(\'fl-sz-val\');if(sv)sv.textContent=this.value+\'%\';var ld=document.getElementById(\'fl-logo-drag\');if(ld)ld.style.width=this.value+\'%\'"></div>')
+    : '';
+
+  var _dtfHtml = '';
   if (SHOW_DTF_LOGOS) {
-    const dtfLogos = DTF_LOGOS[flow.prodIdx] || [];
-    if (dtfLogos.length) {
-      const cards = dtfLogos.map((logo, n) => {
-        const isSel = logoUrl === logo.url;
-        return \`<div onclick="pickDtfLogo(\${n})" style="cursor:pointer;flex:1;min-width:70px;max-width:90px;display:flex;flex-direction:column;align-items:center;gap:5px;padding:7px 5px;border-radius:10px;border:2px solid \${isSel?'#f6d365':'rgba(246,211,101,.2)'};background:\${isSel?'rgba(246,211,101,.12)':'rgba(246,211,101,.04)'}">
-          <div style="width:56px;height:56px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35)"><img src="\${logo.url}" style="max-width:90%;max-height:90%;object-fit:contain"></div>
-          <div style="font-size:.55rem;color:\${isSel?'#f6d365':'#9090b0'};text-align:center;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">\${logo.name||'Logo DTF '+(n+1)}</div>
-          \${isSel?'<div style="font-size:.5rem;color:#f6d365;font-weight:800">✓ Sélectionné</div>':''}
-        </div>\`;
+    var _dtfLogos = DTF_LOGOS[flow.prodIdx]||[];
+    if (_dtfLogos.length) {
+      var _dtfCards = _dtfLogos.map(function(logo,n){
+        var sel=flow.logoUrl===logo.url;
+        return '<div onclick="pickDtfLogo('+n+')" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px;border-radius:9px;border:2px solid '+(sel?'#f6d365':'rgba(246,211,101,.2)')+';background:'+(sel?'rgba(246,211,101,.1)':'rgba(246,211,101,.03)')+';min-width:52px">'
+          +'<div style="width:40px;height:40px;border-radius:6px;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;overflow:hidden"><img src="'+logo.url+'" style="max-width:90%;max-height:90%;object-fit:contain"></div>'
+          +'<div style="font-size:.48rem;color:'+(sel?'#f6d365':'#9090b0')+';text-align:center;max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(logo.name||('Logo '+(n+1)))+'</div>'
+          +(sel?'<div style="font-size:.48rem;color:#f6d365;font-weight:800">✓</div>':'')
+          +'</div>';
       }).join('');
-      dtfPickerHtml = \`<div style="width:100%;border:1px solid rgba(246,211,101,.25);border-radius:12px;padding:10px;background:rgba(246,211,101,.04)">
-        <div style="font-size:.68rem;font-weight:800;color:#f6d365;margin-bottom:8px;text-align:center">🏷️ Logos DTF prédéfinis</div>
-        <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">\${cards}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;width:100%;max-width:280px"><div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div><span style="font-size:.6rem;color:rgba(255,255,255,.3)">ou</span><div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div></div>\`;
+      _dtfHtml='<div style="border:1px solid rgba(246,211,101,.22);border-radius:10px;padding:8px;background:rgba(246,211,101,.03)">'
+        +'<div style="font-size:.6rem;font-weight:800;color:#f6d365;margin-bottom:6px;text-align:center">🏷️ Logos DTF prédéfinis</div>'
+        +'<div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap">'+_dtfCards+'</div></div>';
     }
   }
 
-  // Texte personnalisé (selon config admin)
-  let textPickerHtml = '';
+  var _textHtml = '';
   if (SHOW_CUSTOM_TEXT) {
-    const tc = TEXT_CFG || {};
-    const availPos = (tc.positions||[]).filter(v => POS_OPTS.find(p=>p.val===v));
-    const availFnt = (tc.fonts||[]).filter(v => FONT_OPTS.find(f=>f.val===v));
-    const swatches = tc.colors||['#ffffff','#000000','#ff3b3b','#4facfe','#f6d365','#43e97b'];
-    const cClr = flow.textColor||tc.defaultColor||'#ffffff';
-    const cFnt = flow.textFont||tc.defaultFont||'Arial, sans-serif';
-    const cPos = flow.textPos||tc.defaultPos||'front-center';
-    const posPills = availPos.map(v => { const opt=POS_OPTS.find(p=>p.val===v); const sel=cPos===v; return \`<button onclick="setTextProp('textPos','\${v}')" style="padding:3px 9px;border-radius:20px;border:1.5px solid \${sel?'#4facfe':'rgba(255,255,255,.15)'};background:\${sel?'rgba(79,172,254,.15)':'transparent'};color:\${sel?'#4facfe':'rgba(255,255,255,.5)'};font-size:.58rem;font-weight:\${sel?700:400};cursor:pointer">\${opt?opt.label:v}</button>\`; }).join('');
-    const fntPills = availFnt.map(v => { const opt=FONT_OPTS.find(f=>f.val===v); const sel=cFnt===v; const esc=v.replace(/\\\\/g,'\\\\\\\\').replace(/'/g,"\\\\'"); return \`<button onclick="setTextProp('textFont','\${esc}')" style="padding:3px 10px;border-radius:20px;border:1.5px solid \${sel?'#a78bfa':'rgba(255,255,255,.15)'};background:\${sel?'rgba(167,139,250,.15)':'transparent'};color:\${sel?'#a78bfa':'rgba(255,255,255,.55)'};font-family:\${v};font-size:.62rem;cursor:pointer">\${opt?opt.label:v}</button>\`; }).join('');
-    const clrDots = swatches.map(c => { const sel=cClr===c; return \`<div onclick="setTextProp('textColor','\${c}')" style="width:20px;height:20px;border-radius:50%;background:\${c};cursor:pointer;border:2px solid \${sel?'#fff':'rgba(255,255,255,.2)'};flex-shrink:0"></div>\`; }).join('');
-    textPickerHtml = \`<div style="width:100%;border:1px solid rgba(79,172,254,.3);border-radius:12px;padding:10px;background:rgba(79,172,254,.04)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:.68rem;font-weight:800;color:#4facfe">✏️ Texte personnalisé</div>
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.62rem;color:rgba(255,255,255,.6)">
-          <input type="checkbox" \${flow.useText?'checked':''} onchange="setTextProp('useText',this.checked)" style="accent-color:#4facfe"> Activer
-        </label>
-      </div>
-      <div id="fl-text-fields" style="display:\${flow.useText?'flex':'none'};flex-direction:column;gap:7px">
-        <input id="fl-text-input" type="text" maxlength="40" placeholder="Votre texte…" value="\${(flow.customText||'').replace(/"/g,'&quot;')}"
-          oninput="flow.customText=this.value"
-          style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(79,172,254,.35);background:rgba(0,0,0,.3);color:#fff;font-size:.76rem;box-sizing:border-box;outline:none">
-        <div><div style="font-size:.55rem;color:rgba(255,255,255,.4);margin-bottom:3px">Position</div><div style="display:flex;gap:4px;flex-wrap:wrap">\${posPills}</div></div>
-        <div><div style="font-size:.55rem;color:rgba(255,255,255,.4);margin-bottom:3px">Police</div><div style="display:flex;gap:4px;flex-wrap:wrap">\${fntPills}</div></div>
-        <div><div style="font-size:.55rem;color:rgba(255,255,255,.4);margin-bottom:3px">Couleur</div><div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">\${clrDots}<input type="color" value="\${cClr}" oninput="setTextProp('textColor',this.value)" style="width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.2);padding:0;cursor:pointer;background:transparent;flex-shrink:0"></div></div>
-      </div>
-    </div>\`;
+    var _tc=TEXT_CFG||{};
+    var _avPos=(_tc.positions||[]).filter(function(v){return POS_OPTS.find(function(o){return o.val===v;});});
+    var _avFnt=(_tc.fonts||[]).filter(function(v){return FONT_OPTS.find(function(f){return f.val===v;});});
+    var _sw=_tc.colors||['#ffffff','#000000','#ff3b3b','#4facfe','#f6d365','#43e97b'];
+    var _cC=flow.textColor||_tc.defaultColor||'#ffffff';
+    var _cF=flow.textFont||_tc.defaultFont||'Arial, sans-serif';
+    var _cP=flow.textPos||_tc.defaultPos||'front-center';
+    var _pPills=_avPos.map(function(v){var op=POS_OPTS.find(function(o){return o.val===v;});var s=_cP===v;return '<button onclick="setTextProp(\'textPos\',\''+v+'\')" style="padding:3px 9px;border-radius:20px;border:1.5px solid '+(s?'#4facfe':'rgba(255,255,255,.15)')+';background:'+(s?'rgba(79,172,254,.15)':'transparent')+';color:'+(s?'#4facfe':'rgba(255,255,255,.5)')+';font-size:.56rem;font-weight:'+(s?700:400)+';cursor:pointer">'+(op?op.label:v)+'</button>';}).join('');
+    var _fPills=_avFnt.map(function(v){var op=FONT_OPTS.find(function(f){return f.val===v;});var s=_cF===v;return '<button onclick="setTextProp(\'textFont\',\''+v.replace(/\\\\/g,'\\\\\\\\').replace(/'/g,"\\'")+'\' )" style="padding:3px 9px;border-radius:20px;border:1.5px solid '+(s?'#a78bfa':'rgba(255,255,255,.15)')+';background:'+(s?'rgba(167,139,250,.15)':'transparent')+';color:'+(s?'#a78bfa':'rgba(255,255,255,.55)')+';font-family:'+v+';font-size:.6rem;cursor:pointer">'+(op?op.label:v)+'</button>';}).join('');
+    var _cDots=_sw.map(function(c){var s=_cC===c;return '<div onclick="setTextProp(\'textColor\',\''+c+'\')" style="width:20px;height:20px;border-radius:50%;background:'+c+';cursor:pointer;border:2px solid '+(s?'#fff':'rgba(255,255,255,.2)')+';flex-shrink:0"></div>';}).join('');
+    _textHtml='<div style="border:1px solid rgba(79,172,254,.28);border-radius:10px;padding:8px;background:rgba(79,172,254,.03)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">'
+      +'<div style="font-size:.62rem;font-weight:800;color:#4facfe">✏️ Texte personnalisé</div>'
+      +'<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:.58rem;color:rgba(255,255,255,.6)"><input type="checkbox" '+(flow.useText?'checked':'')+' onchange="setTextProp(\'useText\',this.checked)" style="accent-color:#4facfe"> Activer</label>'
+      +'</div>'
+      +'<div id="fl-text-fields" style="display:'+(flow.useText?'flex':'none')+';flex-direction:column;gap:6px">'
+      +'<input id="fl-text-input" type="text" maxlength="40" placeholder="Votre texte…" value="'+(flow.customText||'').replace(/"/g,'&quot;')+'" oninput="flow.customText=this.value" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(79,172,254,.35);background:rgba(0,0,0,.3);color:#fff;font-size:.74rem;box-sizing:border-box;outline:none">'
+      +'<div><div style="font-size:.52rem;color:rgba(255,255,255,.38);margin-bottom:3px">Position</div><div style="display:flex;gap:4px;flex-wrap:wrap">'+_pPills+'</div></div>'
+      +'<div><div style="font-size:.52rem;color:rgba(255,255,255,.38);margin-bottom:3px">Police</div><div style="display:flex;gap:4px;flex-wrap:wrap">'+_fPills+'</div></div>'
+      +'<div><div style="font-size:.52rem;color:rgba(255,255,255,.38);margin-bottom:3px">Couleur</div><div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">'+_cDots+'<input type="color" value="'+_cC+'" oninput="setTextProp(\'textColor\',this.value)" style="width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.2);padding:0;cursor:pointer;background:transparent;flex-shrink:0"></div></div>'
+      +'</div></div>';
   }
 
-  return \`<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 0">
-    \${dtfPickerHtml}
-    <div style="text-align:center"><div style="font-size:.82rem;font-weight:800;margin-bottom:4px">Uploadez votre logo</div>
-    <div style="font-size:.68rem;color:#9090b0">PNG ou SVG — 300 DPI recommandé · Fond supprimé automatiquement</div></div>
-    <div class="fl-logo-preview">\${logoUrl?\`<img src="\${logoUrl}">\`:'<span style="font-size:2rem;opacity:.4">🖼️</span>'}</div>
-    \${dpiCls?'<div class="fl-dpi-badge '+dpiCls+'">'+dpiTxt+'</div>':''}
-    \${pwSection}
-    \${lowDpiWarning}
-    <label class="fl-upload-btn">📁 \${logoUrl?'Changer le logo':'Uploader ton logo'}
-      <input type="file" accept="image/*,.svg" style="display:none" onchange="logoLoad(event)">
-    </label>
-    <div style="font-size:.62rem;color:#6060a0;text-align:center;max-width:280px;line-height:1.5">Pour un rendu optimal en DTF, utilisez un PNG haute résolution ou un SVG vectoriel.</div>
-    \${textPickerHtml}
-  </div>\`;
+  return '<div style="display:flex;flex-direction:column;gap:10px">'
+    +'<div style="display:flex;gap:10px;align-items:flex-start">'
+      +'<div id="fl-studio-wrap" class="fl-studio-wrap" style="flex:0 0 auto;width:43%;margin:0">'+_shirtEl+_logoEl+_hintEl+_faceTabsEl+'</div>'
+      +'<div style="flex:1;display:flex;flex-direction:column;gap:7px;min-width:0;padding-top:2px">'
+        +'<label style="display:block;text-align:center;padding:9px 6px;background:linear-gradient(135deg,#4facfe,#00f2fe);border-radius:10px;font-weight:800;font-size:.72rem;color:#0f0f1a;cursor:pointer">📁 '+(flow.logoUrl?'Changer':'Uploader')+'<input type="file" accept="image/*,.svg" style="display:none" onchange="logoLoad(event)"></label>'
+        +_dpiBadge+_pwSt+_sizeEl
+        +(flow.logoUrl?'<div style="font-size:.52rem;color:rgba(255,255,255,.3);text-align:center;line-height:1.5">Glisse le logo<br>pour repositionner</div>':'')
+      +'</div>'
+    +'</div>'
+    +_dtfHtml
+    +_textHtml
+    +'</div>';
 }
 function pickDtfLogo(n) {
   const logo = (DTF_LOGOS[flow.prodIdx]||[])[n];
@@ -3430,15 +3439,9 @@ function pickDtfLogo(n) {
   flRender();
 }
 function setTextProp(key, val) {
-  /* Sauvegarder le texte en cours de saisie avant le re-render (évite perte de focus) */
-  const _ti = document.getElementById('fl-text-input');
-  if (_ti) flow.customText = _ti.value;
-  flow[key] = val;
-  if (key === 'useText') {
-    const el = document.getElementById('fl-text-fields');
-    if (el) el.style.display = val ? 'flex' : 'none';
-    return;
-  }
+  var _ti=document.getElementById('fl-text-input');
+  if(_ti) flow.customText=_ti.value;
+  flow[key]=val;
   flRender();
 }
 function logoLoad(e) {
