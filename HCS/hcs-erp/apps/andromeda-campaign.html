@@ -1056,6 +1056,10 @@ function buildSidebar() {
     <div class="sa-icon" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">🌐</div>
     <div><div class="sa-label">LPs publiées</div><div class="item-tag">Pages en ligne</div></div>
   </div>
+  <div class="sidebar-action" onclick="window.open('../apps/andromeda-parcours-client.html','_blank')">
+    <div class="sa-icon" style="background:linear-gradient(135deg,#a78bfa,#f093fb)">🗺️</div>
+    <div><div class="sa-label">Parcours Client</div><div class="item-tag">Tunnels · Étapes · Preview</div></div>
+  </div>
   <div class="sidebar-action" id="nav-loyalty" onclick="showLoyalty()">
     <div class="sa-icon" style="background:linear-gradient(135deg,#f6d365,#fda085)">⭐</div>
     <div><div class="sa-label">Fidélité</div><div class="item-tag">Points · Tiers clients</div></div>
@@ -2801,23 +2805,8 @@ async function _deleteLPBySlug(campId, parcoursSlug, url) {
 function previewLP(id) {
   const c = CAMPS[id];
   if (c.id === 0) { vdecOpenFlow(id, 0); return; }
-  const _dl = window._dl_override;
-  window._dl_override = (name, html) => {
-    window._dl_override = _dl;
-    // Ouvrir dans un nouvel onglet en injectant le HTML directement
-    const win = window.open('', '_blank');
-    if (win) {
-      win.document.open();
-      win.document.write(html);
-      win.document.close();
-      win.document.title = 'Preview — ' + c.name;
-    } else {
-      // Fallback si popup bloqué : localStorage + preview.html
-      localStorage.setItem('hcs_lp_preview', JSON.stringify({ name: c.name, html }));
-      alert('Popup bloqué — ouvrez preview.html manuellement dans le même dossier.');
-    }
-  };
-  exportLP(id);
+  // LP dynamique inline — pas de popup, pas de fichier statique
+  previewLPInline(id);
 }
 
 // ═══════════════════════════════════════════════════════
