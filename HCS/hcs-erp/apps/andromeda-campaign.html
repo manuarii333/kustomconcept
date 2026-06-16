@@ -2450,27 +2450,22 @@ async function publishLP(id) {
     const _ok = () => {
       const val = document.getElementById('pub-adm-inp')?.value.trim();
       if (!val) return;
-      const btn = document.getElementById('pub-adm-ok');
-      const _errEl = document.getElementById('pub-adm-err');
-      btn.textContent = '…'; btn.disabled = true;
-      fetch(`${WORKER_BASE}/admin/db/orders?archived=0`, { headers: { 'X-Admin-Secret': val } })
-        .then(r => {
-          if (r.ok) {
-            adminSecret = val;
-            sessionStorage.setItem('hcs_admin_secret', val);
-            localStorage.setItem('hcs_admin_secret', val);
-            _modal.remove();
-            publishLP(id).catch(e => { hidePublishProgress(); showToast('❌ Erreur publication : ' + (e?.message || String(e)), true); });
-          } else {
-            _errEl.style.display='block';
-            _errEl.textContent='❌ Secret incorrect (réponse '+r.status+').';
-            btn.textContent='Publier →'; btn.disabled=false;
-          }
-        }).catch(err => {
-          _errEl.style.display='block';
-          _errEl.textContent='❌ Erreur réseau — essayez de publier depuis le site ERP en ligne.';
-          btn.textContent='Publier →'; btn.disabled=false;
-        });
+      adminSecret = val;
+      sessionStorage.setItem('hcs_admin_secret', val);
+      localStorage.setItem('hcs_admin_secret', val);
+      _modal.remove();
+      publishLP(id).catch(e => {
+        /* Secret incorrect → reset pour redemander au prochain clic */
+        if (/401|403|[Ss]ecret|[Uu]nauthorized/.test(e?.message || '')) {
+          adminSecret = '';
+          sessionStorage.removeItem('hcs_admin_secret');
+          localStorage.removeItem('hcs_admin_secret');
+          showToast('❌ Secret admin incorrect — réessaye.', true);
+        } else {
+          showToast('❌ Erreur publication : ' + (e?.message || String(e)), true);
+        }
+        hidePublishProgress();
+      });
     };
     document.getElementById('pub-adm-ok').onclick = _ok;
     document.getElementById('pub-adm-inp').addEventListener('keydown', e => { if (e.key==='Enter') _ok(); });
