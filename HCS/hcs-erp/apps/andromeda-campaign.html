@@ -2885,7 +2885,7 @@ await KR.setFormConfig({'kr-public-key':${pkVar},'kr-language':'fr-FR'});
 await KR.setFormToken(${tokenVar});`;
 }
 
-function exportLPTshirt(id) {
+function exportLPTshirt(id, previewOnly) {
   const c      = CAMPS[id];
   const isCap  = c.id === 2;
   const pcfg   = tshGetParcours(id);
@@ -3723,6 +3723,7 @@ document.addEventListener('keydown', e => { if(e.key==='Escape'){closeFlow();clo
 <\/script>
 </body></html>`;
 
+  if (previewOnly) return html;
   _registerLpToken(id, lpSlug, lpToken);
   dl(`andromeda-lp-${c.id}-${c.name.replace(/[^\w]/g,'-').toLowerCase()}.html`, html);
   // Sauvegarde dans HCS ERP (T-Shirt / Casquette)
@@ -4757,7 +4758,7 @@ function vdecTriggerUpload(el){var inp=el.querySelector('input');if(inp)inp.clic
   return html;
 }
 
-function exportLPGeneric(id) {
+function exportLPGeneric(id, previewOnly) {
   const c  = CAMPS[id];
   const g  = el => document.getElementById(el);
   const headline  = g('hl-'+id)?.textContent || c.headline;
@@ -5554,6 +5555,7 @@ window.addEventListener('message', function(e) {
 </body>
 </html>`;
 
+  if (previewOnly) return html;
   _registerLpToken(id, lpSlug, lpToken);
   dl(`andromeda-lp-${c.id}-${c.name.replace(/[^\w]/g,'-').toLowerCase()}.html`, html);
   hcsSaveCampaign(id);
@@ -14053,6 +14055,53 @@ async function vdecArchiveOrder(total) {
     const campId = parseInt(_p.get('camp') || '0');
     const _ci = _p.get('catIdx'); const _preCatIdx = _ci !== null && _ci !== '' ? parseInt(_ci) : null;
     vdecOpenFlow(campId, 0, !isNaN(_preCatIdx) ? _preCatIdx : null);
+  });
+})();
+
+/* ── LP DYNAMIQUE : ?lpPreview=1&camp=N → génère la LP depuis la config live ── */
+function previewLPInline(campId) {
+  const c = CAMPS[campId];
+  if (!c) { showToast('⚠️ Campagne introuvable', true); return; }
+  let html = null;
+  try {
+    if (c.id === 1 || c.id === 2) html = exportLPTshirt(campId, true);
+    else if (c.id >= 3)            html = exportLPGeneric(campId, true);
+  } catch(e) { showToast('⚠️ Erreur génération LP : ' + e.message, true); return; }
+  if (!html) return;
+
+  const blob    = new Blob([html], { type: 'text/html; charset=utf-8' });
+  const blobUrl = URL.createObjectURL(blob);
+
+  const existing = document.getElementById('_lp-dyn-ov');
+  if (existing) { existing.remove(); }
+
+  const ov = document.createElement('div');
+  ov.id = '_lp-dyn-ov';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#0f0f1a;display:flex;flex-direction:column';
+  ov.innerHTML =
+    '<div style="display:flex;align-items:center;gap:10px;padding:9px 16px;background:#16162a;border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0">'
+    + '<span style="font-size:.82rem;font-weight:700;color:#4facfe">⚡ LP Dynamique — ' + c.name + '</span>'
+    + '<span style="font-size:.65rem;padding:2px 9px;background:rgba(67,233,123,.13);color:#43e97b;border-radius:20px;border:1px solid rgba(67,233,123,.28)">Config live</span>'
+    + '<button onclick="document.getElementById(\'_lp-dyn-ov\').remove()" style="margin-left:auto;padding:5px 14px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);border-radius:6px;font-size:.75rem;cursor:pointer">✕ Fermer</button>'
+    + '</div>'
+    + '<iframe src="' + blobUrl + '" style="flex:1;border:none;width:100%" allow="clipboard-read;clipboard-write;payment"></iframe>';
+  document.body.appendChild(ov);
+}
+
+(function() {
+  const _p = new URLSearchParams(location.search);
+  if (_p.get('lpPreview') !== '1') return;
+  document.addEventListener('DOMContentLoaded', function() {
+    const campId = parseInt(_p.get('camp') || '1');
+    // Laisser le temps à restoreCamps() de charger la config depuis localStorage
+    setTimeout(function() {
+      const appBody = document.querySelector('.app-body, .main-content');
+      const header  = document.querySelector('.app-header, header, nav');
+      if (appBody) appBody.style.display = 'none';
+      if (header)  header.style.display  = 'none';
+      document.body.style.background = '#0f0f1a';
+      previewLPInline(campId);
+    }, 600);
   });
 })();
 
