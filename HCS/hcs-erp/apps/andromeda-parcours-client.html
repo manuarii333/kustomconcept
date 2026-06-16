@@ -260,35 +260,29 @@ const CAMPS_DATA = {
   1: {
     name:'T-Shirt Personnalisé',
     emoji:'👕',
-    desc:'T-shirts personnalisés DTF — design sur mesure en 4 étapes',
+    desc:'T-shirts personnalisés DTF — design sur mesure en 3 étapes',
     color:'#4facfe',
     colorDark:'rgba(79,172,254,.08)',
     priceRange:'3 500 – 6 500 XPF',
     steps:[
-      { num:1, icon:'👕', name:'Choisir le t-shirt', label:'Produit',
-        desc:'Sélectionner le modèle dans la collection (3 produits disponibles).',
+      { num:1, icon:'👕', name:'Choisir le produit', label:'Produit',
+        desc:'Sélectionner le modèle t-shirt dans la collection.',
         time:'~15 sec', required:['Modèle t-shirt'],
         optional:[],
         tags:['required'],
         funnel:100 },
-      { num:2, icon:'🎨', name:'Votre logo', label:'Logo',
+      { num:2, icon:'🎨', name:'Vos logos', label:'Logo',
         desc:'Upload photo/logo ou texte personnalisé — aperçu temps réel sur le t-shirt.',
         time:'~2 min', required:['Visuel ou texte'],
-        optional:['Position','Taille impression'],
-        tags:['required','optional','optional'],
-        funnel:83 },
-      { num:3, icon:'👤', name:'Taille & Coordonnées', label:'Coordonnées',
-        desc:'Couleur + taille (XS→4XL) + nom, email, téléphone, note commande.',
-        time:'~60 sec', required:['Couleur','Taille','Nom complet','Email'],
-        optional:['Téléphone','Note'],
-        tags:['required','required','required','required','optional','optional'],
-        funnel:68 },
-      { num:4, icon:'💳', name:'Paiement OSB', label:'Paiement',
-        desc:'Récap commande + tunnel Krypton SDK — CB sécurisée.',
-        time:'~60 sec', required:['Carte bancaire'],
-        optional:[],
-        tags:['auto'],
-        funnel:52 }
+        optional:['Position','Galerie DTF','Texte perso'],
+        tags:['required','optional','optional','optional'],
+        funnel:82 },
+      { num:3, icon:'📦', name:'Taille & Commander', label:'Commander',
+        desc:'Taille (XS→4XL) + quantité + récap → paiement OSB Krypton intégré.',
+        time:'~90 sec', required:['Taille','Quantité','Carte bancaire (OSB)'],
+        optional:['Note commande'],
+        tags:['required','required','auto','optional'],
+        funnel:58 }
     ],
     config:[
       { key:'Worker URL', val:'payzen-hcs.workers.dev', ok:true },
@@ -308,7 +302,7 @@ const CAMPS_DATA = {
   2: {
     name:'Casquette Brodée / DTF',
     emoji:'🧢',
-    desc:'Casquettes personnalisées — broderie et impression DTF',
+    desc:'Casquettes personnalisées — broderie et impression DTF en 3 étapes',
     color:'#43e97b',
     colorDark:'rgba(67,233,123,.06)',
     priceRange:'3 000 – 4 500 XPF',
@@ -319,24 +313,18 @@ const CAMPS_DATA = {
         optional:[],
         tags:['required'],
         funnel:100 },
-      { num:2, icon:'🎨', name:'Votre logo', label:'Logo',
+      { num:2, icon:'🎨', name:'Vos logos', label:'Logo',
         desc:'Upload PNG/JPG pour broderie ou impression DTF — aperçu position.',
         time:'~90 sec', required:['Logo ou texte'],
         optional:['Position','Couleurs broderie'],
         tags:['required','optional','optional'],
-        funnel:81 },
-      { num:3, icon:'👤', name:'Couleur & Coordonnées', label:'Coordonnées',
-        desc:'Couleur casquette + nom, email, téléphone, note commande.',
-        time:'~60 sec', required:['Couleur','Nom complet','Email'],
-        optional:['Taille','Téléphone','Note'],
-        tags:['required','required','required','optional','optional','optional'],
-        funnel:64 },
-      { num:4, icon:'💳', name:'Paiement OSB', label:'Paiement',
-        desc:'Tunnel Krypton SDK — CB sécurisée.',
-        time:'~60 sec', required:['Carte bancaire'],
-        optional:[],
-        tags:['auto'],
-        funnel:49 }
+        funnel:80 },
+      { num:3, icon:'📦', name:'Couleur & Commander', label:'Commander',
+        desc:'Couleur casquette + taille + quantité + récap → paiement OSB Krypton intégré.',
+        time:'~90 sec', required:['Couleur','Quantité','Carte bancaire (OSB)'],
+        optional:['Taille','Note commande'],
+        tags:['required','required','auto','optional','optional'],
+        funnel:56 }
     ],
     config:[
       { key:'Worker URL', val:'payzen-hcs.workers.dev', ok:true },
@@ -676,32 +664,33 @@ function getLiveSteps(id) {
 
     if (cfg) {
       const labels = cfg.labels || {};
-      // Labels personnalisés des étapes 2, 3
+      // Labels personnalisés des étapes 2, 3 (le LP T-Shirt a 3 étapes max)
       if (labels[1] && base[1]) { base[1].name = labels[1]; base[1].label = labels[1]; }
       if (labels[2] && base[2]) { base[2].name = labels[2]; base[2].label = labels[2]; }
+      if (labels[3] && base[2]) { base[2].name = labels[3]; base[2].label = labels[3]; }
 
       // Step 2 (logo) désactivée → retirer l'étape logo et renuméroter
       if (cfg.showStep2 === false) {
         base.splice(1, 1);
         base.forEach((s, i) => { s.num = i + 1; });
       } else {
-        // Détail étape logo
-        const logoFeatures = [];
-        if (cfg.showDtfLogos)   logoFeatures.push('Galerie DTF logos');
-        if (cfg.showCustomText) logoFeatures.push('Texte personnalisé');
-        if (logoFeatures.length && base[1]) {
-          base[1].optional = logoFeatures;
-          base[1].tags = ['required'].concat(logoFeatures.map(() => 'optional'));
+        // Options logo actives
+        const logoOpts = [];
+        if (cfg.showDtfLogos)   logoOpts.push('Galerie DTF logos');
+        if (cfg.showCustomText) logoOpts.push('Texte personnalisé');
+        if (logoOpts.length && base[1]) {
+          base[1].optional = logoOpts;
+          base[1].tags = ['required'].concat(logoOpts.map(() => 'optional'));
         }
       }
 
-      // Sizes dans l'étape contact
+      // Tailles disponibles dans l'étape commander
       if (cfg.sizes && cfg.sizes.length) {
-        const contactIdx = cfg.showStep2 !== false ? 2 : 1;
-        if (base[contactIdx]) {
-          const sz = cfg.sizes.join(' / ');
-          base[contactIdx].required = base[contactIdx].required.map(r =>
-            (r === 'Taille' || r === 'Couleur') ? r + ' (' + sz + ')' : r
+        const cmdIdx = cfg.showStep2 !== false ? 2 : 1;
+        if (base[cmdIdx]) {
+          const sz = cfg.sizes.join('/');
+          base[cmdIdx].required = base[cmdIdx].required.map(r =>
+            r === 'Taille' ? 'Taille (' + sz + ')' : r
           );
         }
       }
