@@ -265,23 +265,23 @@ const CAMPS_DATA = {
     colorDark:'rgba(79,172,254,.08)',
     priceRange:'3 500 – 6 500 XPF',
     steps:[
-      { num:1, icon:'👕', name:'Choisir le t-shirt', label:'Options',
-        desc:'Couleur (blanc, noir, gris…) + taille (XS→4XL).',
-        time:'~30 sec', required:['Couleur','Taille'],
-        optional:['Quantité'],
-        tags:['required','required','optional'],
+      { num:1, icon:'👕', name:'Choisir le t-shirt', label:'Produit',
+        desc:'Sélectionner le modèle dans la collection (3 produits disponibles).',
+        time:'~15 sec', required:['Modèle t-shirt'],
+        optional:[],
+        tags:['required'],
         funnel:100 },
-      { num:2, icon:'🎨', name:'Votre design', label:'Design',
-        desc:'Upload photo/logo ou sélection galerie — aperçu en temps réel.',
+      { num:2, icon:'🎨', name:'Votre logo', label:'Logo',
+        desc:'Upload photo/logo ou texte personnalisé — aperçu temps réel sur le t-shirt.',
         time:'~2 min', required:['Visuel ou texte'],
         optional:['Position','Taille impression'],
         tags:['required','optional','optional'],
-        funnel:81 },
-      { num:3, icon:'👤', name:'Coordonnées', label:'Coordonnées',
-        desc:'Nom, email, tél + choix retrait boutique ou livraison île.',
-        time:'~60 sec', required:['Nom complet','Email'],
+        funnel:83 },
+      { num:3, icon:'👤', name:'Taille & Coordonnées', label:'Coordonnées',
+        desc:'Couleur + taille (XS→4XL) + nom, email, téléphone, note commande.',
+        time:'~60 sec', required:['Couleur','Taille','Nom complet','Email'],
         optional:['Téléphone','Note'],
-        tags:['required','required','optional','optional'],
+        tags:['required','required','required','required','optional','optional'],
         funnel:68 },
       { num:4, icon:'💳', name:'Paiement OSB', label:'Paiement',
         desc:'Récap commande + tunnel Krypton SDK — CB sécurisée.',
@@ -313,23 +313,23 @@ const CAMPS_DATA = {
     colorDark:'rgba(67,233,123,.06)',
     priceRange:'3 000 – 4 500 XPF',
     steps:[
-      { num:1, icon:'🧢', name:'Choisir la casquette', label:'Modèle',
-        desc:'Dad Hat · Snapback · Casquette brodée — couleur + taille.',
-        time:'~30 sec', required:['Modèle','Couleur'],
-        optional:['Taille'],
-        tags:['required','required','optional'],
+      { num:1, icon:'🧢', name:'Choisir la casquette', label:'Produit',
+        desc:'Sélectionner le modèle (Dad Hat · Snapback · Brodée) dans la collection.',
+        time:'~15 sec', required:['Modèle casquette'],
+        optional:[],
+        tags:['required'],
         funnel:100 },
       { num:2, icon:'🎨', name:'Votre logo', label:'Logo',
         desc:'Upload PNG/JPG pour broderie ou impression DTF — aperçu position.',
         time:'~90 sec', required:['Logo ou texte'],
         optional:['Position','Couleurs broderie'],
         tags:['required','optional','optional'],
-        funnel:79 },
-      { num:3, icon:'👤', name:'Coordonnées', label:'Coordonnées',
-        desc:'Nom, email, tél + retrait boutique ou livraison île.',
-        time:'~60 sec', required:['Nom complet','Email'],
-        optional:['Téléphone','Note'],
-        tags:['required','required','optional','optional'],
+        funnel:81 },
+      { num:3, icon:'👤', name:'Couleur & Coordonnées', label:'Coordonnées',
+        desc:'Couleur casquette + nom, email, téléphone, note commande.',
+        time:'~60 sec', required:['Couleur','Nom complet','Email'],
+        optional:['Taille','Téléphone','Note'],
+        tags:['required','required','required','optional','optional','optional'],
         funnel:64 },
       { num:4, icon:'💳', name:'Paiement OSB', label:'Paiement',
         desc:'Tunnel Krypton SDK — CB sécurisée.',
@@ -361,24 +361,30 @@ const CAMPS_DATA = {
     colorDark:'rgba(255,107,107,.08)',
     priceRange:'2 500 – 6 500 XPF',
     steps:[
-      { num:1, icon:'🎨', name:'Design & Format', label:'Options',
-        desc:'Sélection du visuel, couleur de T-shirt et taille.',
-        time:'~45 sec', required:['Couleur (6 coloris)','Taille (XS→4XL)'],
+      { num:1, icon:'🛍️', name:'Choisir le produit', label:'Produit',
+        desc:'Sélectionner le t-shirt dans la collection DTF Originals.',
+        time:'~15 sec', required:['Produit'],
+        optional:[],
+        tags:['required'],
+        funnel:100 },
+      { num:2, icon:'🎨', name:'Design & Format', label:'Options',
+        desc:'Couleur du t-shirt (6 coloris) + taille (XS→4XL) + visuel produit.',
+        time:'~45 sec', required:['Couleur','Taille'],
         optional:['Visuel produit (galerie)'],
         tags:['required','required','optional'],
-        funnel:100 },
-      { num:2, icon:'📦', name:'Quantité & Livraison', label:'Coordonnées',
+        funnel:87 },
+      { num:3, icon:'📦', name:'Quantité & Coordonnées', label:'Coordonnées',
         desc:'Nombre d\'exemplaires + informations client (nom, email, tél, note).',
         time:'~90 sec', required:['Nom complet','Email'],
         optional:['Téléphone','Note commande'],
         tags:['required','required','optional','optional'],
-        funnel:82 },
-      { num:3, icon:'💳', name:'Paiement', label:'Paiement',
+        funnel:71 },
+      { num:4, icon:'💳', name:'Paiement', label:'Paiement',
         desc:'Tunnel sécurisé OSB — Krypton SDK. CB Visa/Mastercard/CB locale.',
-        time:'~60 sec', required:['Numéro carte','OSB Krypton'],
+        time:'~60 sec', required:['Carte bancaire'],
         optional:[],
-        tags:['required','auto'],
-        funnel:61 }
+        tags:['auto'],
+        funnel:54 }
     ],
     config:[
       { key:'Worker URL', val:'payzen-hcs.workers.dev', ok:true },
@@ -403,24 +409,30 @@ const CAMPS_DATA = {
     colorDark:'rgba(161,140,209,.08)',
     priceRange:'8 500 – 20 000 XPF',
     steps:[
-      { num:1, icon:'📐', name:'Format & Planche', label:'Planche',
-        desc:'Choisir le format (A3/A2/½ Yard/1 Yard) puis ouvrir le canvas de placement logos.',
+      { num:1, icon:'🛍️', name:'Choisir la planche', label:'Produit',
+        desc:'Sélectionner la gang sheet dans la collection DTF Collector.',
+        time:'~15 sec', required:['Produit'],
+        optional:[],
+        tags:['required'],
+        funnel:100 },
+      { num:2, icon:'📐', name:'Format & Planche', label:'Planche',
+        desc:'Format (A3/A2/½ Yard/1 Yard) + canvas de placement logos.',
         time:'~3 min', required:['Format planche','Logos placés (≥1)','Confirmation planche'],
         optional:['Logos supplémentaires'],
         tags:['required','required','required','optional'],
-        funnel:100 },
-      { num:2, icon:'👤', name:'Quantité & Coordonnées', label:'Coordonnées',
+        funnel:83 },
+      { num:3, icon:'👤', name:'Quantité & Coordonnées', label:'Coordonnées',
         desc:'Nombre de planches + informations client (nom, email, tél, note).',
         time:'~60 sec', required:['Nom complet','Email'],
         optional:['Téléphone','Note'],
         tags:['required','required','optional','optional'],
-        funnel:74 },
-      { num:3, icon:'💳', name:'Paiement', label:'Payer',
+        funnel:66 },
+      { num:4, icon:'💳', name:'Paiement', label:'Payer',
         desc:'Tunnel OSB Krypton — CB sécurisée, livraison 48h.',
         time:'~60 sec', required:['Carte bancaire'],
         optional:[],
         tags:['auto'],
-        funnel:57 }
+        funnel:51 }
     ],
     config:[
       { key:'Worker URL', val:'payzen-hcs.workers.dev', ok:true },
@@ -445,24 +457,30 @@ const CAMPS_DATA = {
     colorDark:'rgba(240,147,251,.06)',
     priceRange:'15 000 – 35 000 XPF',
     steps:[
-      { num:1, icon:'📗', name:'Choisir module', label:'Options',
+      { num:1, icon:'🛍️', name:'Choisir la formation', label:'Produit',
+        desc:'Sélectionner le niveau de formation dans le catalogue HCS.',
+        time:'~15 sec', required:['Produit'],
+        optional:[],
+        tags:['required'],
+        funnel:100 },
+      { num:2, icon:'📗', name:'Choisir le module', label:'Options',
         desc:'Débutant (bases DTF), Avancé (techniques pro), Complet (intégral).',
         time:'~30 sec', required:['Module de formation'],
         optional:[],
         tags:['required'],
-        funnel:100 },
-      { num:2, icon:'📅', name:'Date & Contact', label:'Coordonnées',
-        desc:'Sélection date de session disponible + coordonnées participant.',
+        funnel:84 },
+      { num:3, icon:'📅', name:'Date & Contact', label:'Coordonnées',
+        desc:'Date de session disponible + coordonnées participant.',
         time:'~90 sec', required:['Date session','Nom complet','Email'],
         optional:['Téléphone','Message'],
         tags:['required','required','required','optional','optional'],
-        funnel:74 },
-      { num:3, icon:'💳', name:'Paiement', label:'Paiement',
+        funnel:67 },
+      { num:4, icon:'💳', name:'Paiement', label:'Paiement',
         desc:'Acompte ou paiement intégral via OSB Krypton.',
         time:'~60 sec', required:['Carte bancaire'],
         optional:[],
         tags:['auto'],
-        funnel:56 }
+        funnel:51 }
     ],
     config:[
       { key:'Worker URL', val:'payzen-hcs.workers.dev', ok:true },
@@ -487,24 +505,30 @@ const CAMPS_DATA = {
     colorDark:'rgba(48,207,208,.06)',
     priceRange:'1 800 – 5 500 XPF/mois',
     steps:[
-      { num:1, icon:'💎', name:'Choisir plan', label:'Options',
-        desc:'Starter (points bonus), Pro (×2 + remise 10%), Premium (×3 + remise 20%).',
+      { num:1, icon:'🛍️', name:'Choisir l\'abonnement', label:'Produit',
+        desc:'Sélectionner l\'abonnement HCS dans la boutique.',
+        time:'~15 sec', required:['Produit'],
+        optional:[],
+        tags:['required'],
+        funnel:100 },
+      { num:2, icon:'💎', name:'Choisir le plan', label:'Options',
+        desc:'Starter (points bonus), Pro (×2 + remise 10%), Premium (×3 + remise 20%). Mensuel ou annuel.',
         time:'~45 sec', required:['Plan (Starter/Pro/Premium)'],
         optional:['Durée mensuel/annuel'],
         tags:['required','optional'],
-        funnel:100 },
-      { num:2, icon:'👤', name:'Coordonnées', label:'Coordonnées',
+        funnel:82 },
+      { num:3, icon:'👤', name:'Coordonnées', label:'Coordonnées',
         desc:'Informations client pour activation du compte fidélité.',
         time:'~60 sec', required:['Nom complet','Email'],
         optional:['Téléphone'],
         tags:['required','required','optional'],
-        funnel:69 },
-      { num:3, icon:'💳', name:'Paiement', label:'Paiement',
+        funnel:65 },
+      { num:4, icon:'💳', name:'Paiement', label:'Paiement',
         desc:'Paiement sécurisé OSB — activation immédiate du plan.',
         time:'~60 sec', required:['Carte bancaire'],
         optional:[],
         tags:['auto'],
-        funnel:52 }
+        funnel:49 }
     ],
     config:[
       { key:'Worker URL', val:'payzen-hcs.workers.dev', ok:true },
@@ -529,24 +553,30 @@ const CAMPS_DATA = {
     colorDark:'rgba(246,211,101,.06)',
     priceRange:'1 500 – 8 000 XPF',
     steps:[
-      { num:1, icon:'🎯', name:'Choisir service', label:'Options',
+      { num:1, icon:'🛍️', name:'Choisir le service', label:'Produit',
+        desc:'Sélectionner le service graphique dans le catalogue HCS.',
+        time:'~15 sec', required:['Produit'],
+        optional:[],
+        tags:['required'],
+        funnel:100 },
+      { num:2, icon:'🎯', name:'Type de service', label:'Options',
         desc:'Vectorisation SVG, Détourage IA, Création logo complet, Pack graphique.',
         time:'~30 sec', required:['Service'],
         optional:[],
         tags:['required'],
-        funnel:100 },
-      { num:2, icon:'📁', name:'Fichier + Contact', label:'Coordonnées',
+        funnel:85 },
+      { num:3, icon:'📁', name:'Fichier + Contact', label:'Coordonnées',
         desc:'Upload fichier source (PNG/JPG/AI) + coordonnées client.',
         time:'~90 sec', required:['Nom complet','Email'],
         optional:['Fichier source','Téléphone','Brief'],
         tags:['required','required','optional','optional','optional'],
-        funnel:71 },
-      { num:3, icon:'💳', name:'Paiement', label:'Paiement',
+        funnel:68 },
+      { num:4, icon:'💳', name:'Paiement', label:'Paiement',
         desc:'Paiement avant traitement — livraison par email sous 24h.',
         time:'~60 sec', required:['Carte bancaire'],
         optional:[],
         tags:['auto'],
-        funnel:58 }
+        funnel:55 }
     ],
     config:[
       { key:'Worker URL', val:'payzen-hcs.workers.dev', ok:true },
@@ -571,24 +601,30 @@ const CAMPS_DATA = {
     colorDark:'rgba(212,168,67,.07)',
     priceRange:'12 000 – 20 000 XPF',
     steps:[
-      { num:1, icon:'📐', name:'Format + Upload logos', label:'Format',
+      { num:1, icon:'🛍️', name:'Choisir la planche', label:'Produit',
+        desc:'Sélectionner la gang sheet dans la collection Pack Collector.',
+        time:'~15 sec', required:['Produit'],
+        optional:[],
+        tags:['required'],
+        funnel:100 },
+      { num:2, icon:'📐', name:'Format + Upload logos', label:'Format',
         desc:'½ Yard 56×46 cm (12 000 XPF) ou 1 Yard 56×91 cm (20 000 XPF) + upload PNG optionnel.',
         time:'~45 sec', required:['Format (½ yard / 1 yard)'],
         optional:['Upload logos PNG fond transparent'],
         tags:['required','optional'],
-        funnel:100 },
-      { num:2, icon:'👤', name:'Quantité & Coordonnées', label:'Vos logos',
+        funnel:83 },
+      { num:3, icon:'👤', name:'Quantité & Coordonnées', label:'Vos logos',
         desc:'Nombre de planches + informations client (nom, email, tél, note).',
         time:'~60 sec', required:['Nom complet','Email'],
         optional:['Téléphone','Note','Quantité planches'],
         tags:['required','required','optional','optional','optional'],
-        funnel:72 },
-      { num:3, icon:'💳', name:'Paiement OSB', label:'Paiement',
+        funnel:65 },
+      { num:4, icon:'💳', name:'Paiement OSB', label:'Paiement',
         desc:'Tunnel Krypton SDK — CB sécurisée, livraison 48h.',
         time:'~60 sec', required:['Carte bancaire'],
         optional:[],
         tags:['auto'],
-        funnel:55 }
+        funnel:50 }
     ],
     config:[
       { key:'Worker URL', val:'payzen-hcs.workers.dev', ok:true },
@@ -650,6 +686,7 @@ function renderCamp(id) {
         : `<span style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.35);border-radius:8px;font-size:.75rem;border:1px dashed rgba(255,255,255,.15)">🌐 LP non publiée — exporter depuis Andromeda</span>`
       }
       <a href="../apps/andromeda-campaign.html" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);border-radius:8px;font-size:.75rem;text-decoration:none;border:1px solid rgba(255,255,255,.1)">📣 Andromeda</a>
+      <button onclick="openFlowPreview(${id})" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:${d.color};color:#fff;border-radius:8px;font-size:.75rem;font-weight:700;border:none;cursor:pointer">🎨 Tester le parcours client</button>
     </div>`;
 
   // Camp header
@@ -851,6 +888,54 @@ function renderCamp(id) {
       </div>
     </div>
   `;
+}
+
+/* ── Overlay "Tester le parcours client" ───────────────── */
+function openFlowPreview(campId) {
+  const d = CAMPS_DATA[campId];
+  const existing = document.getElementById('_flow-preview-ol');
+  if (existing) existing.remove();
+
+  // Priorité 1 : LP publiée → vrai parcours client
+  const _pubUrls = JSON.parse(localStorage.getItem('hcs_published_urls') || '{}');
+  const lpUrl = _pubUrls[campId] || null;
+
+  const ol = document.createElement('div');
+  ol.id = '_flow-preview-ol';
+  ol.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#0f0f1a;display:flex;flex-direction:column';
+
+  let bodyHtml;
+  if (lpUrl) {
+    // LP publiée : iframe sur la vraie LP client
+    bodyHtml = `<iframe src="${lpUrl}" style="flex:1;border:none;width:100%" allow="clipboard-read;clipboard-write;payment"></iframe>`;
+  } else {
+    // Pas de LP publiée : message + lien Andromeda
+    bodyHtml = `
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:32px;text-align:center">
+        <div style="font-size:3rem">${d.emoji}</div>
+        <div style="font-size:1rem;font-weight:700;color:rgba(255,255,255,.9)">LP non publiée — ${d.name}</div>
+        <div style="font-size:.78rem;color:rgba(255,255,255,.45);max-width:360px;line-height:1.6">
+          Exportez d'abord la LP depuis <strong>Andromeda → ${d.name}</strong> pour activer le test du parcours client.
+        </div>
+        <a href="../apps/andromeda-campaign.html" style="padding:10px 22px;background:${d.color};color:#fff;border-radius:8px;font-size:.8rem;font-weight:700;text-decoration:none">
+          📣 Ouvrir Andromeda →
+        </a>
+      </div>`;
+  }
+
+  const badge = lpUrl
+    ? `<span style="font-size:.68rem;padding:2px 8px;background:rgba(76,217,100,.15);color:#4cd964;border-radius:20px;border:1px solid rgba(76,217,100,.3)">✓ LP publiée</span>`
+    : `<span style="font-size:.68rem;padding:2px 8px;background:rgba(255,149,0,.12);color:#ff9500;border-radius:20px;border:1px solid rgba(255,149,0,.3)">⚠ LP non publiée</span>`;
+
+  ol.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:#16162a;border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0">
+      <span style="font-size:.8rem;font-weight:700;color:${d.color}">🎨 Parcours client — ${d.name}</span>
+      ${badge}
+      ${lpUrl ? `<a href="${lpUrl}" target="_blank" rel="noopener" style="padding:4px 10px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);border-radius:5px;font-size:.7rem;text-decoration:none">↗ Ouvrir onglet</a>` : ''}
+      <button onclick="document.getElementById('_flow-preview-ol').remove()" style="margin-left:auto;padding:5px 14px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);border-radius:6px;font-size:.75rem;cursor:pointer">✕ Fermer</button>
+    </div>
+    ${bodyHtml}`;
+  document.body.appendChild(ol);
 }
 
 // Init
