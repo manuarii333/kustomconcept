@@ -3185,6 +3185,8 @@ function flRender() {
   document.getElementById('fl-title').textContent = titles[flow.step];
   const d2 = document.getElementById('fd2');
   if (d2) { d2.style.display = SHOW_STEP2 ? '' : 'none'; const l2 = d2.previousElementSibling; if (l2) l2.style.display = SHOW_STEP2 ? '' : 'none'; }
+  const d3 = document.getElementById('fd3');
+  if (d3) { d3.style.display = SHOW_STEP2 ? '' : 'none'; const l3 = d3.previousElementSibling; if (l3) l3.style.display = SHOW_STEP2 ? '' : 'none'; }
   [1,2,3,4].forEach(n => {
     const d = document.getElementById('fd'+n);
     if (!d) return;
@@ -3198,13 +3200,12 @@ function flRender() {
   else { body.innerHTML = flStep4(); prev.innerHTML = \`<button class="btn-fl-prev" onclick="flBack()">← Retour</button><button class="btn-fl-next" onclick="flConfirm()" style="background:linear-gradient(135deg,#43e97b,#38f9d7);color:#0f0f1a">🛒 Commander & Payer</button>\`; }
 }
 function flBack() {
-  if (flow.step === 3 && !SHOW_STEP2) { flow.step = 1; }
-  else if (flow.step === 4 && !SHOW_STEP2) { flow.step = 3; }
+  if ((flow.step === 3 || flow.step === 4) && !SHOW_STEP2) { flow.step = 1; }
   else if (flow.step > 1) { flow.step--; }
   flRender();
 }
 function flNext() {
-  if (flow.step === 1) { flow.step = SHOW_STEP2 ? 2 : 3; flRender(); }
+  if (flow.step === 1) { flow.step = SHOW_STEP2 ? 2 : 4; flRender(); }
   else if (flow.step === 2) {
     if (!flow.logoUrl) { alert('Veuillez uploader votre logo.'); return; }
     if (flow.logoPwLoading) { alert('Détourage en cours, veuillez patienter quelques secondes.'); return; }
