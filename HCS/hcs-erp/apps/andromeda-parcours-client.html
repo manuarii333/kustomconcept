@@ -647,6 +647,81 @@ const TAG_CLASSES = { required:'required', optional:'optional', auto:'auto', kry
 
 let currentStep = 1;
 
+// Enrichit les étapes CAMPS_DATA avec la vraie config admin (localStorage)
+function getLiveSteps(id) {
+  // Lire les produits depuis hcs_camps_v1
+  let prods = null;
+  try {
+    const all = JSON.parse(localStorage.getItem('hcs_camps_v1') || '{}');
+    if (all[id] && Array.isArray(all[id].products) && all[id].products.length)
+      prods = all[id].products;
+  } catch(_) {}
+
+  // T-Shirt (1) et Casquette (2)
+  if (id === 1 || id === 2) {
+    let cfg = null;
+    try { cfg = JSON.parse(localStorage.getItem('hcs_tsh_cfg_' + id) || 'null'); } catch(_) {}
+    if (!cfg && !prods) return null; // rien en localStorage → statique
+
+    const base = JSON.parse(JSON.stringify(CAMPS_DATA[id].steps));
+    const isCap = id === 2;
+
+    // Étape 1 : produits réels
+    if (prods && prods.length) {
+      const names = prods.map(p => p.n).filter(Boolean);
+      base[0].desc = 'Sélectionner parmi ' + prods.length + ' produit' + (prods.length > 1 ? 's' : '') + ' : ' + names.join(', ') + '.';
+      base[0].required = [names.join(' · ')];
+      base[0].tags = ['required'];
+    }
+
+    if (cfg) {
+      const labels = cfg.labels || {};
+      // Labels personnalisés des étapes 2, 3
+      if (labels[1] && base[1]) { base[1].name = labels[1]; base[1].label = labels[1]; }
+      if (labels[2] && base[2]) { base[2].name = labels[2]; base[2].label = labels[2]; }
+
+      // Step 2 (logo) désactivée → retirer l'étape logo et renuméroter
+      if (cfg.showStep2 === false) {
+        base.splice(1, 1);
+        base.forEach((s, i) => { s.num = i + 1; });
+      } else {
+        // Détail étape logo
+        const logoFeatures = [];
+        if (cfg.showDtfLogos)   logoFeatures.push('Galerie DTF logos');
+        if (cfg.showCustomText) logoFeatures.push('Texte personnalisé');
+        if (logoFeatures.length && base[1]) {
+          base[1].optional = logoFeatures;
+          base[1].tags = ['required'].concat(logoFeatures.map(() => 'optional'));
+        }
+      }
+
+      // Sizes dans l'étape contact
+      if (cfg.sizes && cfg.sizes.length) {
+        const contactIdx = cfg.showStep2 !== false ? 2 : 1;
+        if (base[contactIdx]) {
+          const sz = cfg.sizes.join(' / ');
+          base[contactIdx].required = base[contactIdx].required.map(r =>
+            (r === 'Taille' || r === 'Couleur') ? r + ' (' + sz + ')' : r
+          );
+        }
+      }
+    }
+    return base;
+  }
+
+  // Génériques (3-8) : seulement enrichir step 1 avec les vrais produits
+  if (id >= 3 && prods && prods.length) {
+    const base = JSON.parse(JSON.stringify(CAMPS_DATA[id].steps));
+    const names = prods.map(p => p.n).filter(Boolean);
+    base[0].desc = 'Sélectionner parmi ' + prods.length + ' produit' + (prods.length > 1 ? 's' : '') + ' : ' + names.join(', ') + '.';
+    base[0].required = [names.join(' · ')];
+    base[0].tags = ['required'];
+    return base;
+  }
+
+  return null;
+}
+
 function colorCss(campData) {
   return `--camp-color:${campData.color};--camp-color-dark:${campData.colorDark}`;
 }
@@ -674,16 +749,25 @@ function renderCamp(id) {
   if (!d) return;
   const main = document.getElementById('main-area');
 
+  // ── Étapes : live depuis localStorage ou statiques
+  const liveSteps = getLiveSteps(id);
+  const steps = liveSteps || d.steps;
+  const isLive = !!liveSteps;
+
   // ── URLs publiées depuis Andromeda
   const _pubUrls = JSON.parse(localStorage.getItem('hcs_published_urls') || '{}');
   const _lpUrl   = _pubUrls[id] || null;
 
   // ── Accès rapide LP
+  const _liveBadge = isLive
+    ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:rgba(67,233,123,.12);color:#43e97b;border-radius:20px;font-size:.68rem;font-weight:700;border:1px solid rgba(67,233,123,.25)">⚡ Config live</span>`
+    : `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.35);border-radius:20px;font-size:.68rem;border:1px dashed rgba(255,255,255,.15)">📋 Config par défaut</span>`;
   const _quickAccess = `
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+      ${_liveBadge}
       ${_lpUrl
         ? `<a href="${_lpUrl}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:${d.color};color:#fff;border-radius:8px;font-size:.75rem;font-weight:700;text-decoration:none">🌐 Ouvrir la LP ↗</a>`
-        : `<span style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.35);border-radius:8px;font-size:.75rem;border:1px dashed rgba(255,255,255,.15)">🌐 LP non publiée — exporter depuis Andromeda</span>`
+        : `<span style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.35);border-radius:8px;font-size:.75rem;border:1px dashed rgba(255,255,255,.15)">🌐 LP non publiée</span>`
       }
       <a href="../apps/andromeda-campaign.html" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);border-radius:8px;font-size:.75rem;text-decoration:none;border:1px solid rgba(255,255,255,.1)">📣 Andromeda</a>
       <button onclick="openFlowPreview(${id})" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:${d.color};color:#fff;border-radius:8px;font-size:.75rem;font-weight:700;border:none;cursor:pointer">🎨 Tester le parcours client</button>
@@ -699,12 +783,12 @@ function renderCamp(id) {
       </div>
       <div class="camp-header-meta">
         <div class="camp-header-price" style="color:${d.color}">${d.priceRange}</div>
-        <div class="camp-header-steps-count">${d.steps.length} étapes tunnel</div>
+        <div class="camp-header-steps-count">${steps.length} étapes tunnel</div>
       </div>
     </div>`;
 
   // ── OPTION B — Flow opérateur
-  const flowCards = d.steps.map((s, i) => {
+  const flowCards = steps.map((s, i) => {
     const isActive = currentStep === s.num;
     const tagsList = s.required.map((t, ti) =>
       `<span class="flow-tag ${TAG_CLASSES[s.tags[ti]] || 'required'}">${TAG_CONFIG[s.tags[ti]] || s.tags[ti]} · ${t}</span>`
@@ -727,9 +811,9 @@ function renderCamp(id) {
   }).join('');
 
   // ── Métriques
-  const totalSteps = d.steps.length;
-  const convFinal = d.steps[totalSteps-1].funnel;
-  const avgTime = d.steps.reduce((a, s) => {
+  const totalSteps = steps.length;
+  const convFinal = steps[totalSteps-1].funnel;
+  const avgTime = steps.reduce((a, s) => {
     const n = parseFloat(s.time.replace('~','')) || 0;
     return a + (s.time.includes('min') ? Math.round(n * 60) : n);
   }, 0);
@@ -758,7 +842,7 @@ function renderCamp(id) {
     </div>`;
 
   // ── Funnel
-  const funnelRows = d.steps.map(s => `
+  const funnelRows = steps.map(s => `
     <div class="funnel-step">
       <div class="funnel-label">${s.icon} ${s.name}</div>
       <div class="funnel-bar-wrap">${renderFunnelBar(s.funnel, d.color)}</div>
@@ -787,18 +871,18 @@ function renderCamp(id) {
     </div>`).join('');
 
   // ── OPTION A — Preview modal client
-  const stepBar = d.steps.map((s, i) => {
+  const stepBar = steps.map((s, i) => {
     const n = i + 1;
     const dotClass = n < currentStep ? 'done' : n === currentStep ? 'active' : 'idle';
     const lblClass = n === currentStep ? 'active' : '';
-    const conn = i < d.steps.length - 1 ? `<div class="cs-conn${n < currentStep ? ' done' : ''}"></div>` : '';
+    const conn = i < steps.length - 1 ? `<div class="cs-conn${n < currentStep ? ' done' : ''}"></div>` : '';
     return `<div class="cs-item">
       <div class="cs-dot ${dotClass}" style="${dotClass==='done'?'background:'+d.color+';border-color:'+d.color:dotClass==='active'?'border-color:'+d.color+';color:'+d.color:''}">${n < currentStep ? '✓' : n}</div>
       <div class="cs-lbl ${lblClass}">${s.label}</div>
     </div>${conn}`;
   }).join('');
 
-  const illusCards = d.steps.map((s, i) => {
+  const illusCards = steps.map((s, i) => {
     const n = i + 1;
     const isActiveIllus = n === currentStep;
     return `<div class="cs-illus${isActiveIllus ? ' active-illus' : ''}" style="${isActiveIllus ? '--camp-color:'+d.color+';' : ''}cursor:pointer" onclick="setActiveStep(${id},${n})">
@@ -808,7 +892,7 @@ function renderCamp(id) {
     </div>`;
   }).join('');
 
-  const activeStepData = d.steps.find(s => s.num === currentStep) || d.steps[0];
+  const activeStepData = steps.find(s => s.num === currentStep) || steps[0];
 
   main.innerHTML = campHeader + _quickAccess + `
 
