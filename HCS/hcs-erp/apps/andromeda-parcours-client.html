@@ -1057,13 +1057,16 @@ function openFlowPreview(campId) {
   ol.id = '_flow-preview-ol';
   ol.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#0f0f1a;display:flex;flex-direction:column';
 
-  // LP dynamique : toutes les verticales utilisent andromeda-campaign.html?lpPreview=1
-  // VDec (0) conserve son propre mode ?vdec=1
-  const dynSrc = campId === 0
-    ? '../apps/andromeda-campaign.html?vdec=1&camp=0'
-    : `../apps/andromeda-campaign.html?lpPreview=1&camp=${campId}`;
+  /* Priorité : LP publiée → vrai parcours Workers */
+  const iframeSrc = lpUrl
+    ? lpUrl
+    : (campId === 0
+        ? '../apps/andromeda-campaign.html?vdec=1&camp=0'
+        : `../apps/andromeda-campaign.html?lpPreview=1&camp=${campId}`);
 
-  const badge = `<span style="font-size:.68rem;padding:2px 8px;background:rgba(67,233,123,.13);color:#43e97b;border-radius:20px;border:1px solid rgba(67,233,123,.28)">⚡ Config live</span>`;
+  const badge = lpUrl
+    ? `<span style="font-size:.68rem;padding:2px 8px;background:rgba(67,233,123,.13);color:#43e97b;border-radius:20px;border:1px solid rgba(67,233,123,.28)">🌐 LP publiée</span>`
+    : `<span style="font-size:.68rem;padding:2px 8px;background:rgba(255,200,60,.1);color:#ffd23f;border-radius:20px;border:1px solid rgba(255,200,60,.25)">⚡ Config locale (non publiée)</span>`;
 
   ol.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:#16162a;border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0">
@@ -1073,7 +1076,7 @@ function openFlowPreview(campId) {
       <a href="../apps/andromeda-campaign.html" target="_blank" style="padding:4px 10px;background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.08);border-radius:5px;font-size:.7rem;text-decoration:none">📣 Andromeda</a>
       <button onclick="document.getElementById('_flow-preview-ol').remove()" style="margin-left:auto;padding:5px 14px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);border-radius:6px;font-size:.75rem;cursor:pointer">✕ Fermer</button>
     </div>
-    <iframe src="${dynSrc}" style="flex:1;border:none;width:100%" allow="clipboard-read;clipboard-write;payment"></iframe>`;
+    <iframe src="${iframeSrc}" style="flex:1;border:none;width:100%" allow="clipboard-read;clipboard-write;payment"></iframe>`;
   document.body.appendChild(ol);
 }
 

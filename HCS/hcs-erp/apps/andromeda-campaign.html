@@ -2808,7 +2808,23 @@ async function _deleteLPBySlug(campId, parcoursSlug, url) {
 function previewLP(id) {
   const c = CAMPS[id];
   if (c.id === 0) { vdecOpenFlow(id, 0); return; }
-  // LP dynamique inline — pas de popup, pas de fichier statique
+  /* Priorité : LP publiée sur Workers → ouvrir dans overlay iframe */
+  const _pubUrl = (JSON.parse(localStorage.getItem('hcs_published_urls') || '{}'))[id] || null;
+  if (_pubUrl) {
+    const ol = document.createElement('div');
+    ol.id = '_lp-preview-ol';
+    ol.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#0f0f1a;display:flex;flex-direction:column';
+    ol.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:#16162a;border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0">
+        <span style="font-size:.8rem;font-weight:700;color:#43e97b">🌐 LP publiée — ${c.name}</span>
+        <a href="${_pubUrl}" target="_blank" rel="noopener" style="padding:4px 10px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);border-radius:5px;font-size:.7rem;text-decoration:none">Ouvrir dans un onglet ↗</a>
+        <button onclick="document.getElementById('_lp-preview-ol').remove()" style="margin-left:auto;padding:5px 14px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);border-radius:6px;font-size:.75rem;cursor:pointer">✕ Fermer</button>
+      </div>
+      <iframe src="${_pubUrl}" style="flex:1;border:none;width:100%" allow="payment"></iframe>`;
+    document.body.appendChild(ol);
+    return;
+  }
+  /* Fallback : pas encore publiée → génération preview depuis config locale */
   previewLPInline(id);
 }
 
