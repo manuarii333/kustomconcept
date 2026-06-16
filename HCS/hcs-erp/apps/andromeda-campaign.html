@@ -3027,6 +3027,9 @@ footer{text-align:center;padding:24px 16px;color:rgba(255,255,255,.4);font-size:
 .fl-studio-shirt{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;pointer-events:none}
 .fl-studio-logo{position:absolute;cursor:grab;user-select:none;touch-action:none;transform:translate(-50%,-50%);z-index:5}
 .fl-studio-logo img{width:100%;height:auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7));pointer-events:none;display:block}
+.fl-studio-text{position:absolute;cursor:grab;user-select:none;touch-action:none;z-index:6;padding:2px 6px;border:1.5px dashed rgba(79,172,254,.5);border-radius:4px;box-sizing:border-box}
+.fl-studio-text span{font-weight:700;text-shadow:0 1px 4px rgba(0,0,0,.9);display:block;pointer-events:none;line-height:1.2;white-space:nowrap}
+.fl-text-rot-handle{position:absolute;top:-13px;right:-9px;width:15px;height:15px;border-radius:50%;background:#4facfe;border:2px solid #fff;cursor:crosshair;z-index:7;box-shadow:0 1px 4px rgba(0,0,0,.6);touch-action:none}
 .fl-studio-resize{position:absolute;right:-7px;bottom:-7px;width:16px;height:16px;background:${primary};border-radius:50%;cursor:se-resize;border:2px solid white;z-index:6;box-shadow:0 2px 6px rgba(0,0,0,.5)}
 .fl-face-tabs{display:flex;gap:6px;justify-content:center;margin-bottom:10px}
 .fl-face-tab{padding:5px 14px;border-radius:20px;border:1px solid #2a2a4a;background:#16213e;color:#9090b0;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .15s}
@@ -3225,11 +3228,11 @@ const FACE_IMAGES = Array.from({length:${c.products.length}}, (_,i) => ({
   back:  document.getElementById('fi-'+i+'-b')?.getAttribute('src') || ''
 }));
 
-let flow = { step:1, prodIdx:0, face:'front', logoUrl:null, logoOrigUrl:null, logoName:'', logoDpi:0, logoPwDone:false, logoPwLoading:false, size: REQUIRE_SIZE ? '' : 'M', qty:1, logoPos:{xPct:50,yPct:47,wPct:44}, useText:false, customText:'', textColor:(TEXT_CFG&&TEXT_CFG.defaultColor)||'#ffffff', textFont:(TEXT_CFG&&TEXT_CFG.defaultFont)||'Arial, sans-serif', textPos:(TEXT_CFG&&TEXT_CFG.defaultPos)||'front-center', textSize:(TEXT_CFG&&TEXT_CFG.defaultSize)||32 };
+let flow = { step:1, prodIdx:0, face:'front', logoUrl:null, logoOrigUrl:null, logoName:'', logoDpi:0, logoPwDone:false, logoPwLoading:false, size: REQUIRE_SIZE ? '' : 'M', qty:1, logoPos:{xPct:50,yPct:47,wPct:44}, useText:false, customText:'', textColor:(TEXT_CFG&&TEXT_CFG.defaultColor)||'#ffffff', textFont:(TEXT_CFG&&TEXT_CFG.defaultFont)||'Arial, sans-serif', textPos:(TEXT_CFG&&TEXT_CFG.defaultPos)||'front-center', textSize:(TEXT_CFG&&TEXT_CFG.defaultSize)||32, textXPct:50, textYPct:30, textRot:0 };
 let ckContact = {}, ckDelivery = { type:'pickup' }, ckStep = 1;
 let _dh = {};
 let _mockupSnapshot = null;
-function _captureMockupSync(){try{var _cv=document.createElement('canvas');_cv.width=400;_cv.height=600;var _ctx=_cv.getContext('2d');var _si=document.getElementById('fl-shirt-img');if(_si&&_si.complete&&_si.naturalWidth)_ctx.drawImage(_si,0,0,400,600);var _ld=document.getElementById('fl-logo-drag');var _li=_ld&&_ld.querySelector('img');if(_li&&_li.complete&&_li.naturalWidth){var _p=flow.logoPos,_lw=(_p.wPct/100)*400,_lh=(_li.naturalHeight/_li.naturalWidth)*_lw;_ctx.drawImage(_li,(_p.xPct/100)*400-_lw/2,(_p.yPct/100)*600-_lh/2,_lw,_lh);}return _cv.toDataURL('image/jpeg',0.65);}catch(_e){return null;}}
+function _captureMockupSync(){try{var _cv=document.createElement('canvas');_cv.width=400;_cv.height=600;var _ctx=_cv.getContext('2d');var _si=document.getElementById('fl-shirt-img');if(_si&&_si.complete&&_si.naturalWidth)_ctx.drawImage(_si,0,0,400,600);var _ld=document.getElementById('fl-logo-drag');var _li=_ld&&_ld.querySelector('img');if(_li&&_li.complete&&_li.naturalWidth){var _p=flow.logoPos,_lw=(_p.wPct/100)*400,_lh=(_li.naturalHeight/_li.naturalWidth)*_lw;_ctx.drawImage(_li,(_p.xPct/100)*400-_lw/2,(_p.yPct/100)*600-_lh/2,_lw,_lh);}if(flow.useText&&flow.customText){_ctx.save();var _tx=(flow.textXPct||50)/100*400,_ty=(flow.textYPct||30)/100*600,_tpx=Math.max(9,Math.round((flow.textSize||32)*0.27));_ctx.translate(_tx,_ty);_ctx.rotate(((flow.textRot||0)*Math.PI)/180);_ctx.font='700 '+_tpx+'px '+(flow.textFont||'Arial, sans-serif');_ctx.fillStyle=flow.textColor||'#ffffff';_ctx.textAlign='center';_ctx.textBaseline='middle';_ctx.shadowColor='rgba(0,0,0,.9)';_ctx.shadowBlur=3;_ctx.fillText(flow.customText,0,0);_ctx.restore();}return _cv.toDataURL('image/jpeg',0.65);}catch(_e){return null;}}
 
 /* ── Auto-ouverture parcours au chargement (comportement par défaut) ──
    Attend la fin du fetch MySQL (config live) OU 800ms max, puis ouvre.
@@ -3257,7 +3260,7 @@ function _captureMockupSync(){try{var _cv=document.createElement('canvas');_cv.w
 // ── Flow ─────────────────────────────────────────────────
 function openFlow(i) {
   try {
-    flow = { step:1, prodIdx:i, face:'front', logoUrl:null, logoOrigUrl:null, logoName:'', logoDpi:0, logoPwDone:false, logoPwLoading:false, size: REQUIRE_SIZE ? '' : 'M', qty:1, logoPos:{xPct:50,yPct:47,wPct:44}, useText:false, customText:'', textColor:(TEXT_CFG&&TEXT_CFG.defaultColor)||'#ffffff', textFont:(TEXT_CFG&&TEXT_CFG.defaultFont)||'Arial, sans-serif', textPos:(TEXT_CFG&&TEXT_CFG.defaultPos)||'front-center', textSize:(TEXT_CFG&&TEXT_CFG.defaultSize)||32 };
+    flow = { step:1, prodIdx:i, face:'front', logoUrl:null, logoOrigUrl:null, logoName:'', logoDpi:0, logoPwDone:false, logoPwLoading:false, size: REQUIRE_SIZE ? '' : 'M', qty:1, logoPos:{xPct:50,yPct:47,wPct:44}, useText:false, customText:'', textColor:(TEXT_CFG&&TEXT_CFG.defaultColor)||'#ffffff', textFont:(TEXT_CFG&&TEXT_CFG.defaultFont)||'Arial, sans-serif', textPos:(TEXT_CFG&&TEXT_CFG.defaultPos)||'front-center', textSize:(TEXT_CFG&&TEXT_CFG.defaultSize)||32, textXPct:50, textYPct:30, textRot:0 };
     document.getElementById('fl-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
     flRender();
@@ -3348,8 +3351,15 @@ function flStep2() {
     ? '<div class="fl-studio-logo" id="fl-logo-drag" style="left:'+_pos.xPct+'%;top:'+_pos.yPct+'%;width:'+_pos.wPct+'%"><img src="'+flow.logoUrl+'" draggable="false"><div class="fl-studio-resize" id="fl-logo-resize"></div></div>'
     : '';
 
-  var _hintEl = !flow.logoUrl
+  var _hintEl = (!flow.logoUrl && !flow.useText)
     ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:3"><div style="text-align:center;background:rgba(0,0,0,.45);padding:8px 14px;border-radius:12px"><div style="font-size:1.4rem;margin-bottom:3px">🖼️</div><div style="font-size:.52rem;color:rgba(255,255,255,.55)">Logo ici</div></div></div>'
+    : '';
+  var _tpx2 = Math.max(9, Math.round((flow.textSize||32)*0.27));
+  var _textDragEl = flow.useText
+    ? '<div class="fl-studio-text" id="fl-text-drag" style="left:'+(flow.textXPct||50)+'%;top:'+(flow.textYPct||30)+'%;transform:translate(-50%,-50%) rotate('+(flow.textRot||0)+'deg)">'
+      +'<span id="fl-text-canvas-content" style="font-family:'+(flow.textFont||'Arial, sans-serif').replace(/'/g,'&#39;')+';font-size:'+_tpx2+'px;color:'+(flow.textColor||'#fff')+'">'+(flow.customText||'Texte…')+'</span>'
+      +'<div class="fl-text-rot-handle" id="fl-text-rot" title="Tourner"></div>'
+      +'</div>'
     : '';
 
   var _faceTabsEl = '';
@@ -3392,14 +3402,11 @@ function flStep2() {
   var _textHtml = '';
   if (SHOW_CUSTOM_TEXT) {
     var _tc=TEXT_CFG||{};
-    var _avPos=(_tc.positions||[]).filter(function(v){return POS_OPTS.find(function(o){return o.val===v;});});
     var _avFnt=(_tc.fonts||[]).filter(function(v){return FONT_OPTS.find(function(f){return f.val===v;});});
     var _sw=_tc.colors||['#ffffff','#000000','#ff3b3b','#4facfe','#f6d365','#43e97b'];
     var _cC=flow.textColor||_tc.defaultColor||'#ffffff';
     var _cF=flow.textFont||_tc.defaultFont||'Arial, sans-serif';
-    var _cP=flow.textPos||_tc.defaultPos||'front-center';
-    var _pPills=_avPos.map(function(v){var op=POS_OPTS.find(function(o){return o.val===v;});var s=_cP===v;return '<button onclick="setTextProp(\'textPos\',\''+v+'\')" style="padding:3px 9px;border-radius:20px;border:1.5px solid '+(s?'#4facfe':'rgba(255,255,255,.15)')+';background:'+(s?'rgba(79,172,254,.15)':'transparent')+';color:'+(s?'#4facfe':'rgba(255,255,255,.5)')+';font-size:.56rem;font-weight:'+(s?700:400)+';cursor:pointer">'+(op?op.label:v)+'</button>';}).join('');
-    var _fPills=_avFnt.map(function(v){var op=FONT_OPTS.find(function(f){return f.val===v;});var s=_cF===v;return '<button onclick="setTextProp(\'textFont\',\''+v.replace(/\\\\/g,'\\\\\\\\').replace(/'/g,"\\'")+'\' )" style="padding:3px 9px;border-radius:20px;border:1.5px solid '+(s?'#a78bfa':'rgba(255,255,255,.15)')+';background:'+(s?'rgba(167,139,250,.15)':'transparent')+';color:'+(s?'#a78bfa':'rgba(255,255,255,.55)')+';font-family:'+v+';font-size:.6rem;cursor:pointer">'+(op?op.label:v)+'</button>';}).join('');
+    var _fPills=_avFnt.map(function(v){var op=FONT_OPTS.find(function(f){return f.val===v;});var s=_cF===v;return '<button onclick="setTextProp(\'textFont\',\''+v.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\' )" style="padding:3px 9px;border-radius:20px;border:1.5px solid '+(s?'#a78bfa':'rgba(255,255,255,.15)')+';background:'+(s?'rgba(167,139,250,.15)':'transparent')+';color:'+(s?'#a78bfa':'rgba(255,255,255,.55)')+';font-family:'+v+';font-size:.6rem;cursor:pointer">'+(op?op.label:v)+'</button>';}).join('');
     var _cDots=_sw.map(function(c){var s=_cC===c;return '<div onclick="setTextProp(\'textColor\',\''+c+'\')" style="width:20px;height:20px;border-radius:50%;background:'+c+';cursor:pointer;border:2px solid '+(s?'#fff':'rgba(255,255,255,.2)')+';flex-shrink:0"></div>';}).join('');
     _textHtml='<div style="border:1px solid rgba(79,172,254,.28);border-radius:10px;padding:8px;background:rgba(79,172,254,.03)">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">'
@@ -3407,8 +3414,11 @@ function flStep2() {
       +'<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:.58rem;color:rgba(255,255,255,.6)"><input type="checkbox" '+(flow.useText?'checked':'')+' onchange="setTextProp(\'useText\',this.checked)" style="accent-color:#4facfe"> Activer</label>'
       +'</div>'
       +'<div id="fl-text-fields" style="display:'+(flow.useText?'flex':'none')+';flex-direction:column;gap:6px">'
-      +'<input id="fl-text-input" type="text" maxlength="40" placeholder="Votre texte…" value="'+(flow.customText||'').replace(/"/g,'&quot;')+'" oninput="flow.customText=this.value" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(79,172,254,.35);background:rgba(0,0,0,.3);color:#fff;font-size:.74rem;box-sizing:border-box;outline:none">'
-      +'<div><div style="font-size:.52rem;color:rgba(255,255,255,.38);margin-bottom:3px">Position</div><div style="display:flex;gap:4px;flex-wrap:wrap">'+_pPills+'</div></div>'
+      +'<input id="fl-text-input" type="text" maxlength="40" placeholder="Votre texte…" value="'+(flow.customText||'').replace(/"/g,'&quot;')+'" oninput="flow.customText=this.value;var _tc2=document.getElementById(\'fl-text-canvas-content\');if(_tc2)_tc2.textContent=this.value||\'Texte…\';" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(79,172,254,.35);background:rgba(0,0,0,.3);color:#fff;font-size:.74rem;box-sizing:border-box;outline:none">'
+      +(flow.useText?'<div style="font-size:.5rem;color:rgba(79,172,254,.55);text-align:center">✋ Glisse le texte sur le t-shirt · 🔵 Poignée bleue pour tourner</div>':'')
+      +'<div><div style="display:flex;justify-content:space-between;font-size:.52rem;color:rgba(255,255,255,.38);margin-bottom:3px"><span>🔄 Rotation</span><span id="fl-rot-val">'+(flow.textRot||0)+'°</span></div>'
+      +'<input type="range" class="fl-sl" id="fl-rot-sl" min="-180" max="180" value="'+(flow.textRot||0)+'" oninput="flow.textRot=+this.value;var _rv=document.getElementById(\'fl-rot-val\');if(_rv)_rv.textContent=this.value+\'°\';var _td=document.getElementById(\'fl-text-drag\');if(_td)_td.style.transform=\'translate(-50%,-50%) rotate(\'+this.value+\'deg)\'">'
+      +'</div>'
       +'<div><div style="font-size:.52rem;color:rgba(255,255,255,.38);margin-bottom:3px">Police</div><div style="display:flex;gap:4px;flex-wrap:wrap">'+_fPills+'</div></div>'
       +'<div><div style="font-size:.52rem;color:rgba(255,255,255,.38);margin-bottom:3px">Couleur</div><div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">'+_cDots+'<input type="color" value="'+_cC+'" oninput="setTextProp(\'textColor\',this.value)" style="width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.2);padding:0;cursor:pointer;background:transparent;flex-shrink:0"></div></div>'
       +'</div></div>';
@@ -3416,7 +3426,7 @@ function flStep2() {
 
   return '<div style="display:flex;flex-direction:column;gap:10px">'
     +'<div style="display:flex;gap:10px;align-items:flex-start">'
-      +'<div id="fl-studio-wrap" class="fl-studio-wrap" style="flex:0 0 auto;width:43%;margin:0">'+_shirtEl+_logoEl+_hintEl+_faceTabsEl+'</div>'
+      +'<div id="fl-studio-wrap" class="fl-studio-wrap" style="flex:0 0 auto;width:43%;margin:0">'+_shirtEl+_logoEl+_textDragEl+_hintEl+_faceTabsEl+'</div>'
       +'<div style="flex:1;display:flex;flex-direction:column;gap:7px;min-width:0;padding-top:2px">'
         +'<label style="display:block;text-align:center;padding:9px 6px;background:linear-gradient(135deg,#4facfe,#00f2fe);border-radius:10px;font-weight:800;font-size:.72rem;color:#0f0f1a;cursor:pointer">📁 '+(flow.logoUrl?'Changer':'Uploader')+'<input type="file" accept="image/*,.svg" style="display:none" onchange="logoLoad(event)"></label>'
         +_dpiBadge+_pwSt+_sizeEl
@@ -3437,6 +3447,13 @@ function setTextProp(key, val) {
   var _ti=document.getElementById('fl-text-input');
   if(_ti) flow.customText=_ti.value;
   flow[key]=val;
+  var _tc=document.getElementById('fl-text-canvas-content');
+  var _td=document.getElementById('fl-text-drag');
+  if(_tc&&_td&&key!=='useText') {
+    if(key==='textColor'){_tc.style.color=val;return;}
+    if(key==='textFont'){_tc.style.fontFamily=val;return;}
+    if(key==='textSize'){_tc.style.fontSize=Math.max(8,Math.round(val*0.27))+'px';return;}
+  }
   flRender();
 }
 function logoLoad(e) {
@@ -3529,30 +3546,58 @@ function setFace(face) {
 function initDrag() {
   if (_dh.mm) { document.removeEventListener('mousemove',_dh.mm); document.removeEventListener('mouseup',_dh.mu); document.removeEventListener('touchmove',_dh.tm); document.removeEventListener('touchend',_dh.tu); }
   const wrap = document.getElementById('fl-studio-wrap');
-  const drag = document.getElementById('fl-logo-drag');
-  const rsz  = document.getElementById('fl-logo-resize');
-  if (!wrap || !drag) return;
+  if (!wrap) return;
+  const drag    = document.getElementById('fl-logo-drag');
+  const rsz     = document.getElementById('fl-logo-resize');
+  const txtDrag = document.getElementById('fl-text-drag');
+  const txtRot  = document.getElementById('fl-text-rot');
   const pos = flow.logoPos;
-  let state = null;
-  const onMove = (cx,cy) => {
+  let state = null; // { who:'logo'|'text', t:'move'|'resize'|'rotate', sx,sy,ox,oy,ow }
+
+  const onMove = (cx, cy) => {
     if (!state) return;
     const r = wrap.getBoundingClientRect();
-    if (state.t === 'move') {
-      pos.xPct = Math.max(5,Math.min(95, state.ox+(cx-state.sx)/r.width*100));
-      pos.yPct = Math.max(5,Math.min(95, state.oy+(cy-state.sy)/r.height*100));
-      drag.style.left = pos.xPct+'%'; drag.style.top = pos.yPct+'%';
-    } else {
-      pos.wPct = Math.max(10,Math.min(80, state.ow+(cx-state.sx)/r.width*100*2));
-      drag.style.width = pos.wPct+'%';
-      const sl=document.getElementById('fl-size-sl'), vl=document.getElementById('fl-size-val');
-      if(sl) sl.value=Math.round(pos.wPct); if(vl) vl.textContent=Math.round(pos.wPct)+'%';
+    if (state.who === 'logo') {
+      if (state.t === 'move') {
+        pos.xPct = Math.max(5,Math.min(95, state.ox+(cx-state.sx)/r.width*100));
+        pos.yPct = Math.max(5,Math.min(95, state.oy+(cy-state.sy)/r.height*100));
+        drag.style.left = pos.xPct+'%'; drag.style.top = pos.yPct+'%';
+      } else {
+        pos.wPct = Math.max(10,Math.min(80, state.ow+(cx-state.sx)/r.width*100*2));
+        drag.style.width = pos.wPct+'%';
+        const sl=document.getElementById('fl-size-sl'), vl=document.getElementById('fl-size-val');
+        if(sl) sl.value=Math.round(pos.wPct); if(vl) vl.textContent=Math.round(pos.wPct)+'%';
+      }
+    } else if (state.who === 'text' && txtDrag) {
+      if (state.t === 'move') {
+        flow.textXPct = Math.max(5,Math.min(95, state.ox+(cx-state.sx)/r.width*100));
+        flow.textYPct = Math.max(5,Math.min(95, state.oy+(cy-state.sy)/r.height*100));
+        txtDrag.style.left = flow.textXPct+'%'; txtDrag.style.top = flow.textYPct+'%';
+      } else {
+        const tr = txtDrag.getBoundingClientRect();
+        const angle = Math.atan2(cy-(tr.top+tr.height/2), cx-(tr.left+tr.width/2))*180/Math.PI+90;
+        flow.textRot = Math.round(angle);
+        txtDrag.style.transform = 'translate(-50%,-50%) rotate('+flow.textRot+'deg)';
+        const sl=document.getElementById('fl-rot-sl'), vl=document.getElementById('fl-rot-val');
+        if(sl) sl.value=flow.textRot; if(vl) vl.textContent=flow.textRot+'°';
+      }
     }
   };
-  const onUp = () => { state=null; if(drag) drag.style.cursor='grab'; };
-  drag.addEventListener('mousedown', e => { if(e.target===rsz) return; state={t:'move',sx:e.clientX,sy:e.clientY,ox:pos.xPct,oy:pos.yPct}; drag.style.cursor='grabbing'; e.preventDefault(); });
-  if(rsz) rsz.addEventListener('mousedown', e => { state={t:'resize',sx:e.clientX,sy:e.clientY,ow:pos.wPct}; e.stopPropagation(); e.preventDefault(); });
-  drag.addEventListener('touchstart', e => { if(e.target===rsz) return; const t=e.touches[0]; state={t:'move',sx:t.clientX,sy:t.clientY,ox:pos.xPct,oy:pos.yPct}; e.preventDefault(); },{passive:false});
-  if(rsz) rsz.addEventListener('touchstart', e => { const t=e.touches[0]; state={t:'resize',sx:t.clientX,sy:t.clientY,ow:pos.wPct}; e.stopPropagation(); e.preventDefault(); },{passive:false});
+  const onUp = () => { state=null; if(drag) drag.style.cursor='grab'; if(txtDrag) txtDrag.style.cursor='grab'; };
+
+  if (drag) {
+    drag.addEventListener('mousedown', e => { if(e.target===rsz) return; state={who:'logo',t:'move',sx:e.clientX,sy:e.clientY,ox:pos.xPct,oy:pos.yPct}; drag.style.cursor='grabbing'; e.preventDefault(); });
+    if(rsz) rsz.addEventListener('mousedown', e => { state={who:'logo',t:'resize',sx:e.clientX,sy:e.clientY,ow:pos.wPct}; e.stopPropagation(); e.preventDefault(); });
+    drag.addEventListener('touchstart', e => { if(e.target===rsz) return; const t=e.touches[0]; state={who:'logo',t:'move',sx:t.clientX,sy:t.clientY,ox:pos.xPct,oy:pos.yPct}; e.preventDefault(); },{passive:false});
+    if(rsz) rsz.addEventListener('touchstart', e => { const t=e.touches[0]; state={who:'logo',t:'resize',sx:t.clientX,sy:t.clientY,ow:pos.wPct}; e.stopPropagation(); e.preventDefault(); },{passive:false});
+  }
+  if (txtDrag) {
+    txtDrag.addEventListener('mousedown', e => { if(e.target===txtRot) return; state={who:'text',t:'move',sx:e.clientX,sy:e.clientY,ox:flow.textXPct||50,oy:flow.textYPct||30}; txtDrag.style.cursor='grabbing'; e.preventDefault(); });
+    if(txtRot) txtRot.addEventListener('mousedown', e => { state={who:'text',t:'rotate'}; e.stopPropagation(); e.preventDefault(); });
+    txtDrag.addEventListener('touchstart', e => { if(e.target===txtRot) return; const t=e.touches[0]; state={who:'text',t:'move',sx:t.clientX,sy:t.clientY,ox:flow.textXPct||50,oy:flow.textYPct||30}; e.preventDefault(); },{passive:false});
+    if(txtRot) txtRot.addEventListener('touchstart', e => { state={who:'text',t:'rotate'}; e.stopPropagation(); e.preventDefault(); },{passive:false});
+  }
+
   _dh.mm = e => onMove(e.clientX,e.clientY);
   _dh.mu = onUp;
   _dh.tm = e => { if(!state) return; onMove(e.touches[0].clientX,e.touches[0].clientY); e.preventDefault(); };
@@ -3777,7 +3822,9 @@ async function ckPayment() {
           logoPlacement:'x='+Math.round(flow.logoPos.xPct)+'%,y='+Math.round(flow.logoPos.yPct)+'%,w='+Math.round(flow.logoPos.wPct)+'%',
           couleur:p.couleur||'',
           customText: flow.useText ? flow.customText : '',
-          textPos: flow.useText ? flow.textPos : '',
+          textXPct: flow.useText ? Math.round(flow.textXPct||50) : null,
+          textYPct: flow.useText ? Math.round(flow.textYPct||30) : null,
+          textRot: flow.useText ? (flow.textRot||0) : null,
           face:flow.face||'front',
           textFont:flow.useText?flow.textFont||'':'',
           textColor:flow.useText?flow.textColor||'':'',
@@ -3785,11 +3832,11 @@ async function ckPayment() {
           mockupDataUrl:_mockupSnapshot||'',
           client:{name:ckContact.name,email:ckContact.email,phone:ckContact.phone||''},
           delivery:{type:ckDelivery.type,address:ckDelivery.address||'',island:ckDelivery.island||'',shippingFee:ckDelivery.shippingFee||0,pickupDate:ckDelivery.pickupDate||'',slot:ckDelivery.slot||'',deliveryDelay:3},
-          note: [ckContact.note||'', 'Taille:'+flow.size, p.couleur?'Couleur:'+p.couleur:'', 'Logo:'+flow.logoName, 'Face:'+(flow.face||'front'), 'Placement:x='+Math.round(flow.logoPos.xPct)+'%,y='+Math.round(flow.logoPos.yPct)+'%,w='+Math.round(flow.logoPos.wPct)+'%', flow.useText&&flow.customText?'Texte:'+flow.customText+' ['+flow.textPos+']':'', flow.useText&&flow.textFont?'Police:'+flow.textFont:'', flow.useText&&flow.textColor?'CouleurTexte:'+flow.textColor:'', flow.useText&&flow.textSize?'TailleTexte:'+flow.textSize+'px':''].filter(Boolean).join(' | ')
+          note: [ckContact.note||'', 'Taille:'+flow.size, p.couleur?'Couleur:'+p.couleur:'', flow.logoName?'Logo:'+flow.logoName:'', 'Face:'+(flow.face||'front'), flow.logoName?'Placement:x='+Math.round(flow.logoPos.xPct)+'%,y='+Math.round(flow.logoPos.yPct)+'%,w='+Math.round(flow.logoPos.wPct)+'%':'', flow.useText&&flow.customText?'Texte:'+flow.customText+' rot:'+(flow.textRot||0)+'° x='+Math.round(flow.textXPct||50)+'% y='+Math.round(flow.textYPct||30)+'%':'', flow.useText&&flow.textFont?'Police:'+flow.textFont:'', flow.useText&&flow.textColor?'CouleurTexte:'+flow.textColor:'', flow.useText&&flow.textSize?'TailleTexte:'+flow.textSize+'px':''].filter(Boolean).join(' | ')
         })
       }).catch(function(_e){console.error('[HCS] Ordre non sauvegardé:',_e);var _ok=document.getElementById('pz-ok');if(_ok&&!document.getElementById('_ord-warn')){var _w=document.createElement('p');_w.id='_ord-warn';_w.style.cssText='color:#f6d365;font-size:.7rem;margin-top:10px;padding:8px;background:rgba(246,211,101,.1);border-radius:6px;border:1px solid rgba(246,211,101,.3)';_w.textContent='⚠️ Réf. '+orderId+' — Contactez HCS si vous ne recevez pas de confirmation.';_ok.appendChild(_w);}});
       /* hcs_orders — save MySQL direct pour fiche de production */
-      fetch('https://highcoffeeshirts.com/erp/api/hcs_orders',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json','x-api-key':'hcs-erp-2026'},body:JSON.stringify({order_id:orderId,vertical:'tshirt',status:'payé',total_xpf:total,campaign_name:CAMP_NAME,lp_slug:LP_SLUG,product_icon:'👕',product_name:p.n,contact:{name:ckContact.name,email:ckContact.email,phone:ckContact.phone||''},delivery:ckDelivery,design_data:{size:flow.size,qty:flow.qty,product_color:p.couleur||'',face:flow.face||'front',logo_name:flow.logoName||'',logo_pos:flow.logoPos||null,use_text:flow.useText||false,custom_text:flow.useText?flow.customText:'',text_font:flow.useText?flow.textFont:'',text_color:flow.useText?flow.textColor:'',text_pos:flow.useText?flow.textPos:'',text_size:flow.useText?flow.textSize||0:0},snapshots:{face:_mockupSnapshot||''},mode:WORKER_MODE,created_at:new Date().toISOString()})}).catch(function(){});
+      fetch('https://highcoffeeshirts.com/erp/api/hcs_orders',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json','x-api-key':'hcs-erp-2026'},body:JSON.stringify({order_id:orderId,vertical:'tshirt',status:'payé',total_xpf:total,campaign_name:CAMP_NAME,lp_slug:LP_SLUG,product_icon:'👕',product_name:p.n,contact:{name:ckContact.name,email:ckContact.email,phone:ckContact.phone||''},delivery:ckDelivery,design_data:{size:flow.size,qty:flow.qty,product_color:p.couleur||'',face:flow.face||'front',logo_name:flow.logoName||'',logo_pos:flow.logoUrl?flow.logoPos:null,use_text:flow.useText||false,custom_text:flow.useText?flow.customText:'',text_font:flow.useText?flow.textFont:'',text_color:flow.useText?flow.textColor:'',text_x_pct:flow.useText?Math.round(flow.textXPct||50):null,text_y_pct:flow.useText?Math.round(flow.textYPct||30):null,text_rot:flow.useText?flow.textRot||0:null,text_size:flow.useText?flow.textSize||0:0},snapshots:{face:_mockupSnapshot||''},mode:WORKER_MODE,created_at:new Date().toISOString()})}).catch(function(){});
     }
     KR.onSubmit(d=>{if(['PAID','RUNNING','AUTHORISED'].includes(d?.clientAnswer?.orderStatus)){showSuccess();}return false;});
     const krForm=document.querySelector('.kr-embedded');
