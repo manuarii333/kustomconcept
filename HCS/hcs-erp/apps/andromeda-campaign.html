@@ -3167,8 +3167,8 @@ function _buildProdsHTML() {
   fetch('https://highcoffeeshirts.com/erp/api/lp_config/' + LP_SLUG, {cache:'no-store'})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(cfg) {
-      if (!cfg || !cfg.products || !cfg.products.length) return;
-      PRODUCTS = cfg.products;
+      if (!cfg) return;
+      /* Toujours mettre à jour le parcours depuis MySQL */
       if (cfg.parcours) {
         if (cfg.parcours.showStep2   !== undefined) SHOW_STEP2   = !!cfg.parcours.showStep2;
         if (cfg.parcours.requireSize !== undefined) REQUIRE_SIZE = !!cfg.parcours.requireSize;
@@ -3181,8 +3181,12 @@ function _buildProdsHTML() {
           if (cfg.parcours.labels[3]) LBL3 = cfg.parcours.labels[3];
         }
       }
-      var grid = document.getElementById('prods-grid');
-      if (grid) grid.innerHTML = _buildProdsHTML();
+      /* Mettre à jour les produits si fournis */
+      if (Array.isArray(cfg.products) && cfg.products.length) {
+        PRODUCTS = cfg.products;
+        var grid = document.getElementById('prods-grid');
+        if (grid) grid.innerHTML = _buildProdsHTML();
+      }
     })
     .catch(function(){});
 })();
@@ -10225,6 +10229,7 @@ function _quickSave(msg) {
   clearTimeout(el._t);
   el._t = setTimeout(() => { el.style.opacity = '0'; }, 1400);
 }
+const _tshPushDebounce = {};
 function tshSetParcours(campId, key, val) {
   const conf = tshGetParcours(campId);
   if (key === 'label1') conf.labels[1] = val;
@@ -10232,6 +10237,8 @@ function tshSetParcours(campId, key, val) {
   else if (key === 'label3') conf.labels[3] = val;
   else conf[key] = val;
   _lsSet('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave();
+  clearTimeout(_tshPushDebounce[campId]);
+  _tshPushDebounce[campId] = setTimeout(() => pushLpConfig(campId), 1500);
 }
 function tshToggleSize(campId, size, checked) {
   const conf = tshGetParcours(campId);
@@ -10239,6 +10246,8 @@ function tshToggleSize(campId, size, checked) {
   if (checked) { if (!conf.sizes.includes(size)) conf.sizes.push(size); conf.sizes.sort((a,b)=>order.indexOf(a)-order.indexOf(b)); }
   else conf.sizes = conf.sizes.filter(s => s !== size);
   _lsSet('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave('✓ Taille mise à jour');
+  clearTimeout(_tshPushDebounce[campId]);
+  _tshPushDebounce[campId] = setTimeout(() => pushLpConfig(campId), 1500);
 }
 function tshResetParcours(campId) {
   if (!confirm('Réinitialiser toute la config parcours de cette verticale ?')) return;
@@ -10290,11 +10299,14 @@ function getParcoursCfg(campId) {
   }
   return parcoursCfg[campId];
 }
+const _genPushDebounce = {};
 function setParcoursCfg(campId, key, val) {
   const cfg = getParcoursCfg(campId);
   cfg[key] = val;
   _lsSet('hcs_gen_cfg_' + campId, JSON.stringify(cfg));
   _quickSave();
+  clearTimeout(_genPushDebounce[campId]);
+  _genPushDebounce[campId] = setTimeout(() => pushLpConfig(campId), 1500);
 }
 function toggleParcoursCfg(campId, key, val, checked) {
   const cfg = getParcoursCfg(campId);

@@ -34,6 +34,7 @@ class LpConfigController extends CRUDController {
 
     /* ── GET public par slug (sans auth) ─────────────────────── */
     public function getBySlug(string $slug): array {
+        $this->createTable(); /* auto-crée la table si elle n'existe pas encore */
         $stmt = $this->db->prepare(
             "SELECT id, slug, camp_id, camp_type, config_json, headline, updated_at
                FROM `lp_config` WHERE slug = ?"
