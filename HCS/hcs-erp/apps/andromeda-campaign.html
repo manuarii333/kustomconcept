@@ -4819,8 +4819,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .prods-section{padding:40px 20px;max-width:900px;margin:0 auto}
 .prods-section h2{font-size:1.1rem;font-weight:800;margin-bottom:20px;text-align:center}
 .prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px}
-.prod-card{background:#1a0e07;border:2px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .15s}
-.prod-card.selected,.prod-card:hover{border-color:${primary};transform:translateY(-3px)}
+.prod-card{background:#1a0e07;border:2px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .15s,box-shadow .15s}
+.prod-card:hover{border-color:${primary};transform:translateY(-3px);box-shadow:0 8px 24px ${primary}22}
 .prod-img{aspect-ratio:4/3;background:#2a1508;display:flex;align-items:center;justify-content:center;font-size:3rem}
 .prod-img img{width:100%;height:100%;object-fit:contain}
 .prod-info{padding:12px 14px}
@@ -5010,11 +5010,12 @@ ${_normalizePhoneBlock()}
     var img = (CAMP_ID===3 && FACE_IMGS[i] && FACE_IMGS[i].front)
       ? '<img src="'+FACE_IMGS[i].front+'" alt="">'
       : '<span style="font-size:2.5rem">'+(p.e||'📦')+'</span>';
-    return '<div class="prod-card" id="pc-'+i+'" onclick="selectProd('+i+')">'
+    return '<div class="prod-card" id="pc-'+i+'" onclick="openFlow('+i+')">'
       +'<div class="prod-img">'+img+'</div>'
       +'<div class="prod-info"><div class="prod-name">'+p.n+'</div>'
       +'<div class="prod-price">'+p.p+'</div>'
       +(p.d?'<div class="prod-desc">'+p.d+'</div>':'')
+      +'<div style="margin-top:6px;font-size:.65rem;color:rgba(255,255,255,.35);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Commander →</div>'
       +'</div></div>';
   }).join('');
   selectProd(0);
