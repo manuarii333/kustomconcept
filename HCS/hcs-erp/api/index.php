@@ -87,6 +87,19 @@ if ($_ccSeg === 'compte_client') {
     exit;
 }
 
+/* GET /api/lp_config/{slug} — LP dynamique : config publique sans auth */
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $_lcPath = trim(preg_replace('#^.*/api/?#', '', strtok($_SERVER['REQUEST_URI'], '?')), '/');
+    $_lcParts = explode('/', $_lcPath);
+    if ($_lcParts[0] === 'lp_config' && isset($_lcParts[1]) && $_lcParts[1] !== '') {
+        require_once __DIR__ . '/controllers/lp_config.php';
+        $pdo = Database::getInstance()->getPdo();
+        $ctrl = new LpConfigController($pdo);
+        echo json_encode($ctrl->getBySlug($_lcParts[1]));
+        exit;
+    }
+}
+
 /* ----------------------------------------------------------------
    2. VÉRIFICATION CLÉ API
    Accepte : clé statique (hcs-erp-2026) OU token HMAC valide
@@ -197,6 +210,8 @@ $allowedTables = [
     'triage_messages',
     /* Commandes unifiées toutes verticales */
     'hcs_orders',
+    /* Config LP dynamique */
+    'lp_config',
 ];
 
 if (!$resource || !in_array($resource, $allowedTables, true)) {

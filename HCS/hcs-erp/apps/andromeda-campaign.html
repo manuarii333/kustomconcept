@@ -2511,6 +2511,9 @@ async function publishLP(id) {
     return;
   }
 
+  /* Étape 2b — Sauvegarder config en MySQL (LP dynamique) */
+  await pushLpConfig(id);
+
   /* Étape 3 — Upload Worker */
   showPublishProgress(3, 4, '☁️ Upload vers Cloudflare…');
 
@@ -3127,13 +3130,17 @@ ${_lpPayCss(primary)}
 </div>
 
 <script>
-const PRODUCTS     = ${prodsJson};
-const SIZES        = ${sizesJson};
-const SHOW_BACK    = ${showBack};
-const SHOW_STEP2   = ${pcfg.showStep2};
-const REQUIRE_SIZE = ${pcfg.requireSize};
+/* ── Config baked (fallback si API hors-ligne) ── */
+var PRODUCTS     = ${prodsJson};
+var SIZES        = ${sizesJson};
+var SHOW_BACK    = ${showBack};
+var SHOW_STEP2   = ${pcfg.showStep2};
+var REQUIRE_SIZE = ${pcfg.requireSize};
+var SHOW_DTF_LOGOS   = ${!!pcfg.showDtfLogos};
+var SHOW_CUSTOM_TEXT = ${!!pcfg.showCustomText};
+var LBL1='${lbl1.replace(/'/g,"\\'")}', LBL2='${lbl2.replace(/'/g,"\\'")}', LBL3='${lbl3.replace(/'/g,"\\'")}';
 const WORKER_URL   = '${workerUrl}';
-const WORKER_SECRET= ''; /* secret géré côté Worker via Origin auth */
+const WORKER_SECRET= '';
 const LP_TOKEN     = '${lpToken}';
 const WORKER_MODE  = '${workerMode}';
 const ACCENT       = '${primary}';
@@ -3141,14 +3148,44 @@ const SHIP_RATES   = {tahiti:1800,moorea:1500,huahine:2500,'bora-bora':2500,raia
 const CAMP_NAME    = '${c.name.replace(/'/g,"\\'")}';
 const EMOJI        = '${emoji}';
 const PICWISH_URL  = 'https://hcs-proxy.highcoffeeshirt.workers.dev/api/picwish';
-const LBL1='${lbl1.replace(/'/g,"\\'")}', LBL2='${lbl2.replace(/'/g,"\\'")}', LBL3='${lbl3.replace(/'/g,"\\'")}';
 const LP_SLUG='${lpSlug}';
-const SHOW_DTF_LOGOS  =${!!pcfg.showDtfLogos};
-const SHOW_CUSTOM_TEXT=${!!pcfg.showCustomText};
-const TEXT_CFG=${textCfgJson};
-const DTF_LOGOS=${dtfLogosJson};
+var TEXT_CFG=${textCfgJson};
+var DTF_LOGOS=${dtfLogosJson};
 const POS_OPTS =${posOptsJson};
 const FONT_OPTS=${fontOptsJson};
+
+/* ── LP Dynamique : fetch config live depuis MySQL ── */
+function _buildProdsHTML() {
+  return PRODUCTS.map(function(p,i) {
+    var fi = FACE_IMAGES[i] ? FACE_IMAGES[i].front : '';
+    var imgH = fi ? '<img id="lp-dyn-pi-'+i+'" src="'+fi+'">' : '<span>'+(p.e||'👕')+'</span>';
+    var badge = p.couleur ? '<div style="font-size:.62rem;color:#9090b0;margin-top:3px">'+(p.couleurHex?'<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+p.couleurHex+';margin-right:3px"></span>':'')+p.couleur+'</div>' : '';
+    return '<div class="prod" onclick="openFlow('+i+')"><div class="prod-img">'+imgH+'</div><div class="prod-info"><div class="prod-name">'+p.n+'</div>'+badge+'<div class="prod-price">'+p.p+'</div></div></div>';
+  }).join('');
+}
+(function() {
+  fetch('https://highcoffeeshirts.com/erp/api/lp_config/' + LP_SLUG, {cache:'no-store'})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(cfg) {
+      if (!cfg || !cfg.products || !cfg.products.length) return;
+      PRODUCTS = cfg.products;
+      if (cfg.parcours) {
+        if (cfg.parcours.showStep2   !== undefined) SHOW_STEP2   = !!cfg.parcours.showStep2;
+        if (cfg.parcours.requireSize !== undefined) REQUIRE_SIZE = !!cfg.parcours.requireSize;
+        if (cfg.parcours.showDtfLogos!== undefined) SHOW_DTF_LOGOS = !!cfg.parcours.showDtfLogos;
+        if (cfg.parcours.showCustomText!==undefined) SHOW_CUSTOM_TEXT=!!cfg.parcours.showCustomText;
+        if (Array.isArray(cfg.parcours.sizes) && cfg.parcours.sizes.length) SIZES = cfg.parcours.sizes;
+        if (cfg.parcours.labels) {
+          if (cfg.parcours.labels[1]) LBL1 = cfg.parcours.labels[1];
+          if (cfg.parcours.labels[2]) LBL2 = cfg.parcours.labels[2];
+          if (cfg.parcours.labels[3]) LBL3 = cfg.parcours.labels[3];
+        }
+      }
+      var grid = document.getElementById('prods-grid');
+      if (grid) grid.innerHTML = _buildProdsHTML();
+    })
+    .catch(function(){});
+})();
 
 // Charge les images depuis les éléments <img> cachés dans le HTML (pas de gros JSON dans le script)
 const FACE_IMAGES = Array.from({length:${c.products.length}}, (_,i) => ({
@@ -8084,6 +8121,7 @@ function saveCamps(id) {
       domain:    c.domain    || '',
       linktitle: c.linktitle || '',
       products:  c.products.map(p => ({
+        e: p.e || '',
         n: p.n, p: p.p,
         couleur:    p.couleur    || '',
         couleurHex: p.couleurHex || '',
@@ -8122,14 +8160,17 @@ function restoreCamps() {
       if (data.cta       !== undefined) c.cta       = data.cta;
       if (data.domain    !== undefined) c.domain    = data.domain;
       if (data.linktitle !== undefined) c.linktitle = data.linktitle;
-      if (Array.isArray(data.products)) {
-        data.products.forEach((p, i) => {
-          if (!c.products[i]) return;
-          if (p.n !== undefined) c.products[i].n = p.n;
-          if (p.p !== undefined) c.products[i].p = p.p;
-          if (p.couleur    !== undefined) c.products[i].couleur    = p.couleur;
-          if (p.couleurHex !== undefined) c.products[i].couleurHex = p.couleurHex;
-          if (p.dtfLogoRef !== undefined) c.products[i].dtfLogoRef = p.dtfLogoRef;
+      if (Array.isArray(data.products) && data.products.length) {
+        c.products = data.products.map((p, i) => {
+          const orig = c.products[i] || {};
+          return {
+            e:          p.e          || orig.e          || '👕',
+            n:          p.n          !== undefined ? p.n : (orig.n || ''),
+            p:          p.p          !== undefined ? p.p : (orig.p || ''),
+            couleur:    p.couleur    || orig.couleur    || '',
+            couleurHex: p.couleurHex || orig.couleurHex || '',
+            dtfLogoRef: p.dtfLogoRef || orig.dtfLogoRef || '',
+          };
         });
       }
       // PayZen → _memState (sera injecté dans le DOM par restoreState)
@@ -8404,6 +8445,30 @@ async function exportLPImage(id) {
  * Appelé après exportLP() et exportLPTshirt().
  * @param {number} id - identifiant de la campagne dans CAMPS[]
  */
+async function pushLpConfig(id) {
+  const c = CAMPS[id];
+  if (!c) return;
+  const _baseName = c.name.replace(/[^a-zA-Z0-9]+/g,'-').toLowerCase().replace(/^-|-$/g,'');
+  const slug = (_baseName || 'camp') + '-' + id;
+  const campType = (c.id === 0) ? 'vdec' : (c.id === 1 || c.id === 2) ? 'tshirt' : 'generic';
+  const configJson = {
+    products: c.products,
+    parcours: (c.id === 1 || c.id === 2) ? tshGetParcours(id) : {},
+    gen_cfg:  (c.id >= 3) ? getParcoursCfg(id) : {},
+  };
+  try {
+    await fetch('https://highcoffeeshirts.com/erp/api/lp_config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': 'hcs-erp-2026' },
+      body: JSON.stringify({
+        slug, camp_id: id, camp_type: campType,
+        config_json: JSON.stringify(configJson),
+        headline: c.headline || c.name,
+      }),
+    });
+  } catch(_) {}
+}
+
 async function hcsSaveCampaign(id) {
   if (typeof HCSApi === 'undefined') return; // garde si le script n'est pas chargé
   const c = CAMPS[id];
