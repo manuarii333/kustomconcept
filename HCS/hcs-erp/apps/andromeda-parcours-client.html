@@ -635,75 +635,153 @@ const TAG_CLASSES = { required:'required', optional:'optional', auto:'auto', kry
 
 let currentStep = 1;
 
-// Enrichit les étapes CAMPS_DATA avec la vraie config admin (localStorage)
-function getLiveSteps(id) {
-  // Lire les produits depuis hcs_camps_v1
-  let prods = null;
+/* ── Lecture config T-Shirt depuis localStorage ──────────── */
+function _tshCfg(id) {
+  try { return JSON.parse(localStorage.getItem('hcs_tsh_cfg_' + id) || 'null'); } catch(_) { return null; }
+}
+function _campProds(id) {
   try {
     const all = JSON.parse(localStorage.getItem('hcs_camps_v1') || '{}');
-    if (all[id] && Array.isArray(all[id].products) && all[id].products.length)
-      prods = all[id].products;
-  } catch(_) {}
+    const p = all[id] && all[id].products;
+    return Array.isArray(p) && p.length ? p : null;
+  } catch(_) { return null; }
+}
 
-  // T-Shirt (1) et Casquette (2)
+/* ── Config panel dynamique T-Shirt ─────────────────────── */
+function _tshLiveConfigHTML(id, cfg, prods, color) {
+  const rows = [];
+  const row = (key, val, ok, warn) => {
+    const st = ok ? 'ok' : warn ? 'warn' : 'na';
+    const ic = ok ? '✓' : warn ? '!' : '—';
+    return `<div class="config-row"><div class="config-key">${key}</div><div class="config-val">${val}</div><div class="config-status ${st}">${ic}</div></div>`;
+  };
+
+  /* Produits */
+  if (prods && prods.length) {
+    const priceMin = prods.map(p => parseInt((p.p||'0').replace(/\D/g,''))||0).filter(Boolean);
+    const pRange = priceMin.length ? Math.min(...priceMin).toLocaleString('fr-FR')+' – '+Math.max(...priceMin).toLocaleString('fr-FR')+' XPF' : '—';
+    rows.push(row('Produits configurés', prods.length + ' produit' + (prods.length>1?'s':'') + ' (' + pRange + ')', true));
+  } else {
+    rows.push(row('Produits configurés', 'Défaut (aucun produit perso)', false, true));
+  }
+
+  /* Étape logo */
+  if (!cfg) {
+    rows.push(row('Étape logo', 'Config non chargée', false, true));
+    rows.push(row('Galerie DTF logos', '—', false, false));
+    rows.push(row('Texte personnalisé', '—', false, false));
+    rows.push(row('Taille obligatoire', '—', false, false));
+    rows.push(row('Tailles disponibles', 'XS / S / M / L / XL / 2XL (défaut)', false, true));
+  } else {
+    const step2On = cfg.showStep2 !== false;
+    rows.push(row('Étape logo (step 2)', step2On ? '✅ Active' : '⛔ Désactivée — parcours court', step2On, !step2On));
+    if (step2On) {
+      rows.push(row('Galerie logos DTF', cfg.showDtfLogos ? '✅ Active' : 'Non', cfg.showDtfLogos, false));
+      rows.push(row('Texte personnalisé', cfg.showCustomText ? '✅ Actif' : 'Non', cfg.showCustomText, false));
+      const faces = Array.isArray(cfg.faces) && cfg.faces.length ? cfg.faces : ['front'];
+      rows.push(row('Faces impression', faces.join(' + '), true));
+    }
+    const reqSz = cfg.requireSize !== false;
+    rows.push(row('Taille obligatoire', reqSz ? 'Oui' : 'Optionnelle', reqSz, false));
+    const sizes = Array.isArray(cfg.sizes) && cfg.sizes.length ? cfg.sizes : ['XS','S','M','L','XL','2XL','3XL','4XL'];
+    rows.push(row('Tailles disponibles', sizes.join(' / '), true));
+    const labels = cfg.labels || {};
+    if (labels[1]||labels[2]||labels[3]) {
+      const lblStr = [labels[1]||'—', labels[2]||'—', labels[3]||'—'].join(' → ');
+      rows.push(row('Labels étapes', lblStr, true));
+    }
+  }
+  rows.push(row('Worker URL', 'payzen-hcs.workers.dev', true));
+  rows.push(row('Paiement', 'OSB Krypton (TEST / PROD)', true));
+
+  return `<div class="config-panel">
+    <div class="config-panel-title">⚙️ Configuration admin T-Shirt${cfg ? ' <span style="color:#43e97b;font-size:.6rem;font-weight:700">⚡ live</span>' : ' <span style="color:#ffd23f;font-size:.6rem">défaut</span>'}</div>
+    ${rows.join('')}
+  </div>`;
+}
+
+/* ── Étapes dynamiques selon config admin ────────────────── */
+function getLiveSteps(id) {
+  const prods = _campProds(id);
+
+  /* ── T-Shirt (1) et Casquette (2) ── */
   if (id === 1 || id === 2) {
-    let cfg = null;
-    try { cfg = JSON.parse(localStorage.getItem('hcs_tsh_cfg_' + id) || 'null'); } catch(_) {}
-    if (!cfg && !prods) return null; // rien en localStorage → statique
+    const cfg = _tshCfg(id);
+    if (!cfg && !prods) return null; // rien → statique
 
-    const base = JSON.parse(JSON.stringify(CAMPS_DATA[id].steps));
     const isCap = id === 2;
+    const base = JSON.parse(JSON.stringify(CAMPS_DATA[id].steps));
+    const labels = cfg ? (cfg.labels || {}) : {};
 
-    // Étape 1 : produits réels
+    /* Étape 1 — produits réels */
     if (prods && prods.length) {
       const names = prods.map(p => p.n).filter(Boolean);
-      base[0].desc = 'Sélectionner parmi ' + prods.length + ' produit' + (prods.length > 1 ? 's' : '') + ' : ' + names.join(', ') + '.';
-      base[0].required = [names.join(' · ')];
+      const emoji = prods[0] && prods[0].e ? prods[0].e : (isCap ? '🧢' : '👕');
+      base[0].icon = emoji;
+      base[0].desc = prods.length + ' produit' + (prods.length>1?'s':'') + ' disponible' + (prods.length>1?'s':'') + ' : ' + names.join(', ') + '.';
+      base[0].required = [names.length > 2 ? names.slice(0,2).join(' · ')+'…' : names.join(' · ')];
       base[0].tags = ['required'];
     }
+    if (labels[1]) { base[0].name = labels[1]; base[0].label = labels[1]; }
 
     if (cfg) {
-      const labels = cfg.labels || {};
-      // Labels personnalisés des étapes 2, 3 (le LP T-Shirt a 3 étapes max)
-      if (labels[1] && base[1]) { base[1].name = labels[1]; base[1].label = labels[1]; }
-      if (labels[2] && base[2]) { base[2].name = labels[2]; base[2].label = labels[2]; }
-      if (labels[3] && base[2]) { base[2].name = labels[3]; base[2].label = labels[3]; }
+      const showStep2 = cfg.showStep2 !== false;
 
-      // Step 2 (logo) désactivée → retirer l'étape logo et renuméroter
-      if (cfg.showStep2 === false) {
+      if (!showStep2) {
+        /* Parcours court : supprimer étape logo */
         base.splice(1, 1);
         base.forEach((s, i) => { s.num = i + 1; });
+        /* Étape commander (maintenant index 1) */
+        if (labels[3] && base[1]) { base[1].name = labels[3]; base[1].label = labels[3]; }
       } else {
-        // Options logo actives
-        const logoOpts = [];
-        if (cfg.showDtfLogos)   logoOpts.push('Galerie DTF logos');
-        if (cfg.showCustomText) logoOpts.push('Texte personnalisé');
-        if (logoOpts.length && base[1]) {
-          base[1].optional = logoOpts;
-          base[1].tags = ['required'].concat(logoOpts.map(() => 'optional'));
+        /* Étape logo (index 1) */
+        if (labels[2]) { base[1].name = labels[2]; base[1].label = labels[2]; }
+        const logoReq = [];
+        const logoOpt = [];
+        const logoTags = [];
+        if (!cfg.showDtfLogos && !cfg.showCustomText) {
+          logoReq.push('Upload logo / photo');
+          logoTags.push('required');
+        } else {
+          logoOpt.push('Upload logo perso');
+          logoTags.push('optional');
+          if (cfg.showDtfLogos)   { logoOpt.push('Galerie DTF logos'); logoTags.push('optional'); }
+          if (cfg.showCustomText) { logoOpt.push('Texte personnalisé'); logoTags.push('optional'); }
         }
-      }
-
-      // Tailles disponibles dans l'étape commander
-      if (cfg.sizes && cfg.sizes.length) {
-        const cmdIdx = cfg.showStep2 !== false ? 2 : 1;
-        if (base[cmdIdx]) {
-          const sz = cfg.sizes.join('/');
-          base[cmdIdx].required = base[cmdIdx].required.map(r =>
-            r === 'Taille' ? 'Taille (' + sz + ')' : r
-          );
+        const faces = Array.isArray(cfg.faces) && cfg.faces.length ? cfg.faces : ['front'];
+        if (faces.length > 1) { logoOpt.push('Face : ' + faces.join(' / ')); logoTags.push('optional'); }
+        if (base[1]) {
+          base[1].required = logoReq.length ? logoReq : ['Logo ou texte'];
+          base[1].optional = logoOpt;
+          base[1].tags = logoReq.length ? ['required'].concat(logoTags.slice(1)) : logoTags;
+          base[1].time = (cfg.showCustomText || cfg.showDtfLogos) ? '~1 min' : '~2 min';
+        }
+        /* Étape commander (index 2) */
+        if (labels[3] && base[2]) { base[2].name = labels[3]; base[2].label = labels[3]; }
+        if (base[2]) {
+          const sizes = Array.isArray(cfg.sizes) && cfg.sizes.length ? cfg.sizes : ['XS','S','M','L','XL','2XL'];
+          const reqSz = cfg.requireSize !== false;
+          base[2].required = [
+            ...(reqSz ? ['Taille (' + sizes.join('/') + ')'] : []),
+            'Quantité', 'Carte bancaire (OSB)'
+          ];
+          base[2].optional = [
+            ...(reqSz ? [] : ['Taille']),
+            'Note commande'
+          ];
+          base[2].tags = ['required','required','auto',...(reqSz?[]:['optional']),'optional'];
         }
       }
     }
     return base;
   }
 
-  // Génériques (3-8) : seulement enrichir step 1 avec les vrais produits
+  /* ── Génériques (3-8) ── */
   if (id >= 3 && prods && prods.length) {
     const base = JSON.parse(JSON.stringify(CAMPS_DATA[id].steps));
     const names = prods.map(p => p.n).filter(Boolean);
-    base[0].desc = 'Sélectionner parmi ' + prods.length + ' produit' + (prods.length > 1 ? 's' : '') + ' : ' + names.join(', ') + '.';
-    base[0].required = [names.join(' · ')];
+    base[0].desc = prods.length + ' produit' + (prods.length>1?'s':'') + ' : ' + names.join(', ') + '.';
+    base[0].required = [names.length > 2 ? names.slice(0,2).join(' · ')+'…' : names.join(' · ')];
     base[0].tags = ['required'];
     return base;
   }
@@ -759,6 +837,7 @@ function renderCamp(id) {
         : `<span style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.35);border-radius:8px;font-size:.75rem;border:1px dashed rgba(255,255,255,.15)">🌐 LP non publiée</span>`
       }
       <a href="../apps/andromeda-campaign.html" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);border-radius:8px;font-size:.75rem;text-decoration:none;border:1px solid rgba(255,255,255,.1)">📣 Andromeda</a>
+      <button onclick="renderCamp(${id})" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);border-radius:8px;font-size:.75rem;border:1px solid rgba(255,255,255,.1);cursor:pointer">🔄 Recharger</button>
       <button onclick="openFlowPreview(${id})" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:${d.color};color:#fff;border-radius:8px;font-size:.75rem;font-weight:700;border:none;cursor:pointer">🎨 Tester le parcours client</button>
     </div>`;
 
@@ -838,19 +917,25 @@ function renderCamp(id) {
       <div class="funnel-pct">${s.funnel}%</div>
     </div>`).join('');
 
-  // ── Config (LP row activée dynamiquement si URL publiée)
-  const configRows = d.config.map(c => {
-    let val = c.val, status = c.ok ? 'ok' : c.warn ? 'warn' : 'na', icon = c.ok ? '✓' : c.warn ? '!' : '—';
-    if (c.warn && _lpUrl) {
-      val = `<a href="${_lpUrl}" target="_blank" rel="noopener" style="color:#43e97b;text-decoration:none;font-weight:600">${_lpUrl.length > 32 ? _lpUrl.slice(0,32)+'…' : _lpUrl} ↗</a>`;
-      status = 'ok'; icon = '✓';
-    }
-    return `<div class="config-row">
-      <div class="config-key">${c.key}</div>
-      <div class="config-val">${val}</div>
-      <div class="config-status ${status}">${icon}</div>
-    </div>`;
-  }).join('');
+  // ── Config panel : dynamique pour T-Shirt/Casquette, statique sinon
+  let configPanelHTML;
+  if (id === 1 || id === 2) {
+    configPanelHTML = _tshLiveConfigHTML(id, _tshCfg(id), _campProds(id), d.color);
+  } else {
+    const configRows = d.config.map(c => {
+      let val = c.val, status = c.ok ? 'ok' : c.warn ? 'warn' : 'na', icon = c.ok ? '✓' : c.warn ? '!' : '—';
+      if (c.warn && _lpUrl) {
+        val = `<a href="${_lpUrl}" target="_blank" rel="noopener" style="color:#43e97b;text-decoration:none;font-weight:600">${_lpUrl.length > 32 ? _lpUrl.slice(0,32)+'…' : _lpUrl} ↗</a>`;
+        status = 'ok'; icon = '✓';
+      }
+      return `<div class="config-row">
+        <div class="config-key">${c.key}</div>
+        <div class="config-val">${val}</div>
+        <div class="config-status ${status}">${icon}</div>
+      </div>`;
+    }).join('');
+    configPanelHTML = `<div class="config-panel"><div class="config-panel-title">⚙️ Configuration requise</div>${configRows}</div>`;
+  }
 
   // ── Tips
   const tipsHTML = d.tips.map(t => `
@@ -904,12 +989,7 @@ function renderCamp(id) {
           ${funnelRows}
         </div>
       </div>
-      <div>
-        <div class="config-panel">
-          <div class="config-panel-title">⚙️ Configuration requise</div>
-          ${configRows}
-        </div>
-      </div>
+      <div>${configPanelHTML}</div>
     </div>
 
     <div class="tip-list">${tipsHTML}</div>
@@ -937,7 +1017,7 @@ function renderCamp(id) {
         <div class="client-steps-illus">${illusCards}</div>
         <div style="margin-top:10px;display:flex;justify-content:space-between">
           ${currentStep > 1 ? `<button onclick="setActiveStep(${id},${currentStep-1})" style="padding:7px 14px;border-radius:7px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text2);font-size:.72rem;cursor:pointer">← Retour</button>` : '<span></span>'}
-          ${currentStep < d.steps.length ? `<button onclick="setActiveStep(${id},${currentStep+1})" style="padding:7px 14px;border-radius:7px;background:${d.color};border:none;color:#fff;font-size:.72rem;font-weight:800;cursor:pointer">${currentStep === d.steps.length-1 ? '💳 Payer' : 'Suivant →'}</button>` : `<button style="padding:7px 14px;border-radius:7px;background:linear-gradient(135deg,#43e97b,#38f9d7);border:none;color:#0f0f1a;font-size:.72rem;font-weight:800">✅ Commande validée</button>`}
+          ${currentStep < steps.length ? `<button onclick="setActiveStep(${id},${currentStep+1})" style="padding:7px 14px;border-radius:7px;background:${d.color};border:none;color:#fff;font-size:.72rem;font-weight:800;cursor:pointer">${currentStep === steps.length-1 ? '💳 Payer' : 'Suivant →'}</button>` : `<button style="padding:7px 14px;border-radius:7px;background:linear-gradient(135deg,#43e97b,#38f9d7);border:none;color:#0f0f1a;font-size:.72rem;font-weight:800">✅ Commande validée</button>`}
         </div>
       </div>
 
