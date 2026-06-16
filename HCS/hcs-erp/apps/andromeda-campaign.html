@@ -2428,11 +2428,6 @@ async function _uploadCampaignImages(id, lpSlug, onProgress) {
 }
 
 async function publishLP(id) {
-  if (location.protocol === 'file:') {
-    window.open('https://highcoffeeshirts.com/erp/#outils/ext-andromeda', '_blank');
-    showToast('🌐 ERP ouvert dans un nouvel onglet — publie depuis là-bas', false);
-    return;
-  }
   if (!adminSecret) {
     const _modal = document.createElement('div');
     _modal.id = 'pub-admin-modal';
@@ -2459,7 +2454,7 @@ async function publishLP(id) {
       btn.textContent = '…'; btn.disabled = true;
       fetch(`${WORKER_BASE}/admin/db/orders?archived=0`, { headers: { 'X-Admin-Secret': val } })
         .then(r => {
-          if (r.ok) { adminSecret = val; sessionStorage.setItem('hcs_admin_secret', val); _modal.remove(); publishLP(id); }
+          if (r.ok) { adminSecret = val; sessionStorage.setItem('hcs_admin_secret', val); localStorage.setItem('hcs_admin_secret', val); _modal.remove(); publishLP(id); }
           else { document.getElementById('pub-adm-err').style.display='block'; document.getElementById('pub-adm-err').textContent='❌ Secret incorrect.'; btn.textContent='Publier →'; btn.disabled=false; }
         }).catch(() => { btn.textContent='Publier →'; btn.disabled=false; });
     };
@@ -6850,7 +6845,7 @@ function _triggerPay() {
 const WORKER_BASE   = 'https://payzen-hcs.highcoffeeshirt.workers.dev';
 const HCS_API_BASE  = 'https://highcoffeeshirts.com/erp/api';
 const HCS_API_KEY   = 'hcs-erp-2026';
-let adminSecret = sessionStorage.getItem('hcs_admin_secret') || '';
+let adminSecret = sessionStorage.getItem('hcs_admin_secret') || localStorage.getItem('hcs_admin_secret') || '';
 let ordersFilter = 'all';
 let ordersData = [];
 
