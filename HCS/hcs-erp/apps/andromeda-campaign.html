@@ -2808,10 +2808,11 @@ async function _deleteLPBySlug(campId, parcoursSlug, url) {
 function previewLP(id) {
   const c = CAMPS[id];
   if (c.id === 0) { vdecOpenFlow(id, 0); return; }
-  /* Construire le slug LP (même formule que publishLP) */
+  /* T-Shirt / Casquette : aperçu inline depuis config live (sans publier) */
+  if (c.id === 1 || c.id === 2) { previewLPInline(id); return; }
+  /* Autres verticales : ouvrir LP publiée sur Workers */
   const _baseName = c.name.replace(/[^a-zA-Z0-9]/g,'-').toLowerCase().replace(/-+/g,'-').replace(/^-|-$/g,'');
   const _slug = `${_baseName}-${id}`;
-  /* Préférer URL stockée en localStorage, sinon construire depuis slug */
   const _pubUrl = (JSON.parse(localStorage.getItem('hcs_published_urls') || '{}'))[id] || (`${WORKER_BASE}/lp/${_slug}`);
   const ol = document.createElement('div');
   ol.id = '_lp-preview-ol';
