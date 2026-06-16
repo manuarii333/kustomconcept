@@ -5032,8 +5032,9 @@ var _s = { prodIdx:0, step:1, color:null, size:null, qty:1, format:null,
   plateB64:null, plateName:null, plateLogos:0 };
 var _b = { logos:[], placed:[] };
 ${_normalizePhoneBlock()}
-(function initProds() {
+function _renderGenGrid() {
   var grid = document.getElementById('prod-grid');
+  if (!grid) return;
   grid.innerHTML = PRODS.map(function(p,i) {
     var img = (CAMP_ID===3 && FACE_IMGS[i] && FACE_IMGS[i].front)
       ? '<img src="'+FACE_IMGS[i].front+'" alt="">'
@@ -5047,6 +5048,23 @@ ${_normalizePhoneBlock()}
       +'</div></div>';
   }).join('');
   selectProd(0);
+}
+(function initProds() { _renderGenGrid(); })();
+/* LP Dynamique — fetch config MySQL à chaque chargement */
+(function() {
+  fetch('https://highcoffeeshirts.com/erp/api/lp_config/' + LP_SLUG, {cache:'no-store'})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(cfg) {
+      if (!cfg) return;
+      if (Array.isArray(cfg.products) && cfg.products.length) {
+        PRODS = cfg.products;
+        _renderGenGrid();
+      }
+      if (cfg.gen_cfg && typeof cfg.gen_cfg === 'object') {
+        Object.keys(cfg.gen_cfg).forEach(function(k){ CFG[k] = cfg.gen_cfg[k]; });
+      }
+    })
+    .catch(function(){});
 })();
 
 function selectProd(idx) {
