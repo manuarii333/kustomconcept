@@ -232,6 +232,19 @@ const Store = (() => {
         dbForStorage.messages = dbForStorage.messages.slice(-500);
       }
 
+      /* Strip champs volumineux des records déjà sauvegardés en MySQL.
+         Les données complètes restent dans MySQL — localStorage ne garde que les métadonnées. */
+      for (const col of Object.keys(dbForStorage)) {
+        if (!Array.isArray(dbForStorage[col])) continue;
+        dbForStorage[col].forEach(r => {
+          if (typeof r !== 'object' || !r || !r._mysql_id) return;
+          for (const k of Object.keys(r)) {
+            const v = r[k];
+            if (typeof v === 'string' && (v.startsWith('data:') || v.length > 2000)) r[k] = '';
+          }
+        });
+      }
+
       try {
         localStorage.setItem(LS_KEY, JSON.stringify(dbForStorage));
       } catch (e1) {
