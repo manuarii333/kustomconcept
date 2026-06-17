@@ -2942,7 +2942,7 @@ function exportLPTshirt(id, previewOnly) {
   const prodsJson  = JSON.stringify(c.products.map(p => ({ e:p.e, n:p.n, p:p.p, price:parseInt(p.p.replace(/[^\d]/g,''))||0, couleur:p.couleur||'', couleurHex:p.couleurHex||'', dtfLogoRef:p.dtfLogoRef||'' })));
   const sizesJson  = JSON.stringify(sizes);
   const _baseLpSlug = c.name.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase().replace(/^-|-$/g, '') + '-' + id;
-  const lpSlug      = window._parcours_slug_override || _baseLpSlug;
+  const lpSlug      = previewOnly ? '__preview__' : (window._parcours_slug_override || _baseLpSlug);
   _restoreTshFaceImgs(id);
   _restoreTshDtfLogos(id);
   const dtfLogosData = c.products.map((_,pi) => {
