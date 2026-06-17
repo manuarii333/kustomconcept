@@ -991,26 +991,14 @@ function tout() {
   calculerAlertes();
 }
 
-// Données de démonstration si localStorage vide
-function chargerDemo() {
-  const t = getData('hcs_transactions');
-  if (t.length > 0) return;
-  const m = thisMonth();
-  const demo_t = [
-    { id: 'd1', date: today(), canal: 'cash', description: 'T-shirts DTF x3 client walk-in', montant: 12500, nb: 1 },
-    { id: 'd2', date: today(), canal: 'messenger', description: 'Commande Logo entreprise', montant: 8000, nb: 1 },
-    { id: 'd3', date: m + '-20', canal: 'odoo', description: 'Commande Mairie Papeete', montant: 45000, nb: 1 },
-    { id: 'd4', date: m + '-18', canal: 'woocommerce', description: 'Commande WooCommerce #1042', montant: 6500, nb: 1 },
-    { id: 'd5', date: m + '-15', canal: 'instagram', description: 'Casquettes brodées x5', montant: 15000, nb: 5 },
-  ];
-  const demo_c = [
-    { id: 'c1', date: m + '-01', fournisseur: 'Taaroa Stock', categorie: 'fournisseur_textile', montant: 18000, numero: 'TS-2026-089', statut: 'paye' },
-    { id: 'c2', date: m + '-10', fournisseur: 'Heat Transfer 4 You', categorie: 'fournisseur_dtf', montant: 25000, numero: 'HT4Y-2026-041', statut: 'paye' },
-    { id: 'c3', date: m + '-05', fournisseur: 'Loyer boutique', categorie: 'charges_fixes', montant: 40000, numero: 'LOYER-FEV', statut: 'paye' },
-    { id: 'c4', date: today(), fournisseur: 'Anémone', categorie: 'fournisseur_textile', montant: 9000, numero: 'ANE-2026-012', statut: 'en_attente' },
-  ];
-  setData('hcs_transactions', demo_t);
-  setData('hcs_charges', demo_c);
+// Purge les entrées de démonstration insérées par les anciennes versions
+function purgerDonneesDemo() {
+  const demoIdsT = new Set(['d1','d2','d3','d4','d5']);
+  const demoIdsC = new Set(['c1','c2','c3','c4']);
+  const tx = getData('hcs_transactions').filter(r => !demoIdsT.has(r.id));
+  const ch = getData('hcs_charges').filter(r => !demoIdsC.has(r.id));
+  setData('hcs_transactions', tx);
+  setData('hcs_charges', ch);
 }
 
 // ===== IMPORT HISTORIQUE FACTURES ERP =====
@@ -1197,7 +1185,7 @@ async function importerFacturesMySQLAsync() {
 // Lancement
 document.getElementById('filtre-mois').value = thisMonth();
 document.getElementById('filtre-mois-charge').value = thisMonth();
-chargerDemo();
+purgerDonneesDemo();
 // Auto-pull MySQL au démarrage pour avoir les données les plus récentes
 _MYSQL.pull().catch(() => {});
 tout();

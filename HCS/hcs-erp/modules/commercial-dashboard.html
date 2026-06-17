@@ -125,13 +125,13 @@
   <div class="panel" style="margin-bottom:20px">
     <div class="panel-title">🔄 Pipeline traitement email → devis</div>
     <div class="pipeline">
-      <div class="pipe-step"><div class="pipe-icon">✉️</div><div class="pipe-name">Email reçu</div><div class="pipe-val" id="p1">24</div></div>
-      <div class="pipe-step"><div class="pipe-icon">🤖</div><div class="pipe-name">Classifié devis</div><div class="pipe-val" id="p2">16</div></div>
-      <div class="pipe-step"><div class="pipe-icon">🔐</div><div class="pipe-name">Auth Odoo</div><div class="pipe-val" id="p3">16</div></div>
-      <div class="pipe-step"><div class="pipe-icon">👤</div><div class="pipe-name">Client identifié</div><div class="pipe-val" id="p4">16</div></div>
-      <div class="pipe-step"><div class="pipe-icon">📋</div><div class="pipe-name">Devis créé</div><div class="pipe-val" id="p5">14</div></div>
-      <div class="pipe-step"><div class="pipe-icon">🧾</div><div class="pipe-name">Lignes IA</div><div class="pipe-val" id="p6">14</div></div>
-      <div class="pipe-step"><div class="pipe-icon">✅</div><div class="pipe-name">Archivé</div><div class="pipe-val" id="p7">13</div></div>
+      <div class="pipe-step"><div class="pipe-icon">✉️</div><div class="pipe-name">Email reçu</div><div class="pipe-val" id="p1">—</div></div>
+      <div class="pipe-step"><div class="pipe-icon">🤖</div><div class="pipe-name">Classifié devis</div><div class="pipe-val" id="p2">—</div></div>
+      <div class="pipe-step"><div class="pipe-icon">🔐</div><div class="pipe-name">Auth Odoo</div><div class="pipe-val" id="p3">—</div></div>
+      <div class="pipe-step"><div class="pipe-icon">👤</div><div class="pipe-name">Client identifié</div><div class="pipe-val" id="p4">—</div></div>
+      <div class="pipe-step"><div class="pipe-icon">📋</div><div class="pipe-name">Devis créé</div><div class="pipe-val" id="p5">—</div></div>
+      <div class="pipe-step"><div class="pipe-icon">🧾</div><div class="pipe-name">Lignes IA</div><div class="pipe-val" id="p6">—</div></div>
+      <div class="pipe-step"><div class="pipe-icon">✅</div><div class="pipe-name">Archivé</div><div class="pipe-val" id="p7">—</div></div>
     </div>
   </div>
 
@@ -148,9 +148,9 @@
     <div class="panel">
       <div class="panel-title">👥 Clients</div>
       <div class="conn-list">
-        <div class="stat-pair"><span class="stat-lbl">Total clients Odoo</span><span class="stat-val">147</span></div>
-        <div class="stat-pair"><span class="stat-lbl">Nouveaux ce mois</span><span class="stat-val">8</span></div>
-        <div class="stat-pair"><span class="stat-lbl">Clients récurrents</span><span class="stat-val">23</span></div>
+        <div class="stat-pair"><span class="stat-lbl">Total clients</span><span class="stat-val" id="statTotalClients">—</span></div>
+        <div class="stat-pair"><span class="stat-lbl">Nouveaux ce mois</span><span class="stat-val" id="statNouveaux">—</span></div>
+        <div class="stat-pair"><span class="stat-lbl">Clients récurrents</span><span class="stat-val" id="statRecurrents">—</span></div>
         <div style="margin-top:8px">
           <div style="font-size:10px;color:#666688;margin-bottom:4px">Taux client trouvé / créé</div>
           <div class="progress-bar"><div class="progress-fill" style="width:65%"></div></div>
@@ -203,17 +203,8 @@
 </main>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-// === DONNÉES DÉMO (remplacées par MySQL au chargement) ===
-let DEVIS = [
-  {num:'SO-2847',client:'Marie Tamatoa',email:'marie.tamatoa@gmail.com',montant:48500,lignes:4,statut:'sent',date:'26/02',nouveau:false},
-  {num:'SO-2846',client:'Faa\'a Sport Club',email:'contact@faaasport.pf',montant:127000,lignes:6,statut:'confirmed',date:'26/02',nouveau:false},
-  {num:'SO-2845',client:'Hina Varua',email:'hina.varua@hotmail.fr',montant:23400,lignes:2,statut:'draft',date:'25/02',nouveau:true},
-  {num:'SO-2844',client:'Jean-Pierre Teriimana',email:'jp.teriimana@gmail.com',montant:56200,lignes:5,statut:'sent',date:'25/02',nouveau:false},
-  {num:'SO-2843',client:'Maeva Nui',email:'maeva.nui@yahoo.fr',montant:89000,lignes:7,statut:'confirmed',date:'24/02',nouveau:true},
-  {num:'SO-2842',client:'Tahiti Events Pro',email:'contact@tahiti-events.pf',montant:215000,lignes:9,statut:'confirmed',date:'24/02',nouveau:false},
-  {num:'SO-2841',client:'Roa Tetuanui',email:'roa.tetuanui@gmail.com',montant:31500,lignes:3,statut:'cancelled',date:'23/02',nouveau:false},
-  {num:'SO-2840',client:'Puna Vahine',email:'puna@vahine.pf',montant:42800,lignes:4,statut:'sent',date:'23/02',nouveau:true},
-];
+// Données chargées depuis MySQL — tableau vide par défaut (remplacé par loadDevisMySQL)
+let DEVIS = [];
 
 const STATUTS={draft:'Brouillon',sent:'Envoyé',confirmed:'Confirmé',cancelled:'Annulé'};
 const STATUT_CSS={draft:'s-draft',sent:'s-sent',confirmed:'s-confirmed',cancelled:'s-cancelled'};
@@ -243,7 +234,7 @@ function loadKPIs(){
   document.getElementById('kpiCA').textContent=ca;
   document.getElementById('kpiNouveaux').textContent=DEVIS.filter(d=>d.nouveau).length;
   document.getElementById('kpiConf').textContent=DEVIS.filter(d=>d.statut==='confirmed').length;
-  document.getElementById('kpiErreurs').textContent=1;
+  document.getElementById('kpiErreurs').textContent=0;
 }
 
 // === CHARTS ===
@@ -293,16 +284,8 @@ function buildConns(){
   });
 }
 
-// === LOGS ===
-const LOGS=[
-  {type:'ok',time:'11:34',msg:'SO-2847 créé — Marie Tamatoa — 48 500 XPF — 4 lignes IA'},
-  {type:'ok',time:'11:22',msg:'Client Faa\'a Sport Club trouvé (ID 142) — devis SO-2846'},
-  {type:'ok',time:'10:55',msg:'SO-2845 créé — Hina Varua (nouveau client ID 201) — 23 400 XPF'},
-  {type:'warn',time:'10:31',msg:'Email sans PJ — branche Stub activée — Merge OK'},
-  {type:'ok',time:'09:48',msg:'SO-2844 créé — J.P. Teriimana — 56 200 XPF — 5 lignes IA'},
-  {type:'err',time:'08:12',msg:'Erreur OpenAI timeout (ligne IA) — retry 1/3 OK'},
-  {type:'ok',time:'08:05',msg:'Workflow démarré — Gmail Trigger actif'},
-];
+// Journal d'exécution — alimenté en temps réel par loadDevisMySQL()
+const LOGS = [];
 function buildLogs(){
   const list=document.getElementById('logList');
   LOGS.forEach(l=>{
@@ -347,9 +330,35 @@ async function loadDevisMySQL() {
       }));
     }
 
-    // Injecter les totaux factures dans le pipeline
+    // Pipeline : alimenter p5 (devis créés) et p7 (factures archivées)
     const facPayees = facsDB.filter(f => ['Payé','Payé partiel'].includes(f.statut));
+    document.getElementById('p5').textContent = devisDB.length;
+    document.getElementById('p6').textContent = facsDB.length;
     document.getElementById('p7').textContent = facPayees.length;
+
+    // Stats clients depuis MySQL contacts
+    try {
+      const contRes = await fetch(`${apiUrl}/contacts?limit=2000`, { headers: { 'x-api-key': apiKey } });
+      if (contRes.ok) {
+        const { items: contacts = [] } = await contRes.json();
+        const m = new Date().toISOString().slice(0,7);
+        const nouveaux = contacts.filter(c => (c.created_at||c.date||'').startsWith(m));
+        const recurrents = contacts.filter(c => parseInt(c.nb_commandes||0) > 1);
+        document.getElementById('statTotalClients').textContent = contacts.length;
+        document.getElementById('statNouveaux').textContent = nouveaux.length;
+        document.getElementById('statRecurrents').textContent = recurrents.length;
+        const pct = contacts.length > 0 ? Math.round(recurrents.length / contacts.length * 100) : 0;
+        const fill = document.querySelector('.progress-fill');
+        if (fill) fill.style.width = pct + '%';
+        const pctLabels = document.querySelectorAll('.progress-fill + * span, .progress-bar ~ div span');
+        // Mettre à jour le label sous la barre
+        const barParent = document.querySelector('.progress-bar');
+        if (barParent && barParent.nextElementSibling) {
+          barParent.nextElementSibling.innerHTML =
+            `<span>${pct}% récurrents</span><span>${100-pct}% nouveaux</span>`;
+        }
+      }
+    } catch(_) {}
 
     renderDevis();
     loadKPIs();
@@ -360,16 +369,24 @@ async function loadDevisMySQL() {
     if (chartStatut) chartStatut.destroy();
     buildCharts();
 
-    // Ajouter un log de sync réussi
+    // Log de sync réussi dans le journal
     const logList = document.getElementById('logList');
     if (logList) {
       const div = document.createElement('div');
       div.className = 'log-item log-ok';
-      div.innerHTML = `<span class="log-time">${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span><span class="log-msg">✅ MySQL sync — ${devisDB.length} devis + ${facsDB.length} factures chargés</span>`;
+      div.innerHTML = `<span class="log-time">${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span><span class="log-msg">✅ Sync MySQL — ${devisDB.length} devis · ${facsDB.length} factures · ${facPayees.length} payées</span>`;
       logList.prepend(div);
     }
   } catch(e) {
-    console.warn('Chargement MySQL commercial-dashboard échoué, données démo conservées :', e.message);
+    console.warn('Chargement MySQL commercial-dashboard échoué :', e.message);
+    // En cas d'erreur réseau, afficher un message dans le journal
+    const logList = document.getElementById('logList');
+    if (logList) {
+      const div = document.createElement('div');
+      div.className = 'log-item log-warn';
+      div.innerHTML = `<span class="log-time">${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span><span class="log-msg">⚠️ MySQL hors-ligne — données en attente de sync</span>`;
+      logList.prepend(div);
+    }
   }
 }
 
