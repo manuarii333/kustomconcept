@@ -9103,10 +9103,10 @@ function renderConfigAdmin(c) {
             </div>
           </div>
 
-          <!-- Config résumé + reset -->
-          <div class="pcfg-section" style="background:rgba(108,99,255,.07);border:1px solid rgba(108,99,255,.2)">
-            <div class="pcfg-title" style="color:#9090b0;font-size:0.65rem;letter-spacing:.05em">⚙️ CONFIG ACTIVE (sera baked dans le LP)</div>
-            <div class="pcfg-body" id="tsh-${id}-cfg-summary" style="font-size:0.7rem;color:#9090b0;font-family:monospace;white-space:pre-wrap"></div>
+          <!-- Parcours client prédit -->
+          <div class="pcfg-section" style="background:rgba(79,172,254,.06);border:1px solid rgba(79,172,254,.22)">
+            <div class="pcfg-title" style="color:#4facfe;font-size:0.65rem;letter-spacing:.05em">📍 PARCOURS CLIENT PRÉDIT (mis à jour en temps réel)</div>
+            <div class="pcfg-body" id="tsh-${id}-cfg-summary" style="padding:2px 0"></div>
             <div style="padding:6px 0 2px;display:flex;gap:8px">
               <button onclick="tshResetParcours(${id})" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(255,80,80,.4);border-radius:6px;color:#ff6b6b;font-size:0.68rem;cursor:pointer">🔄 Réinitialiser config</button>
               <button onclick="tshRefreshSummary(${id})" style="padding:5px 10px;background:#1e1e3a;border:1px solid #2a2a4a;border-radius:6px;color:#9090b0;font-size:0.68rem;cursor:pointer">↻ Actualiser</button>
@@ -9445,6 +9445,10 @@ function renderConfigAdmin(c) {
         ` : c.id === 3 ? `
         <div class="ep-section">
           <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — DTF Originals</div>
+          <div class="pcfg-section" style="background:rgba(79,172,254,.06);border:1px solid rgba(79,172,254,.22)">
+            <div class="pcfg-title" style="color:#4facfe;font-size:0.65rem;letter-spacing:.05em">📍 PARCOURS CLIENT PRÉDIT</div>
+            <div id="pcfg-predict-${id}" style="padding:2px 0"></div>
+          </div>
           <div class="pcfg-section">
             <div class="pcfg-title">📦 Étapes du parcours</div>
             <div class="pcfg-body">
@@ -9536,6 +9540,10 @@ function renderConfigAdmin(c) {
         ` : c.id === 4 ? `
         <div class="ep-section">
           <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Gang Sheet Builder (4 étapes)</div>
+          <div class="pcfg-section" style="background:rgba(79,172,254,.06);border:1px solid rgba(79,172,254,.22)">
+            <div class="pcfg-title" style="color:#4facfe;font-size:0.65rem;letter-spacing:.05em">📍 PARCOURS CLIENT PRÉDIT</div>
+            <div id="pcfg-predict-${id}" style="padding:2px 0"></div>
+          </div>
           <div class="pcfg-section">
             <div class="pcfg-title">📐 Formats gang sheet proposés</div>
             <div class="pcfg-body">
@@ -9656,6 +9664,10 @@ function renderConfigAdmin(c) {
         ` : c.id === 5 ? `
         <div class="ep-section">
           <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Formation Textile</div>
+          <div class="pcfg-section" style="background:rgba(79,172,254,.06);border:1px solid rgba(79,172,254,.22)">
+            <div class="pcfg-title" style="color:#4facfe;font-size:0.65rem;letter-spacing:.05em">📍 PARCOURS CLIENT PRÉDIT</div>
+            <div id="pcfg-predict-${id}" style="padding:2px 0"></div>
+          </div>
           <div class="pcfg-section">
             <div class="pcfg-title">📚 Modules disponibles</div>
             <div class="pcfg-body" style="display:flex;flex-direction:column;gap:10px">
@@ -9729,6 +9741,10 @@ function renderConfigAdmin(c) {
         ` : c.id === 6 ? `
         <div class="ep-section">
           <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Abonnements</div>
+          <div class="pcfg-section" style="background:rgba(79,172,254,.06);border:1px solid rgba(79,172,254,.22)">
+            <div class="pcfg-title" style="color:#4facfe;font-size:0.65rem;letter-spacing:.05em">📍 PARCOURS CLIENT PRÉDIT</div>
+            <div id="pcfg-predict-${id}" style="padding:2px 0"></div>
+          </div>
           <div class="pcfg-section">
             <div class="pcfg-title">⭐ Plans disponibles</div>
             <div class="pcfg-body" style="display:flex;flex-direction:column;gap:10px">
@@ -9801,6 +9817,10 @@ function renderConfigAdmin(c) {
         ` : c.id === 7 ? `
         <div class="ep-section">
           <div class="ep-label" style="color:#a78bfa">🎯 Parcours Client — Graphiques / Vecto IA</div>
+          <div class="pcfg-section" style="background:rgba(79,172,254,.06);border:1px solid rgba(79,172,254,.22)">
+            <div class="pcfg-title" style="color:#4facfe;font-size:0.65rem;letter-spacing:.05em">📍 PARCOURS CLIENT PRÉDIT</div>
+            <div id="pcfg-predict-${id}" style="padding:2px 0"></div>
+          </div>
           <div class="pcfg-section">
             <div class="pcfg-title">🔧 Services proposés</div>
             <div class="pcfg-body" style="display:flex;flex-direction:column;gap:7px">
@@ -10194,6 +10214,9 @@ function tshTextCfgTogglePos(campId, pos, checked) {
   if (checked) { if (!cfg.positions.includes(pos)) cfg.positions.push(pos); }
   else cfg.positions = cfg.positions.filter(p => p !== pos);
   _lsSet('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave();
+  tshRefreshSummary(campId);
+  clearTimeout(_tshPushDebounce[campId]);
+  _tshPushDebounce[campId] = setTimeout(() => pushLpConfig(campId), 1500);
 }
 
 // Admin — toggle une police dans textCfg.fonts (par index dans TSH_FONT_OPTS)
@@ -10205,6 +10228,7 @@ function tshTextCfgToggleFont(campId, fi, checked) {
   if (checked) { if (!cfg.fonts.includes(val)) cfg.fonts.push(val); }
   else cfg.fonts = cfg.fonts.filter(f => f !== val);
   _lsSet('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave();
+  tshRefreshSummary(campId);
   clearTimeout(_tshPushDebounce[campId]);
   _tshPushDebounce[campId] = setTimeout(() => pushLpConfig(campId), 1500);
 }
@@ -10216,6 +10240,7 @@ function tshTextCfgSetDefault(campId, key, val) {
   if (key === 'color') cfg.defaultColor = val;
   else cfg[key] = val;
   _lsSet('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave();
+  tshRefreshSummary(campId);
   clearTimeout(_tshPushDebounce[campId]);
   _tshPushDebounce[campId] = setTimeout(() => pushLpConfig(campId), 1500);
 }
@@ -10245,6 +10270,7 @@ function tshSetFace(campId, face, enabled) {
     });
   }
   _lsSet('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave('✓ Face mise à jour');
+  tshRefreshSummary(campId);
   clearTimeout(_tshPushDebounce[campId]);
   _tshPushDebounce[campId] = setTimeout(() => pushLpConfig(campId), 1500);
 }
@@ -10343,6 +10369,7 @@ function tshSetParcours(campId, key, val) {
   else if (key === 'label3') conf.labels[3] = val;
   else conf[key] = val;
   _lsSet('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave();
+  tshRefreshSummary(campId);
   clearTimeout(_tshPushDebounce[campId]);
   _tshPushDebounce[campId] = setTimeout(() => pushLpConfig(campId), 1500);
 }
@@ -10352,6 +10379,7 @@ function tshToggleSize(campId, size, checked) {
   if (checked) { if (!conf.sizes.includes(size)) conf.sizes.push(size); conf.sizes.sort((a,b)=>order.indexOf(a)-order.indexOf(b)); }
   else conf.sizes = conf.sizes.filter(s => s !== size);
   _lsSet('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave('✓ Taille mise à jour');
+  tshRefreshSummary(campId);
   clearTimeout(_tshPushDebounce[campId]);
   _tshPushDebounce[campId] = setTimeout(() => pushLpConfig(campId), 1500);
 }
@@ -10368,19 +10396,87 @@ function tshResetParcours(campId) {
   if (chkSz) chkSz.checked = true;
   tshRefreshSummary(campId);
 }
+// ═══════════════════════════════════════════════════════
+// PARCOURS PREDICTOR — dérive les étapes client depuis la config admin
+// Principe : chaque param admin → impact direct sur le parcours client
+// ═══════════════════════════════════════════════════════
+function predictParcours(campId) {
+  const c = CAMPS[campId];
+  if (!c) return [];
+  if (c.id === 1 || c.id === 2) {
+    const cfg = tshGetParcours(campId);
+    const isCap = c.id === 2;
+    const faces = cfg.faces || ['front'];
+    const faceLabel = faces.includes('back') ? 'Avant + Dos' : 'Avant uniquement';
+    return [
+      { n:1, ok:true,  icon:isCap?'🧢':'👕',
+        lbl: cfg.labels?.[1] || (isCap?'Choisir casquette':'Choisir produit'),
+        detail: c.products.length + ' produit(s) · ' + faceLabel },
+      cfg.showStep2
+        ? { n:2, ok:true, icon:'🎨', lbl: cfg.labels?.[2] || 'Votre design',
+            detail: ['Upload logo', cfg.showDtfLogos && '+ Logos DTF', cfg.showCustomText && '+ Texte libre'].filter(Boolean).join(' · ') }
+        : { n:2, ok:false, icon:'⏭️', lbl: 'Studio design',
+            detail: '⛔ SAUTÉ — le client commande sans uploader de design' },
+      { n:3, ok:true,  icon:'📏', lbl: cfg.labels?.[3] || 'Taille & Commander',
+        detail: 'Tailles: ' + (cfg.sizes || []).join(' ') + (cfg.requireSize ? ' (obligatoire)' : ' (optionnel)') },
+      { n:4, ok:true,  icon:'💳', lbl: 'Paiement',
+        detail: 'Contact → Livraison → OSB Krypton' }
+    ];
+  }
+  if (c.id >= 3) {
+    const cfg = getParcoursCfg(campId);
+    const step2Map = {
+      3: () => ({ icon:'🎨', lbl: cfg.label2||'Design & Couleur',
+          detail: 'Couleurs T-shirt: ' + (cfg.tshirtColors||[]).join(', ') }),
+      4: () => ({ icon:'📐', lbl: cfg.label2||'Format & Composition',
+          detail: 'Formats: ' + (cfg.formats||[]).join(', ') + (cfg.allowUpload ? ' · Upload print-ready' : '') }),
+      5: () => ({ icon:'📅', lbl: cfg.label2||'Module & Date',
+          detail: (cfg.modules||[]).join(', ') + ' · ' +
+            (cfg.dates ? cfg.dates.trim().split('\n').length + ' date(s) dispo' : 'Dates à définir') +
+            ' · Max ' + (cfg.maxPlaces||8) + ' places' }),
+      6: () => ({ icon:'💎', lbl: cfg.label2||'Choisir plan',
+          detail: 'Plans: ' + (cfg.plans||[]).join(', ') + (cfg.autoRenew ? ' · Auto-renouvelable' : '') }),
+      7: () => ({ icon:'✏️', lbl: cfg.label2||'Configurer service',
+          detail: 'Services: ' + (cfg.services||[]).join(', ') +
+            [cfg.allowUpload && ' · Upload fichier', cfg.allowDesc && ' · Description libre'].filter(Boolean).join('') })
+    };
+    const s2 = (step2Map[c.id] || (() => ({ icon:'📦', lbl:'Options', detail:'Config verticale' })))();
+    return [
+      { n:1, ok:true, icon:'🛍️', lbl: cfg.label1||'Choisir le produit', detail: c.products.length + ' produit(s)' },
+      { n:2, ok:true, ...s2 },
+      { n:3, ok:true, icon:'📋', lbl: cfg.label3||'Coordonnées', detail: 'Nom · Email · Téléphone' },
+      { n:4, ok:true, icon:'💳', lbl: 'Paiement', detail: 'OSB Krypton' }
+    ];
+  }
+  return [];
+}
+
+function renderParcoursPredict(campId) {
+  const steps = predictParcours(campId);
+  if (!steps.length) return '<div style="font-size:.63rem;color:#9090b0;padding:2px">Config non disponible.</div>';
+  return '<div style="display:flex;flex-direction:column">' +
+    steps.map(function(s, i) {
+      var clr = !s.ok ? '#ff6b6b' : (s.n===1||s.n===4 ? '#43e97b' : '#4facfe');
+      return '<div style="display:flex;align-items:flex-start;gap:8px' + (i < steps.length-1 ? ';margin-bottom:5px' : '') + '">'
+        + '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">'
+        + '<div style="width:22px;height:22px;border-radius:50%;background:' + clr + '22;border:2px solid ' + clr + ';display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:900;color:' + clr + '">' + s.n + '</div>'
+        + (i < steps.length-1 ? '<div style="width:2px;height:10px;background:#2a2a4a;margin:1px 0"></div>' : '')
+        + '</div>'
+        + '<div style="opacity:' + (s.ok ? 1 : 0.5) + ';padding-top:2px">'
+        + '<div style="font-size:.68rem;font-weight:700;color:' + clr + '">' + s.icon + ' ' + s.lbl + '</div>'
+        + '<div style="font-size:.58rem;color:rgba(255,255,255,.42);margin-top:1px">' + s.detail + '</div>'
+        + '</div></div>';
+    }).join('') + '</div>';
+}
+
+function genRefreshSummary(campId) {
+  var el = document.getElementById('pcfg-predict-' + campId);
+  if (el) el.innerHTML = renderParcoursPredict(campId);
+}
+
 function tshRefreshSummary(campId) {
   const el = document.getElementById('tsh-' + campId + '-cfg-summary');
-  if (!el) return;
-  const cfg = tshGetParcours(campId);
-  el.textContent = [
-    'showStep2   : ' + cfg.showStep2,
-    'requireSize : ' + cfg.requireSize,
-    'DTF logos   : ' + cfg.showDtfLogos,
-    'Custom text : ' + cfg.showCustomText,
-    'faces       : ' + JSON.stringify(cfg.faces || ['front']),
-    'sizes       : ' + JSON.stringify(cfg.sizes),
-  ].join('\n');
-  el.style.color = (!cfg.showStep2) ? '#ff6b6b' : '#43e97b';
+  if (el) el.innerHTML = renderParcoursPredict(campId);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -10411,6 +10507,7 @@ function setParcoursCfg(campId, key, val) {
   cfg[key] = val;
   _lsSet('hcs_gen_cfg_' + campId, JSON.stringify(cfg));
   _quickSave();
+  genRefreshSummary(campId);
   clearTimeout(_genPushDebounce[campId]);
   _genPushDebounce[campId] = setTimeout(() => pushLpConfig(campId), 1500);
 }
@@ -10421,6 +10518,7 @@ function toggleParcoursCfg(campId, key, val, checked) {
   else if (!checked) cfg[key] = cfg[key].filter(v => v !== val);
   _lsSet('hcs_gen_cfg_' + campId, JSON.stringify(cfg));
   _quickSave();
+  genRefreshSummary(campId);
   clearTimeout(_genPushDebounce[campId]);
   _genPushDebounce[campId] = setTimeout(() => pushLpConfig(campId), 1500);
 }
@@ -10470,6 +10568,12 @@ function _renderCfgBody(campId) {
   if (!body) return;
   if (!c) { body.innerHTML = '<div style="padding:20px;color:var(--text-secondary);font-size:.8rem">Verticale non trouvée.</div>'; return; }
   body.innerHTML = renderConfigAdmin(c);
+  /* Initialiser le parcours prédit après rendu */
+  var _cid = campId;
+  setTimeout(function() {
+    if (_cid === 1 || _cid === 2) tshRefreshSummary(_cid);
+    else if (_cid >= 3) genRefreshSummary(_cid);
+  }, 0);
 }
 
 // ═══════════════════════════════════════════════════════
