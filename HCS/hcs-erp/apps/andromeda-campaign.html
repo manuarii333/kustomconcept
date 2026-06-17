@@ -3201,6 +3201,8 @@ function _buildProdsHTML() {
         if (cfg.parcours.showDtfLogos!== undefined) SHOW_DTF_LOGOS = !!cfg.parcours.showDtfLogos;
         if (cfg.parcours.showCustomText!==undefined) SHOW_CUSTOM_TEXT=!!cfg.parcours.showCustomText;
         if (Array.isArray(cfg.parcours.sizes) && cfg.parcours.sizes.length) SIZES = cfg.parcours.sizes;
+        if (Array.isArray(cfg.parcours.faces)) SHOW_BACK = cfg.parcours.faces.includes('back');
+        if (cfg.parcours.textCfg && typeof cfg.parcours.textCfg === 'object') TEXT_CFG = cfg.parcours.textCfg;
         if (cfg.parcours.labels) {
           if (cfg.parcours.labels[1]) LBL1 = cfg.parcours.labels[1];
           if (cfg.parcours.labels[2]) LBL2 = cfg.parcours.labels[2];
@@ -10203,6 +10205,8 @@ function tshTextCfgToggleFont(campId, fi, checked) {
   if (checked) { if (!cfg.fonts.includes(val)) cfg.fonts.push(val); }
   else cfg.fonts = cfg.fonts.filter(f => f !== val);
   _lsSet('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave();
+  clearTimeout(_tshPushDebounce[campId]);
+  _tshPushDebounce[campId] = setTimeout(() => pushLpConfig(campId), 1500);
 }
 
 // Admin — modifie un paramètre par défaut du textCfg
@@ -10212,6 +10216,8 @@ function tshTextCfgSetDefault(campId, key, val) {
   if (key === 'color') cfg.defaultColor = val;
   else cfg[key] = val;
   _lsSet('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave();
+  clearTimeout(_tshPushDebounce[campId]);
+  _tshPushDebounce[campId] = setTimeout(() => pushLpConfig(campId), 1500);
 }
 
 function tshPickDtfLogo(campId, prodIdx, n) {
@@ -10239,6 +10245,8 @@ function tshSetFace(campId, face, enabled) {
     });
   }
   _lsSet('hcs_tsh_cfg_' + campId, JSON.stringify(conf)); _quickSave('✓ Face mise à jour');
+  clearTimeout(_tshPushDebounce[campId]);
+  _tshPushDebounce[campId] = setTimeout(() => pushLpConfig(campId), 1500);
 }
 
 // ── Constantes texte personnalisé ────────────────────────
