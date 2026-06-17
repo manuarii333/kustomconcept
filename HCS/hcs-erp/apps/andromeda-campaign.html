@@ -9109,7 +9109,7 @@ function renderConfigAdmin(c) {
             <div class="pcfg-body" id="tsh-${id}-cfg-summary" style="padding:2px 0"></div>
             <div style="padding:6px 0 2px;display:flex;gap:8px">
               <button onclick="tshResetParcours(${id})" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(255,80,80,.4);border-radius:6px;color:#ff6b6b;font-size:0.68rem;cursor:pointer">🔄 Réinitialiser config</button>
-              <button onclick="tshRefreshSummary(${id})" style="padding:5px 10px;background:#1e1e3a;border:1px solid #2a2a4a;border-radius:6px;color:#9090b0;font-size:0.68rem;cursor:pointer">↻ Actualiser</button>
+              <button onclick="tshRefreshSummary(${id});pushLpConfig(${id}).then(()=>_quickSave('✓ Config validée'))" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(79,172,254,.4);border-radius:6px;color:#4facfe;font-size:0.68rem;cursor:pointer">↻ Valider config</button>
             </div>
           </div>
 
