@@ -86,6 +86,10 @@ const Accounting = (() => {
   function _renderJournal(toolbar, area) {
     toolbar.innerHTML = `
       <button class="btn btn-primary" id="btn-new-ecriture">+ Écriture manuelle</button>
+      <button class="btn btn-secondary btn-sm" id="btn-sync-ecritures"
+        title="Régénère les écritures 411/701/445810 pour toutes les factures existantes">
+        ⚡ Sync écritures
+      </button>
       <div style="display:flex;gap:6px;margin-left:auto;">
         <button class="btn btn-ghost btn-sm" id="jnl-imp"   title="Importer CSV / JSON">⬆️ Importer</button>
         <button class="btn btn-ghost btn-sm" id="jnl-csv"   title="Exporter CSV">📥 CSV</button>
@@ -94,6 +98,25 @@ const Accounting = (() => {
       </div>`;
 
     toolbar.querySelector('#btn-new-ecriture').addEventListener('click', _openEcritureModal);
+
+    toolbar.querySelector('#btn-sync-ecritures').addEventListener('click', () => {
+      showConfirm(
+        'Régénérer les écritures comptables pour TOUTES les factures ?\n\n' +
+        'Ceci crée les écritures 411 (Clients), 701 (Ventes), 445810 (TVA) ' +
+        'pour chaque facture sans écriture d\'émission.\n\nOpération non destructive pour les écritures de paiement.',
+        () => {
+          const result = _regenerateAllEcritures();
+          toastSuccess(
+            `✅ ${result.created} facture(s) traitée(s) — ${result.skipped} ignorée(s). Écritures mises à jour.`
+          );
+          _renderJournal(
+            document.getElementById('toolbar-actions'),
+            document.getElementById('view-content')
+          );
+        },
+        null, 'Synchroniser', false
+      );
+    });
 
     /* Données courantes filtrées */
     const _getData = () => _getFilteredEcritures();
@@ -439,23 +462,31 @@ const Accounting = (() => {
     const MOIS_C = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
 
     /* Données brutes filtrées sur l'année */
+    const _n = v => { const x = Number(v); return isNaN(x) ? 0 : x; };
     const factures  = Store.getAll('factures').filter(f =>
       f.date && new Date(f.date).getFullYear() === year
     );
     const bonsAchat = Store.getAll('bonsAchat').filter(b =>
       b.statut === 'Reçu' && b.date && new Date(b.date).getFullYear() === year
     );
+    /* Dépenses opérationnelles saisies dans "Dépenses & TVA" */
+    const depenses  = Store.getAll('depenses').filter(d =>
+      d.date && new Date(d.date).getFullYear() === year
+    );
 
-    const totalVentes  = factures.reduce((s, f)  => s + (f.totalHT  || 0), 0);
-    const totalAchats  = bonsAchat.reduce((s, b)  => s + (b.totalHT  || 0), 0);
-    const resultat     = totalVentes - totalAchats;
+    const totalVentes  = factures.reduce((s, f)  => s + _n(f.totalHT),  0);
+    const totalAchats  = bonsAchat.reduce((s, b)  => s + _n(b.totalHT),  0);
+    const totalDepOpe  = depenses.reduce((s, d)   => s + _n(d.montantHT), 0);
+    const totalCharges = totalAchats + totalDepOpe;
+    const resultat     = totalVentes - totalCharges;
     const marge        = totalVentes > 0 ? Math.round((resultat / totalVentes) * 100) : 0;
 
     /* Mensuel */
     const mventes  = new Array(12).fill(0);
     const mcharges = new Array(12).fill(0);
-    factures.forEach(f  => { mventes[new Date(f.date).getMonth()]  += f.totalHT  || 0; });
-    bonsAchat.forEach(b => { mcharges[new Date(b.date).getMonth()] += b.totalHT  || 0; });
+    factures.forEach(f  => { mventes[new Date(f.date).getMonth()]  += _n(f.totalHT); });
+    bonsAchat.forEach(b => { mcharges[new Date(b.date).getMonth()] += _n(b.totalHT); });
+    depenses.forEach(d  => { mcharges[new Date(d.date).getMonth()] += _n(d.montantHT); });
 
     area.innerHTML = `
       <div style="padding:24px 0;max-width:1100px;margin:0 auto;">
@@ -502,7 +533,7 @@ const Accounting = (() => {
               border-top:1px solid var(--border);padding-top:12px;margin-top:12px;font-weight:700;">
               <span style="color:var(--text-primary);">Total charges</span>
               <span style="font-family:var(--font-mono);color:var(--accent-red);">
-                ${fmt(Math.round(totalAchats))}</span>
+                ${fmt(Math.round(totalCharges))}</span>
             </div>
           </div>
         </div>
@@ -517,7 +548,7 @@ const Accounting = (() => {
               Résultat net ${year}
             </div>
             <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">
-              Produits ${fmt(Math.round(totalVentes))} − Charges ${fmt(Math.round(totalAchats))}
+              Produits ${fmt(Math.round(totalVentes))} − Charges ${fmt(Math.round(totalCharges))}
             </div>
           </div>
           <div style="text-align:right;">
@@ -538,7 +569,7 @@ const Accounting = (() => {
       label: `CA HT ${year}`, color: 'var(--accent-green)'
     });
     statCard('pl-kpi-charges', {
-      icon: '🛒', value: fmt(Math.round(totalAchats)),
+      icon: '🛒', value: fmt(Math.round(totalCharges)),
       label: 'Total charges', color: 'var(--accent-red)'
     });
     statCard('pl-kpi-resultat', {
@@ -592,7 +623,12 @@ const Accounting = (() => {
         <button class="btn btn-ghost btn-sm" id="bal-pdf" title="Exporter PDF">🖨️ PDF</button>
       </div>`;
 
-    const ecritures = Store.getAll('ecritures');
+    /* Auto-sync : si aucune écriture mais des factures existent, régénérer silencieusement */
+    let ecritures = Store.getAll('ecritures');
+    if (ecritures.length === 0 && Store.getAll('factures').length > 0) {
+      _regenerateAllEcritures();
+      ecritures = Store.getAll('ecritures');
+    }
 
     const data = PLAN_COMPTABLE.map(compte => {
       const entries     = ecritures.filter(e => _matchesCompte(e.compte, compte.numero));
@@ -1114,9 +1150,13 @@ const Accounting = (() => {
     const factures  = Store.getAll('factures').filter(f =>
       f.statut === 'Payé' && f.date && new Date(f.date).getFullYear() === year
     );
-    /* TVA déductible = TTC - HT sur achats reçus */
+    /* TVA déductible = achats reçus */
     const bonsAchat = Store.getAll('bonsAchat').filter(b =>
       b.statut === 'Reçu' && b.date && new Date(b.date).getFullYear() === year
+    );
+    /* TVA déductible = dépenses opérationnelles saisies dans "Dépenses & TVA" */
+    const depensesTVA = Store.getAll('depenses').filter(d =>
+      d.date && new Date(d.date).getFullYear() === year && (parseFloat(d.montantTVA) || 0) > 0
     );
 
     /* Calcule la TVA par taux depuis les lignes d'un document */
@@ -1163,8 +1203,20 @@ const Accounting = (() => {
       } else {
         const diff = (b.totalTTC || 0) - (b.totalHT || 0);
         mdedu[m]   += diff;
-        mdedu16[m] += diff; // on attribue au taux principal par défaut
+        mdedu16[m] += diff;
       }
+    });
+
+    /* TVA déductible des dépenses opérationnelles */
+    depensesTVA.forEach(d => {
+      const m   = new Date(d.date).getMonth();
+      const tva = parseFloat(d.montantTVA) || 0;
+      const taux = parseFloat(d.tauxTVA) || 16;
+      mdedu[m]   += tva;
+      if (taux === 16) mdedu16[m] += tva;
+      else if (taux === 13) mdedu13[m] += tva;
+      else if (taux === 5)  mdedu5[m]  += tva;
+      else mdedu16[m] += tva;
     });
 
     const mnette = mcoll.map((c, i) => c - mdedu[i]);
@@ -2445,20 +2497,28 @@ const Accounting = (() => {
     const facsPrev = _tbFiltrePrecedent(allFacs, 'ventes');
     const depsPrev = _tbFiltrePrecedent(allDeps, 'depenses');
 
-    const ca       = facs.reduce((s, f) => s + (f.totalTTC || 0), 0);
-    const caHT     = facs.reduce((s, f) => s + (f.totalHT  || 0), 0);
-    const caPrev   = facsPrev.reduce((s, f) => s + (f.totalTTC || 0), 0);
-    const depTTC   = deps.reduce((s, d) => s + (d.montantTTC || d.montantHT || 0), 0);
-    const depPrev  = depsPrev.reduce((s, d) => s + (d.montantTTC || d.montantHT || 0), 0);
+    /* Conversion sûre : MySQL renvoie les nombres en strings, évite NaN via concaténation */
+    const _n = v => { const x = Number(v); return isNaN(x) ? 0 : x; };
+
+    const ca       = facs.reduce((s, f) => s + _n(f.totalTTC), 0);
+    const caHT     = facs.reduce((s, f) => s + _n(f.totalHT),  0);
+    const caPrev   = facsPrev.reduce((s, f) => s + _n(f.totalTTC), 0);
+    const depTTC   = deps.reduce((s, d) => s + (_n(d.montantTTC) || _n(d.montantHT)), 0);
+    const depPrev  = depsPrev.reduce((s, d) => s + (_n(d.montantTTC) || _n(d.montantHT)), 0);
     const marge    = ca - depTTC;
     const tauxMarge= ca > 0 ? Math.round((marge / ca) * 100) : 0;
-    const tvaColl  = facs.reduce((s, f)  => s + Math.max(0, (f.totalTTC||0)-(f.totalHT||0)), 0);
-    const tvaDedu  = deps.reduce((s, d)  => s + (d.montantTVA || 0), 0);
+    const tvaColl  = facs.reduce((s, f) => s + Math.max(0, _n(f.totalTTC) - _n(f.totalHT)), 0);
+    const tvaDedu  = deps.reduce((s, d) => s + _n(d.montantTVA), 0);
     const tvaNette = tvaColl - tvaDedu;
 
     const impayees = allFacs.filter(f => f.statut && f.statut !== 'Payé' && f.statut !== 'Annulé');
     const totalImpaye = impayees.reduce((s, f) =>
-      s + Math.max(0, (f.totalTTC||0) - (f.totalRegle||0)), 0);
+      s + Math.max(0, _n(f.totalTTC) - _n(f.totalRegle)), 0);
+
+    /* Pipeline devis actifs (Envoyé + Confirmé) */
+    const allDevis    = Store.getAll('devis');
+    const devisActifs = allDevis.filter(d => ['Envoyé', 'Confirmé'].includes(d.statut));
+    const devisTotal  = devisActifs.reduce((s, d) => s + _n(d.totalTTC), 0);
 
     /* Tendances (%) */
     const _trend = (cur, prev) => {
@@ -2474,9 +2534,9 @@ const Accounting = (() => {
     const moisDep = new Array(12).fill(0);
     if (_tbState.periode === 'annee') {
       allFacs.filter(f => new Date(f.date||'').getFullYear() === _tbState.annee)
-        .forEach(f => { const m = new Date(f.date).getMonth(); moisCA[m] += f.totalTTC||0; });
+        .forEach(f => { const m = new Date(f.date).getMonth(); moisCA[m] += _n(f.totalTTC); });
       allDeps.filter(d => new Date(d.date||'').getFullYear() === _tbState.annee)
-        .forEach(d => { const m = new Date(d.date).getMonth(); moisDep[m] += d.montantTTC||d.montantHT||0; });
+        .forEach(d => { const m = new Date(d.date).getMonth(); moisDep[m] += _n(d.montantTTC) || _n(d.montantHT); });
     }
 
     /* — KPI card helper — */
@@ -2498,6 +2558,29 @@ const Accounting = (() => {
 
     area.innerHTML = `
       <div style="padding:0 0 32px;">
+
+        <!-- Raccourcis ventes → comptabilité -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;
+          padding:10px 14px;background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;">
+          <span style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;
+            letter-spacing:.05em;margin-right:2px;">Accès rapide</span>
+          <button class="btn btn-secondary btn-sm"
+            onclick="openApp('ventes');setTimeout(()=>openView('invoices'),80)">🧾 Factures</button>
+          <button class="btn btn-secondary btn-sm"
+            onclick="openApp('ventes');setTimeout(()=>openView('quotes'),80)">📄 Devis</button>
+          <button class="btn btn-secondary btn-sm"
+            onclick="openApp('ventes');setTimeout(()=>openView('orders'),80)">📦 Commandes</button>
+          <button class="btn btn-ghost btn-sm" onclick="openView('journal')">📒 Journal</button>
+          <button class="btn btn-ghost btn-sm" onclick="openView('tax-report')">📊 TVA</button>
+          <button class="btn btn-ghost btn-sm" onclick="openView('pl-report')">📈 P&L</button>
+          ${impayees.length > 0 ? `
+            <span onclick="openApp('ventes');setTimeout(()=>openView('invoices'),80)"
+              title="Cliquer pour voir les factures impayées"
+              style="margin-left:auto;font-size:12px;background:rgba(220,38,38,0.1);color:var(--accent-red);
+                padding:4px 12px;border-radius:20px;font-weight:700;cursor:pointer;">
+              ⚠ ${impayees.length} impayée${impayees.length > 1 ? 's' : ''}
+            </span>` : ''}
+        </div>
 
         <!-- KPI Cards -->
         <div class="dash-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:24px;">
@@ -2545,11 +2628,13 @@ const Accounting = (() => {
                   </tbody>
                 </table>`}
             ${impayees.length > 0 ? `
-              <div style="margin-top:12px;padding:10px 12px;background:rgba(220,38,38,0.06);
-                border-radius:8px;border-left:3px solid var(--accent-red);">
+              <div onclick="openApp('ventes');setTimeout(()=>openView('invoices'),80)"
+                title="Cliquer pour gérer les factures impayées"
+                style="margin-top:12px;padding:10px 12px;background:rgba(220,38,38,0.06);
+                  border-radius:8px;border-left:3px solid var(--accent-red);cursor:pointer;">
                 <span style="font-size:13px;color:var(--accent-red);font-weight:600;">
                   ⚠ ${impayees.length} facture${impayees.length>1?'s':''} impayée${impayees.length>1?'s':''} —
-                  ${fmt(Math.round(totalImpaye))} à encaisser
+                  ${fmt(Math.round(totalImpaye))} à encaisser →
                 </span>
               </div>` : ''}
           </div>
@@ -2602,6 +2687,55 @@ const Accounting = (() => {
           </div>
 
         </div>
+
+        <!-- Pipeline Devis en cours -->
+        ${devisActifs.length > 0 ? `
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header">
+            <div class="card-title">Pipeline devis — ${devisActifs.length} devis actif${devisActifs.length>1?'s':''}</div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:var(--accent-blue);">
+                ${fmt(Math.round(devisTotal))}
+              </span>
+              <button class="btn btn-ghost btn-sm"
+                onclick="openApp('ventes');setTimeout(()=>openView('quotes'),80)"
+                style="font-size:11px;">Tout voir →</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead>
+                <tr>
+                  <th style="text-align:left;padding:6px 8px;color:var(--text-muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);">Réf.</th>
+                  <th style="text-align:left;padding:6px 8px;color:var(--text-muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);">Client</th>
+                  <th style="text-align:left;padding:6px 8px;color:var(--text-muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);">Date</th>
+                  <th style="text-align:left;padding:6px 8px;color:var(--text-muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);">Statut</th>
+                  <th style="text-align:right;padding:6px 8px;color:var(--text-muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);">Montant TTC</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${[...devisActifs].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,6).map(d => `
+                  <tr style="border-bottom:1px solid var(--border-light);cursor:pointer;"
+                    onclick="openApp('ventes');setTimeout(()=>openView('quotes'),80)"
+                    title="Aller aux devis">
+                    <td style="padding:7px 8px;font-family:var(--font-mono);font-size:12px;color:var(--accent-blue);">${_escA(d.ref||'—')}</td>
+                    <td style="padding:7px 8px;">${_escA(d.client||'—')}</td>
+                    <td style="padding:7px 8px;color:var(--text-muted);font-size:12px;">${d.date ? d.date.slice(0,10) : '—'}</td>
+                    <td style="padding:7px 8px;">
+                      <span style="font-size:11px;padding:2px 8px;border-radius:12px;font-weight:600;
+                        background:${d.statut==='Confirmé'?'rgba(0,212,170,0.15)':'rgba(99,102,241,0.12)'};
+                        color:${d.statut==='Confirmé'?'var(--accent-green)':'var(--accent-blue)'};">
+                        ${_escA(d.statut||'—')}
+                      </span>
+                    </td>
+                    <td style="padding:7px 8px;text-align:right;font-family:var(--font-mono);font-weight:600;color:var(--accent-blue);">
+                      ${fmt(Math.round(_n(d.totalTTC)))}
+                    </td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>` : ''}
 
         <!-- Assistant Coach Comptable -->
         <div id="tb-assistant-block"></div>
@@ -3159,7 +3293,12 @@ const Accounting = (() => {
         <button class="btn btn-ghost btn-sm" id="gl-pdf" title="Exporter PDF">🖨️ PDF</button>
       </div>`;
 
-    const ecritures = Store.getAll('ecritures');
+    /* Auto-sync : si aucune écriture mais des factures existent, régénérer silencieusement */
+    let ecritures = Store.getAll('ecritures');
+    if (ecritures.length === 0 && Store.getAll('factures').length > 0) {
+      _regenerateAllEcritures();
+      ecritures = Store.getAll('ecritures');
+    }
 
     /* Calcul du solde de chaque compte depuis les écritures réelles */
     const comptes = PLAN_COMPTABLE.map(c => {
@@ -3233,7 +3372,43 @@ const Accounting = (() => {
         <button class="btn btn-ghost btn-sm" id="pay-pdf" title="Exporter PDF">🖨️ PDF</button>
       </div>`;
 
-    const paiements = Store.getAll('paiements') || [];
+    /* Paiements manuels (collection 'paiements') */
+    const paiementsManuel = Store.getAll('paiements') || [];
+
+    /* Normalise le mode de paiement depuis les champs methode/mode de sales-invoices */
+    const _normMode = (m = '') => {
+      const s = m.toLowerCase();
+      if (s.includes('virement')) return 'virement';
+      if (s.includes('carte'))    return 'carte';
+      if (s.includes('espèce') || s.includes('espece') || s.includes('cash')) return 'especes';
+      if (s.includes('chèque') || s.includes('cheque')) return 'cheque';
+      if (s.includes('prélèvement') || s.includes('prelevement')) return 'prelevement';
+      return 'virement';
+    };
+
+    /* Extraire les paiements embarqués dans chaque facture (sales-invoices) */
+    const paiementsFactures = [];
+    (Store.getAll('factures') || []).forEach(fac => {
+      (fac.paiements || []).forEach(p => {
+        /* Éviter les doublons avec la collection manuelle */
+        if (paiementsManuel.some(pm => pm._pay_id === p.id)) return;
+        paiementsFactures.push({
+          id:       p.id,
+          client:   fac.client || '—',
+          facture:  fac.ref   || fac.id,
+          montant:  parseFloat(p.montant) || 0,
+          date:     p.date,
+          mode:     _normMode(p.methode || p.mode || ''),
+          reference: p.type || 'Paiement',
+          statut:   (fac.statut === 'Payé') ? 'encaissé' : 'en_attente',
+          _fromFacture: true
+        });
+      });
+    });
+
+    const paiements = [...paiementsFactures, ...paiementsManuel]
+      .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
     const modes = {
       virement:     { label:'Virement bancaire', icon:'🏦', color:'#1F7A63' },
       cheque:       { label:'Chèque',            icon:'📝', color:'#2563EB' },
@@ -3591,7 +3766,11 @@ const Accounting = (() => {
       _renderBilan(toolbar, area);
     });
 
-    const year      = _state.year;
+    const year = _state.year;
+    /* Auto-sync écritures si vides mais factures présentes */
+    if (Store.getAll('ecritures').length === 0 && Store.getAll('factures').length > 0) {
+      _regenerateAllEcritures();
+    }
     const ecritures = Store.getAll('ecritures').filter(e => e.date && new Date(e.date).getFullYear() === year);
     const factures  = Store.getAll('factures').filter(f => f.date && new Date(f.date).getFullYear() === year);
     const bonsAchat = Store.getAll('bonsAchat').filter(b => b.statut==='Reçu' && b.date && new Date(b.date).getFullYear() === year);
@@ -3885,6 +4064,71 @@ Sois direct et utile, avec des exemples concrets.`;
     }
   }
 
+  /* ================================================================
+     SYNCHRONISATION RÉTROACTIVE DES ÉCRITURES COMPTABLES
+     Génère les écritures 411/701/445810 pour toutes les factures
+     existantes qui n'ont pas encore d'écriture d'émission (type='vente').
+     ================================================================ */
+  function _regenerateAllEcritures() {
+    const _n = v => { const x = Number(v); return isNaN(x) ? 0 : x; };
+    const factures  = Store.getAll('factures');
+    const ecritures = Store.getAll('ecritures');
+
+    let created = 0, skipped = 0;
+
+    factures.forEach(fac => {
+      const ttc = _n(fac.totalTTC);
+      const ht  = _n(fac.totalHT);
+      const tva = _n(fac.totalTVA);
+      const ref = fac.ref || fac.id || '';
+
+      if (ttc <= 0 || fac.statut === 'Annulé' || !ref) { skipped++; return; }
+
+      const dateDoc = (fac.date && fac.date.length >= 10)
+        ? fac.date.slice(0, 10)
+        : (fac._createdAt ? fac._createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10));
+      const label = `${ref} — ${fac.client || ''}`.trim();
+
+      /* Supprimer les anciennes écritures d'émission pour cette pièce */
+      ecritures
+        .filter(e => e.pieceRef === ref && e.type === 'vente')
+        .forEach(e => Store.remove('ecritures', e.id));
+
+      /* 411000 Clients — débit TTC */
+      Store.create('ecritures', {
+        date: dateDoc, reference: ref,
+        libelle: `Créance client — ${label}`,
+        compte: '411000', journal: 'Ventes',
+        debit: ttc, credit: 0,
+        type: 'vente', pieceRef: ref
+      });
+
+      /* 701000 Ventes de produits — crédit HT */
+      Store.create('ecritures', {
+        date: dateDoc, reference: ref,
+        libelle: `CA HT — ${label}`,
+        compte: '701000', journal: 'Ventes',
+        debit: 0, credit: ht || ttc,
+        type: 'vente', pieceRef: ref
+      });
+
+      /* 445810 TVA collectée — crédit TVA */
+      if (tva > 0) {
+        Store.create('ecritures', {
+          date: dateDoc, reference: ref,
+          libelle: `TVA collectée — ${label}`,
+          compte: '445810', journal: 'Ventes',
+          debit: 0, credit: tva,
+          type: 'tgc', pieceRef: ref
+        });
+      }
+
+      created++;
+    });
+
+    return { created, skipped, total: factures.length };
+  }
+
   return {
     init,
     /* Tableau de bord — exposé pour les onclick inline */
@@ -3906,7 +4150,9 @@ Sois direct et utile, avec des exemples concrets.`;
     _dlCSV,
     _dlXLS,
     _dlPDF,
-    _openImportModal
+    _openImportModal,
+    /* Synchronisation rétroactive — crée les écritures pour toutes les factures existantes */
+    regenerateEcritures: _regenerateAllEcritures
   };
 
   /* ================================================================
