@@ -700,23 +700,37 @@ async function recalculer() {
     if (!s) return;
 
     /* Charger les données et calculer côté client (pas de route action custom sur ce controller) */
-    const [devisData, facData, chargesData] = await Promise.all([
-      apiGet(`devis?limit=1000`),
-      apiGet(`factures?limit=1000`),
-      apiGet(`finance_charges?limit=1000`),
+    const debut = s.date_debut, fin = s.date_fin;
+    const [devisData, facData, chargesData, ventesData, txData] = await Promise.all([
+      apiGet(`devis?limit=2000`),
+      apiGet(`factures?limit=2000`),
+      apiGet(`finance_charges?limit=2000`),
+      apiGet(`ventes_caisse?date_debut=${debut}&date_fin=${fin}&annulee=0&limit=2000`),
+      apiGet(`finance_transactions?limit=2000`),
     ]);
 
-    const debut = s.date_debut, fin = s.date_fin;
     const devis   = (devisData.items||[]).filter(d => d.date >= debut && d.date <= fin && d.statut === 'Confirmé');
     const facs    = (facData.items||[]).filter(f => f.date >= debut && f.date <= fin);
     const facsPay = facs.filter(f => ['Payé','Payé partiel'].includes(f.statut));
     const charges = (chargesData.items||[]).filter(c => c.date >= debut && c.date <= fin);
+    const ventes  = ventesData.items || [];
+    // finance_transactions manuelles (hors doublons déjà couverts par factures/caisse)
+    const txManuelles = (txData.items||[]).filter(t =>
+      t.date >= debut && t.date <= fin &&
+      !t.store_id?.startsWith('mysql-fac-') && !t.store_id?.startsWith('mysql-vente-')
+    );
 
     const sumField = (arr, field) => arr.reduce((a,r) => a + parseFloat(r[field]||0), 0);
-    const totalFac = sumField(facs, 'total_ttc');
-    const totalChg = sumField(charges, 'montant');
-    const resultat = Math.round((totalFac - totalChg) * 100) / 100;
-    const marge    = totalFac > 0 ? Math.round((resultat/totalFac)*10000)/100 : 0;
+    const sumMode  = (mode) => ventes.filter(v => v.mode_paiement === mode)
+                                     .reduce((a,v) => a + parseFloat(v.total_ttc||0), 0);
+
+    const totalFac    = sumField(facs, 'total_ttc');
+    const totalCaisse = sumField(ventes, 'total_ttc');
+    const totalTx     = sumField(txManuelles, 'montant');   // revenus manuels non couverts
+    const totalCA     = totalFac + totalCaisse + totalTx;
+    const totalChg    = sumField(charges, 'montant');
+    const resultat    = Math.round((totalCA - totalChg) * 100) / 100;
+    const marge       = totalCA > 0 ? Math.round((resultat / totalCA) * 10000) / 100 : 0;
 
     const totaux = {
       nb_devis:              devis.length,
@@ -724,6 +738,12 @@ async function recalculer() {
       nb_factures:           facs.length,
       total_factures_ttc:    Math.round(totalFac*100)/100,
       total_factures_payees: Math.round(sumField(facsPay,'total_ttc')*100)/100,
+      nb_ventes_caisse:      ventes.length,
+      total_caisse_ttc:      Math.round(totalCaisse*100)/100,
+      caisse_especes:        Math.round(sumMode('Espèces')*100)/100,
+      caisse_carte:          Math.round(sumMode('Carte bancaire')*100)/100,
+      caisse_virement:       Math.round(sumMode('Virement')*100)/100,
+      caisse_cheque:         Math.round(sumMode('Chèque')*100)/100,
       total_charges:         Math.round(totalChg*100)/100,
       resultat_net:          resultat,
       marge_nette:           marge,

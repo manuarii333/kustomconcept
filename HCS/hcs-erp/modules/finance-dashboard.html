@@ -98,6 +98,7 @@ function saveN8nUrl() {
     <button onclick="exportCSV()" class="btn-ghost text-sm">⬇ Exporter CSV</button>
     <button id="_btn-pull" onclick="_MYSQL.pull()" class="btn-ghost text-sm" title="Charger depuis MySQL">☁↓ MySQL</button>
     <button id="_btn-push" onclick="_MYSQL.pushAll()" class="btn-ghost text-sm" title="Pousser tout vers MySQL">☁↑ Push</button>
+    <button onclick="importerFacturesMySQLAsync()" class="btn-ghost text-sm" title="Synchroniser factures payées + ventes caisse depuis MySQL → finance_transactions">☁ Sync Factures</button>
     <button onclick="importerFacturesERP()" class="btn-ghost text-sm" title="Importer les factures payées depuis l'ERP">📥 Import ERP</button>
     <span id="_sync-toast" style="font-size:11px;font-weight:500;opacity:0;transition:opacity 0.5s;min-width:180px;text-align:right;"></span>
     <button onclick="openAddRevenu()" class="btn-primary text-sm">+ Revenu</button>
@@ -1104,10 +1105,101 @@ function importerFacturesERP() {
   alert(`✅ ${nbImportes} paiement(s) ERP importé(s) dans le Finance Dashboard.`);
 }
 
+// ===== SYNC FACTURES + VENTES CAISSE DEPUIS MYSQL → finance_transactions =====
+// Lit factures payées + ventes_caisse MySQL et les archive dans finance_transactions.
+// Déduplication via _source_id (format "fac-{id}" / "vente-{id}") — safe à rappeler.
+async function importerFacturesMySQLAsync() {
+  const apiUrl = localStorage.getItem('hcs_api_url') || 'https://highcoffeeshirts.com/erp/api';
+  const apiKey = localStorage.getItem('hcs_api_key') || 'hcs-erp-2026';
+  const h = { 'x-api-key': apiKey };
+  const btn = document.querySelector('[onclick="importerFacturesMySQLAsync()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+  try {
+    const [facRes, venteRes] = await Promise.all([
+      fetch(`${apiUrl}/factures?limit=2000&sort=date&order=desc`, { headers: h }),
+      fetch(`${apiUrl}/ventes_caisse?limit=2000&sort=date&order=desc&annulee=0`, { headers: h }),
+    ]);
+    const { items: factures = [] } = facRes.ok ? await facRes.json() : {};
+    const { items: ventes = [] }   = venteRes.ok ? await venteRes.json() : {};
+
+    const existing = getData('hcs_transactions');
+    const existingSourceIds = new Set(existing.map(t => t._source_id).filter(Boolean));
+
+    const CANAL_FAC = { 'Espèces': 'cash', 'Carte bancaire': 'cash', 'Virement': 'odoo', 'Chèque': 'odoo' };
+    const nouvelles = [];
+
+    // Factures payées → finance_transactions
+    factures
+      .filter(f => ['Payé', 'Payé partiel'].includes(f.statut))
+      .forEach(f => {
+        const srcId = 'fac-' + f.id;
+        if (existingSourceIds.has(srcId)) return;
+        nouvelles.push({
+          id:          'mysql-fac-' + f.id,
+          _source:     'factures',
+          _source_id:  srcId,
+          date:        f.date,
+          canal:       CANAL_FAC[f.mode_paiement] || 'odoo',
+          type:        'prestation',
+          description: ('Facture ' + (f.ref || '') + ' — ' + (f.client_nom || '')).trim(),
+          montant:     parseFloat(f.total_ttc || 0),
+          nb:          1,
+        });
+        existingSourceIds.add(srcId);
+      });
+
+    // Ventes caisse → finance_transactions
+    ventes.forEach(v => {
+      const srcId = 'vente-' + v.id;
+      if (existingSourceIds.has(srcId)) return;
+      nouvelles.push({
+        id:          'mysql-vente-' + v.id,
+        _source:     'ventes_caisse',
+        _source_id:  srcId,
+        date:        v.date,
+        canal:       'cash',
+        type:        'vente',
+        description: ('Vente caisse ' + (v.ref || '') + ' — ' + (v.client_nom || 'Comptoir')).trim(),
+        montant:     parseFloat(v.total_ttc || 0),
+        nb:          parseInt(v.nb_lignes || 1),
+      });
+      existingSourceIds.add(srcId);
+    });
+
+    if (!nouvelles.length) {
+      alert('✅ Finance Dashboard déjà à jour — aucune nouvelle entrée à synchroniser.');
+      tout();
+      return;
+    }
+
+    setData('hcs_transactions', [...existing, ...nouvelles]);
+
+    // Archiver chaque nouvelle entrée dans MySQL finance_transactions
+    let archived = 0;
+    for (const rec of nouvelles) {
+      const mid = await _MYSQL.upsert('finance_transactions', rec);
+      if (mid) {
+        const all = getData('hcs_transactions');
+        const i = all.findIndex(r => r.id === rec.id);
+        if (i >= 0) { all[i]._mysql_id = mid; setData('hcs_transactions', all); }
+        archived++;
+      }
+    }
+    alert(`✅ Synchronisation terminée\n• ${nouvelles.length} entrées importées (${archived} archivées MySQL)\n• ${factures.filter(f=>['Payé','Payé partiel'].includes(f.statut)).length} factures payées\n• ${ventes.length} ventes caisse`);
+    tout();
+  } catch(e) {
+    alert('❌ Erreur sync MySQL : ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '☁ Sync Factures'; }
+  }
+}
+
 // Lancement
 document.getElementById('filtre-mois').value = thisMonth();
 document.getElementById('filtre-mois-charge').value = thisMonth();
 chargerDemo();
+// Auto-pull MySQL au démarrage pour avoir les données les plus récentes
+_MYSQL.pull().catch(() => {});
 tout();
 </script>
 <!-- ===== MODAL VALIDER CHARGE ===== -->
