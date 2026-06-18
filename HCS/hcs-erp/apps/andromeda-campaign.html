@@ -3149,17 +3149,17 @@ var SHOW_STEP2   = ${pcfg.showStep2};
 var REQUIRE_SIZE = ${pcfg.requireSize};
 var SHOW_DTF_LOGOS   = ${!!pcfg.showDtfLogos};
 var SHOW_CUSTOM_TEXT = ${!!pcfg.showCustomText};
-var LBL1='${lbl1.replace(/'/g,"\\'")}', LBL2='${lbl2.replace(/'/g,"\\'")}', LBL3='${lbl3.replace(/'/g,"\\'")}';
-const WORKER_URL   = '${workerUrl}';
+var LBL1=${JSON.stringify(lbl1)}, LBL2=${JSON.stringify(lbl2)}, LBL3=${JSON.stringify(lbl3)};
+const WORKER_URL   = ${JSON.stringify(workerUrl)};
 const WORKER_SECRET= '';
-const LP_TOKEN     = '${lpToken}';
-const WORKER_MODE  = '${workerMode}';
-const ACCENT       = '${primary}';
+const LP_TOKEN     = ${JSON.stringify(lpToken)};
+const WORKER_MODE  = ${JSON.stringify(workerMode)};
+const ACCENT       = ${JSON.stringify(primary)};
 const SHIP_RATES   = {tahiti:1800,moorea:1500,huahine:2500,'bora-bora':2500,raiatea:2500,tahaa:2500,maupiti:3500,rangiroa:3000,makemo:4000,tubuai:4000,'hiva-oa':5000,'nuku-hiva':5000};
-const CAMP_NAME    = '${c.name.replace(/'/g,"\\'")}';
-const EMOJI        = '${emoji}';
+const CAMP_NAME    = ${JSON.stringify(c.name)};
+const EMOJI        = ${JSON.stringify(emoji)};
 const PICWISH_URL  = 'https://hcs-proxy.highcoffeeshirt.workers.dev/api/picwish';
-const LP_SLUG='${lpSlug}';
+const LP_SLUG=${JSON.stringify(lpSlug)};
 var TEXT_CFG=${textCfgJson};
 var DTF_LOGOS=${dtfLogosJson};
 const POS_OPTS =${posOptsJson};
@@ -5105,14 +5105,14 @@ var FACE_IMGS  = ${faceImgsJson};
 var TSH_SIZES  = ${tshSizesJson};
 var WORKER_URL = '${workerUrl.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}';
 var WORKER_SEC = ''; /* secret géré côté Worker via Origin auth */
-var LP_TOKEN   = '${lpToken}';
-var WORKER_MODE = '${mode}';
-var PUBLIC_KEY  = '${publicKey}';
-var PRIMARY    = '${primary}';
-var LP_SLUG    = '${lpSlug}';
+var LP_TOKEN   = ${JSON.stringify(lpToken)};
+var WORKER_MODE = ${JSON.stringify(mode)};
+var PUBLIC_KEY  = ${JSON.stringify(publicKey)};
+var PRIMARY    = ${JSON.stringify(primary)};
+var LP_SLUG    = ${JSON.stringify(lpSlug)};
 var CAMP_NAME  = '${c.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}';
 var CAMP_ICON  = '${c.icon||''}';
-var LP_VERTICAL= '${_verticalStr}';
+var LP_VERTICAL= ${JSON.stringify(_verticalStr)};
 
 var _s = { prodIdx:0, step:1, color:null, size:null, qty:1, format:null,
   fileB64:null, fileName:null, date:null, sessFmt:null, module:null,
@@ -14485,6 +14485,22 @@ function previewLPInline(campId) {
   const _fr = document.createElement('iframe');
   _fr.style.cssText = 'flex:1;border:none;width:100%';
   _fr.allow = 'clipboard-read;clipboard-write;payment';
+
+  // Fallback : si l'auto-open interne (IIFE 800ms) ne déclenche pas openFlow,
+  // on le force depuis le parent après que l'iframe soit prête.
+  _fr.addEventListener('load', function() {
+    setTimeout(function() {
+      try {
+        const iw = _fr.contentWindow;
+        if (!iw) return;
+        const flOv = iw.document && iw.document.getElementById('fl-overlay');
+        if (flOv && !flOv.classList.contains('open') && typeof iw.openFlow === 'function') {
+          iw.openFlow(0);
+        }
+      } catch(_) {}
+    }, 500);
+  });
+
   _fr.srcdoc = html;
 
   ov.appendChild(_hd);
