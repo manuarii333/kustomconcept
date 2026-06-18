@@ -343,6 +343,31 @@ const Store = (() => {
     }
   }
 
+  /* ---------- SAUVEGARDE ALLÉGÉE (MySQL-aware) ---------- */
+
+  /**
+   * Persiste UNIQUEMENT les records sans _mysql_id (non encore dans MySQL).
+   * Les records déjà dans MySQL sont exclus du localStorage — MySQL est la source de vérité.
+   * Commence par removeItem pour garantir que le setItem suivant ne dépasse pas le quota.
+   */
+  function _saveNonMysqlOnly() {
+    if (!db) return;
+    try {
+      const slim = {};
+      for (const col of Object.keys(db)) {
+        if (!Array.isArray(db[col])) { slim[col] = db[col]; continue; }
+        slim[col] = db[col].filter(r => !r || !r._mysql_id);
+      }
+      if (slim.auditLog) slim.auditLog = slim.auditLog.slice(-50);
+      if (slim.messages) slim.messages = (slim.messages || []).slice(-100);
+      localStorage.removeItem(LS_KEY);
+      localStorage.setItem(LS_KEY, JSON.stringify(slim));
+    } catch (e) {
+      console.warn('[Store] _saveNonMysqlOnly échoué:', e.message);
+      try { localStorage.removeItem(LS_KEY); } catch (_) {}
+    }
+  }
+
   /* ---------- STOCKAGE : TAILLE + LIBÉRATION ---------- */
 
   /**
@@ -1196,8 +1221,11 @@ const Store = (() => {
     }
 
     if (synced > 0) {
-      save();
-      console.info(`[Store] syncFromMySQL: ${synced} enregistrement(s) restauré(s) depuis MySQL`);
+      /* Ne persiste que les records locaux (sans _mysql_id) — les records MySQL
+         restent en mémoire pour cette session et sont re-fetched au prochain chargement.
+         Évite définitivement le QuotaExceededError. */
+      _saveNonMysqlOnly();
+      console.info(`[Store] syncFromMySQL: ${synced} enregistrement(s) restauré(s) depuis MySQL (mémoire uniquement)`);
     }
     return { synced, errors };
   }
@@ -1229,6 +1257,16 @@ const Store = (() => {
             const idx = db[col].findIndex(r => r.id === record.id);
             if (idx !== -1) db[col][idx]._mysql_id = created.id;
             pushed++;
+            /* Supprimer ce record du localStorage (MySQL le possède maintenant).
+               removeItem + setItem plus petit → toujours possible même si quota plein. */
+            try {
+              const cur = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+              if (Array.isArray(cur[col])) {
+                const before = cur[col].length;
+                cur[col] = cur[col].filter(r => r.id !== record.id);
+                if (cur[col].length < before) localStorage.setItem(LS_KEY, JSON.stringify(cur));
+              }
+            } catch (_) {}
           }
         } catch (e) {
           errors.push(`${col}/${record.id}: ${e.message}`);
@@ -1238,7 +1276,6 @@ const Store = (() => {
     }
 
     if (pushed > 0) {
-      save();
       console.info(`[Store] pushMissingToMySQL: ${pushed} enregistrement(s) envoyé(s) vers MySQL`);
     }
     return { pushed, errors };
@@ -1369,7 +1406,7 @@ const Store = (() => {
     }
 
     if (updated + added > 0) {
-      save();
+      _saveNonMysqlOnly();
       console.info(`[Store] pullAllFromMySQL : ↓${updated} mis à jour, +${added} ajouté(s)`);
     }
     return { updated, added, errors };
