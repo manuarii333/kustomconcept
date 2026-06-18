@@ -13,12 +13,12 @@
 
 require_once __DIR__ . '/base.php';
 
-class LpConfigController extends CRUDController {
+class LpConfigController extends BaseController {
 
     protected string $table = 'lp_config';
 
     protected function createTable(): void {
-        $this->db->exec("
+        $this->db->query("
             CREATE TABLE IF NOT EXISTS `lp_config` (
                 `id`          INT AUTO_INCREMENT PRIMARY KEY,
                 `slug`        VARCHAR(255) NOT NULL UNIQUE,
@@ -35,12 +35,12 @@ class LpConfigController extends CRUDController {
     /* ── GET public par slug (sans auth) ─────────────────────── */
     public function getBySlug(string $slug): array {
         $this->createTable(); /* auto-crée la table si elle n'existe pas encore */
-        $stmt = $this->db->prepare(
+        $stmt = $this->db->query(
             "SELECT id, slug, camp_id, camp_type, config_json, headline, updated_at
-               FROM `lp_config` WHERE slug = ?"
+               FROM `lp_config` WHERE slug = ?",
+            [$slug]
         );
-        $stmt->execute([$slug]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $row = $stmt->fetch();
         if (!$row) {
             http_response_code(404);
             return ['error' => 'LP config introuvable pour le slug : ' . $slug];
@@ -86,7 +86,7 @@ class LpConfigController extends CRUDController {
         /* Encoder si on reçoit un array */
         if (is_array($cfgJson)) $cfgJson = json_encode($cfgJson, JSON_UNESCAPED_UNICODE);
 
-        $stmt = $this->db->prepare("
+        $this->db->query("
             INSERT INTO `lp_config` (slug, camp_id, camp_type, config_json, headline)
             VALUES (?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
@@ -95,8 +95,7 @@ class LpConfigController extends CRUDController {
               config_json= VALUES(config_json),
               headline   = VALUES(headline),
               updated_at = CURRENT_TIMESTAMP
-        ");
-        $stmt->execute([$slug, $campId, $campType, $cfgJson, $headline]);
+        ", [$slug, $campId, $campType, $cfgJson, $headline]);
 
         /* Retourner l'enregistrement mis à jour */
         return $this->getBySlug($slug);
@@ -106,9 +105,8 @@ class LpConfigController extends CRUDController {
     public function update($id, array $body): array {
         /* Chercher par id ou slug */
         if (!is_numeric($id)) { $body['slug'] = $id; return $this->upsert($body); }
-        $stmt = $this->db->prepare("SELECT slug FROM `lp_config` WHERE id = ?");
-        $stmt->execute([$id]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt = $this->db->query("SELECT slug FROM `lp_config` WHERE id = ?", [$id]);
+        $row = $stmt->fetch();
         if (!$row) { http_response_code(404); return ['error' => 'Introuvable']; }
         $body['slug'] = $row['slug'];
         return $this->upsert($body);
