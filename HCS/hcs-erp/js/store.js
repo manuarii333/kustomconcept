@@ -107,6 +107,20 @@ const Store = (() => {
               if (!existingIds.has(e.id)) { db[col].push(e); patched = true; }
             });
           });
+
+          /* Purger les écritures démo v1.3.0 (ec-001 … ec-028) */
+          if (dbVersion === '1.3.0' && db.ecritures) {
+            const DEMO_IDS = new Set([
+              'ec-001','ec-002','ec-003','ec-004','ec-005','ec-006','ec-007','ec-008',
+              'ec-009','ec-010','ec-011','ec-012','ec-013','ec-014','ec-015','ec-016',
+              'ec-017','ec-018','ec-019','ec-020','ec-021','ec-022','ec-023','ec-024',
+              'ec-025','ec-026','ec-027','ec-028'
+            ]);
+            const before = db.ecritures.length;
+            db.ecritures = db.ecritures.filter(e => !DEMO_IDS.has(e.id));
+            if (db.ecritures.length !== before) patched = true;
+          }
+
           console.info(`[Store] Migration seed ${dbVersion || 'null'} → ${seedVersion} (données préservées)`);
         }
 
@@ -156,15 +170,16 @@ const Store = (() => {
    * Appelé automatiquement après chaque mutation CRUD.
    */
   let _saving = false;
+  let _syncAndFreeRunning = false;
   function save() {
     if (_saving) return; // anti-réentrance
     _saving = true;
     try {
-      /* Purge proactive MySQL-aware : si >2.5 MB, éviction intelligente AVANT save.
+      /* Purge proactive MySQL-aware : si >1.5 MB, éviction intelligente AVANT save.
          Priorité : virer les records déjà dans MySQL, préserver les non-synchronisés. */
       try {
         const _raw = localStorage.getItem(LS_KEY) || '';
-        if (_raw.length > 2500000 && db) {
+        if (_raw.length > 1500000 && db) {
           const ARCHIVABLE = ['devis','factures','commandes','contacts','produits',
                               'fournisseurs','logos','assets','calculs','bonsAchat','employes'];
           let _freed = 0;
@@ -172,14 +187,14 @@ const Store = (() => {
             if (!Array.isArray(db[col])) continue;
             const withMySQL    = db[col].filter(r => r && r._mysql_id);
             const withoutMySQL = db[col].filter(r => r && !r._mysql_id);
-            if (withMySQL.length > 10) {
-              /* Garder les 10 plus récents parmi les synced + tous les non-synced */
+            if (withMySQL.length > 5) {
+              /* Garder les 5 plus récents parmi les synced + tous les non-synced */
               const before = db[col].length;
-              db[col] = [...withoutMySQL, ...withMySQL.slice(-10)];
+              db[col] = [...withoutMySQL, ...withMySQL.slice(-5)];
               _freed += before - db[col].length;
-            } else if (db[col].length > 40) {
-              /* Fallback : strip base64 + limiter à 30 */
-              db[col] = db[col].slice(-30).map(r => {
+            } else if (db[col].length > 20) {
+              /* Fallback : strip base64 + limiter à 15 */
+              db[col] = db[col].slice(-15).map(r => {
                 if (typeof r !== 'object' || !r) return r;
                 const c = {};
                 for (const k of Object.keys(r)) {
@@ -285,8 +300,8 @@ const Store = (() => {
             console.warn('[Store] Sauvegarde ultra-dégradée (grands champs tronqués) — libérez du localStorage');
           } catch (e3) {
             console.error('[Store] Erreur de sauvegarde critique — localStorage saturé :', e3);
-            /* Tier 4 : sync MySQL en arrière-plan puis purge nucléaire */
-            syncAndFreeSpace().catch(() => {});
+            /* Tier 4 : sync MySQL en arrière-plan puis purge nucléaire (une seule fois) */
+            if (!_syncAndFreeRunning) syncAndFreeSpace().catch(() => {});
             try {
               const minimal = {};
               for (const col of Object.keys(dbForStorage)) {
@@ -352,30 +367,40 @@ const Store = (() => {
    * @returns {Promise<{ pushed: number }>}
    */
   async function syncAndFreeSpace(onProgress) {
+    if (_syncAndFreeRunning) return { pushed: 0 };
+    _syncAndFreeRunning = true;
     const COLS = ['devis', 'factures', 'commandes', 'contacts', 'produits', 'fournisseurs'];
     let pushed = 0;
-    for (let i = 0; i < COLS.length; i++) {
-      const col = COLS[i];
-      onProgress?.({ step: 'push', col, done: i, total: COLS.length });
-      try { await syncAllToMySQL(col); pushed++; } catch (_) {}
-    }
-    /* Purge agressive : réduire à 30 records max + strip champs volumineux */
-    if (db) {
-      for (const col of Object.keys(db)) {
-        if (!Array.isArray(db[col])) continue;
-        db[col] = db[col].slice(-30).map(r => {
-          if (typeof r !== 'object' || !r) return r;
-          const clean = {};
-          for (const k of Object.keys(r)) {
-            const v = r[k];
-            clean[k] = (typeof v === 'string' && (v.startsWith('data:') || v.length > 500)) ? '' : v;
-          }
-          return clean;
-        });
+    try {
+      for (let i = 0; i < COLS.length; i++) {
+        const col = COLS[i];
+        onProgress?.({ step: 'push', col, done: i, total: COLS.length });
+        try { await syncAllToMySQL(col); pushed++; } catch (_) {}
       }
-      if (db.auditLog) db.auditLog = [];
-      if (db.messages) db.messages = (db.messages || []).slice(-20);
-      save();
+      /* Purge agressive : réduire à 30 records max + strip champs volumineux */
+      if (db) {
+        for (const col of Object.keys(db)) {
+          if (!Array.isArray(db[col])) continue;
+          db[col] = db[col].slice(-30).map(r => {
+            if (typeof r !== 'object' || !r) return r;
+            const clean = {};
+            for (const k of Object.keys(r)) {
+              const v = r[k];
+              clean[k] = (typeof v === 'string' && (v.startsWith('data:') || v.length > 500)) ? '' : v;
+            }
+            return clean;
+          });
+        }
+        if (db.auditLog) db.auditLog = [];
+        if (db.messages) db.messages = (db.messages || []).slice(-20);
+        /* Sauvegarde directe sans récursion (bypass save() pour éviter la boucle) */
+        try {
+          localStorage.removeItem(LS_KEY);
+          localStorage.setItem(LS_KEY, JSON.stringify(db));
+        } catch (_) {}
+      }
+    } finally {
+      _syncAndFreeRunning = false;
     }
     onProgress?.({ step: 'done', pushed });
     return { pushed };
@@ -1064,13 +1089,13 @@ const Store = (() => {
     let synced = 0;
     const errors = [];
 
-    /* Archivage automatique : si localStorage > 3 MB, supprimer les enregistrements
+    /* Archivage automatique : si localStorage > 1.5 MB, supprimer les enregistrements
        déjà archivés dans MySQL (_mysql_id présent) pour libérer de la place.
        Les enregistrements sans _mysql_id (non-synchronisés) sont conservés. */
     try {
       let used = 0;
       for (const k of Object.keys(localStorage)) used += (localStorage.getItem(k) || '').length;
-      if (used > 3_000_000) {
+      if (used > 1_500_000) {
         /* Étape 1 : vider les clés lourdes non-critiques */
         ['hcs_lp_preview','hcs_lp_preview_b','hcs_lp_preview_vdec','hcs_erp_mockups',
          'hcs_tsh_cfg_1','hcs_tsh_cfg_2','hcs_bg_thumbs_v1','hcs_published_urls'].forEach(k => {
@@ -1084,11 +1109,11 @@ const Store = (() => {
           for (const col of ARCHIVABLE) {
             if (!Array.isArray(cur[col])) continue;
             const before = cur[col].length;
-            /* Garder : non-MySQL OU les 10 plus récents même si MySQL */
+            /* Garder : non-MySQL OU les 5 plus récents même si MySQL */
             const withMySQL   = cur[col].filter(r => r._mysql_id);
             const withoutMySQL = cur[col].filter(r => !r._mysql_id);
-            if (withMySQL.length > 10) {
-              cur[col] = [...withoutMySQL, ...withMySQL.slice(-10)];
+            if (withMySQL.length > 5) {
+              cur[col] = [...withoutMySQL, ...withMySQL.slice(-5)];
               freed += before - cur[col].length;
             }
           }
@@ -1099,7 +1124,7 @@ const Store = (() => {
       }
     } catch(_) {}
 
-    const SYNC_LIMITS = { contacts: 40, produits: 60, fournisseurs: 30 };
+    const SYNC_LIMITS = { devis: 20, factures: 20, commandes: 15, contacts: 25, produits: 40, fournisseurs: 20 };
 
     for (const col of SYNC_COLS) {
       try {
@@ -1152,6 +1177,16 @@ const Store = (() => {
               if (!db._meta.counters) db._meta.counters = {};
               if (n > (db._meta.counters[cKey] || 0)) db._meta.counters[cKey] = n;
             }
+          }
+        }
+
+        /* Éviction post-sync : ne garder que colLimit records MySQL en cache local.
+           Les enregistrements sans _mysql_id (créés hors-ligne) sont toujours conservés. */
+        if (db[col]) {
+          const withMySQL    = db[col].filter(r => r._mysql_id);
+          const withoutMySQL = db[col].filter(r => !r._mysql_id);
+          if (withMySQL.length > colLimit) {
+            db[col] = [...withoutMySQL, ...withMySQL.slice(-colLimit)];
           }
         }
       } catch (e) {

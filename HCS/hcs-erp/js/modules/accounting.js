@@ -1146,10 +1146,16 @@ const Accounting = (() => {
     const MOIS_LONG = ['Janvier','Février','Mars','Avril','Mai','Juin',
       'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
-    /* TVA collectée = TTC - HT sur factures payées */
-    const factures  = Store.getAll('factures').filter(f =>
-      f.statut === 'Payé' && f.date && new Date(f.date).getFullYear() === year
+    /* TVA collectée depuis les écritures comptables (compte 445810) */
+    const ecrColl = Store.getAll('ecritures').filter(e =>
+      e.date && new Date(e.date).getFullYear() === year && e.compte === '445810'
     );
+    /* Index factures par ref/id pour retrouver la ventilation par taux */
+    const facIdx = {};
+    Store.getAll('factures').forEach(f => {
+      if (f.ref) facIdx[f.ref] = f;
+      if (f.id)  facIdx[f.id]  = f;
+    });
     /* TVA déductible = achats reçus */
     const bonsAchat = Store.getAll('bonsAchat').filter(b =>
       b.statut === 'Reçu' && b.date && new Date(b.date).getFullYear() === year
@@ -1182,13 +1188,24 @@ const Accounting = (() => {
     const mdedu13  = new Array(12).fill(0);
     const mdedu5   = new Array(12).fill(0);
 
-    factures.forEach(f => {
-      const m   = new Date(f.date).getMonth();
-      const tva = _tvaParTaux(f.lignes || []);
-      mcoll[m]   += tva[16] + tva[13] + tva[5] + tva.autres;
-      mcoll16[m] += tva[16];
-      mcoll13[m] += tva[13];
-      mcoll5[m]  += tva[5];
+    ecrColl.forEach(e => {
+      const m   = new Date(e.date).getMonth();
+      const net = (e.credit || 0) - (e.debit || 0);
+      if (net === 0) return;
+      mcoll[m] += net;
+      /* Ventilation par taux via la facture source */
+      const fac = facIdx[e.pieceRef] || facIdx[e.reference];
+      if (fac && Array.isArray(fac.lignes) && fac.lignes.length) {
+        const tva = _tvaParTaux(fac.lignes);
+        const tot = tva[16] + tva[13] + tva[5] + tva.autres;
+        if (tot > 0) {
+          mcoll16[m] += net * (tva[16] / tot);
+          mcoll13[m] += net * (tva[13] / tot);
+          mcoll5[m]  += net * (tva[5]  / tot);
+          return;
+        }
+      }
+      mcoll16[m] += net; /* fallback : tout en 16% */
     });
     bonsAchat.forEach(b => {
       const m   = new Date(b.date).getMonth();

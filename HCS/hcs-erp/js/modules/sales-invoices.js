@@ -768,6 +768,57 @@ window.SalesInvoices = (() => {
     _bindPaiementEvents(doc, toolbar, area);
   }
 
+  /**
+   * Crée les écritures d'émission de facture (schéma comptable complet).
+   * Appelée à la création ET à chaque mise à jour des totaux.
+   * Dédoublonnage par pieceRef + type='vente' avant réinsertion.
+   */
+  function _createFactureEcritures(facture, totaux) {
+    const ttc = Number(totaux.totalTTC) || 0;
+    const ht  = Number(totaux.totalHT)  || 0;
+    const tva = Number(totaux.totalTVA) || 0;
+    if (ttc <= 0) return;
+
+    const dateDoc = facture.date || new Date().toISOString().slice(0, 10);
+    const ref     = facture.ref || '';
+    const label   = `${ref} — ${facture.client || ''}`.trim();
+
+    /* Supprimer les anciennes écritures d'émission pour éviter les doublons */
+    const existing = Store.getAll('ecritures').filter(
+      e => e.pieceRef === ref && e.type === 'vente'
+    );
+    existing.forEach(e => Store.remove('ecritures', e.id));
+
+    /* 411000 Clients — débit TTC (créance sur le client) */
+    Store.create('ecritures', {
+      date: dateDoc, reference: ref,
+      libelle: `Créance client — ${label}`,
+      compte: '411000', journal: 'Ventes',
+      debit: ttc, credit: 0,
+      type: 'vente', pieceRef: ref
+    });
+
+    /* 701000 Ventes — crédit HT (produit de la vente) */
+    Store.create('ecritures', {
+      date: dateDoc, reference: ref,
+      libelle: `CA HT — ${label}`,
+      compte: '701000', journal: 'Ventes',
+      debit: 0, credit: ht,
+      type: 'vente', pieceRef: ref
+    });
+
+    /* 445810 TVA collectée — crédit TVA */
+    if (tva > 0) {
+      Store.create('ecritures', {
+        date: dateDoc, reference: ref,
+        libelle: `TVA collectée — ${label}`,
+        compte: '445810', journal: 'Ventes',
+        debit: 0, credit: tva,
+        type: 'tgc', pieceRef: ref
+      });
+    }
+  }
+
   /** Crée les 2 écritures comptables lors d'un paiement */
   function _createPaiementEcritures(facture, paiement) {
     const isEspeces  = paiement.methode === 'Espèces';
@@ -910,11 +961,15 @@ window.SalesInvoices = (() => {
 
       if (isNew) {
         Store.create('factures', record);
-        toast('Facture créée et paiements enregistrés. ✓', 'success', 3500);
+        /* Écriture comptable d'émission : 411000 / 701000 / 445810 */
+        _createFactureEcritures(record, saveTotaux);
+        toast('Facture créée — écritures comptables générées. ✓', 'success', 3500);
         C()._goList('invoices', toolbar, area);
       } else {
         Store.update('factures', doc.id, record);
-        toast('Facture sauvegardée.', 'success');
+        /* Réémettre les écritures si les totaux ont changé */
+        _createFactureEcritures({ ...doc, ...record }, saveTotaux);
+        toast('Facture sauvegardée — écritures mises à jour.', 'success');
         C()._goList('invoices', toolbar, area);
       }
     });
