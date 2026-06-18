@@ -2812,23 +2812,8 @@ async function _deleteLPBySlug(campId, parcoursSlug, url) {
 function previewLP(id) {
   const c = CAMPS[id];
   if (c.id === 0) { vdecOpenFlow(id, 0); return; }
-  /* T-Shirt / Casquette : aperçu inline depuis config live (sans publier) */
-  if (c.id === 1 || c.id === 2) { previewLPInline(id); return; }
-  /* Autres verticales : ouvrir LP publiée sur Workers */
-  const _baseName = c.name.replace(/[^a-zA-Z0-9]/g,'-').toLowerCase().replace(/-+/g,'-').replace(/^-|-$/g,'');
-  const _slug = `${_baseName}-${id}`;
-  const _pubUrl = (JSON.parse(localStorage.getItem('hcs_published_urls') || '{}'))[id] || (`${WORKER_BASE}/lp/${_slug}`);
-  const ol = document.createElement('div');
-  ol.id = '_lp-preview-ol';
-  ol.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#0f0f1a;display:flex;flex-direction:column';
-  ol.innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:#16162a;border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0">
-      <span style="font-size:.8rem;font-weight:700;color:#43e97b">🌐 LP — ${c.name}</span>
-      <a href="${_pubUrl}" target="_blank" rel="noopener" style="padding:4px 10px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);border-radius:5px;font-size:.7rem;text-decoration:none">Ouvrir dans un onglet ↗</a>
-      <button onclick="document.getElementById('_lp-preview-ol').remove()" style="margin-left:auto;padding:5px 14px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);border-radius:6px;font-size:.75rem;cursor:pointer">✕ Fermer</button>
-    </div>
-    <iframe src="${_pubUrl}" style="flex:1;border:none;width:100%" allow="payment"></iframe>`;
-  document.body.appendChild(ol);
+  /* Toutes les verticales : aperçu inline depuis config live (reflect paramètres admin) */
+  previewLPInline(id);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -9109,7 +9094,7 @@ function renderConfigAdmin(c) {
             <div class="pcfg-body" id="tsh-${id}-cfg-summary" style="padding:2px 0"></div>
             <div style="padding:6px 0 2px;display:flex;gap:8px">
               <button onclick="tshResetParcours(${id})" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(255,80,80,.4);border-radius:6px;color:#ff6b6b;font-size:0.68rem;cursor:pointer">🔄 Réinitialiser config</button>
-              <button onclick="tshRefreshSummary(${id});pushLpConfig(${id}).then(()=>_quickSave('✓ Config validée'))" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(79,172,254,.4);border-radius:6px;color:#4facfe;font-size:0.68rem;cursor:pointer">↻ Valider config</button>
+              <button id="_vbtn_${id}" onclick="validerParcours(${id})" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(67,233,123,.4);border-radius:6px;color:#43e97b;font-size:0.68rem;cursor:pointer">✅ Valider & Publier</button>
             </div>
           </div>
 
@@ -9449,7 +9434,7 @@ function renderConfigAdmin(c) {
             <div class="pcfg-title" style="color:#4facfe;font-size:0.65rem;letter-spacing:.05em">📍 PARCOURS CLIENT PRÉDIT</div>
             <div id="pcfg-predict-${id}" style="padding:2px 0"></div>
             <div style="padding:6px 0 2px;display:flex;gap:8px">
-              <button onclick="genRefreshSummary(${id});pushLpConfig(${id}).then(()=>_quickSave('✓ Config validée'))" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(79,172,254,.4);border-radius:6px;color:#4facfe;font-size:0.68rem;cursor:pointer">↻ Valider config</button>
+              <button id="_vbtn_${id}" onclick="validerParcours(${id})" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(67,233,123,.4);border-radius:6px;color:#43e97b;font-size:0.68rem;cursor:pointer">✅ Valider & Publier</button>
             </div>
           </div>
           <div class="pcfg-section">
@@ -9547,7 +9532,7 @@ function renderConfigAdmin(c) {
             <div class="pcfg-title" style="color:#4facfe;font-size:0.65rem;letter-spacing:.05em">📍 PARCOURS CLIENT PRÉDIT</div>
             <div id="pcfg-predict-${id}" style="padding:2px 0"></div>
             <div style="padding:6px 0 2px;display:flex;gap:8px">
-              <button onclick="genRefreshSummary(${id});pushLpConfig(${id}).then(()=>_quickSave('✓ Config validée'))" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(79,172,254,.4);border-radius:6px;color:#4facfe;font-size:0.68rem;cursor:pointer">↻ Valider config</button>
+              <button id="_vbtn_${id}" onclick="validerParcours(${id})" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(67,233,123,.4);border-radius:6px;color:#43e97b;font-size:0.68rem;cursor:pointer">✅ Valider & Publier</button>
             </div>
           </div>
           <div class="pcfg-section">
@@ -9674,7 +9659,7 @@ function renderConfigAdmin(c) {
             <div class="pcfg-title" style="color:#4facfe;font-size:0.65rem;letter-spacing:.05em">📍 PARCOURS CLIENT PRÉDIT</div>
             <div id="pcfg-predict-${id}" style="padding:2px 0"></div>
             <div style="padding:6px 0 2px;display:flex;gap:8px">
-              <button onclick="genRefreshSummary(${id});pushLpConfig(${id}).then(()=>_quickSave('✓ Config validée'))" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(79,172,254,.4);border-radius:6px;color:#4facfe;font-size:0.68rem;cursor:pointer">↻ Valider config</button>
+              <button id="_vbtn_${id}" onclick="validerParcours(${id})" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(67,233,123,.4);border-radius:6px;color:#43e97b;font-size:0.68rem;cursor:pointer">✅ Valider & Publier</button>
             </div>
           </div>
           <div class="pcfg-section">
@@ -9754,7 +9739,7 @@ function renderConfigAdmin(c) {
             <div class="pcfg-title" style="color:#4facfe;font-size:0.65rem;letter-spacing:.05em">📍 PARCOURS CLIENT PRÉDIT</div>
             <div id="pcfg-predict-${id}" style="padding:2px 0"></div>
             <div style="padding:6px 0 2px;display:flex;gap:8px">
-              <button onclick="genRefreshSummary(${id});pushLpConfig(${id}).then(()=>_quickSave('✓ Config validée'))" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(79,172,254,.4);border-radius:6px;color:#4facfe;font-size:0.68rem;cursor:pointer">↻ Valider config</button>
+              <button id="_vbtn_${id}" onclick="validerParcours(${id})" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(67,233,123,.4);border-radius:6px;color:#43e97b;font-size:0.68rem;cursor:pointer">✅ Valider & Publier</button>
             </div>
           </div>
           <div class="pcfg-section">
@@ -9833,7 +9818,7 @@ function renderConfigAdmin(c) {
             <div class="pcfg-title" style="color:#4facfe;font-size:0.65rem;letter-spacing:.05em">📍 PARCOURS CLIENT PRÉDIT</div>
             <div id="pcfg-predict-${id}" style="padding:2px 0"></div>
             <div style="padding:6px 0 2px;display:flex;gap:8px">
-              <button onclick="genRefreshSummary(${id});pushLpConfig(${id}).then(()=>_quickSave('✓ Config validée'))" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(79,172,254,.4);border-radius:6px;color:#4facfe;font-size:0.68rem;cursor:pointer">↻ Valider config</button>
+              <button id="_vbtn_${id}" onclick="validerParcours(${id})" style="padding:5px 10px;background:#1e1e3a;border:1px solid rgba(67,233,123,.4);border-radius:6px;color:#43e97b;font-size:0.68rem;cursor:pointer">✅ Valider & Publier</button>
             </div>
           </div>
           <div class="pcfg-section">
@@ -10467,31 +10452,85 @@ function predictParcours(campId) {
 }
 
 function renderParcoursPredict(campId) {
+  return renderParcoursLecteur(campId);
+}
+
+// ── Lecteur de parcours : snapshot + diff + validation ──────
+function _getParcoursSnapshot(campId) {
+  try { return JSON.parse(localStorage.getItem('hcs_snap_' + campId) || 'null'); } catch(_) { return null; }
+}
+function _saveParcoursSnapshot(campId) {
+  const steps = predictParcours(campId);
+  _lsSet('hcs_snap_' + campId, JSON.stringify(steps.map(function(s) {
+    return { n:s.n, lbl:s.lbl, detail:s.detail, ok:s.ok };
+  })));
+}
+
+function renderParcoursLecteur(campId) {
   const steps = predictParcours(campId);
   if (!steps.length) return '<div style="font-size:.63rem;color:#9090b0;padding:2px">Config non disponible.</div>';
-  return '<div style="display:flex;flex-direction:column">' +
-    steps.map(function(s, i) {
-      var clr = !s.ok ? '#ff6b6b' : (s.n===1||s.n===4 ? '#43e97b' : '#4facfe');
-      return '<div style="display:flex;align-items:flex-start;gap:8px' + (i < steps.length-1 ? ';margin-bottom:5px' : '') + '">'
-        + '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">'
-        + '<div style="width:22px;height:22px;border-radius:50%;background:' + clr + '22;border:2px solid ' + clr + ';display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:900;color:' + clr + '">' + s.n + '</div>'
-        + (i < steps.length-1 ? '<div style="width:2px;height:10px;background:#2a2a4a;margin:1px 0"></div>' : '')
-        + '</div>'
-        + '<div style="opacity:' + (s.ok ? 1 : 0.5) + ';padding-top:2px">'
-        + '<div style="font-size:.68rem;font-weight:700;color:' + clr + '">' + s.icon + ' ' + s.lbl + '</div>'
-        + '<div style="font-size:.58rem;color:rgba(255,255,255,.42);margin-top:1px">' + s.detail + '</div>'
-        + '</div></div>';
-    }).join('') + '</div>';
+  const snap = _getParcoursSnapshot(campId);
+  const snapMap = {};
+  if (snap) snap.forEach(function(s) { snapMap[s.n] = s; });
+  const currentSig = JSON.stringify(steps.map(function(s) { return { n:s.n, lbl:s.lbl, detail:s.detail, ok:s.ok }; }));
+  const hasChanges = !snap || JSON.stringify(snap) !== currentSig;
+
+  let html = '<div style="display:flex;flex-direction:column;gap:5px">';
+
+  // Bannière état
+  html += hasChanges
+    ? '<div style="background:rgba(246,211,101,.13);border:1px solid rgba(246,211,101,.3);border-radius:7px;padding:5px 9px;font-size:.6rem;color:#f6d365;font-weight:700;margin-bottom:2px">⚠️ Modifications non validées — parcours a changé</div>'
+    : '<div style="background:rgba(67,233,123,.1);border:1px solid rgba(67,233,123,.22);border-radius:7px;padding:5px 9px;font-size:.6rem;color:#43e97b;font-weight:700;margin-bottom:2px">✅ Parcours validé et à jour</div>';
+
+  // Étapes avec diff
+  steps.forEach(function(s, i) {
+    const prev = snapMap[s.n];
+    const isNew     = snap && !prev;
+    const isChanged = prev && (prev.lbl !== s.lbl || prev.detail !== s.detail || prev.ok !== s.ok);
+    const clr = !s.ok ? '#ff6b6b' : (s.n===1||s.n===4 ? '#43e97b' : '#4facfe');
+    const borderClr = (isNew||isChanged) ? '#f6d365' : (clr + '44');
+    let badge = '';
+    if (isNew)          badge = '<span style="background:rgba(246,211,101,.2);color:#f6d365;font-size:.5rem;font-weight:800;padding:1px 5px;border-radius:8px;margin-left:5px">NOUVEAU</span>';
+    else if (isChanged) badge = '<span style="background:rgba(79,172,254,.2);color:#4facfe;font-size:.5rem;font-weight:800;padding:1px 5px;border-radius:8px;margin-left:5px">MODIFIÉ</span>';
+
+    html += '<div style="display:flex;align-items:flex-start;gap:8px;border-left:2px solid ' + borderClr + ';padding-left:7px' + (i<steps.length-1?';padding-bottom:4px':'') + '">'
+      + '<div style="width:22px;height:22px;border-radius:50%;background:' + clr + '22;border:2px solid ' + clr + ';display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:900;color:' + clr + ';flex-shrink:0">' + s.n + '</div>'
+      + '<div style="flex:1;opacity:' + (s.ok?1:0.55) + ';padding-top:2px">'
+      + '<div style="font-size:.68rem;font-weight:700;color:' + clr + '">' + s.icon + ' ' + s.lbl + badge + '</div>'
+      + '<div style="font-size:.58rem;color:rgba(255,255,255,.42);margin-top:1px">' + s.detail + '</div>'
+      + (isChanged && prev ? '<div style="font-size:.53rem;color:rgba(255,165,0,.55);margin-top:2px;font-style:italic">Avant : ' + prev.detail + '</div>' : '')
+      + '</div></div>';
+  });
+
+  html += '</div>';
+  return html;
+}
+
+async function validerParcours(campId) {
+  const btn = document.getElementById('_vbtn_' + campId);
+  const origTxt = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Validation...'; }
+  try {
+    await pushLpConfig(campId);
+    _saveParcoursSnapshot(campId);
+    genRefreshSummary(campId);
+    tshRefreshSummary(campId);
+    _quickSave('✓ Parcours validé');
+  } catch(e) {
+    showToast('❌ Erreur validation : ' + e.message, true);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = origTxt; }
+  }
 }
 
 function genRefreshSummary(campId) {
   var el = document.getElementById('pcfg-predict-' + campId);
-  if (el) el.innerHTML = renderParcoursPredict(campId);
+  if (el) el.innerHTML = renderParcoursLecteur(campId);
 }
 
 function tshRefreshSummary(campId) {
   const el = document.getElementById('tsh-' + campId + '-cfg-summary');
-  if (el) el.innerHTML = renderParcoursPredict(campId);
+  if (el) el.innerHTML = renderParcoursLecteur(campId);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -14381,22 +14420,27 @@ function previewLPInline(campId) {
   } catch(e) { showToast('⚠️ Erreur génération LP : ' + e.message, true); return; }
   if (!html) return;
 
-  const blob    = new Blob([html], { type: 'text/html; charset=utf-8' });
-  const blobUrl = URL.createObjectURL(blob);
-
   const existing = document.getElementById('_lp-dyn-ov');
   if (existing) { existing.remove(); }
 
   const ov = document.createElement('div');
   ov.id = '_lp-dyn-ov';
   ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#0f0f1a;display:flex;flex-direction:column';
-  ov.innerHTML =
-    '<div style="display:flex;align-items:center;gap:10px;padding:9px 16px;background:#16162a;border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0">'
-    + '<span style="font-size:.82rem;font-weight:700;color:#4facfe">⚡ LP Dynamique — ' + c.name + '</span>'
+
+  const _hd = document.createElement('div');
+  _hd.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 16px;background:#16162a;border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0';
+  _hd.innerHTML =
+    '<span style="font-size:.82rem;font-weight:700;color:#4facfe">⚡ LP Dynamique — ' + c.name + '</span>'
     + '<span style="font-size:.65rem;padding:2px 9px;background:rgba(67,233,123,.13);color:#43e97b;border-radius:20px;border:1px solid rgba(67,233,123,.28)">Config live</span>'
-    + '<button onclick="document.getElementById(\'_lp-dyn-ov\').remove()" style="margin-left:auto;padding:5px 14px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);border-radius:6px;font-size:.75rem;cursor:pointer">✕ Fermer</button>'
-    + '</div>'
-    + '<iframe src="' + blobUrl + '" style="flex:1;border:none;width:100%" allow="clipboard-read;clipboard-write;payment"></iframe>';
+    + '<button onclick="document.getElementById(\'_lp-dyn-ov\').remove()" style="margin-left:auto;padding:5px 14px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);border-radius:6px;font-size:.75rem;cursor:pointer">✕ Fermer</button>';
+
+  const _fr = document.createElement('iframe');
+  _fr.style.cssText = 'flex:1;border:none;width:100%';
+  _fr.allow = 'clipboard-read;clipboard-write;payment';
+  _fr.srcdoc = html;
+
+  ov.appendChild(_hd);
+  ov.appendChild(_fr);
   document.body.appendChild(ov);
 }
 
