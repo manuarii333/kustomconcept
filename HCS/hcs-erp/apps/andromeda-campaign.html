@@ -11012,37 +11012,6 @@ function tshBuyStep2HTML() {
     const cPos     = tshBuy.textPos     || tc.defaultPos   || (availPos[0] || 'front-center');
     const cSize    = tshBuy.textSize    || tc.defaultSize  || 32;
 
-    // ── Séparation zones avant / dos
-    const frontPositions = availPos.filter(v => v.startsWith('front'));
-    const backPositions  = availPos.filter(v => v.startsWith('back'));
-    const _tshapeStyle = 'position:absolute;inset:0;background:rgba(255,255,255,.09);border-radius:6px 6px 3px 3px;clip-path:polygon(28% 0%,36% 10%,50% 12%,64% 10%,72% 0%,100% 22%,82% 30%,82% 100%,18% 100%,18% 30%,0% 22%)';
-    const _makePosZone = v => {
-      const opt = TSH_POS_OPTS.find(p => p.val === v);
-      if (!opt) return '';
-      const sel = cPos === v;
-      return `<button onclick="tshTextSet('textPos','${v}')"
-        style="position:absolute;left:${opt.x}%;top:${opt.y}%;transform:translate(-50%,-50%);
-               padding:3px 7px;border-radius:6px;line-height:1.5;
-               border:1.5px solid ${sel?'#4facfe':'rgba(255,255,255,.2)'};
-               background:${sel?'rgba(79,172,254,.4)':'rgba(0,0,0,.55)'};
-               color:${sel?'#fff':'rgba(255,255,255,.6)'};font-size:0.5rem;font-weight:${sel?'800':'500'};
-               cursor:pointer;white-space:nowrap;z-index:3;
-               box-shadow:${sel?'0 0 0 2px rgba(79,172,254,.4),0 2px 8px rgba(0,0,0,.4)':'0 1px 4px rgba(0,0,0,.4)'};
-               -webkit-tap-highlight-color:transparent">
-        ${opt.label}
-      </button>`;
-    };
-    const frontZonesHtml = frontPositions.length > 0 ? `
-      <div style="text-align:center;flex:1">
-        <div style="font-size:0.52rem;color:rgba(255,255,255,.35);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em">Avant</div>
-        <div style="position:relative;width:80px;height:96px;margin:0 auto">${'<div style="' + _tshapeStyle + '"></div>'}${frontPositions.map(_makePosZone).join('')}</div>
-      </div>` : '';
-    const backZonesHtml = backPositions.length > 0 ? `
-      <div style="text-align:center;flex:1">
-        <div style="font-size:0.52rem;color:rgba(255,255,255,.35);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em">Dos</div>
-        <div style="position:relative;width:80px;height:96px;margin:0 auto">${'<div style="' + _tshapeStyle + '"></div>'}${backPositions.map(_makePosZone).join('')}</div>
-      </div>` : '';
-
     // ── Polices — scroll horizontal, grandes touches
     const fntPills = availFnt.map((v, fi) => {
       const opt = TSH_FONT_OPTS.find(f => f.val === v);
@@ -11070,10 +11039,29 @@ function tshBuyStep2HTML() {
       </div>`;
     }).join('');
 
-    // ── Grande preview centrée (130px, factor 0.40)
+    // ── Position X/Y libre (avec presets nommés)
     const shirtSrc = tshGetFaceImg(campId, prodIdx, 'front') || '';
     const posOpt   = TSH_POS_OPTS.find(p => p.val === cPos) || TSH_POS_OPTS[0];
+    const posX = tshBuy.textX !== undefined ? tshBuy.textX : posOpt.x;
+    const posY = tshBuy.textY !== undefined ? tshBuy.textY : posOpt.y;
+    if (tshBuy.textX === undefined) tshBuy.textX = posX;
+    if (tshBuy.textY === undefined) tshBuy.textY = posY;
     const scaledPx = Math.max(10, Math.round(cSize * 0.40));
+
+    // Presets rapides (chips sous les sliders)
+    const presetsBtns = availPos.map(v => {
+      const opt = TSH_POS_OPTS.find(p => p.val === v);
+      if (!opt) return '';
+      const sel = Math.round(posX) === opt.x && Math.round(posY) === opt.y;
+      return `<button onclick="tshBuy.textX=${opt.x};tshBuy.textY=${opt.y};const slx=document.getElementById('tsh-pos-x');if(slx)slx.value=${opt.x};const sly=document.getElementById('tsh-pos-y');if(sly)sly.value=${opt.y};const pe=document.getElementById('tsh-text-preview-el');if(pe){pe.style.left='${opt.x}%';pe.style.top='${opt.y}%'}"
+        style="padding:6px 13px;border-radius:20px;border:1.5px solid ${sel?'#4facfe':'rgba(255,255,255,.14)'};
+               background:${sel?'rgba(79,172,254,.18)':'rgba(255,255,255,.04)'};
+               color:${sel?'#4facfe':'rgba(255,255,255,.55)'};font-size:0.65rem;font-weight:${sel?'700':'400'};
+               cursor:pointer;white-space:nowrap;min-height:36px;-webkit-tap-highlight-color:transparent;
+               box-shadow:${sel?'0 0 0 2px rgba(79,172,254,.3)':'none'}">
+        ${opt.label}
+      </button>`;
+    }).join('');
 
     textPickerHtml = `
     <div style="width:100%;border:1px solid rgba(79,172,254,.3);border-radius:14px;padding:14px 12px 14px;background:rgba(79,172,254,.04)">
@@ -11085,7 +11073,7 @@ function tshBuyStep2HTML() {
                     box-shadow:0 6px 24px rgba(0,0,0,.45)">
           <img src="${shirtSrc}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top">
           <div id="tsh-text-preview-el"
-            style="position:absolute;left:${posOpt.x}%;top:${posOpt.y}%;transform:translate(-50%,-50%);
+            style="position:absolute;left:${posX}%;top:${posY}%;transform:translate(-50%,-50%);
                    font-family:${cFont};font-size:${scaledPx}px;color:${cColor};
                    text-align:center;white-space:nowrap;font-weight:700;
                    text-shadow:0 1px 3px rgba(0,0,0,.7);pointer-events:none;
@@ -11142,14 +11130,28 @@ function tshBuyStep2HTML() {
         <div class="tsh-hscroll" style="gap:8px;padding:4px 2px">${fntPills}</div>
       </div>
 
-      <!-- Position — silhouette t-shirt avec zones tactiles -->
+      <!-- Position X / Y avec sliders + presets rapides -->
       ${availPos.length > 0 ? `<div>
-        <div style="font-size:0.62rem;color:rgba(255,255,255,.45);margin-bottom:10px">
-          Emplacement ${campId === 2 ? 'sur la casquette' : 'sur le t-shirt'}
+        <div style="font-size:0.62rem;color:rgba(255,255,255,.45);margin-bottom:8px">
+          Position ${campId === 2 ? 'sur la casquette' : 'sur le t-shirt'}
         </div>
-        <div style="display:flex;gap:20px;justify-content:center;align-items:flex-start;flex-wrap:wrap">
-          ${frontZonesHtml}${backZonesHtml}
+        <div style="margin-bottom:7px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.57rem;color:rgba(255,255,255,.3);margin-bottom:3px">
+            <span>◀ Gauche</span><span>Droite ▶</span>
+          </div>
+          <input type="range" min="10" max="90" value="${posX}" id="tsh-pos-x"
+            oninput="tshBuy.textX=+this.value;const pe=document.getElementById('tsh-text-preview-el');if(pe)pe.style.left=this.value+'%'"
+            style="width:100%;accent-color:#4facfe;cursor:pointer;height:4px">
         </div>
+        <div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.57rem;color:rgba(255,255,255,.3);margin-bottom:3px">
+            <span>▲ Haut</span><span>Bas ▼</span>
+          </div>
+          <input type="range" min="10" max="90" value="${posY}" id="tsh-pos-y"
+            oninput="tshBuy.textY=+this.value;const pe=document.getElementById('tsh-text-preview-el');if(pe)pe.style.top=this.value+'%'"
+            style="width:100%;accent-color:#4facfe;cursor:pointer;height:4px">
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${presetsBtns}</div>
       </div>` : ''}
     </div>`;
   }
