@@ -14497,7 +14497,7 @@ function previewLPInline(campId) {
         if (flOv && !flOv.classList.contains('open') && typeof iw.openFlow === 'function') {
           iw.openFlow(0);
         }
-      } catch(_) {}
+      } catch(e) { console.warn('[preview] openFlow fallback:', e.message); }
     }, 500);
   });
 
