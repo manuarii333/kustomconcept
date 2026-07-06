@@ -1,0 +1,25 @@
+# Racine = profil Windows (C:\Users\highc) — on ne versionne QUE le projet HCS/.
+# Tout le reste (Downloads, Desktop, Documents, AppData, .ssh, .claude, Dropbox,
+# OneDrive, venv, etc.) ne doit jamais entrer dans ce dépôt.
+/*
+!/.gitignore
+!/HCS/
+
+# Dépôts imbriqués (leur propre .git + remote GitHub dédié) — suivis séparément
+/HCS/hcs-erp/
+/HCS/campaign/
+/HCS/hcs-erp ok/
+
+# Credentials — ne jamais committer
+.env
+*.env
+.env.local
+*.key
+*recovery_codes*
+*-backup-*.json
+
+# Divers
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
